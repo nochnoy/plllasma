@@ -15,6 +15,8 @@ export class AppService {
     private userService: UserService
   ) { }
 
+  readonly apiPath = '../api';
+
   user?: IUserData;
 
   focusesCount = new Subject<number>();
@@ -52,7 +54,7 @@ export class AppService {
     return of({}).pipe(
       switchMap((dialogData) => {
         return this.httpClient.post(
-          '/rest-auth.php',
+          `${this.apiPath}/auth.php`,
           { },
           { observe: 'body', withCredentials: true });
       }),
@@ -68,7 +70,7 @@ export class AppService {
     return of({}).pipe(
       switchMap((dialogData) => {
         return this.httpClient.post(
-          '/rest-auth.php',
+          `${this.apiPath}/auth.php`,
           {
             login: login,
             password: password,
@@ -85,7 +87,7 @@ export class AppService {
 
   addFocus$(focus: IFocus): Observable<any> {
     return this.httpClient.post(
-      '/rest-image-focus-add.php',
+      `${this.apiPath}/focus-add.php`,
       focus,
       { observe: 'body', withCredentials: true })
   }
