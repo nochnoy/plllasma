@@ -1,0 +1,93 @@
+@import "normalize.scss";
+
+:root {
+  font-family: 'Arial', sans-serif;
+  font-size: 12pt; // rem
+
+  // Цветовая схема (комплиментарный от #D7CABB):
+  // Основной #D7CABB
+  // Кнопка #5C7C8A
+  // Кнопка актив #BACED6
+  // Светлый #FFFBF7
+  // Тёмный #8A7B6A
+
+  --color-black: black;
+  --color-page-bg: #D7CABB;
+
+  --border-radius: 3px;
+  --margin-standard: 0.4rem;
+
+  // input
+  --color-input-bg: #ffffff;
+
+  // button
+  --color-button-bg: #444444;
+  --color-button-bg-hover: #775858;
+  --color-button-bg-active: #000000;
+
+  --color-button-bg-red: #444444;
+  --color-button-bg-red-hover: #444444;
+  --color-button-bg-red-active: #444444;
+
+  --color-button-bg-blue: #5C7C8A;
+  --color-button-bg-blue-hover: #739bab;
+  --color-button-bg-blue-active: #455c67;
+
+  --color-button-text: #FFFBF7;
+}
+
+body {
+  background-color: var(--color-page-bg);
+}
+
+.input {
+  height: 1.5rem;
+  background-color: var(--color-input-bg);
+  border: none;
+  border-radius: var(--border-radius);
+  &:focus {
+    outline: none;
+  }
+}
+
+.textarea {
+  border: none;
+  border-radius: var(--border-radius);
+  &:focus {
+    outline: none;
+  }
+}
+
+.button {
+  height: 1.5rem;
+  background-color: var(--color-button-bg);
+  border: none;
+  border-radius: var(--border-radius);
+  color: var(--color-button-text);
+  &:hover {
+    background-color: var(--color-button-bg-hover);
+  }
+  &:active {
+    background-color: var(--color-button-bg-active);
+  }
+
+  &__red {
+    background-color: var(--color-button-bg-red);
+    &:hover {
+      background-color: var(--color-button-bg-red-hover);
+    }
+    &:active {
+      background-color: var(--color-button-bg-red-active);
+    }
+  }
+
+  &__blue {
+    background-color: var(--color-button-bg-blue);
+    &:hover {
+      background-color: var(--color-button-bg-blue-hover);
+    }
+    &:active {
+      background-color: var(--color-button-bg-blue-active);
+    }
+  }
+}

@@ -1,0 +1,46 @@
+:host {
+  height: var(--focus-icon-size);
+  overflow-x: hidden;
+  overflow-y: hidden;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  margin-left: -500px;
+}
+
+.focus {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  background-repeat: no-repeat;
+  cursor: pointer;
+  width: var(--focus-icon-size);
+  min-width: var(--focus-icon-size);
+  height: var(--focus-icon-size);
+  border: 2px solid rgba(0,0,0,0);
+  border-radius: calc(var(--focus-icon-size) / 2);
+  background-color: black;
+  box-sizing: border-box;
+  opacity: 80%;
+
+  &:not(:last-child) {
+    margin-right: var(--focus-icon-margin);
+  }
+
+  &--selected {
+    border: 2px solid white;
+    opacity: 100%;
+  }
+
+  .like {
+    margin-right: -4px;
+    font-size: 0.8rem;
+  }
+
+}

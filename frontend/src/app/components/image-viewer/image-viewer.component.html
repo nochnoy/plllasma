@@ -1,0 +1,64 @@
+<div class="download-info" *ngIf="fileType === 'file'">
+  <div>
+    Скачивается <a [href]="this.getDownloadUrl()">файл</a>...
+  </div>
+</div>
+
+<ng-container *ngIf="!!data?.imageLoaded && fileType === 'image'">
+  <svg #svg>
+    <g #zoomable mask="url(#msk1)">
+      <image [attr.href]="data.url" (load)="onImageLoaded()" />
+    </g>
+    <defs *ngIf="!!appService.currentFocus && !appService.currentFocus.default && !isAnimating">
+      <mask id="msk1">
+        <rect
+          [attr.x]="appService.currentFocus.l"
+          [attr.width]="(appService.currentFocus.r - appService.currentFocus.l)"
+          [attr.y]="appService.currentFocus.t"
+          [attr.height]="(appService.currentFocus.b - appService.currentFocus.t)"
+          fill="white" />
+      </mask>
+    </defs>
+  </svg>
+  <div class="info" *ngIf="!isAnimating && !!appService.currentFocus && !appService.currentFocus.default">
+    <div class="info--panel">
+
+      <img class="info--icon" (click)="onCurrentFocusNickClick()" [attr.src]="getIconUrl(appService.currentFocus)" />
+      <span class="info--nick" (click)="onCurrentFocusNickClick()">
+        {{appService.currentFocus.ghost ? 'Привидение' : appService.currentFocus.nick}}
+        <span class="info--selector" *ngIf="appService.currentFocus.isEditing">{{appService.currentFocus.ghost ? '⯅' : '⯆'}}</span>
+      </span>
+
+      <ng-container *ngFor="let like of appService.currentFocus.likes">
+        <div class="like" [class.like__disabled]="!like.count" (click)="addLike(appService.currentFocus, like.id)">
+          <span class="like--icon" [title]="appService.getLiketitle(like)">{{appService.getLikeIcon(like)}}</span>
+          <span class="like--count" *ngIf="like.count">{{like.count}}</span>
+        </div>
+      </ng-container>
+
+    </div>
+  </div>
+
+  <div class="toolbar toolbar-left">
+    <div class="toolbar-button toolbar-button__zoom-in" (click)="onZoomInButton()"></div>
+    <div class="toolbar-button toolbar-button__zoom-out" (click)="onZoomOutButton()"></div>
+    <div class="toolbar-button toolbar-button__zoom-100" (click)="onZoom100Button()"></div>
+    <a class="toolbar-button toolbar-button__download" [attr.href]="getDownloadUrl()"></a>
+  </div>
+
+  <ng-container *ngIf="data.focusesLoaded">
+    <div class="focuses" *ngIf="!appService.currentFocus?.isNew">
+      <app-focus-list class="focus-list" [data]="data" (select)="onFocusButton($event)"></app-focus-list>
+      <div class="focus focus--plus" *ngIf="firstFocus" (click)="onAddFocusButton()"></div>
+    </div>
+
+    <div class="add-focus-container" *ngIf="!isAnimating && appService.currentFocus?.isNew">
+      <div class="add-focus__label">Создаём вот такой фокус. Пойдёт?</div>
+      <div class="add-focus">
+        <button class="button button-secondary" (click)="onAddFocusCancelButton()">Отмена</button>
+        <button class="button button-primary" (click)="onAddFocusSaveButton()">Сохранить</button>
+      </div>
+    </div>
+  </ng-container>
+
+</ng-container>

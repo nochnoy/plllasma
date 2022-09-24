@@ -1,0 +1,11 @@
+<div class="container" [style.margin-left]="(-_pos) + 'px'">
+  <div *ngFor="let focus of data.focuses"
+       class="focus"
+       [class.focus--selected]="focus === appService.currentFocus"
+       (click)="onFocusButton(focus)"
+       [style]="getFocusButtonStyle(focus)">
+    <ng-container class="like" *ngFor="let like of focus.likes">
+      <div class="like" *ngIf="like.count">{{appService.getLikeIcon(like)}}</div>
+    </ng-container>
+  </div>
+</div>

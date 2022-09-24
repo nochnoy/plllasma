@@ -1,0 +1,8 @@
+<main>
+  <form [formGroup]="form">
+    <input class="input" placeholder="Логин" type="text" formControlName="login" autofocus>
+    <input class="input" placeholder="Пароль" type="password" formControlName="password">
+    <button class="button" (click)="onLogin()">Войти</button>
+    <a href>Регистрация</a>
+  </form>
+</main>

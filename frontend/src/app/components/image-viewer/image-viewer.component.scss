@@ -1,0 +1,248 @@
+:host {
+  --color-background: #2b2e2f;
+  --color-white: #ffffff;
+  --color-background-transparent: rgba(43, 46, 47, 0.6);
+  --focus-icon-size: 42px; // Должна быть равна константе Const.focusIconSize
+  --focus-icon-margin: 8px; // Должна быть равна константе Const.focusIconMargin
+  --focus-info-height: 80px; // Должна быть равна константе Const.focusInfoHeight
+
+  font-family: arial, sans-serif;
+  font-size: 12px; // rem
+}
+
+svg {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--color-background);
+  cursor: crosshair;
+}
+
+.focuses {
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  justify-content: center;
+  position: absolute;
+  z-index: 2;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  height: var(--focus-icon-size);
+
+  .focus-list {
+    margin: 0 var(--focus-icon-margin);
+  }
+
+  .focus {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-repeat: no-repeat;
+    opacity: 0.6;
+    cursor: pointer;
+    width: var(--focus-icon-size);
+    min-width: var(--focus-icon-size);
+    height: var(--focus-icon-size);
+    border-radius: calc(var(--focus-icon-size) / 2);
+    background-color: black;
+
+    &--plus {
+      background: rgba(0, 0, 0, 0.65);
+      background-image: url('/img/btn-add-focus.png');
+      box-shadow: none;
+      opacity: 100%;
+    }
+  }
+}
+
+.toolbar {
+  position: absolute;
+  z-index: 2;
+  width: 2rem;
+  top: 0;
+
+  &-left {
+    left: 0;
+  }
+
+  &-button {
+    display: inline-block;
+    width: 48px;
+    height: 48px;
+    cursor: pointer;
+
+    &__zoom-100 {
+      background-image: url('/img/btn-zoom-100.png');
+    }
+    &__zoom-in {
+      background-image: url('/img/btn-zoom-in.png');
+    }
+    &__zoom-out {
+      background-image: url('/img/btn-zoom-out.png');
+    }
+    &__download {
+      background-image: url('/img/btn-download.png');
+    }
+  }
+}
+
+.info {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  height: var(--focus-info-height);
+  bottom: calc(var(--focus-icon-margin) + var(--focus-icon-size));
+  padding-top: 1rem;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+
+  &--panel {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 1rem;
+    line-height: 1rem;
+    text-align: center;
+    user-select: none;
+    color: white;
+    overflow: hidden;
+    white-space: nowrap;
+    pointer-events: auto;
+    cursor: pointer;
+
+    .like {
+      width: 1.7rem;
+      height: 100%;
+      padding-left: 0.7rem;
+      cursor: pointer;
+
+      &--icon {
+        font-size: 1rem;
+      }
+      &--count {
+        font-size: 0.7rem;
+      }
+
+      &__disabled {
+        filter: grayscale(100%) brightness(40%);
+      }
+
+      &:hover {
+        &--icon {
+          font-size: 1.2rem;
+          filter: none;
+        }
+      }
+    }
+  }
+
+  &--nick {
+    font-weight: bold;
+    padding-right: 0.7rem;
+  }
+
+  &--selector {
+    font-size: 0.6rem;
+    padding-left: 0.3rem;
+  }
+
+  &--icon {
+    padding-right: 0.3rem;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.add-focus-container {
+  z-index: 2;
+  bottom: 1rem;
+  left: 0;
+  right: 0;
+  position: absolute;
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.add-focus {
+  display: flex;
+  flex-wrap: nowrap;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+
+  &__label {
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+    color: var(--color-white);
+  }
+
+  > *:not(:last-child) {
+    margin-right: 0.4rem;
+  }
+
+  > .button {
+    width: 6rem;
+    height: 2rem;
+    padding: 0;
+  }
+}
+
+.button {
+  padding: 0 2rem;
+  color: black;
+  cursor: pointer;
+  border: 1px solid gray;
+  border-radius: 3px;
+  background-color: #F0F0F0;
+  font-size: 0.8rem;
+}
+
+.user-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+}
+
+.user-select {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  border-radius: 4px;
+  padding: 0 1rem;
+  background-color: #D7CABB;
+
+  select {
+    background-color: #D7CABB;
+    border: none;
+    height: 100%;
+    cursor: pointer;
+    font-size: 0.8rem;
+
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
+.download-info {
+  width: 100%;
+  height: 20rem;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.4rem;
+}

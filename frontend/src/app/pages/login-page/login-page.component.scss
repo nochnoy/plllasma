@@ -1,0 +1,57 @@
+main {
+  --controls-height: 3rem;
+  background-image: url("/assets/bg-logo.png");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 34rem 34rem;
+
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  form {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+
+    *:first-child {
+      margin-top: 10rem;
+    }
+
+    *:not(:last-child) {
+      margin-bottom: var(--margin-standard);
+    }
+
+    .input {
+      background-color: #f1eeec;
+      width: 10rem;
+      height: var(--controls-height);
+      line-height: var(--controls-height);
+      padding: 0 1rem;
+    }
+
+    .button {
+      color: #f1eeec;
+      margin-top: 1rem;
+      width: 6rem;
+      height: var(--controls-height);
+      line-height: var(--controls-height);
+    }
+
+    a {
+      padding: 4rem;
+      color: var(--color-black);
+      &:visited {
+        color: var(--color-black);
+      }
+      &:hover {
+        color: var(--color-black);
+      }
+    }
+  }
+}
