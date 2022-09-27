@@ -54,7 +54,7 @@ export class AppService {
     return of({}).pipe(
       switchMap((dialogData) => {
         return this.httpClient.post(
-          `${this.apiPath}/auth.php`,
+          `${this.apiPath}/login.php`,
           { },
           { observe: 'body', withCredentials: true });
       }),
@@ -70,7 +70,7 @@ export class AppService {
     return of({}).pipe(
       switchMap((dialogData) => {
         return this.httpClient.post(
-          `${this.apiPath}/auth.php`,
+          `${this.apiPath}/login.php`,
           {
             login: login,
             password: password,

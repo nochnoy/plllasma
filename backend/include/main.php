@@ -24,8 +24,11 @@ $allowed_http_origins = [
     "https://localhost",
 ];
 
-require("include/functions.php");
-require("include/commands.php");
+require("include/functions-utils.php");
+require("include/functions-user.php");
+require("include/functions-messages.php");
+require("include/functions-channels.php");
+require("include/functions-files.php");
 
 session_set_cookie_params(0 , '/', DOMAIN);
 session_name(SESSION_NAME);
