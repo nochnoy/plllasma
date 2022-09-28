@@ -1,8 +1,8 @@
 <? // REST для добавления нового фокуса фотки
 
-include("_rest-api-main.php");
+include("include/main.php");
 
-loadUser();
+loginBySessionOrToken();
 
 // TODO: проверка на права и то что ещё не лайкал
 

@@ -8,7 +8,7 @@ global $userId;
 unset($userId);
 unset($_SESSION['plasma_user_id']);
 
-clearCookieKey();
+clearToken();
 
 session_unset();
 session_destroy();

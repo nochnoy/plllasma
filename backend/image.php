@@ -3,7 +3,7 @@
 
 require("include/main.php");
 
-loadUser();
+loginBySessionOrToken();
 
 // TODO: выкинуть эту хрень когда юзерскую инфу можно будет достать из сессии
 $stmt = $mysqli->prepare('

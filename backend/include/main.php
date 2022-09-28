@@ -2,12 +2,18 @@
 // Главный файл для REST-API
 // Цепляется к базе, подготавливает всё для работы конкретных эндпоинтов
 
-error_reporting(E_ALL);
+require("include/functions-utils.php");
+require("include/functions-user.php");
+require("include/functions-messages.php");
+require("include/functions-channels.php");
+require("include/functions-files.php");
 
-require "../../plllasma-passwords.php";
+include "../../plllasma-passwords.php";
 if (empty($passwordDB)) {
     die('Скопируй plllasma-passwords.php в родительскую папку всех сайтов, впиши туда актуальные пароли.');
 }
+
+error_reporting(E_ALL);
 
 define("SESSION_NAME", 'plasma');
 define("DOMAIN", $_SERVER['SERVER_NAME']);
@@ -23,12 +29,6 @@ $allowed_http_origins = [
     "https://contortion.ru",
     "https://localhost",
 ];
-
-require("include/functions-utils.php");
-require("include/functions-user.php");
-require("include/functions-messages.php");
-require("include/functions-channels.php");
-require("include/functions-files.php");
 
 session_set_cookie_params(0 , '/', DOMAIN);
 session_name(SESSION_NAME);
@@ -48,6 +48,7 @@ $mysqli->query("SET NAMES 'utf8'");
 $mysqli->set_charset('utf8mb4');
 $mysqli->options(MYSQLI_OPT_INT_AND_FLOAT_NATIVE, 1);
 
+$user = NULL;
 $userId = NULL;
 $input = json_decode(file_get_contents('php://input'), true);
 ?>

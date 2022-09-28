@@ -2,7 +2,7 @@
 
 require("include/main.php");
 
-loadUser();
+loginBySessionOrToken();
 
 if (!is_numeric($input['l']) || !is_numeric($input['r']) || !is_numeric($input['t']) || !is_numeric($input['b'])) {
 	die('{"error": "invalidParameter"}');
