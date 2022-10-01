@@ -5,6 +5,7 @@ import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {UserService} from "./services/user.service";
 import {AppService} from "./services/app.service";
 import {of} from "rxjs";
+import { LoginStatus } from './model/app-model';
 
 @UntilDestroy()
 @Component({
@@ -23,13 +24,19 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     of({}).pipe(
       switchMap(() => this.appService.authorizeBySession$()), // В начале попытаемся авторизоваться сессией
-      switchMap(() => this.userService.isAuthorized$), // Дальше слушаем статус авторизованности
+      switchMap(() => this.userService.loginStatus$), // Дальше слушаем статус авторизованности
       distinct((value) => !!value),
-      tap((isAuthorized) => {
-        if (isAuthorized) {
-          this.router.navigate(['default']);
-        } else {
-          this.router.navigate(['login']);
+      tap((loginStatus) => {
+        switch (loginStatus) {
+
+          case LoginStatus.authorised:
+            this.router.navigate(['default']);
+            break;
+            
+          case LoginStatus.unauthorised:
+            this.router.navigate(['login']);
+            break;
+
         }
       }),
       untilDestroyed(this)

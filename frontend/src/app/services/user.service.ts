@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import {BehaviorSubject} from "rxjs";
-import {IUserData} from "../model/app-model";
+import {IUserData, LoginStatus} from "../model/app-model";
 
 @Injectable({
   providedIn: 'root'
@@ -14,10 +14,9 @@ export class UserService {
     nick: ''
   }
 
-  isAuthorized$ = new BehaviorSubject<boolean>(false);
-  authorisationInProgress = false;
+  loginStatus$ = new BehaviorSubject<LoginStatus>(LoginStatus.unauthorised);
 
   get isAuthorized(): boolean {
-    return Boolean(this.isAuthorized$.value);
+    return Boolean(this.loginStatus$.value === LoginStatus.authorised);
   }
 }

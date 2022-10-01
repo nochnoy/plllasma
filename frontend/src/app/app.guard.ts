@@ -2,6 +2,8 @@
 import {Injectable} from '@angular/core';
 import {Observable, of} from "rxjs";
 import {UserService} from "./services/user.service";
+import { filter, map } from 'rxjs/operators';
+import { LoginStatus } from './model/app-model';
 
 @Injectable({
   providedIn: 'root'
@@ -13,11 +15,16 @@ export class AppGuard implements CanActivate {
     private router: Router
   ) { }
 
-  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Observable<UrlTree | boolean> {
-    if (this.userService.isAuthorized) {
-      return true;
-    } else {
-      return of(this.router.parseUrl('/login'));
-    }
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<UrlTree | boolean> {
+    return this.userService.loginStatus$.pipe(
+      filter((status) => status !== LoginStatus.authorising),
+      map((status) => {
+        if (status === LoginStatus.authorised) {
+          return true;
+        } else {
+          return this.router.parseUrl('/login');
+        }
+      })
+    );
   }
 }

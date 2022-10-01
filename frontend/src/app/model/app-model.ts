@@ -1,3 +1,14 @@
+export interface IUserData {
+  nick: string;
+  icon: string;
+}
+
+export enum LoginStatus {
+  unauthorised = 0,
+  authorised = 1,
+  authorising = 2,
+}
+
 export interface AuthDialogResult {
   login?: string;
   password?: string;
@@ -30,11 +41,6 @@ export interface IFocus {
 export interface ILike {
   id: 'sps' | 'he' | 'nep' | 'ogo';
   count: number;
-}
-
-export interface IUserData {
-  nick: string;
-  icon: string;
 }
 
 export interface IImageData {

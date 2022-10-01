@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import {Observable, of, Subject} from "rxjs";
-import {AuthDialogResult, IFocus, ILike, IUserData} from "../model/app-model";
+import {AuthDialogResult, IFocus, ILike, IUserData, LoginStatus} from "../model/app-model";
 import {map, switchMap, tap} from "rxjs/operators";
 import {HttpClient} from "@angular/common/http";
 import {UserService} from "./user.service";
@@ -49,7 +49,7 @@ export class AppService {
   }
 
   authorizeBySession$(): Observable<boolean> {
-    this.userService.authorisationInProgress = true;
+    this.userService.loginStatus$.next(LoginStatus.authorising);
     return of({}).pipe(
       switchMap((dialogData) => {
         return this.httpClient.post(
@@ -58,16 +58,15 @@ export class AppService {
           { observe: 'body', withCredentials: true });
       }),
       map((result: any) => {
-        this.userService.authorisationInProgress = false;
         const success = !result.error;
-        this.userService.isAuthorized$.next(success);
+        this.userService.loginStatus$.next(success ? LoginStatus.authorised : LoginStatus.unauthorised);
         return success;
       })
     );
   }
 
   authorize$(login: string, password: string): Observable<boolean> {
-    this.userService.authorisationInProgress = true;
+    this.userService.loginStatus$.next(LoginStatus.authorising);
     return of({}).pipe(
       switchMap((dialogData) => {
         return this.httpClient.post(
@@ -79,9 +78,8 @@ export class AppService {
           { observe: 'body', withCredentials: true });
       }),
       map((result: any) => {
-        this.userService.authorisationInProgress = false;
         const success = !result.error;
-        this.userService.isAuthorized$.next(success);
+        this.userService.loginStatus$.next(success ? LoginStatus.authorised : LoginStatus.unauthorised);
         return success;
       })
     );
