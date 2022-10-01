@@ -10,6 +10,7 @@ import {RouterModule} from "@angular/router";
 import { DefaultPageComponent } from './pages/default-page/default-page.component';
 import {AppRoutingModule} from "./app-routing.module";
 import { LoginPageComponent } from './pages/login-page/login-page.component';
+import { AppGuard } from './app.guard';
 
 @NgModule({
   imports: [
@@ -28,7 +29,7 @@ import { LoginPageComponent } from './pages/login-page/login-page.component';
     DefaultPageComponent,
     LoginPageComponent,
   ],
-  providers: [],
+  providers: [AppGuard],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

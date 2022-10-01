@@ -48,8 +48,7 @@ function loadUserByToken() {
 
 	$token = getToken();
 	if (isset($token)) {
-		//$result = mysqli_query($mysqli, 'SELECT * FROM tbl_users WHERE logkey="'.$token.'" LIMIT 1');
-		$stmt = $mysqli->prepare('SELECT * tbl_users WHERE logkey=? LIMIT 1');
+		$stmt = $mysqli->prepare('SELECT * FROM tbl_users WHERE logkey=? LIMIT 1');
 		$stmt->bind_param("s", $token);
 		$stmt->execute();
 		$result = $stmt->get_result();
@@ -65,8 +64,10 @@ function loadUserByToken() {
 }
 
 function loginByPassword($login, $password) {
+	global $mysqli;
+
 	$stmt = $mysqli->prepare('SELECT * FROM tbl_users WHERE login=? AND password=? LIMIT 1');
-	$stmt->bind_param("ss", $input['login'], $input['password']);
+	$stmt->bind_param("ss", $login, $password);
 	$stmt->execute();
 	$result = $stmt->get_result();
 	if ($result->num_rows > 0) {
@@ -94,6 +95,7 @@ function saveUserToSession() {
 
 // Создаёт и сохраняет в куках токен авторизации
 function createToken() {
+	global $mysqli;
 	global $user;
 
 	$userId = $user['id_user'];

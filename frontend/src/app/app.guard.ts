@@ -14,18 +14,10 @@ export class AppGuard implements CanActivate {
   ) { }
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Observable<UrlTree | boolean> {
-    if (route.routeConfig?.path === 'login') {
-      if (this.userService.isAuthorized) {
-        return of (this.router.parseUrl(''));
-      } else {
-        return false;
-      }
+    if (this.userService.isAuthorized) {
+      return true;
     } else {
-      if (this.userService.isAuthorized) {
-        return true;
-      } else {
-        return of(this.router.parseUrl('/login'));
-      }
+      return of(this.router.parseUrl('/login'));
     }
   }
 }

@@ -15,6 +15,7 @@ export class UserService {
   }
 
   isAuthorized$ = new BehaviorSubject<boolean>(false);
+  authorisationInProgress = false;
 
   get isAuthorized(): boolean {
     return Boolean(this.isAuthorized$.value);

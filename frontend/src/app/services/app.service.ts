@@ -18,9 +18,7 @@ export class AppService {
   readonly apiPath = '../api';
 
   user?: IUserData;
-
   focusesCount = new Subject<number>();
-
   currentFocus?: IFocus;
 
   normalizeLikes(focus: IFocus): void {
@@ -51,6 +49,7 @@ export class AppService {
   }
 
   authorizeBySession$(): Observable<boolean> {
+    this.userService.authorisationInProgress = true;
     return of({}).pipe(
       switchMap((dialogData) => {
         return this.httpClient.post(
@@ -59,6 +58,7 @@ export class AppService {
           { observe: 'body', withCredentials: true });
       }),
       map((result: any) => {
+        this.userService.authorisationInProgress = false;
         const success = !result.error;
         this.userService.isAuthorized$.next(success);
         return success;
@@ -67,6 +67,7 @@ export class AppService {
   }
 
   authorize$(login: string, password: string): Observable<boolean> {
+    this.userService.authorisationInProgress = true;
     return of({}).pipe(
       switchMap((dialogData) => {
         return this.httpClient.post(
@@ -78,6 +79,7 @@ export class AppService {
           { observe: 'body', withCredentials: true });
       }),
       map((result: any) => {
+        this.userService.authorisationInProgress = false;
         const success = !result.error;
         this.userService.isAuthorized$.next(success);
         return success;

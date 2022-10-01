@@ -13,7 +13,8 @@ import {AppService} from "../../services/app.service";
 export class LoginPageComponent implements OnInit {
 
   constructor(
-    public appService: AppService
+    public appService: AppService,
+    public userService: UserService,
   ) { }
 
   form = new FormGroup({
