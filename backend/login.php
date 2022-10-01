@@ -9,12 +9,11 @@ include("include/main.php");
 
 if (!(empty($input['login']) && empty($input['password']))) {
 	if (loginByPassword($input['login'], $input['password'])) {
-		exit(json_encode(getUserInfoForClient());
+		exit(json_encode(getUserInfoForClient()));
 	}
 } else {
 	// Если логин-пароль не указаны - значит это попытка залогиниться по сессии/кукам
 	loginBySessionOrToken();
-	exit(json_encode(getUserInfoForClient());
+	exit(json_encode(getUserInfoForClient()));
 }
-
 ?>

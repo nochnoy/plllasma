@@ -2,6 +2,8 @@
 // Главный файл для REST-API
 // Цепляется к базе, подготавливает всё для работы конкретных эндпоинтов
 
+error_reporting(E_ALL);
+
 require("include/functions-utils.php");
 require("include/functions-user.php");
 require("include/functions-messages.php");
@@ -12,8 +14,6 @@ include "../../plllasma-passwords.php";
 if (empty($passwordDB)) {
     die('Скопируй plllasma-passwords.php в родительскую папку всех сайтов, впиши туда актуальные пароли.');
 }
-
-error_reporting(E_ALL);
 
 define("SESSION_NAME", 'plasma');
 define("DOMAIN", $_SERVER['SERVER_NAME']);

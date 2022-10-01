@@ -17,6 +17,7 @@ function loginBySessionOrToken() {
 
 // Пробуем восстановить юзерские данные из сессии
 function loadUserFromSession() {
+	global $mysqli;
 	global $userId;
 	global $user;
 
@@ -27,7 +28,7 @@ function loadUserFromSession() {
 		// В сессии лежит userId но нет самого user
 		// Значит сессия была сформирована в старой плазме
 		// Подтянем user из БД и положим в сессию
-		$q = $mysqli->prepare('SELECT * tbl_users WHERE id_user=? LIMIT 1');
+		$q = $mysqli->prepare('SELECT * FROM tbl_users WHERE id_user=? LIMIT 1');
 		$q->bind_param("i", $userId);
 		$q->execute();
 		$result = $q->get_result();
@@ -72,7 +73,7 @@ function loginByPassword($login, $password) {
 		updateUserFromDb($result->fetch_assoc());
 		saveUserToSession();
 		createToken();
-		exit(json_encode(getUserInfoForClient());
+		exit(json_encode(getUserInfoForClient()));
 	} else {
 		exit('{"error": "auth"}');
 	}
@@ -125,7 +126,7 @@ function clearToken() {
 
 // Вливает запись из таблицы в БД в глобальную переменную $user
 // По ходу делает все нужные трансформации
-updateUserFromDb($rec) {
+function updateUserFromDb($rec) {
 	global $user;
 
 	if (empty($user)) {
@@ -148,10 +149,10 @@ updateUserFromDb($rec) {
 function getUserInfoForClient() {
 	global $user;
 
-	exit(json_encode((object)[
+	return (object)[
 		'userId' => $user['id_user'],
 		'nick' => $user['nick'],
-	]));
+	];
 }
 
 ?>
