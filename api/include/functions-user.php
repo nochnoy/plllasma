@@ -152,8 +152,9 @@ function getUserInfoForClient() {
 	global $user;
 
 	return (object)[
-		'userId' => $user['id_user'],
-		'nick' => $user['nick'],
+		'userId' 	=> $user['id_user'],
+		'nick' 		=> $user['nick'],
+		'icon' 		=> $user['icon'],
 	];
 }
 

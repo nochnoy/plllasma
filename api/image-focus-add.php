@@ -13,24 +13,9 @@ if ($input['ghost']) {
 	$nick = 'Привидение';
 	$icon = null;
 } else {
-
-	// TODO: выкинуть эту хрень когда юзерскую инфу можно быдет достать из сессии
-	$stmt = $mysqli->prepare('
-		SELECT * FROM tbl_users
-		WHERE id_user=?
-	');
-	$stmt->bind_param("i", $userId);
-	$stmt->execute();
-	$result = $stmt->get_result();
-	$user = $result->fetch_all(MYSQLI_ASSOC)[0];
 	$ghost = false;
 	$nick = $user['nick'];
-	if ($user['icon']) {
-		$icon = '' . $userId;
-	} else {
-		$icon = '-';
-	}
-
+	$icon = $user['icon'];
 }
 
 $stmt = $mysqli->prepare('
