@@ -2,8 +2,6 @@
 // Главный файл для REST-API
 // Цепляется к базе, подготавливает всё для работы конкретных эндпоинтов
 
-error_reporting(E_ALL);
-
 require("include/functions-utils.php");
 require("include/functions-user.php");
 require("include/functions-messages.php");
