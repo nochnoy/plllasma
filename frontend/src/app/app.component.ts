@@ -30,7 +30,7 @@ export class AppComponent implements OnInit {
         switch (loginStatus) {
 
           case LoginStatus.authorised:
-            this.router.navigate(['default']);
+            this.router.navigate(['channel']);
             break;
             
           case LoginStatus.unauthorised:

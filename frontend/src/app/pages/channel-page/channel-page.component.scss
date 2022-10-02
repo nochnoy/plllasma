@@ -1,0 +1,14 @@
+:host {
+    display: flex;
+    flex-direction: row;
+
+    .menu {
+        width: 20rem;
+    }
+    .main {
+        width: 40rem;
+    }
+    .sidebar {
+        width: 1fr;
+    }
+}

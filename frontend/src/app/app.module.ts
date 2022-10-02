@@ -11,6 +11,8 @@ import { DefaultPageComponent } from './pages/default-page/default-page.componen
 import {AppRoutingModule} from "./app-routing.module";
 import { LoginPageComponent } from './pages/login-page/login-page.component';
 import { AppGuard } from './app.guard';
+import { ChannelPageComponent } from './pages/channel-page/channel-page.component';
+import { MainMenuComponent } from './components/main-menu/main-menu.component';
 
 @NgModule({
   imports: [
@@ -28,6 +30,8 @@ import { AppGuard } from './app.guard';
     ImageViewerComponent,
     DefaultPageComponent,
     LoginPageComponent,
+    ChannelPageComponent,
+    MainMenuComponent,
   ],
   providers: [AppGuard],
   bootstrap: [AppComponent]
