@@ -3,6 +3,10 @@
 
 include("include/main.php");
 
-respond('channels', '{"channels":'.getChannelsJson().'}');
+loginBySessionOrToken();
+
+//respond('channels', '{"channels":'.getChannelsJson().'}');
+
+exit(json_encode(getChannels2()));
 
 ?>

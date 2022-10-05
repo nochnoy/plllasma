@@ -8,6 +8,7 @@ function isAuthorized() {
 
 // Авторизует юзера из сессии или по токену
 function loginBySessionOrToken() {
+	global $user;
 	if (!loadUserFromSession()) {
 		if (!loadUserByToken()) {
 			die('{"error": "auth"}');
@@ -34,7 +35,7 @@ function loadUserFromSession() {
 		$result = $q->get_result();
 		if (mysqli_num_rows($result) > 0) {
 			$row = mysqli_fetch_assoc($result);
-			updateUserFromDb($row);
+			buildUser($row);
 			saveUserToSession();
 		}
 	}
@@ -54,7 +55,7 @@ function loadUserByToken() {
 		$result = $stmt->get_result();
 		if (mysqli_num_rows($result) > 0) {
 			$row = mysqli_fetch_assoc($result);
-			updateUserFromDb($row);
+			buildUser($row);
 			saveUserToSession();
 			createToken();
 			return true;
@@ -71,7 +72,7 @@ function loginByPassword($login, $password) {
 	$stmt->execute();
 	$result = $stmt->get_result();
 	if ($result->num_rows > 0) {
-		updateUserFromDb($result->fetch_assoc());
+		buildUser($result->fetch_assoc());
 		saveUserToSession();
 		createToken();
 		exit(json_encode(getUserInfoForClient()));
@@ -128,7 +129,8 @@ function clearToken() {
 
 // Вливает запись из таблицы в БД в глобальную переменную $user
 // По ходу делает все нужные трансформации
-function updateUserFromDb($rec) {
+function buildUser($rec) {
+	global $mysqli;	
 	global $user;
 
 	if (empty($user)) {
@@ -144,6 +146,13 @@ function updateUserFromDb($rec) {
 		$user['icon'] = $user['id_user'];
 	} else {
 		$user['icon'] = '-';
+	}
+
+	// Список игнорируемых уродов
+	$user['ignored'] = array();
+	$result = mysqli_query($mysqli, 'SELECT DISTINCT id_ignored_user FROM lnk_user_ignor WHERE id_user='.$user['id_user']);
+	while($row = mysqli_fetch_array( $result)){
+		array_push($user['ignored'], intval($row[0]));
 	}
 }
 

@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import {AppService} from "../../services/app.service";
+import {IChannel} from "../../model/app-model";
 
 @Component({
   selector: 'app-main-menu',
@@ -7,9 +9,14 @@ import { Component, OnInit } from '@angular/core';
 })
 export class MainMenuComponent implements OnInit {
 
-  constructor() { }
+  channels: IChannel[] = [];
+
+  constructor(
+    private appService: AppService
+  ) { }
 
   ngOnInit(): void {
+    this.channels = this.appService.channels;
   }
 
 }

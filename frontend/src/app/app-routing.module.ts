@@ -5,10 +5,16 @@ import { ChannelPageComponent } from './pages/channel-page/channel-page.componen
 import {LoginPageComponent} from "./pages/login-page/login-page.component";
 
 const routes: Routes = [
-  { path: '', redirectTo: 'channel', pathMatch: 'full' },
+  { path: '', component: ChannelPageComponent, canActivate: [AppGuard] },
   { path: 'login', component: LoginPageComponent },
-  { path: 'channel', component: ChannelPageComponent, canActivate: [AppGuard]},
-  { path: '**', redirectTo: 'default', pathMatch: 'full' },
+  {
+    path: 'channel',
+    children: [
+      {path: '', component: ChannelPageComponent, canActivate: [AppGuard]},
+      {path: '**', component: ChannelPageComponent, canActivate: [AppGuard]},
+    ]
+  },
+  { path: '**', redirectTo: '', pathMatch: 'full' },
 ];
 
 @NgModule({

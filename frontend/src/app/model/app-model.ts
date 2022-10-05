@@ -59,3 +59,14 @@ export interface IFileInfo {
 }
 
 export type TFileType = 'unknown' | 'image' | 'file' | 'video';
+
+export interface IChannel {
+  id_place: number;
+  parent: number;
+  first_parent: number;
+  name: string;
+  description: string;
+  time_changed: string;
+  time_viewed: string;
+  weight: number;
+}

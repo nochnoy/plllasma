@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import {distinct, distinctUntilChanged, switchMap, tap} from "rxjs/operators";
-import {Router} from "@angular/router";
+import {distinct, distinctUntilChanged, filter, switchMap, tap} from "rxjs/operators";
+import {ActivatedRoute, ActivatedRouteSnapshot, Router} from "@angular/router";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {UserService} from "./services/user.service";
 import {AppService} from "./services/app.service";
@@ -19,7 +19,10 @@ export class AppComponent implements OnInit {
     public appService: AppService,
     public userService: UserService,
     public router: Router,
+    public activatedRoute: ActivatedRoute,
   ) {}
+
+  isReady = false;
 
   ngOnInit(): void {
     of({}).pipe(
@@ -30,15 +33,26 @@ export class AppComponent implements OnInit {
         switch (loginStatus) {
 
           case LoginStatus.authorised:
-            this.router.navigate(['channel']);
+            // Мы уже авторизовались а ты всё ещё сидишь на странице логина. Уходи.
+            // TODO: возможно надо на самой странице логин слушать статус авторизации и уходить. А это убрать.
+            if (this.router.url === '/login') {
+              //
+              this.router.navigate(['']);
+            }
             break;
-            
+
           case LoginStatus.unauthorised:
             this.router.navigate(['login']);
             break;
 
         }
       }),
+      filter((loginStatus) => loginStatus === LoginStatus.authorised),
+      switchMap(() => this.appService.loadChannels$()),
+      tap((channels) => {
+        this.appService.channels = channels;
+      }),
+      tap(() => this.isReady = true),
       untilDestroyed(this)
     ).subscribe();
   }

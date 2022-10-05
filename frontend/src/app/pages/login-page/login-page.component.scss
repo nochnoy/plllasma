@@ -28,11 +28,15 @@ main {
     }
 
     .input {
-      background-color: #f1eeec;
+      background-color: #ffffff;
       width: 10rem;
       height: var(--controls-height);
       line-height: var(--controls-height);
       padding: 0 1rem;
+      border: 1px solid #c5b9ac;
+      &::placeholder {
+        color: #b6b6b6;
+      }
     }
 
     .button {
@@ -41,6 +45,10 @@ main {
       width: 6rem;
       height: var(--controls-height);
       line-height: var(--controls-height);
+
+      &:hover {
+        background-color: #1f6f8f;
+      }
     }
 
     a {
@@ -50,7 +58,7 @@ main {
         color: var(--color-black);
       }
       &:hover {
-        color: var(--color-black);
+        color: #1f6f8f;
       }
     }
   }

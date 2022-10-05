@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import {Observable, of, Subject} from "rxjs";
-import {AuthDialogResult, IFocus, ILike, IUserData, LoginStatus} from "../model/app-model";
+import {AuthDialogResult, IChannel, IFocus, ILike, IUserData, LoginStatus} from "../model/app-model";
 import {map, switchMap, tap} from "rxjs/operators";
 import {HttpClient} from "@angular/common/http";
 import {UserService} from "./user.service";
@@ -18,6 +18,7 @@ export class AppService {
   readonly apiPath = '../api';
 
   user?: IUserData;
+  channels: IChannel[] = [];
   focusesCount = new Subject<number>();
   currentFocus?: IFocus;
 
@@ -90,6 +91,17 @@ export class AppService {
       `${this.apiPath}/focus-add.php`,
       focus,
       { observe: 'body', withCredentials: true })
+  }
+
+  loadChannels$(): Observable<any> {
+    return of({}).pipe(
+      switchMap(() => {
+        return this.httpClient.post(
+          `${this.apiPath}/channels.php`,
+          { },
+          { observe: 'body', withCredentials: true });
+      }),
+    );
   }
 
 }

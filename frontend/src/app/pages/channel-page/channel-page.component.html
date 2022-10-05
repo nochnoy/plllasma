@@ -1,7 +1,10 @@
 <div class="menu">
-    <app-main-menu></app-main-menu>
+    <app-main-menu *ngIf="appService.channels.length"></app-main-menu>
 </div>
 <div class="main">
+  <ng-container *ngIf="channel">
+    <h1>{{channel.name}}</h1>
+    <p>{{channel.description}}</p>
     <p>Сообщения</p>
     <p>Сообщения</p>
     <p>Сообщения</p>
@@ -14,6 +17,7 @@
     <p>Сообщения</p>
     <p>Сообщения</p>
     <p>Сообщения</p>
+  </ng-container>
 </div>
 <div class="sidebar">
     Привет, это новая Плазма.
