@@ -1,4 +1,50 @@
 :host {
   display: flex;
   flex-direction: column;
+
+  .logo {
+    display: inline-block;
+    position: absolute;
+    z-index: 1;
+    width: 146px;
+    height: 133px;
+    background-image: url('~src/assets/logo.gif');
+  }
+
+  .tools {
+    display: inline-block;
+    position: absolute;
+    z-index: 2;
+    width: 30px;
+    height: 210px;
+    background-image: url('~src/assets/icons.gif');
+  }
+
+  .channels {
+    position: absolute;
+    z-index: 3;
+    margin-left: 40px;
+    margin-top: 100px;
+
+    div {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 1rem;
+
+      a {
+        color: var(--color-black);
+        text-decoration: none;
+        &:hover {
+          text-decoration: underline;
+        }
+        &:visited {
+          color: var(--color-black);
+        }
+      }
+      :first-child {
+        font-weight: bold;
+      }
+    }
+  }
+
 }
