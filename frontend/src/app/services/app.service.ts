@@ -49,24 +49,7 @@ export class AppService {
     }
   }
 
-  authorizeBySession$(): Observable<boolean> {
-    this.userService.loginStatus$.next(LoginStatus.authorising);
-    return of({}).pipe(
-      switchMap((dialogData) => {
-        return this.httpClient.post(
-          `${this.apiPath}/login.php`,
-          { },
-          { observe: 'body', withCredentials: true });
-      }),
-      map((result: any) => {
-        const success = !result.error;
-        this.userService.loginStatus$.next(success ? LoginStatus.authorised : LoginStatus.unauthorised);
-        return success;
-      })
-    );
-  }
-
-  authorize$(login: string, password: string): Observable<boolean> {
+  login$(login?: string, password?: string): Observable<boolean> {
     this.userService.loginStatus$.next(LoginStatus.authorising);
     return of({}).pipe(
       switchMap((dialogData) => {
@@ -78,10 +61,19 @@ export class AppService {
           },
           { observe: 'body', withCredentials: true });
       }),
-      map((result: any) => {
-        const success = !result.error;
+      map((result: any) => !result.error),
+      switchMap((result) => {
+        if (result) {
+          return of({}).pipe(
+            switchMap(() => this.loadChannels$()),
+            switchMap(() => of(true))
+          );
+        } else {
+          return of(false);
+        }
+      }),
+      tap((success) => {
         this.userService.loginStatus$.next(success ? LoginStatus.authorised : LoginStatus.unauthorised);
-        return success;
       })
     );
   }
@@ -101,6 +93,8 @@ export class AppService {
           { },
           { observe: 'body', withCredentials: true });
       }),
+      tap((channels) => this.channels = channels as IChannel[]),
+      switchMap(() => of(true))
     );
   }
 

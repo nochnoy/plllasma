@@ -33,7 +33,7 @@ export class LoginPageComponent implements OnInit {
   onLogin(): void {
     const login = this.form.get('login')?.value ?? '';
     const password = this.form.get('password')?.value ?? '';
-    this.appService.authorize$(login, password).pipe(
+    this.appService.login$(login, password).pipe(
       untilDestroyed(this)
     ).subscribe();
   }

@@ -26,7 +26,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     of({}).pipe(
-      switchMap(() => this.appService.authorizeBySession$()), // В начале попытаемся авторизоваться сессией
+      switchMap(() => this.appService.login$()), // В начале попытаемся авторизоваться сессией
       switchMap(() => this.userService.loginStatus$), // Дальше слушаем статус авторизованности
       distinct((value) => !!value),
       tap((loginStatus) => {
@@ -48,11 +48,6 @@ export class AppComponent implements OnInit {
         }
       }),
       filter((loginStatus) => loginStatus === LoginStatus.authorised),
-      switchMap(() => this.appService.loadChannels$()),
-      tap((channels) => {
-        this.appService.channels = channels;
-      }),
-      tap(() => this.isReady = true),
       untilDestroyed(this)
     ).subscribe();
   }
