@@ -1,0 +1,41 @@
+<ng-container *ngFor="let message of messages">
+  <div class="msg"
+       [class.msg-root]="!message.parent"
+       [class.msg-starred]="message.isStarred"
+       *ngIf="message != null"
+  >
+
+    <ng-container [ngSwitch]="message.display">
+
+      <!-- Обычное сообщение (MessageDisplayType.NORMAL) -->
+      <ng-container *ngSwitchCase="0">
+        <!--  [style.color]="getTextColor(message)" -->
+        <div class="text">
+          <div class="ico"></div>
+          <b>{{message.nick}}<u *ngIf="message.isStarred"></u>:</b>
+          {{message.text}}
+        </div>
+      </ng-container>
+
+      <!-- Серое сообщение (MessageDisplayType.GRAY) -->
+      <ng-container *ngSwitchCase="1">
+        <div class="text text-gray" (click)="unfoldGray($event, message)">
+          <div class="ico"></div>
+          <b>{{message.nick}}<u *ngIf="message.isStarred"></u>:</b>
+          {{message.text}}
+        </div>
+      </ng-container>
+
+      <!-- Схлоп (MessageDisplayType.SHLOP) -->
+      <ng-container *ngSwitchCase="10">
+        <div class="text text-gray" (click)="unshlop($event, message)">
+          {{(message | as : ShlopMessageRef).shlop.lengthText}}
+        </div>
+      </ng-container>
+
+    </ng-container>
+
+    <app-board *ngIf="showChildren && message.children && message.children.length > 0" [messages]="message.children"></app-board>
+
+  </div>
+</ng-container>

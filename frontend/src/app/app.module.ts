@@ -13,6 +13,8 @@ import { LoginPageComponent } from './pages/login-page/login-page.component';
 import { AppGuard } from './app.guard';
 import { ChannelPageComponent } from './pages/channel-page/channel-page.component';
 import { MainMenuComponent } from './components/main-menu/main-menu.component';
+import { BoardComponent } from './components/board/board.component';
+import { AsPipe } from './pipes/as.pipe';
 
 @NgModule({
   imports: [
@@ -32,6 +34,8 @@ import { MainMenuComponent } from './components/main-menu/main-menu.component';
     LoginPageComponent,
     ChannelPageComponent,
     MainMenuComponent,
+    BoardComponent,
+    AsPipe,
   ],
   providers: [AppGuard],
   bootstrap: [AppComponent]
