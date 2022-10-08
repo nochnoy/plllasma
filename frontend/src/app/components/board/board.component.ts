@@ -1,7 +1,7 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {Message, MessageDisplayType} from "../../model/messages/message.model";
 import {ShlopMessage} from "../../model/messages/shlop-message.model";
-import {MessagesService} from "../../services/messages.service";
+import {AppService} from "../../services/app.service";
 
 @Component({
   selector: 'app-board',
@@ -11,12 +11,10 @@ import {MessagesService} from "../../services/messages.service";
 export class BoardComponent implements OnInit {
 
   constructor(
-    public messagesService: MessagesService,
+    public appService: AppService,
   ) {}
 
-  ngOnInit() {
-
-  }
+  public ShlopMessageRef = ShlopMessage;
 
   @Input('messages')
   public messages:Array<Message> = [];
@@ -24,21 +22,16 @@ export class BoardComponent implements OnInit {
   @Input('showChildren')
   public showChildren: boolean = true;
 
+  ngOnInit() {
+
+  }
+
   public unshlop(event: any, message: Message) {
     event.preventDefault();
     if (message instanceof ShlopMessage) {
       const shlopMessage = message as ShlopMessage;
       shlopMessage.thread.unshlop(shlopMessage);
     }
-  }
-
-  public ShlopMessageRef = ShlopMessage;
-
-  getTextColor(message: Message):string {
-    if (message.thread.isDigest)
-      return this.messagesService.colorDigest;
-    else
-      return this.messagesService.colorText;
   }
 
   unfoldGray(event: any, message: Message) {

@@ -9,7 +9,6 @@
 
       <!-- Обычное сообщение (MessageDisplayType.NORMAL) -->
       <ng-container *ngSwitchCase="0">
-        <!--  [style.color]="getTextColor(message)" -->
         <div class="text">
           <div class="ico"></div>
           <b>{{message.nick}}<u *ngIf="message.isStarred"></u>:</b>

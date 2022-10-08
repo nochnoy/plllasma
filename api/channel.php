@@ -3,6 +3,7 @@
 
 include("include/main.php");
 
-respond('channel', '{"id":'.$channelId.', "messages":'.getChannelJson($channelId, $lastVieved).'}');
+
+exit('{"id":'.$input['cid'].', "messages":'.getChannelJson($input['cid'], $input['lv']).'}');
 
 ?>

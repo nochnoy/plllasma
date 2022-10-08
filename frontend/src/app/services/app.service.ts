@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import {Observable, of, Subject} from "rxjs";
-import {AuthDialogResult, IChannel, IFocus, ILike, IUserData, LoginStatus} from "../model/app-model";
+import {IChannel, IFocus, ILike, IUserData, LoginStatus} from "../model/app-model";
 import {map, switchMap, tap} from "rxjs/operators";
 import {HttpClient} from "@angular/common/http";
 import {UserService} from "./user.service";
@@ -96,6 +96,26 @@ export class AppService {
       tap((channels) => this.channels = channels as IChannel[]),
       switchMap(() => of(true))
     );
+  }
+
+  public getChannel(channelId:number, lastVieved:string): Observable<any> {
+    return this.httpClient.post(
+      `${this.apiPath}/channel.php`,
+      {
+        cid: channelId.toString(),
+        lv: lastVieved
+      },
+      { observe: 'body', withCredentials: true })
+  }
+
+  public getThread(threadId:number, lastVieved:string) {
+    return this.httpClient.post(
+      `${this.apiPath}/thread.php`,
+      {
+        tid: threadId.toString(),
+        lv: lastVieved
+      },
+      { observe: 'body', withCredentials: true })
   }
 
 }

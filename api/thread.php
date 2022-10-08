@@ -3,6 +3,6 @@
 
 include("include/main.php");
 
-respond('thread', '{"id":"'.$threadId.'", "messages":'.getThreadJson($threadId, $lastVieved).'}');
+exit('{"id":"'.$input['tid'].'", "messages":'.getThreadJson($input['tid'], $input['lv']).'}');
 
 ?>

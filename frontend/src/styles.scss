@@ -12,6 +12,7 @@
   // Тёмный #8A7B6A
 
   --color-black: black;
+  --color-gray: #757575;
   --color-page-bg: #D7CABB;
 
   --border-radius: 3px;
@@ -92,4 +93,98 @@ body {
       background-color: var(--color-button-bg-blue-active);
     }
   }
+}
+
+/* Thread */
+
+/* Message */
+
+.msg {
+  max-width: 100%;
+  margin-left: 32px;
+  color: var(--color-black);
+}
+.msg-root {
+  margin-left: 0;
+}
+.children {
+  padding-left:20px;
+}
+.text {
+  width: 100%;
+  min-width: 200px;
+  padding: 0;
+  margin: 0;
+  margin-bottom: 9px;
+}
+
+/* Ссылка "раскрыть ветку" */
+
+.expand {
+  display: block;
+  margin-bottom: 9px;
+  padding-left: 16px;
+  color: var(--color-black);
+  text-decoration: none;
+}
+.expand:hover {
+  color: var(--color-black);
+}
+
+/* Gray */
+
+.text-gray {
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-gray);
+  cursor: pointer;
+}
+.text-gray:hover {
+  color: var(--color-black);
+}
+.msg-wrapper {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+.text-gray b {
+  font-weight: normal;
+}
+
+/* Shlop */
+
+
+/* Звёздочки */
+
+u {
+  text-decoration: none;
+}
+u:after {
+  content: "●";
+  color: rgb(241, 95, 95);
+  font-size: 17px;
+  margin-left: 3px;
+  margin-right: 3px;
+  text-decoration: none;
+}
+
+/* Иконки юзеров */
+
+.ico {
+  margin-bottom: -1px;
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background-color: white;
+  border: 1px solid rgb(141, 139, 135);
+  border-radius: 2px 2px 2px 2px;
+}
+.text-gray .ico {
+  border: 1px solid var(--color-gray);
+  background-color: inherit;
+}
+.text-gray:hover .ico {
+  border: 1px solid var(--color-black);
 }
