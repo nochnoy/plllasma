@@ -1,7 +1,9 @@
 @import "normalize.scss";
+@import url('https://fonts.googleapis.com/css?family=Roboto:700');
+@import url('https://fonts.googleapis.com/css?family=Roboto');
 
 :root {
-  font-family: 'Arial', sans-serif;
+  font-family: 'Roboto', Arial, sans-serif;
   font-size: 12pt; // rem
 
   // Цветовая схема (комплиментарный от #D7CABB):
