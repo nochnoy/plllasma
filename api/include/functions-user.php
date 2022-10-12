@@ -151,20 +151,55 @@ function buildUser($rec) {
 	// Список игнорируемых уродов
 	$user['ignored'] = array();
 	$result = mysqli_query($mysqli, 'SELECT DISTINCT id_ignored_user FROM lnk_user_ignor WHERE id_user='.$user['id_user']);
-	while($row = mysqli_fetch_array( $result)){
+	while ($row = mysqli_fetch_array($result)) {
 		array_push($user['ignored'], intval($row[0]));
+	}
+
+	// Загрузим доступы юзера
+	$user['access'] = array();	
+	$result = mysqli_query($mysqli, 'SELECT DISTINCT id_place, role FROM tbl_access WHERE id_user='.$user['id_user']);
+	while ($row = mysqli_fetch_assoc($result)) {
+		$user['access'][] = $row;
 	}
 }
 
 // Возвращает объект с юзерскими данными в формате, ожидаемом клиентом
 function getUserInfoForClient() {
 	global $user;
-
 	return (object)[
 		'userId' 	=> $user['id_user'],
 		'nick' 		=> $user['nick'],
 		'icon' 		=> $user['icon'],
+		'access'	=> @$user['access'],
 	];
+}
+
+function canRead($channelId) {
+	global $user;
+	if (empty($user['access'])) {
+		return false;
+	} else {
+		foreach ($user['access'] as $o) {
+			if ($o['id_place'] == $channelId) {
+				return true; // Если в принципе есть запись значит читать может
+			}
+		}
+		return false;
+	}
+}
+
+function canWrite($channelId) {
+	global $user;
+	if (empty($user['access'])) {
+		return false;
+	} else {
+		foreach ($user['access'] as $o) {
+			if ($o['id_place'] == $channelId) {
+				return true; // Если в принципе есть запись значит писать может
+			}
+		}
+		return false;
+	}
 }
 
 ?>

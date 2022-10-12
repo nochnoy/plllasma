@@ -9,6 +9,37 @@
         width: 40rem;
     }
     .sidebar {
-        width: 1fr;
+      width: 1fr;
+
+
     }
+
+  .halloween {
+    position: absolute;
+    z-index: -1;
+    right: 0;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 267px;
+    height: 1000px;
+    background-image: url('~src/assets/halloween.png');
+    background-repeat: no-repeat;
+
+    &__text {
+      margin: 370px 20px 0 30px;
+      color: #3F525A;
+      font-weight: bold;
+      line-height: 1.4rem;
+    }
+
+    &__pumpkin {
+      display: inline-block;
+      background-image: url('~src/assets/pumpkin.png');
+      width: 70px;
+      height: 73px;
+      margin-top: 20px;
+    }
+  }
 }

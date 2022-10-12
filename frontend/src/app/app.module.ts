@@ -15,6 +15,7 @@ import { ChannelPageComponent } from './pages/channel-page/channel-page.componen
 import { MainMenuComponent } from './components/main-menu/main-menu.component';
 import { BoardComponent } from './components/board/board.component';
 import { AsPipe } from './pipes/as.pipe';
+import { MessageFormComponent } from './message-form/message-form.component';
 
 @NgModule({
   imports: [
@@ -36,6 +37,7 @@ import { AsPipe } from './pipes/as.pipe';
     MainMenuComponent,
     BoardComponent,
     AsPipe,
+    MessageFormComponent,
   ],
   providers: [AppGuard],
   bootstrap: [AppComponent]

@@ -34,5 +34,10 @@ function jsonifyMessageText($s) {
 	return $s;
 }
 
+function txt2html($s){
+	$s = htmlspecialchars($s, ENT_QUOTES);
+	$s = nl2br($s);
+	return $s;
+}
 
 ?>

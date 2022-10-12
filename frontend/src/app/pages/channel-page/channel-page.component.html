@@ -6,6 +6,8 @@
     <h1>{{channel.name}}</h1>
     <p>{{channel.description}}</p>
 
+    <app-message-form></app-message-form>
+
     <ng-container *ngIf="!!channelModel">
       <div class="thread" [class.thread-gray]="t.isDigest" *ngFor="let t of channelModel.threads">
         <app-board [messages]="[t.root]" [showChildren]="t.isDigest || t.isExpanded"></app-board>
@@ -16,6 +18,23 @@
   </ng-container>
 </div>
 <div class="sidebar">
-    Привет, это новая Плазма.
-    Она ещё не существует и все здесь как-бы привидения.
+  <div class="halloween">
+    <div class="halloween__text">
+
+        Ну вот и всё, закончились тёплые деньки, древнее зло пробудилось!
+        Кабина министров низложена,
+        у нас не осталось ни одного модератора,
+        скоро плазму заполнят толпы привидений,
+        а из-под земли, скрипя и уродливо корчась,
+        воздвигнется новый сайт на ангуляре. А старый -<br>
+        ЖДЁТ СМЕРТЬ!
+
+
+      <!--
+      Это новая Плазма, полностью переписанная на ангуляре.<br>
+      Она как-бы ещё не существует<br>и вы здесь как-бы привидение.
+      -->
+    </div>
+    <div class="halloween__pumpkin"></div>
+  </div>
 </div>

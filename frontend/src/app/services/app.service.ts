@@ -98,7 +98,7 @@ export class AppService {
     );
   }
 
-  public getChannel(channelId:number, lastVieved:string): Observable<any> {
+  getChannel(channelId:number, lastVieved:string): Observable<any> {
     return this.httpClient.post(
       `${this.apiPath}/channel.php`,
       {
@@ -108,12 +108,23 @@ export class AppService {
       { observe: 'body', withCredentials: true })
   }
 
-  public getThread(threadId:number, lastVieved:string) {
+  getThread(threadId:number, lastVieved:string) {
     return this.httpClient.post(
       `${this.apiPath}/thread.php`,
       {
         tid: threadId.toString(),
         lv: lastVieved
+      },
+      { observe: 'body', withCredentials: true })
+  }
+
+  addMessage$(channelId: number, message: string, parentMessageId?: number): Observable<any> {
+    return this.httpClient.post(
+      `${this.apiPath}/message-add.php`,
+      {
+        placeId: channelId,
+        message,
+        parent: parentMessageId
       },
       { observe: 'body', withCredentials: true })
   }

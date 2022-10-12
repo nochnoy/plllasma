@@ -24,16 +24,16 @@ export class ChannelPageComponent implements OnInit {
   channelModel?: Channel;
 
   ngOnInit(): void {
+    let id = this.defaultChannelId;
     of({}).pipe(
       switchMap(() => this.activatedRoute.url),
       tap((urlSegments) => {
-        let id = this.defaultChannelId;
         if (urlSegments.length) {
           id = parseInt(urlSegments[0].path, 10) ?? this.defaultChannelId;
         }
         this.channel = this.appService.channels.find((channel) => channel.id_place === id);
       }),
-      switchMap(() => this.appService.getChannel(25, "2019-09-22 22:21:06")),
+      switchMap(() => this.appService.getChannel(id, "2019-09-22 22:21:06")),
       tap((input) => {
         this.channelModel = new Channel();
         this.channelModel.deserialize(input);
