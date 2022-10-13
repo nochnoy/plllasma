@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {AppService} from "../../services/app.service";
 import {ActivatedRoute} from "@angular/router";
-import {of} from "rxjs";
+import {Observable, of} from "rxjs";
 import {switchMap, tap} from "rxjs/operators";
 import {IChannel} from "../../model/app-model";
 import {Channel} from "../../model/messages/channel.model";
@@ -33,12 +33,18 @@ export class ChannelPageComponent implements OnInit {
         }
         this.channel = this.appService.channels.find((channel) => channel.id_place === id);
       }),
-      switchMap(() => this.appService.getChannel(id, "2019-09-22 22:21:06")),
+      switchMap(() => this.load$(id)),
+    ).subscribe();
+  }
+
+  load$(channelId: number): Observable<any> {
+    return of({}).pipe(
+      switchMap(() => this.appService.getChannel(channelId, "2019-09-22 22:21:06")),
       tap((input) => {
         this.channelModel = new Channel();
         this.channelModel.deserialize(input);
       })
-    ).subscribe();
+    );
   }
 
   onExpandClick(event: any, thread: Thread) {
@@ -53,6 +59,14 @@ export class ChannelPageComponent implements OnInit {
           thread.addMessages(input.messages);
           thread.isExpanded = true;
         })
+      ).subscribe();
+    }
+  }
+
+  onNewMessagePosted(message: string): void {
+    if (this.channel !== undefined) {
+      this.appService.addMessage$(this.channel?.id_place, message).pipe(
+        switchMap(() => this.load$(this.channel?.id_place ?? 0)),
       ).subscribe();
     }
   }

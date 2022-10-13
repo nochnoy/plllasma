@@ -73,7 +73,10 @@ export class AppService {
         }
       }),
       tap((success) => {
-        this.userService.loginStatus$.next(success ? LoginStatus.authorised : LoginStatus.unauthorised);
+
+        const val = success ? LoginStatus.authorised : LoginStatus.unauthorised;
+        console.log(`setting ${val}`);
+        this.userService.loginStatus$.next(val);
       })
     );
   }

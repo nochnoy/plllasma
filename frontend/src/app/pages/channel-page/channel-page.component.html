@@ -6,7 +6,7 @@
     <h1>{{channel.name}}</h1>
     <p>{{channel.description}}</p>
 
-    <app-message-form></app-message-form>
+    <app-message-form (onPost)="onNewMessagePosted($event)"></app-message-form>
 
     <ng-container *ngIf="!!channelModel">
       <div class="thread" [class.thread-gray]="t.isDigest" *ngFor="let t of channelModel.threads">
@@ -21,14 +21,13 @@
   <div class="halloween">
     <div class="halloween__text">
 
-        Ну вот и всё, закончились тёплые деньки, древнее зло пробудилось!
-        Кабина министров низложена,
-        у нас не осталось ни одного модератора,
-        скоро плазму заполнят толпы привидений,
-        а из-под земли, скрипя и уродливо корчась,
-        воздвигнется новый сайт на ангуляре. А старый -<br>
-        ЖДЁТ СМЕРТЬ!
-
+      Ну вот и всё, тёплые деньки закончились и пробудилось древнее <a href="https://plllasma.ru/user.php?id=2">зло</a>!<br>
+      Кабина министров низложена,
+      не осталось ни одного модератора,
+      скоро плазму заполнят толпы привидений,
+      новый сайт на ангуляре, c надсадным скрипом
+      воздвигнется из-под земли, а старый пхпшный<br>
+      ЖДЁТ СМЕРТЬ!
 
       <!--
       Это новая Плазма, полностью переписанная на ангуляре.<br>

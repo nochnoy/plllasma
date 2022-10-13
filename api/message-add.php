@@ -45,6 +45,7 @@ mysqli_query($mysqli,
 	',id_first_parent='.$id_first_parent.
 	',id_parent='.$id_parent.
 	',message="'.txt2html(trim(@$input["message"])).'"'.
+	',subject=""'.
 	',time_created=NOW()'.
 	',place_type=0'
 );

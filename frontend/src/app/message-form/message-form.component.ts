@@ -1,6 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, EventEmitter, OnInit, Output} from '@angular/core';
 import {AppService} from "../services/app.service";
-import {tap} from "rxjs/operators";
 
 @Component({
   selector: 'app-message-form',
@@ -8,6 +7,10 @@ import {tap} from "rxjs/operators";
   styleUrls: ['./message-form.component.scss']
 })
 export class MessageFormComponent implements OnInit {
+
+  messageText: string = '';
+
+  @Output('onPost') onNewMessageCreated  = new EventEmitter<string>();
 
   constructor(
     public appService: AppService
@@ -17,11 +20,8 @@ export class MessageFormComponent implements OnInit {
   }
 
   onSendClick(): void {
-    this.appService.addMessage$(12, 'test').pipe(
-      tap((result) => {
-
-      })
-    ).subscribe();
+    this.onNewMessageCreated.emit(this.messageText);
+    this.messageText = '';
   }
 
 }
