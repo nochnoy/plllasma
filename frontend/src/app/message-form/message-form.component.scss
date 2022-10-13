@@ -2,3 +2,26 @@ textarea {
   width: 40rem;
   height: 6rem;
 }
+
+.user {
+  font-weight: bold;
+  .icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background-image: url('~src/assets/ghost.gif');
+  }
+}
+
+.inputs {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  padding-bottom: 1rem;
+
+  button {
+    margin-left: 1rem;
+    margin-bottom: 1rem;
+    height: 2rem;
+  }
+}

@@ -29,16 +29,20 @@
 
     &__text {
       margin: 370px 20px 0 30px;
-      color: #3F525A;
+      color: #000000;
       font-weight: bold;
       line-height: 1.4rem;
+
+      a {
+        color: black;
+      }
     }
 
     &__pumpkin {
       display: inline-block;
       background-image: url('~src/assets/pumpkin.png');
-      width: 70px;
-      height: 73px;
+      width: 124px;
+      height: 109px;
       margin-top: 20px;
     }
   }
