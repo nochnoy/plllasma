@@ -24,16 +24,15 @@ export class ChannelPageComponent implements OnInit {
   channelModel?: Channel;
 
   ngOnInit(): void {
-    let id = this.defaultChannelId;
+    let channelId = this.defaultChannelId;
     of({}).pipe(
       switchMap(() => this.activatedRoute.url),
       tap((urlSegments) => {
         if (urlSegments.length) {
-          id = parseInt(urlSegments[0].path, 10) ?? this.defaultChannelId;
+          channelId = parseInt(urlSegments[0].path, 10) ?? this.defaultChannelId;
         }
-        this.channel = this.appService.channels.find((channel) => channel.id_place === id);
       }),
-      switchMap(() => this.load$(id)),
+      switchMap(() => this.load$(channelId)),
     ).subscribe();
   }
 
@@ -41,8 +40,13 @@ export class ChannelPageComponent implements OnInit {
     return of({}).pipe(
       switchMap(() => this.appService.getChannel(channelId, "2019-09-22 22:21:06")),
       tap((input) => {
-        this.channelModel = new Channel();
-        this.channelModel.deserialize(input);
+        if (input.error) {
+          console.error(`Сервер вернул ошибку ${input.error}`);
+        } else {
+          this.channel = this.appService.channels.find((channel) => channel.id_place === channelId);
+          this.channelModel = new Channel();
+          this.channelModel.deserialize(input);
+        }
       })
     );
   }

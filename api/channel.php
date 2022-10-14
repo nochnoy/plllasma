@@ -5,6 +5,13 @@ include("include/main.php");
 
 loginBySessionOrToken();
 
-exit('{"id":'.$input['cid'].', "messages":'.getChannelJson($input['cid'], $input['lv']).'}');
+$placeId = $input['cid'];
+$lastViewed = $input['lv'];
+
+if (!canRead($placeId)) {
+    die('{"error": "access"}');
+}
+
+exit('{"id":'.$placeId.', "messages":'.getChannelJson($placeId, $lastViewed).'}');
 
 ?>
