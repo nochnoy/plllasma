@@ -1,5 +1,7 @@
 <div class="logo"></div>
-<div class="tools"></div>
+<div class="tools">
+  <div class="logoff" (click)="logoffClick()"></div>
+</div>
 <div class="channels">
   <div *ngFor="let city of cities">
     <a *ngFor="let channel of city.children" [routerLink]="'/channel/' + channel.id_place">{{channel.name}}</a>

@@ -22,13 +22,10 @@ export class AppComponent implements OnInit {
     public activatedRoute: ActivatedRoute,
   ) {}
 
-  isReady = false;
-
   ngOnInit(): void {
     of({}).pipe(
       switchMap(() => this.appService.login$()), // В начале попытаемся авторизоваться сессией
       switchMap(() => this.userService.loginStatus$), // Дальше слушаем статус авторизованности
-      distinct((value) => value),
       tap((loginStatus) => {
         console.log(`loginStatus ${loginStatus}`);
         switch (loginStatus) {
@@ -48,7 +45,7 @@ export class AppComponent implements OnInit {
 
         }
       }),
-      filter((loginStatus) => loginStatus === LoginStatus.authorised),
+      //filter((loginStatus) => loginStatus === LoginStatus.authorised),
       untilDestroyed(this)
     ).subscribe();
   }

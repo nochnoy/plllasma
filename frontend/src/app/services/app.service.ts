@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 import {Observable, of, Subject} from "rxjs";
 import {IChannel, IFocus, ILike, IUserData, LoginStatus} from "../model/app-model";
 import {map, switchMap, tap} from "rxjs/operators";
@@ -78,6 +78,22 @@ export class AppService {
         console.log(`setting ${val}`);
         this.userService.loginStatus$.next(val);
       })
+    );
+  }
+
+  logoff$(): Observable<any> {
+    return of({}).pipe(
+      switchMap((dialogData) => {
+        return this.httpClient.post(
+          `${this.apiPath}/logoff.php`,
+          { },
+          { observe: 'body', withCredentials: true });
+      }),
+      tap((input: any) => {
+        if (input.authorized === false) {
+          this.userService.loginStatus$.next(LoginStatus.unauthorised);
+        }
+      }),
     );
   }
 

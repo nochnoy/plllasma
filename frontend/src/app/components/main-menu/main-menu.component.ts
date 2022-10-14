@@ -39,6 +39,10 @@ export class MainMenuComponent implements OnInit {
     this.cities = this.cities.sort((a, b) => a.channel.weight - b.channel.weight);
   }
 
+  logoffClick(): void {
+    this.appService.logoff$().subscribe();
+  }
+
 }
 
 interface ICity {

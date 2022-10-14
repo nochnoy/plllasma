@@ -104,10 +104,9 @@ function createToken() {
     $key = guid();
     setcookie(COOKIE_KEY_CODE, $key, time() + $oneWeek, '', DOMAIN);
 
-    //mysqli_query($mysqli, 'UPDATE tbl_users SET logkey="'.$key.'", time_logged = NOW() WHERE id_user='.$userId.' LIMIT 1');
 	$stmt = $mysqli->prepare('UPDATE tbl_users SET logkey=?, time_logged=NOW() WHERE id_user=? LIMIT 1');
 	$stmt->bind_param("si", $key, $userId);
-	$stmt->execute();	
+	$stmt->execute();
 }
 
 // Достаёт из кук токен авторизации
