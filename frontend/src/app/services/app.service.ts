@@ -75,7 +75,6 @@ export class AppService {
       tap((success) => {
 
         const val = success ? LoginStatus.authorised : LoginStatus.unauthorised;
-        console.log(`setting ${val}`);
         this.userService.loginStatus$.next(val);
       })
     );

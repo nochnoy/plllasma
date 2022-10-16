@@ -70,3 +70,8 @@ export interface IChannel {
   time_viewed: string;
   weight: number;
 }
+
+export interface IAttachment {
+  id: number;
+  messageId: number;
+}

@@ -14,6 +14,13 @@
           <b>{{message.nick}}<u *ngIf="message.isStarred"></u>:</b>
           {{message.text}}
         </div>
+        <ng-container *ngIf="message.attachments">
+          <a *ngFor="let attachment of message.attachments"
+             class="att" target="_blank"
+             [href]="'../api/file.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id">
+            <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" />
+          </a>
+        </ng-container>
       </ng-container>
 
       <!-- Серое сообщение (MessageDisplayType.GRAY) -->
@@ -23,6 +30,13 @@
           <b>{{message.nick}}<u *ngIf="message.isStarred"></u>:</b>
           {{message.text}}
         </div>
+        <ng-container *ngIf="message.attachments">
+          <a *ngFor="let attachment of message.attachments"
+             class="att" target="_blank"
+             [href]="'../api/file.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id">
+            <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" />
+          </a>
+        </ng-container>
       </ng-container>
 
       <!-- Схлоп (MessageDisplayType.SHLOP) -->
@@ -34,7 +48,7 @@
 
     </ng-container>
 
-    <app-board *ngIf="showChildren && message.children && message.children.length > 0" [messages]="message.children"></app-board>
+    <app-board *ngIf="showChildren && message.children && message.children.length > 0" [placeId]="placeId" [messages]="message.children"></app-board>
 
   </div>
 </ng-container>

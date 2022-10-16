@@ -1,4 +1,5 @@
 import {BLANK_THREAD, Thread} from "./thread.model";
+import {IAttachment} from "../app-model";
 
 export const BLANK_MESSAGE = <Message>{text: 'BLANK'};
 
@@ -8,7 +9,7 @@ export class Message {
   parentId: number = 0;
   rootId: number = 0;
   thread: Thread = BLANK_THREAD;
-
+  attachments: IAttachment[] = [];
   nick = '';
   icon = '';
   text = '';
@@ -73,6 +74,7 @@ export class Message {
     c.timeCreated = this.timeCreated;
     c.isStarred = this.isStarred;
     c.important = this.important;
+    c.attachments = this.attachments;
 
     return c;
   }
@@ -87,6 +89,7 @@ export class Message {
     this.timeCreated = m.timeCreated;
     this.isStarred = m.isStarred;
     this.important = m.important;
+    this.attachments = m.attachments;
   }
 
   public deserialize(raw: any, rootId: number) {
@@ -98,6 +101,14 @@ export class Message {
     this.text = raw.t;
     this.timeCreated = raw.d;
     this.isStarred = raw.star;
+
+    this.attachments.length = 0;
+    for (let i = 0; i < raw.a; i++) {
+      this.attachments.push({
+        id: i,
+        messageId: this.id
+      });
+    }
 
     if (raw.hasOwnProperty('cm')) {
       this.commentsCount = raw.cm;

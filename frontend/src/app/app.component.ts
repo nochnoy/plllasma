@@ -27,7 +27,6 @@ export class AppComponent implements OnInit {
       switchMap(() => this.appService.login$()), // В начале попытаемся авторизоваться сессией
       switchMap(() => this.userService.loginStatus$), // Дальше слушаем статус авторизованности
       tap((loginStatus) => {
-        console.log(`loginStatus ${loginStatus}`);
         switch (loginStatus) {
 
           case LoginStatus.authorised:

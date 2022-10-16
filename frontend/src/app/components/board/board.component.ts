@@ -16,6 +16,9 @@ export class BoardComponent implements OnInit {
 
   public ShlopMessageRef = ShlopMessage;
 
+  @Input('placeId')
+  public placeId: number = 0;
+
   @Input('messages')
   public messages:Array<Message> = [];
 
