@@ -12,7 +12,7 @@ function getChannelJson($channelId, $lastViewed) {
 	// Получаем из БД страницу из 50 сообщений верхнего уровня
 
 	$sql  = 'SELECT';
-	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children';
+	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user';
 	$sql .= ' FROM tbl_messages';
 	$sql .= ' WHERE id_place='.$channelId.' AND id_parent=0';
 	$sql .= ' ORDER BY time_created DESC';
@@ -30,7 +30,7 @@ function getChannelJson($channelId, $lastViewed) {
 	if ($row[0] > 0 && $row[0] < 20) { // Если звезданутых больше 20ти значит юзер не был здесь слишком долго и дайджестов не получит.
 
 		$sql  = 'SELECT';
-		$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, -1'; 
+		$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, -1, icon, anonim, id_user'; 
 		$sql .= ' FROM tbl_messages';
 		$sql .= ' WHERE';
 		$sql .= ' (id_first_parent<>0 && id_first_parent IN (SELECT id_first_parent FROM tbl_messages WHERE id_place='.$channelId.' AND time_created >= "'.$lastViewed.'"))';
@@ -55,7 +55,7 @@ function getThreadJson($threadId, $lastViewed) {
 	// Получаем из БД страницу из 50 сообщений верхнего уровня
 
 	$sql  = 'SELECT';
-	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children';
+	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user';
 	$sql .= ' FROM tbl_messages';
 	$sql .= ' WHERE id_first_parent='.$threadId;
 	$sql .= ' ORDER BY time_created DESC';
@@ -90,8 +90,22 @@ function buildMessagesJson($a, $lastViewed) {
 		$s .= ',"t":"'				. jsonifyMessageText($row[5]).'"';	    // text
 		$s .= ',"d":"'				. $row[6].'"';						    // time_created
 
+		// иконка
+		if ($row[9] == 1) { 
+			// anonim
+			$s .= ',"i":"ghost"';
+		} else {
+			if ($row[8]) {
+				// У юзера есть иконка
+				$s .= ',"i":"'. $row[10].'"'; // TODO: id иконки это id юзера. Не секурно. Сделай иконкам свои айдишники.
+			} else {
+				$s .= ',"i":"-"'; // У юзера нет иконки. Покажем серый квадрат.
+			}
+		}
+
+		// Количество детей (только у верхнеуровневых)
 		if ($row[7] > 0) {
-			$s .= ',"cm":"'.$row[7].'"';								    // Количество детей (только у верхнеуровневых)
+			$s .= ',"cm":"'.$row[7].'"';
 		}
 
 		$s .= '}';

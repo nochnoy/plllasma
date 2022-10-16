@@ -10,7 +10,7 @@
       <!-- Обычное сообщение (MessageDisplayType.NORMAL) -->
       <ng-container *ngSwitchCase="0">
         <div class="text">
-          <div class="ico"></div>
+          <img class="ico" [src]="'https://plllasma.com/i/' + message.icon +'.gif'" />
           <b>{{message.nick}}<u *ngIf="message.isStarred"></u>:</b>
           {{message.text}}
         </div>
@@ -19,7 +19,7 @@
       <!-- Серое сообщение (MessageDisplayType.GRAY) -->
       <ng-container *ngSwitchCase="1">
         <div class="text text-gray" (click)="unfoldGray($event, message)">
-          <div class="ico"></div>
+          <img class="ico" [src]="'https://plllasma.com/i/' + message.icon +'.gif'">
           <b>{{message.nick}}<u *ngIf="message.isStarred"></u>:</b>
           {{message.text}}
         </div>

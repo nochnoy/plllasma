@@ -37,8 +37,8 @@ if (!empty($input["parent"])) {
 
 mysqli_query($mysqli, 
 	'INSERT INTO tbl_messages SET'.
-	' icon="ghost"'.
-	',anonim=1'.
+	' icon=1'. // привидение
+	',anonim=1'. // привидение
 	',nick="Привидение"'.
 	',id_user='.$user['id_user'].
 	',id_place='.$placeId.
