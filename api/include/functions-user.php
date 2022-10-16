@@ -58,12 +58,14 @@ function loadUserFromSession() {
 function loadUserByToken() {
 	global $mysqli;
 
+	sleep(1); // Защита от брутфорса
+
 	$token = getToken();
 	if (isset($token)) {
-		$stmt = $mysqli->prepare('SELECT * FROM tbl_users WHERE logkey=? LIMIT 1');
-		$stmt->bind_param("s", $token);
-		$stmt->execute();
-		$result = $stmt->get_result();
+		$q = $mysqli->prepare('SELECT * FROM tbl_users WHERE logkey=? LIMIT 1');
+		$q->bind_param("s", $token);
+		$q->execute();
+		$result = $q->get_result();
 		if (mysqli_num_rows($result) > 0) {
 			$row = mysqli_fetch_assoc($result);
 			buildUser($row);
@@ -78,10 +80,12 @@ function loadUserByToken() {
 function loginByPassword($login, $password) {
 	global $mysqli;
 
-	$stmt = $mysqli->prepare('SELECT * FROM tbl_users WHERE login=? AND password=? LIMIT 1');
-	$stmt->bind_param("ss", $login, $password);
-	$stmt->execute();
-	$result = $stmt->get_result();
+	sleep(2); // Защита от брутфорса
+
+	$q = $mysqli->prepare('SELECT * FROM tbl_users WHERE login=? AND password=? LIMIT 1');
+	$q->bind_param("ss", $login, $password);
+	$q->execute();
+	$result = $q->get_result();
 	if ($result->num_rows > 0) {
 		buildUser($result->fetch_assoc());
 		saveUserToSession();
@@ -115,9 +119,9 @@ function createToken() {
     $key = guid();
     setcookie(COOKIE_KEY_CODE, $key, time() + $oneWeek, '', DOMAIN);
 
-	$stmt = $mysqli->prepare('UPDATE tbl_users SET logkey=?, time_logged=NOW() WHERE id_user=? LIMIT 1');
-	$stmt->bind_param("si", $key, $userId);
-	$stmt->execute();
+	$q = $mysqli->prepare('UPDATE tbl_users SET logkey=?, time_logged=NOW() WHERE id_user=? LIMIT 1');
+	$q->bind_param("si", $key, $userId);
+	$q->execute();
 }
 
 // Достаёт из кук токен авторизации
@@ -160,14 +164,22 @@ function buildUser($rec) {
 
 	// Список игнорируемых уродов
 	$user['ignored'] = array();
-	$result = mysqli_query($mysqli, 'SELECT DISTINCT id_ignored_user FROM lnk_user_ignor WHERE id_user='.$user['id_user']);
+
+	$q = $mysqli->prepare('SELECT DISTINCT id_ignored_user FROM lnk_user_ignor WHERE id_user=?');
+	$q->bind_param("i", $user['id_user']);
+	$q->execute();
+	$result = $q->get_result();
 	while ($row = mysqli_fetch_array($result)) {
 		array_push($user['ignored'], intval($row[0]));
 	}
 
 	// Загрузим доступы юзера
-	$user['access'] = array();	
-	$result = mysqli_query($mysqli, 'SELECT DISTINCT id_place, role FROM tbl_access WHERE id_user='.$user['id_user']);
+	$user['access'] = array();
+
+	$q = $mysqli->prepare('SELECT DISTINCT id_place, role  FROM tbl_access WHERE id_user=?');
+	$q->bind_param("i", $user['id_user']);
+	$q->execute();
+	$result = $q->get_result();
 	while ($row = mysqli_fetch_assoc($result)) {
 		$user['access'][] = $row;
 	}
