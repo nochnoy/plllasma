@@ -24,11 +24,22 @@ function loadUserFromSession() {
 
 	$userId = @$_SESSION['plasma_user_id'];
 	$user = @$_SESSION['plasma_user'];
+	$oldPlasmaUser = @$_SESSION['user'];
 
-	if (empty($user)) {
-		// В сессии лежит userId но нет самого user
-		// Значит сессия была сформирована в старой плазме
-		// Подтянем user из БД и положим в сессию
+	// В сессии юзера нет, но есть сессия старой плазмы
+	// в oldPlasmaUser находится "incomplete" объект юзера из старой плазмы
+	// переведём его в строку и выцепим id юзера	
+	if (empty($user) && !empty($oldPlasmaUser)) {
+		try {
+			$s = var_export($oldPlasmaUser, true);
+			$a = explode("'id' => '", $s);
+			$a = explode("'", $a[1]);
+			$userId = intval($a[0]);
+
+		} catch (Exception $e) {
+			return false; // Не судьба
+		}
+
 		$q = $mysqli->prepare('SELECT * FROM tbl_users WHERE id_user=? LIMIT 1');
 		$q->bind_param("i", $userId);
 		$q->execute();
