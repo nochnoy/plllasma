@@ -116,7 +116,7 @@ export class AppService {
     );
   }
 
-  getChannel(channelId:number, lastVieved:string): Observable<any> {
+  getChannel$(channelId:number, lastVieved:string): Observable<any> {
     return this.httpClient.post(
       `${this.apiPath}/channel.php`,
       {
@@ -126,7 +126,7 @@ export class AppService {
       { observe: 'body', withCredentials: true })
   }
 
-  getThread(threadId:number, lastVieved:string) {
+  getThread$(threadId:number, lastVieved:string) {
     return this.httpClient.post(
       `${this.apiPath}/thread.php`,
       {
@@ -136,14 +136,31 @@ export class AppService {
       { observe: 'body', withCredentials: true })
   }
 
-  addMessage$(channelId: number, message: string, parentMessageId?: number): Observable<any> {
+  addMessage$(channelId: number, message: string, parentMessageId: number = 0, files: File[] = []): Observable<any> {
+    const formData = new FormData();
+    formData.append(`placeId`, channelId + '');
+    formData.append(`message`, message);
+
+    if (parentMessageId) {
+      formData.append(`parent`, parentMessageId + '');
+    }
+
+    if (files.length) {
+      files.forEach((file: any, i: number) => {
+        formData.append(`f${i}`, file);
+      });
+    }
+
     return this.httpClient.post(
       `${this.apiPath}/message-add.php`,
-      {
-        placeId: channelId,
-        message,
-        parent: parentMessageId
-      },
+      formData,
+      { observe: 'body', withCredentials: true })
+  }
+
+  uploadFiles$(formData: FormData): Observable<any> {
+    return this.httpClient.post(
+      `${this.apiPath}/files-upload.php`,
+      formData,
       { observe: 'body', withCredentials: true })
   }
 

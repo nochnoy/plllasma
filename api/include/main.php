@@ -20,6 +20,7 @@ define("DB_USER", "plllasma");
 define("DB_PASSWORD", $passwordDB);
 define("DB_DB", "plllasma");
 define("COOKIE_KEY_CODE", "contortion_key");
+define("PATH_TO_STORAGE", "../../attachments/");
 
 $allowed_http_origins = [
     "https://plllasma.ru",

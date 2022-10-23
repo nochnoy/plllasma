@@ -2,4 +2,10 @@
 <div class="inputs">
   <textarea [(ngModel)]="messageText"></textarea>
   <button (click)="onSendClick()">Отправить</button>
+
+  <input #fileUpload type="file" multiple (change)="onFilesSelected($event)" style="display: none" />
+  <button (click)="fileUpload.click()">
+    Загрузить
+  </button>
+
 </div>

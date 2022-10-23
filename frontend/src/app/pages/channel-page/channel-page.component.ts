@@ -38,7 +38,7 @@ export class ChannelPageComponent implements OnInit {
 
   load$(channelId: number): Observable<any> {
     return of({}).pipe(
-      switchMap(() => this.appService.getChannel(channelId, "2019-09-22 22:21:06")),
+      switchMap(() => this.appService.getChannel$(channelId, "2019-09-22 22:21:06")),
       tap((input) => {
         if (input.error) {
           console.error(`Сервер вернул ошибку ${input.error}`);
@@ -58,7 +58,7 @@ export class ChannelPageComponent implements OnInit {
       thread.isExpanded = true;
     } else {
       of({}).pipe(
-        switchMap(() => this.appService.getThread(thread.rootId, "2019-09-22 22:21:06")),
+        switchMap(() => this.appService.getThread$(thread.rootId, "2019-09-22 22:21:06")),
         tap((input: any) => {
           thread.addMessages(input.messages);
           thread.isExpanded = true;
@@ -67,12 +67,8 @@ export class ChannelPageComponent implements OnInit {
     }
   }
 
-  onNewMessagePosted(message: string): void {
-    if (this.channel !== undefined) {
-      this.appService.addMessage$(this.channel?.id_place, message).pipe(
-        switchMap(() => this.load$(this.channel?.id_place ?? 0)),
-      ).subscribe();
-    }
+  onNewMessageCreated(): void {
+    this.load$(this.channel?.id_place ?? 0).subscribe();
   }
 
 }
