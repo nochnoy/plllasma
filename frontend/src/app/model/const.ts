@@ -3,4 +3,5 @@ export class Const {
   static focusIconMargin = 8; // Должна быть равна переменной --focus-icon-margin
   static focusInfoHeight = 80; // Должна быть равна переменной --focus-info-height
 
+  static maxFileUploadSizeMb = 50;
 }

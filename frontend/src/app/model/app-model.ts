@@ -75,3 +75,12 @@ export interface IAttachment {
   id: number;
   messageId: number;
 }
+
+export interface IUploadingAttachment {
+  file: File;
+  name: string;
+  isImage: boolean;
+  isReady: boolean;
+  bitmap?: any;
+  error?: string;
+}

@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {Observable, of, Subject} from "rxjs";
-import {IChannel, IFocus, ILike, IUserData, LoginStatus} from "../model/app-model";
+import {IChannel, IFocus, ILike, IUploadingAttachment, IUserData, LoginStatus} from "../model/app-model";
 import {map, switchMap, tap} from "rxjs/operators";
 import {HttpClient} from "@angular/common/http";
 import {UserService} from "./user.service";
@@ -136,7 +136,7 @@ export class AppService {
       { observe: 'body', withCredentials: true })
   }
 
-  addMessage$(channelId: number, message: string, parentMessageId: number = 0, files: File[] = []): Observable<any> {
+  addMessage$(channelId: number, message: string, parentMessageId: number = 0, attachments: IUploadingAttachment[] = []): Observable<any> {
     const formData = new FormData();
     formData.append(`placeId`, channelId + '');
     formData.append(`message`, message);
@@ -145,6 +145,7 @@ export class AppService {
       formData.append(`parent`, parentMessageId + '');
     }
 
+    const files = attachments.filter((a) => !a.error).map((a) => a.file);
     if (files.length) {
       files.forEach((file: any, i: number) => {
         formData.append(`f${i}`, file);

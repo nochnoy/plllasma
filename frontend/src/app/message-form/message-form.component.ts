@@ -1,7 +1,9 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {Component, EventEmitter, HostListener, Input, Output} from '@angular/core';
 import {AppService} from "../services/app.service";
 import {switchMap, tap} from "rxjs/operators";
-import {IChannel} from "../model/app-model";
+import {IChannel, IUploadingAttachment} from "../model/app-model";
+import {Utils} from "../utils/utils";
+import {Const} from "../model/const";
 @Component({
   selector: 'app-message-form',
   templateUrl: './message-form.component.html',
@@ -16,13 +18,50 @@ export class MessageFormComponent {
   @Input('channel') channel?: IChannel;
   @Output('onPost') onNewMessageCreated  = new EventEmitter<string>();
   messageText: string = '';
-  files: File[] = [];
+  attachments: IUploadingAttachment[] = [];
+  isDragging = false;
+  filesAddedByButton = false;
+  thereWasDnd = false;
+
+  addAttachments(files: File[]) {
+    const newAttachments: IUploadingAttachment[] = files.map((file) => {
+      return {
+        file: file,
+        isImage: file?.type?.split('/')[0] === 'image',
+        isReady: false
+      } as IUploadingAttachment;
+    });
+    newAttachments.forEach((attachment: IUploadingAttachment) => {
+      const reader = new FileReader();
+      if (Utils.bytesToMegabytes(attachment.file.size) > Const.maxFileUploadSizeMb) {
+        attachment.error = 'Слишком большой';
+      }
+      if (attachment.isImage) {
+        reader.onload = (e: any) => {
+          attachment.bitmap = e.target.result;
+          attachment.isReady = true;
+          checkAttachmentsReady();
+        };
+      } else {
+        attachment.isReady = true;
+        checkAttachmentsReady();
+      }
+      reader.readAsDataURL(attachment.file);
+    })
+
+    const checkAttachmentsReady = () => {
+      if (!newAttachments.some((attachment) => !attachment || !attachment.isReady)) {
+        this.attachments = [...this.attachments, ...newAttachments];
+      }
+    }
+  }
 
   onSendClick(): void {
     if (this.channel) {
-      this.appService.addMessage$(this.channel?.id_place, this.messageText, 0, this.files)
+      this.appService.addMessage$(this.channel?.id_place, this.messageText, 0, this.attachments)
         .pipe(
           tap((result: any) => {
+            this.attachments.length = 0;
             this.messageText = '';
             this.onNewMessageCreated.emit(this.messageText);
           }),
@@ -31,8 +70,38 @@ export class MessageFormComponent {
   }
 
   onFilesSelected(event: any): void {
-    const addedFiles: File[] = Array.from(event.target?.files) ?? [];
-    this.files = [...this.files, ...addedFiles];
+    this.addAttachments(Array.from(event.target?.files) ?? []);
+    this.filesAddedByButton = true;
+  }
+
+  onDragOver(event: any) {
+    event.preventDefault();
+    this.isDragging = true;
+  }
+
+  onDragLeave(event: any) {
+    event.preventDefault();
+    this.isDragging = false;
+  }
+
+  @HostListener('dragstart')
+  onDragStart() {
+    this.isDragging = true;
+  }
+
+  onDragEnd(): void {
+    this.isDragging = false;
+  }
+
+  onDropSuccess(event: any) {
+    event.preventDefault();
+    this.addAttachments(Array.from(event?.dataTransfer?.files) ?? []);
+    this.thereWasDnd = true;
+    this.isDragging = false;
+  }
+
+  onremoveClick(attachment: IUploadingAttachment): void {
+    this.attachments = this.attachments.filter((a) => a !== attachment);
   }
 
 }

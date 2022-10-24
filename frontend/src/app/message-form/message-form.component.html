@@ -1,11 +1,26 @@
 <div class="user"><div class="icon"></div> Привидение:</div>
-<div class="inputs">
+<div class="inputs"
+     (dragover)="onDragOver($event)"
+     (dragleave)="onDragLeave($event)"
+     (drop)="onDropSuccess($event)"
+     (dragend)="onDragEnd()"
+     [class.landing-pad]="isDragging">
   <textarea [(ngModel)]="messageText"></textarea>
   <button (click)="onSendClick()">Отправить</button>
 
   <input #fileUpload type="file" multiple (change)="onFilesSelected($event)" style="display: none" />
   <button (click)="fileUpload.click()">
-    Загрузить
+    Добавить файлы
   </button>
+
+  <ng-container *ngIf="attachments && attachments.length">
+    <div *ngFor="let attachment of attachments" class="attachment" [title]="attachment.file.name">
+      <div class="imagecontainer"><img *ngIf="attachment.isImage" [src]="attachment.bitmap"></div>
+      <div *ngIf="attachment.error" class="error"><div>{{attachment.error}}</div></div>
+      <div class="remove" (click)="onremoveClick(attachment)">X</div>
+    </div>
+  </ng-container>
+
+  <div *ngIf="filesAddedByButton && !thereWasDnd">Кстати, файлы можно кидать на форму просто мышкой, драг-н-дропом.</div>
 
 </div>
