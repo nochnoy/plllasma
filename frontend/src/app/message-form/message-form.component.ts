@@ -31,6 +31,11 @@ export class MessageFormComponent {
         isReady: false
       } as IUploadingAttachment;
     });
+    const checkAttachmentsReady = () => {
+      if (!newAttachments.some((attachment) => !attachment || !attachment.isReady)) {
+        this.attachments = [...this.attachments, ...newAttachments];
+      }
+    }
     newAttachments.forEach((attachment: IUploadingAttachment) => {
       const reader = new FileReader();
       if (Utils.bytesToMegabytes(attachment.file.size) > Const.maxFileUploadSizeMb) {
@@ -48,12 +53,6 @@ export class MessageFormComponent {
       }
       reader.readAsDataURL(attachment.file);
     })
-
-    const checkAttachmentsReady = () => {
-      if (!newAttachments.some((attachment) => !attachment || !attachment.isReady)) {
-        this.attachments = [...this.attachments, ...newAttachments];
-      }
-    }
   }
 
   onSendClick(): void {
