@@ -82,14 +82,18 @@ function buildMessagesJson($a, $lastViewed) {
 
 		$tid = (empty($row[2]) ? $row[0] : $row[2]);
 
+		if ($row[9] == 1) {
+			$row[4] = 'Привидение';
+		}
+
 		$s .= '{';
-		$s .= '"id":'				. $row[0];								// id 
-		$s .= ',"pid":'				. $row[1];								// parent id
-		$s .= ',"tid":'				. $tid;								    // thread id
-		$s .= ',"n":"'				. $row[4].'"';						    // nick
-		$s .= ',"t":"'				. jsonifyMessageText($row[5]).'"';	    // text
-		$s .= ',"d":"'				. $row[6].'"';						    // time_created
-		$s .= ',"a":'				. ($row[11] ? $row[11] : 0).'';			// attachments		
+		$s .= '"id":'	. $row[0];							// id 
+		$s .= ',"pid":'	. $row[1];							// parent id
+		$s .= ',"tid":'	. $tid;								// thread id
+		$s .= ',"n":"'	. $row[4].'"'; 							// nick
+		$s .= ',"t":"'	. jsonifyMessageText($row[5]).'"';	// text
+		$s .= ',"d":"'	. $row[6].'"';						// time_created
+		$s .= ',"a":'	. ($row[11] ? $row[11] : 0).'';		// attachments		
 
 		// иконка
 		if ($row[9] == 1) { 
