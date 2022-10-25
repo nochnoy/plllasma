@@ -7,6 +7,14 @@
        (dragend)="onDragEnd()"
        [class.inputs--drop]="isDragging">
     <textarea autofocus [(ngModel)]="messageText"></textarea>
+    <div class="attachments" *ngIf="attachments && attachments.length">
+      <div *ngFor="let attachment of attachments" class="attachment" [title]="'Удалить ' + attachment.file.name">
+        <div class="imagecontainer"><img *ngIf="attachment.isImage" [src]="attachment.bitmap"></div>
+        <div *ngIf="attachment.error" class="error"><div>{{attachment.error}}</div></div>
+        <div class="remove" (click)="onremoveClick(attachment)">X</div>
+      </div>
+    </div>
+    <div class="hint" *ngIf="filesAddedByButton && !thereWasDnd">Файлы можно кидать драг-н-дропом</div>
     <div class="tools">
       <button (click)="fileUpload.click()">+</button>
       <label>Добавить файлы</label>
@@ -14,12 +22,5 @@
   </div>
   <button class="send-button" (click)="onSendClick()">Отправить</button>
 </div>
-<div class="hint" *ngIf="filesAddedByButton && !thereWasDnd">Кстати, файлы можно кидать на форму просто мышкой, драг-н-дропом.</div>
-<div class="attachments" *ngIf="attachments && attachments.length">
-  <div *ngFor="let attachment of attachments" class="attachment" [title]="attachment.file.name">
-    <div class="imagecontainer"><img *ngIf="attachment.isImage" [src]="attachment.bitmap"></div>
-    <div *ngIf="attachment.error" class="error"><div>{{attachment.error}}</div></div>
-    <div class="remove" (click)="onremoveClick(attachment)">X</div>
-  </div>
-</div>
+
 <input #fileUpload id="fileUpload" type="file" multiple (change)="onFilesSelected($event)" />
