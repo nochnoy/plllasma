@@ -101,6 +101,9 @@ export class MessageFormComponent {
 
   onremoveClick(attachment: IUploadingAttachment): void {
     this.attachments = this.attachments.filter((a) => a !== attachment);
+    if (!this.attachments.length) {
+      this.filesAddedByButton = false;
+    }
   }
 
 }

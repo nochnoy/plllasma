@@ -1,26 +1,25 @@
 <div class="user"><div class="icon"></div> Привидение:</div>
-<div class="inputs"
-     (dragover)="onDragOver($event)"
-     (dragleave)="onDragLeave($event)"
-     (drop)="onDropSuccess($event)"
-     (dragend)="onDragEnd()"
-     [class.landing-pad]="isDragging">
-  <textarea [(ngModel)]="messageText"></textarea>
-  <button (click)="onSendClick()">Отправить</button>
-
-  <input #fileUpload type="file" multiple (change)="onFilesSelected($event)" style="display: none" />
-  <button (click)="fileUpload.click()">
-    Добавить файлы
-  </button>
-
-  <ng-container *ngIf="attachments && attachments.length">
-    <div *ngFor="let attachment of attachments" class="attachment" [title]="attachment.file.name">
-      <div class="imagecontainer"><img *ngIf="attachment.isImage" [src]="attachment.bitmap"></div>
-      <div *ngIf="attachment.error" class="error"><div>{{attachment.error}}</div></div>
-      <div class="remove" (click)="onremoveClick(attachment)">X</div>
+<div class="middle">
+  <div class="inputs"
+       (dragover)="onDragOver($event)"
+       (dragleave)="onDragLeave($event)"
+       (drop)="onDropSuccess($event)"
+       (dragend)="onDragEnd()"
+       [class.inputs--drop]="isDragging">
+    <textarea autofocus [(ngModel)]="messageText"></textarea>
+    <div class="tools">
+      <button (click)="fileUpload.click()">+</button>
+      <label>Добавить файлы</label>
     </div>
-  </ng-container>
-
-  <div *ngIf="filesAddedByButton && !thereWasDnd">Кстати, файлы можно кидать на форму просто мышкой, драг-н-дропом.</div>
-
+  </div>
+  <button class="send-button" (click)="onSendClick()">Отправить</button>
 </div>
+<div class="hint" *ngIf="filesAddedByButton && !thereWasDnd">Кстати, файлы можно кидать на форму просто мышкой, драг-н-дропом.</div>
+<div class="attachments" *ngIf="attachments && attachments.length">
+  <div *ngFor="let attachment of attachments" class="attachment" [title]="attachment.file.name">
+    <div class="imagecontainer"><img *ngIf="attachment.isImage" [src]="attachment.bitmap"></div>
+    <div *ngIf="attachment.error" class="error"><div>{{attachment.error}}</div></div>
+    <div class="remove" (click)="onremoveClick(attachment)">X</div>
+  </div>
+</div>
+<input #fileUpload id="fileUpload" type="file" multiple (change)="onFilesSelected($event)" />

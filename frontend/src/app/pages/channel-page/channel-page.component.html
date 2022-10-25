@@ -1,19 +1,21 @@
 <div class="menu">
     <app-main-menu *ngIf="appService.channels.length"></app-main-menu>
 </div>
-<div class="main">
+<div class="middle">
   <ng-container *ngIf="channel">
-    <h1>{{channel.name}}</h1>
-    <p>{{channel.description}}</p>
+    <header>
+      <h1>{{channel.name}}</h1>
+      <p>{{channel.description}}</p>
+    </header>
 
     <app-message-form [channel]="channel" (onPost)="onNewMessageCreated()"></app-message-form>
 
-    <ng-container *ngIf="!!channelModel">
+    <main class="messages" *ngIf="!!channelModel">
       <div class="thread" [class.thread-gray]="t.isDigest" *ngFor="let t of channelModel.threads">
         <app-board [placeId]="channel.id_place" [messages]="[t.root]" [showChildren]="t.isDigest || t.isExpanded"></app-board>
         <a class="expand" href *ngIf="t.commentsCount > 0 && !(t.isDigest || t.isExpanded)" (click)="onExpandClick($event, t)">{{t.commentsCountText}}</a>
       </div>
-    </ng-container>
+    </main>
 
   </ng-container>
 </div>
@@ -28,7 +30,7 @@
       <li class="done">Авторизация, роутинг, список каналов</li>
       <li class="done">Деревья сообщений, отправка сообщений</li>
       <li class="done">Корявый временный дизайн</li>
-      <li>Отправлялка файлов с драг-н-дропом</li>
+      <li class="done"> Отправлялка файлов с драг-н-дропом</li>
       <li>Звёздочки, серые ветки</li>
       <li>Создание ответов на сообщения</li>
       <li>Интерфейс для телефонов, оценки</li>
