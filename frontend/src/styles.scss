@@ -105,6 +105,17 @@ body {
   max-width: 100%;
   margin-left: 32px;
   color: var(--color-black);
+
+  a {
+    color: black;
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+    }
+    &:visited {
+      color: black;
+    }
+  }
 }
 .msg-root {
   margin-left: 0;

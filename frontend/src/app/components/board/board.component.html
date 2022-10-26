@@ -11,8 +11,8 @@
       <ng-container *ngSwitchCase="0">
         <div class="text">
           <img class="ico" [src]="'https://plllasma.com/i/' + message.icon +'.gif'" />
-          <b>{{message.nick}}<u *ngIf="message.isStarred"></u>:</b>
-          {{message.text}}
+          <b>{{message.nick}}<u *ngIf="message.isStarred"></u>:</b><br>
+          <span [innerHTML]="message.text | linky"></span>
         </div>
         <ng-container *ngIf="message.attachments">
           <a *ngFor="let attachment of message.attachments"
@@ -27,8 +27,8 @@
       <ng-container *ngSwitchCase="1">
         <div class="text text-gray" (click)="unfoldGray($event, message)">
           <img class="ico" [src]="'https://plllasma.com/i/' + message.icon +'.gif'">
-          <b>{{message.nick}}<u *ngIf="message.isStarred"></u>:</b>
-          {{message.text}}
+          <b>{{message.nick}}<u *ngIf="message.isStarred"></u>:</b><br>
+          <span [innerHTML]="message.text | linky"></span>
         </div>
         <ng-container *ngIf="message.attachments">
           <a *ngFor="let attachment of message.attachments"

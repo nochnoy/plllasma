@@ -16,6 +16,7 @@ import { MainMenuComponent } from './components/main-menu/main-menu.component';
 import { BoardComponent } from './components/board/board.component';
 import { AsPipe } from './pipes/as.pipe';
 import { MessageFormComponent } from './message-form/message-form.component';
+import {LinkyModule} from "ngx-linky";
 
 @NgModule({
   imports: [
@@ -26,6 +27,7 @@ import { MessageFormComponent } from './message-form/message-form.component';
     RouterModule,
     AppRoutingModule,
     ReactiveFormsModule,
+    LinkyModule
   ],
   declarations: [
     AppComponent,
