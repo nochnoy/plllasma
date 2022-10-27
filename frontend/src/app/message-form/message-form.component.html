@@ -1,4 +1,3 @@
-<div class="user"><div class="icon"></div> Привидение:</div>
 <div class="middle">
   <div class="inputs"
        (dragover)="onDragOver($event)"
@@ -6,6 +5,7 @@
        (drop)="onDropSuccess($event)"
        (dragend)="onDragEnd()"
        [class.inputs--drop]="isDragging">
+    <div class="user"><div class="icon"></div> Привидение</div>
     <textarea autofocus [(ngModel)]="messageText"></textarea>
     <div class="attachments" *ngIf="attachments && attachments.length">
       <div *ngFor="let attachment of attachments" class="attachment" [title]="'Удалить ' + attachment.file.name">
@@ -14,10 +14,9 @@
         <div class="remove" (click)="onremoveClick(attachment)">X</div>
       </div>
     </div>
-    <div class="hint" *ngIf="filesAddedByButton && !thereWasDnd">Файлы можно кидать драг-н-дропом</div>
     <div class="tools">
       <button (click)="fileUpload.click()">+</button>
-      <label>Добавить файлы</label>
+      <label>Добавить файлы (можно драг-н-дропом)</label>
     </div>
   </div>
   <button class="send-button" (click)="onSendClick()">Отправить</button>

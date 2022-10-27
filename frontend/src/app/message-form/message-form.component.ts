@@ -20,8 +20,6 @@ export class MessageFormComponent {
   messageText: string = '';
   attachments: IUploadingAttachment[] = [];
   isDragging = false;
-  filesAddedByButton = false;
-  thereWasDnd = false;
 
   addAttachments(files: File[]) {
     const newAttachments: IUploadingAttachment[] = files.map((file) => {
@@ -70,7 +68,6 @@ export class MessageFormComponent {
 
   onFilesSelected(event: any): void {
     this.addAttachments(Array.from(event.target?.files) ?? []);
-    this.filesAddedByButton = true;
   }
 
   onDragOver(event: any) {
@@ -95,14 +92,12 @@ export class MessageFormComponent {
   onDropSuccess(event: any) {
     event.preventDefault();
     this.addAttachments(Array.from(event?.dataTransfer?.files) ?? []);
-    this.thereWasDnd = true;
     this.isDragging = false;
   }
 
   onremoveClick(attachment: IUploadingAttachment): void {
     this.attachments = this.attachments.filter((a) => a !== attachment);
     if (!this.attachments.length) {
-      this.filesAddedByButton = false;
     }
   }
 

@@ -35,21 +35,27 @@
     position: absolute;
     z-index: 3;
     margin-left: 40px;
-    margin-top: 100px;
+    margin-top: 106px;
 
     div {
       display: flex;
       flex-direction: column;
-      margin-bottom: 1rem;
+      margin-bottom: 1.2rem;
 
       a {
         color: var(--color-black);
         text-decoration: none;
+        max-width: 8.5rem;
+        white-space: nowrap;
+        overflow: hidden;
         &:hover {
           text-decoration: underline;
         }
         &:visited {
           color: var(--color-black);
+        }
+        &:not(:last-child) {
+          margin-bottom: 0.2rem;
         }
       }
       :first-child {

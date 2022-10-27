@@ -1,6 +1,7 @@
 :host {
   display: flex;
   flex-direction: column;
+  max-width: 55rem;
 
   .user {
     margin-bottom: 0.2rem;
@@ -9,6 +10,7 @@
       display: inline-block;
       width: 16px;
       height: 16px;
+      margin-bottom: -1px;
       background-image: url('~src/assets/ghost.gif');
     }
   }
@@ -17,22 +19,23 @@
     display: flex;
     flex-direction: row;
     align-items: flex-end;
+    flex-grow: 1;
 
     .inputs {
+      flex-grow: 1;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      padding: 1rem;
+      padding: 0.8rem;
       background-color: white;
       border: 1px solid #c5b9ac;
       border-radius: 0.2rem;
 
       &--drop {
-        background-color: greenyellow;
+        background-color: #d6e8c6;
       }
 
       textarea {
-        min-width: 30rem;
         min-height: 5rem;
         border: 0;
         resize: none;
@@ -50,14 +53,14 @@
         align-items: center;
 
         button {
-          height: 2rem;
-          width: 2rem;
+          height: 1.4rem;
+          width: 1.4rem;
         }
 
         label {
           font-size: 0.9rem;
           color: gray;
-          margin-left: 0.8rem;
+          margin-left: 0.6rem;
         }
       }
 
@@ -66,9 +69,9 @@
     .send-button {
       font-size: 0.9rem;
       height: 2.2rem;
-      width: 8rem;
+      width: 7rem;
       margin-left: 1rem;
-      margin-bottom: 1rem;
+      margin-bottom: 1.4rem;
     }
   }
 
@@ -147,12 +150,6 @@
 
     }
   }
-  .hint {
-    color: gray;
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-  }
-
 }
 
 #fileUpload {
