@@ -2,19 +2,31 @@
 
 include("include/main.php");
 
-loginBySessionOrToken();
+$previewWidth 		= 220;
+$previewHeight 		= 220;
 
 $placeId 			= @$_POST['placeId'];
 $parentMessageId 	= @$_POST['parent'];
 $message 			= @trim($_POST['message']);
 
-if (!canWrite($placeId)) {
-	die('{"error": "access"}');
-}
+$channelFolder 		= getcwd().'/../attachments/'.$placeId.'/';
+$iconFolder 		= getcwd().'/attachment-icons/';
 
 $id_parent = 0;
 $id_first_parent = 0;
 $receivedFilesCount = 0;
+$lll = '';
+
+function lll($s) {
+	global $lll;
+	$lll = $lll . $s . ';';
+}
+
+loginBySessionOrToken();
+
+if (!canWrite($placeId)) {
+	die('{"error": "access"}');
+}
 
 // это коммент к другому cообщению
 if (!empty($parentMessageId)) {
@@ -56,68 +68,97 @@ $messageId = mysqli_insert_id($mysqli);
 
 // Принимаем файлы, если они были
 
-$sss = ''; // <<<<<<<<<<<<<<<<<
+// Если папки не было, создадим и зададим права
+if (!file_exists($channelFolder)) {
+	lll('Creating folder '. $channelFolder);
+	mkdir($channelFolder, 0777, true);
+}
 
-for ($i = 0; $i < count($_FILES); $i++) { 
+for ($i = 0; $i < count($_FILES); $i++) {
 	$received_file = $_FILES['f'.$i]['tmp_name'];
 	if ($received_file != "" && $received_file != "none") {
 
+		$receivedFilesCount++;
 		$original_name = $_FILES['f'.$i]['name'];
 		$filesize = $_FILES['f'.$i]['size'];
 		$extention = strtolower(substr($original_name, strrpos($original_name, ".") + 1));
 
-		$has_icon = 0;
-		$file_type = 0; // тип файла: 0-просто файл, 1-jpg, 2-gif, 3-видео, 4-архив
+		lll('Adding '. $original_name);
+
+		$imagefile = $channelFolder.$messageId.'_'.$i.'.'.$extention;
+		copy($received_file, $imagefile);
+		$thumbfile = $channelFolder.$messageId.'_'.$i.'t.jpg';
+
+		$img = null;
 
 		switch ($extention){
-			case "jpg": 
-			case "jfif":
-			case "jpeg": $file_type=1; $has_icon = 1; break;
 
-			case "gif": $file_type=2; break;
+			case 'jpg': 
+			case 'jpeg':
+			case 'jpe':
+			case 'jif':
+			case 'jfif':				
+				$img = @imagecreatefromjpeg($imagefile);
+				break;
 
-			case "divx":
-			case "mpeg": 
-			case "mpg": 
-			case "wmv":
-			case "ram":
-			case "rm":
-			case "swf":
-			case "mov":
-			case "asf":
-			case "avi": $file_type=3; break;
+			case "gif":
+				$img = @imagecreatefromgif($imagefile);
+				break;
 
-			case "rar":
-			case "arj":
-			case "zip": $file_type=4; break;
+			case 'png':
+				$img = @imagecreatefrompng($imagefile);
+				break;
+
+			case 'webp':
+				$img = @imagecreatefromwebp($imagefile);
+				break;
+
+			case 'bmp':
+				$img = @imagecreatefrombmp($imagefile);
+				break;
 		}
 
-		$folderPath = getcwd().'/../attachments/'.$placeId.'/';
+		if ($img) {
 
-		$imagefile = $folderPath.$messageId.'_'.$i.".".$extention;
-		copy($received_file, $imagefile);
-		$receivedFilesCount++;
+			$w = imagesx($img);
+			$h = imagesy($img);
 
-		if ($file_type == 1) {
-			$thumbfile = $folderPath.$messageId.'_'.$i.'t.jpg';
-			$img = @imagecreatefromjpeg($imagefile);
-
-			if ($img) {
-				$w = imagesx($img);
-				$h = imagesy($img);
-				$percent = $w / 80; // сжимаем ширину до 80 пикселей
-				$w2 = $w / $percent;//thumb width
-				$h2 = $h / $percent;//thumb height
-				$tmb = @imagecreatetruecolor($w2, $h2);
-				imagecopyresampled($tmb, $img, 0, 0, 0, 0, $w2, $h2, $w, $h);
-				imagejpeg($tmb,  $thumbfile, 90);
-				imagedestroy($img);
-				imagedestroy($tmb);
+			if($w > $h) {
+				$percent = $h / $previewHeight;
+			} else {
+				$percent = $w / $previewWidth;
 			}
 
+			$w2 = $w / $percent;
+			$h2 = $h / $percent;
+
+			$tmb = @imagecreatetruecolor($previewWidth, $previewHeight);
+			imagecopyresampled($tmb, $img, ($previewWidth / 2) - ($w2 / 2), ($previewHeight / 2) - ($h2 / 2), 0, 0, $w2, $h2, $w, $h);			
+
+		} else {
+
+			$imgFile = imagecreatefrompng($iconFolder.'file.png');
+
+			$tmb = @imagecreatetruecolor($previewWidth, $previewHeight);
+			$result = imagecopyresampled($tmb, $imgFile, 0, 0, 0, 0, $previewWidth, $previewHeight, $previewWidth, $previewHeight);
+
+			imagedestroy($imgFile);
+
+			//$mimeType = mime_content_type($filename);
+			//$fileType = explode('/', $mimeType)[0];
 		}
 
-		$sss .= $original_name.', ';
+		imagejpeg($tmb,  $thumbfile, 90);
+		imagedestroy($tmb);
+
+		if ($img) {
+			imagedestroy($img);		
+		}
+
+		// отрежем директорию, оставим имя файла
+		$a = explode('/', $imagefile);
+		$imagefile = $a[count($a) - 1]; 		
+		// TODO: тут наверное сохранение оригинального имени файла в БД
 
 	}
 }
@@ -128,117 +169,9 @@ if ($receivedFilesCount > 0) {
 
 mysqli_query($mysqli, 'UPDATE tbl_places SET time_changed = NOW() WHERE id_place='.$placeId);
 
-/*
-// пошёл приём файлов
-for($i=1; $i<=count($_FILES); $i++){ 
-	$received_file=$_FILES['f'.$i]['tmp_name'];
-	if($received_file!="" && $received_file!="none"){
-
-		$receivedSomething = true;
-		
-		$original_name = $_FILES['f'.$i]['name'];
-		$filesize = $_FILES['f'.$i]['size'];
-		$description = txt2html($_REQUEST["txt".$i],0,50);
-		$extention = strtolower(substr($original_name, strrpos($original_name, ".")+1));
-		$has_icon = 0;
-		$file_type=0; // тип файла - 0-просто файл, 1-jpg, 2-gif, 3-видео, 4-архив
-		$dontdel = $_REQUEST['dd'];
-
-		switch($extention){
-			case "jpg": 
-			case "jpeg": $file_type=1; $has_icon = 1; break;
-
-			case "gif": $file_type=2; break;
-
-			case "divx":
-			case "mpeg": 
-			case "mpg": 
-			case "wmv":
-			case "ram":
-			case "rm":
-			case "swf":
-			case "mov":
-			case "asf":
-			case "avi": $file_type=3; break;
-
-			case "rar":
-			case "arj":
-			case "zip": $file_type=4; break;
-		}
-
-		$sql = 				
-		'INSERT INTO tbl_files ('
-		.' id_user,'
-		.' nick,'
-		.' icon,'
-		.' anonim,'
-		.' id_storage,'
-		.' id_place,'
-		.' file_type,'
-		.' description,'
-		.' time_created,'
-		.' time_updated,'
-		.' has_icon,'
-		.' original_name,'
-		.' size,'
-		.' extension,'
-		.' dontdel,'
-		.' attachment_id'
-		.') VALUES ('
-		.' '.$user->id.','
-		.' "'.$nick.'",'
-		.' '.$icn.','
-		.' 0,' // anonim
-		.' 1,'
-		.' '.$id_place.',' 
-		.' '.$file_type.','
-		.' "'.$description.'",'
-		.' NOW(),'
-		.' NOW(),'
-		.' '.$has_icon.','
-		.' "'.$original_name.'",'
-		.' '.$filesize.','
-		.' "'.$extention.'",'
-		.' '.$dontdel.','
-		.' '.(empty($_REQUEST['sess']) ? 0 : $_REQUEST['sess'])
-		.")";
-
-		mysqli_query($mysqli, $sql);
-		sqlerr();
-		$id_file = mysqli_insert_id($mysqli);
-
-		$imagefile=STORAGE.$id_file.".".$extention;
-		copy($received_file, $imagefile);
-
-		if($file_type==1){ // создаём тумбу
-			$thumbfile=STORAGE.$id_file."t.jpg";
-			$img=@imagecreatefromjpeg($imagefile);
-			if ($img){
-				$w=imagesx($img);
-				$h=imagesy($img);
-				$percent=$w/80;//насколько сжимаем (сжимаем ширину до 80 пикселей)
-				$w2=$w/$percent;//thumb width
-				$h2=$h/$percent;//thumb height
-				$tmb = @imagecreatetruecolor($w2,$h2);
-				imagecopyresampled($tmb, $img, 0, 0, 0, 0, $w2, $h2, $w, $h);
-				imagejpeg($tmb,  $thumbfile, 90);
-				imagedestroy($img);
-				imagedestroy($tmb);
-			}
-
-			if(!file_exists($thumbfile)){
-				mysqli_query($mysqli, 'UPDATE tbl_files SET has_icon=0 WHERE id_file='.$id_file);
-			}
-		}
-
-	}
-}
-*/
-
-
 exit(json_encode((object)[
 	'messageId' => $messageId,
-	'files' => $sss
+	'log' => $lll
 ]));
 
 ?>
