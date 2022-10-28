@@ -24,6 +24,9 @@ $extension = getFileExtension($path);
 switch($extension) {
 	case 'jpg':
 	case 'jpeg':
+	case 'jpe':
+	case 'jif':
+	case 'jfif':
 		$contentType = 'Content-Type: image/jpeg';
 		break;
 	case 'gif':
@@ -32,6 +35,9 @@ switch($extension) {
 	case 'png':
 		$contentType = 'Content-Type: image/png';
 		break;
+	case 'webp':
+		$contentType = 'Content-Type: image/webp';
+		break;		
 	default:
 		$contentType = 'Content-Type: application/download';
 }

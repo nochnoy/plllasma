@@ -2,8 +2,8 @@
 
 include("include/main.php");
 
-$previewWidth 		= 220;
-$previewHeight 		= 220;
+$previewWidth 		= 160;
+$previewHeight 		= 160;
 
 $placeId 			= @$_POST['placeId'];
 $parentMessageId 	= @$_POST['parent'];
@@ -93,11 +93,11 @@ for ($i = 0; $i < count($_FILES); $i++) {
 
 		switch ($extention){
 
-			case 'jpg': 
+			case 'jpg':
 			case 'jpeg':
 			case 'jpe':
 			case 'jif':
-			case 'jfif':				
+			case 'jfif':
 				$img = @imagecreatefromjpeg($imagefile);
 				break;
 
