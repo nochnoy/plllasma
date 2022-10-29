@@ -10,7 +10,7 @@ $parentMessageId 	= @$_POST['parent'];
 $message 			= @trim($_POST['message']);
 
 $channelFolder 		= getcwd().'/../attachments/'.$placeId.'/';
-$iconFolder 		= getcwd().'/attachment-icons/';
+$iconFolder 		= getcwd().'/images/attachment-icons/';
 
 $id_parent = 0;
 $id_first_parent = 0;
@@ -85,8 +85,8 @@ for ($i = 0; $i < count($_FILES); $i++) {
 
 		lll('Adding '. $original_name);
 
-		$imagefile = $channelFolder.$messageId.'_'.$i.'.'.$extention;
-		copy($received_file, $imagefile);
+		$fileName = $channelFolder.$messageId.'_'.$i.'.'.$extention;
+		copy($received_file, $fileName);
 		$thumbfile = $channelFolder.$messageId.'_'.$i.'t.jpg';
 
 		$img = null;
@@ -98,23 +98,23 @@ for ($i = 0; $i < count($_FILES); $i++) {
 			case 'jpe':
 			case 'jif':
 			case 'jfif':
-				$img = @imagecreatefromjpeg($imagefile);
+				$img = @imagecreatefromjpeg($fileName);
 				break;
 
 			case "gif":
-				$img = @imagecreatefromgif($imagefile);
+				$img = @imagecreatefromgif($fileName);
 				break;
 
 			case 'png':
-				$img = @imagecreatefrompng($imagefile);
+				$img = @imagecreatefrompng($fileName);
 				break;
 
 			case 'webp':
-				$img = @imagecreatefromwebp($imagefile);
+				$img = @imagecreatefromwebp($fileName);
 				break;
 
 			case 'bmp':
-				$img = @imagecreatefrombmp($imagefile);
+				$img = @imagecreatefrombmp($fileName);
 				break;
 		}
 
@@ -137,28 +137,53 @@ for ($i = 0; $i < count($_FILES); $i++) {
 
 		} else {
 
-			$imgFile = imagecreatefrompng($iconFolder.'file.png');
+			$icon = null;
+			$mimeType = mime_content_type($fileName);	
+			$mime = explode('/', $mimeType)[0];			
+
+			switch ($mime) {
+
+				case 'image':
+					$icon = imagecreatefrompng($iconFolder.'image.png');
+					break;
+
+				case 'video':
+					$icon = imagecreatefrompng($iconFolder.'video.png');
+					break;
+
+				default:
+
+					switch($extention) {
+						case 'zip':
+						case 'rar':
+						case 'tar':
+						case 'tga':
+						case 'iso':
+						case '7z':
+						case 's7z':
+						case 'gz':
+							$icon = imagecreatefrompng($iconFolder.'archive.png');
+							break;
+
+						default:
+						$icon = imagecreatefrompng($iconFolder.'file.png');
+					}
+			}
 
 			$tmb = @imagecreatetruecolor($previewWidth, $previewHeight);
-			$result = imagecopyresampled($tmb, $imgFile, 0, 0, 0, 0, $previewWidth, $previewHeight, $previewWidth, $previewHeight);
+			if ($icon) {
+				$result = imagecopyresampled($tmb, $icon, 0, 0, 0, 0, $previewWidth, $previewHeight, $previewWidth, $previewHeight);
+				imagedestroy($icon);
+			}
 
-			imagedestroy($imgFile);
-
-			//$mimeType = mime_content_type($filename);
-			//$fileType = explode('/', $mimeType)[0];
 		}
 
 		imagejpeg($tmb,  $thumbfile, 90);
 		imagedestroy($tmb);
 
 		if ($img) {
-			imagedestroy($img);		
+			imagedestroy($img);
 		}
-
-		// отрежем директорию, оставим имя файла
-		$a = explode('/', $imagefile);
-		$imagefile = $a[count($a) - 1]; 		
-		// TODO: тут наверное сохранение оригинального имени файла в БД
 
 	}
 }
