@@ -18,7 +18,7 @@
           <a *ngFor="let attachment of message.attachments"
              class="att" target="_blank"
              [href]="'../api/file.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id">
-            <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" />
+            <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
           </a>
         </ng-container>
       </ng-container>
@@ -34,7 +34,7 @@
           <a *ngFor="let attachment of message.attachments"
              class="att" target="_blank"
              [href]="'../api/file.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id">
-            <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" />
+            <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
           </a>
         </ng-container>
       </ng-container>
