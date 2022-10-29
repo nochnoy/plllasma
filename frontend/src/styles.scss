@@ -20,6 +20,8 @@
   --border-radius: 3px;
   --margin-standard: 0.4rem;
 
+  --attachment-icon-size: 160px;
+
   // input
   --color-input-bg: #ffffff;
 
@@ -131,9 +133,11 @@ body {
   margin: 0;
 }
 .att {
-  width: 100px;
-  height: 100px;
-  opacity: 0.7;
+  img {
+    width: var(--attachment-icon-size);
+    height: var(--attachment-icon-size);
+    opacity: 0.7;
+  }
 }
 
 /* Ссылка "раскрыть ветку" */
@@ -202,4 +206,31 @@ u:after {
 }
 .text-gray:hover .ico {
   border: 1px solid var(--color-black);
+}
+
+// Крутилка
+
+@keyframes spinner {
+  to {transform: rotate(360deg);}
+}
+
+.spinner {
+  display: inline-block;
+  &:before {
+    content: '';
+    box-sizing: border-box;
+    position: absolute;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0);
+    border-top-color: #000;
+    animation: spinner .6s linear infinite;
+  }
+  &:after {
+    content: 'Загрузка';
+    line-height: 2rem;
+    margin-left: 2.3rem;
+  }
+
 }

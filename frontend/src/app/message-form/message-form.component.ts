@@ -20,6 +20,7 @@ export class MessageFormComponent {
   messageText: string = '';
   attachments: IUploadingAttachment[] = [];
   isDragging = false;
+  isSending = false;
 
   addAttachments(files: File[]) {
     const newAttachments: IUploadingAttachment[] = files.map((file) => {
@@ -55,9 +56,11 @@ export class MessageFormComponent {
 
   onSendClick(): void {
     if (this.channel) {
+      this.isSending = true;
       this.appService.addMessage$(this.channel?.id_place, this.messageText, 0, this.attachments)
         .pipe(
           tap((result: any) => {
+            this.isSending = false;
             this.attachments.length = 0;
             this.messageText = '';
             this.onNewMessageCreated.emit(this.messageText);
