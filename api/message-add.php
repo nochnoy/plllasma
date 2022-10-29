@@ -2,6 +2,8 @@
 
 include("include/main.php");
 
+$maxMegabytes 		= 10;
+
 $previewWidth 		= 160;
 $previewHeight 		= 160;
 
@@ -50,7 +52,7 @@ if (!empty($parentMessageId)) {
 	}
 }
 
-mysqli_query($mysqli, 
+mysqli_query($mysqli,
 	'INSERT INTO tbl_messages SET'.
 	' icon=1'. // привидение
 	',anonim=1'. // привидение
@@ -74,20 +76,26 @@ if (!file_exists($channelFolder)) {
 	mkdir($channelFolder, 0777, true);
 }
 
+$receivedFilesCount = 0;
+
 for ($i = 0; $i < count($_FILES); $i++) {
 	$received_file = $_FILES['f'.$i]['tmp_name'];
 	if ($received_file != "" && $received_file != "none") {
 
-		$receivedFilesCount++;
 		$original_name = $_FILES['f'.$i]['name'];
 		$filesize = $_FILES['f'.$i]['size'];
 		$extention = strtolower(substr($original_name, strrpos($original_name, ".") + 1));
 
+		if ($filesize / (1024 * 1024) > $maxMegabytes) {
+			lll($original_name.' too big');
+			continue;
+		}
+
 		lll('Adding '. $original_name);
 
-		$fileName = $channelFolder.$messageId.'_'.$i.'.'.$extention;
+		$fileName = $channelFolder.$messageId.'_'.$receivedFilesCount.'.'.$extention;
 		copy($received_file, $fileName);
-		$thumbfile = $channelFolder.$messageId.'_'.$i.'t.jpg';
+		$thumbfile = $channelFolder.$messageId.'_'.$receivedFilesCount.'t.jpg';
 
 		$img = null;
 
@@ -185,6 +193,7 @@ for ($i = 0; $i < count($_FILES); $i++) {
 			imagedestroy($img);
 		}
 
+		$receivedFilesCount++;
 	}
 }
 
