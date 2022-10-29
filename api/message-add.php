@@ -2,7 +2,7 @@
 
 include("include/main.php");
 
-$maxMegabytes 		= 10;
+$maxMegabytes 		= 50; // 50 Мб макс
 
 $previewWidth 		= 160;
 $previewHeight 		= 160;
