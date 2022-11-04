@@ -6,6 +6,7 @@ require("include/functions-utils.php");
 require("include/functions-user.php");
 require("include/functions-messages.php");
 require("include/functions-channels.php");
+require("include/functions-channel.php");
 require("include/functions-files.php");
 
 include "../../plllasma-passwords.php";
@@ -21,6 +22,7 @@ define("DB_PASSWORD", $passwordDB);
 define("DB_DB", "plllasma");
 define("COOKIE_KEY_CODE", "contortion_key");
 define("PATH_TO_STORAGE", "../../attachments/");
+define("MAX_STARRED_THREADS", 20); // порог кол-ва новых сообщений после которого перестаём строить серые ветки
 
 $allowed_http_origins = [
     "https://plllasma.ru",

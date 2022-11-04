@@ -5,8 +5,6 @@ include("include/main.php");
 
 loginBySessionOrToken();
 
-//respond('channels', '{"channels":'.getChannelsJson().'}');
-
-exit(json_encode(getChannels2()));
+exit(json_encode(getChannels()));
 
 ?>

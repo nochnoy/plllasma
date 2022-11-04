@@ -58,7 +58,7 @@ function loadUserFromSession() {
 function loadUserByToken() {
 	global $mysqli;
 
-	sleep(1); // Защита от брутфорса
+	sleep(2); // Защита от брутфорса
 
 	$token = getToken();
 	if (isset($token)) {
