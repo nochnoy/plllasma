@@ -12,7 +12,7 @@
 
     <main class="messages" *ngIf="!!channelModel">
       <div class="thread" [class.thread-gray]="t.isDigest" *ngFor="let t of channelModel.threads">
-        <app-board [placeId]="channel.id_place" [messages]="[t.root]" [showChildren]="t.isDigest || t.isExpanded"></app-board>
+        <app-messages [placeId]="channel.id_place" [messages]="[t.root]" [showChildren]="t.isDigest || t.isExpanded"></app-messages>
         <a class="expand" href *ngIf="t.commentsCount > 0 && !(t.isDigest || t.isExpanded)" (click)="onExpandClick($event, t)">{{t.commentsCountText}}</a>
       </div>
     </main>

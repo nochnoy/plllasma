@@ -3,7 +3,7 @@ import {AppService} from "../../services/app.service";
 import {ActivatedRoute} from "@angular/router";
 import {Observable, of} from "rxjs";
 import {switchMap, tap} from "rxjs/operators";
-import {IChannel} from "../../model/app-model";
+import {EMPTY_CHANNEL, IChannel} from "../../model/app-model";
 import {Channel} from "../../model/messages/channel.model";
 import {Thread} from "../../model/messages/thread.model";
 
@@ -20,30 +20,39 @@ export class ChannelPageComponent implements OnInit {
   ) { }
 
   readonly defaultChannelId = 1;
-  channel?: IChannel;
+  channel: IChannel = EMPTY_CHANNEL;
   channelModel?: Channel;
 
   ngOnInit(): void {
-    let channelId = this.defaultChannelId;
     of({}).pipe(
       switchMap(() => this.activatedRoute.url),
       tap((urlSegments) => {
+        let channelId: number;
         if (urlSegments.length) {
           channelId = parseInt(urlSegments[0].path, 10) ?? this.defaultChannelId;
+        } else {
+          channelId = this.defaultChannelId;
+        }
+        const channel = this.appService.channels.find((channel) => channel.id_place === channelId);
+        this.channel = channel ?? EMPTY_CHANNEL;
+      }),
+      switchMap(() => {
+        if (this.channel !== EMPTY_CHANNEL) {
+          return this.load$(this.channel.id_place);
+        } else {
+          return of({});
         }
       }),
-      switchMap(() => this.load$(channelId)),
     ).subscribe();
   }
 
   load$(channelId: number): Observable<any> {
     return of({}).pipe(
-      switchMap(() => this.appService.getChannel$(channelId, "2019-09-22 22:21:06")),
+      switchMap(() => this.appService.getChannel$(channelId, this.channel?.time_viewed ?? '')),
       tap((input) => {
         if (input.error) {
           console.error(`Сервер вернул ошибку ${input.error}`);
         } else {
-          this.channel = this.appService.channels.find((channel) => channel.id_place === channelId);
           this.channelModel = new Channel();
           this.channelModel.deserialize(input);
         }
@@ -58,7 +67,7 @@ export class ChannelPageComponent implements OnInit {
       thread.isExpanded = true;
     } else {
       of({}).pipe(
-        switchMap(() => this.appService.getThread$(thread.rootId, "2019-09-22 22:21:06")),
+        switchMap(() => this.appService.getThread$(thread.rootId, this.channel.time_viewed)),
         tap((input: any) => {
           thread.addMessages(input.messages);
           thread.isExpanded = true;

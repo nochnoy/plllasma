@@ -4,11 +4,11 @@ import {ShlopMessage} from "../../model/messages/shlop-message.model";
 import {AppService} from "../../services/app.service";
 
 @Component({
-  selector: 'app-board',
-  templateUrl: './board.component.html',
-  styleUrls: ['./board.component.scss']
+  selector: 'app-messages',
+  templateUrl: './messages.component.html',
+  styleUrls: ['./messages.component.scss']
 })
-export class BoardComponent implements OnInit {
+export class MessagesComponent implements OnInit {
 
   constructor(
     public appService: AppService,

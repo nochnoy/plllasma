@@ -48,7 +48,7 @@
 
     </ng-container>
 
-    <app-board *ngIf="showChildren && message.children && message.children.length > 0" [placeId]="placeId" [messages]="message.children"></app-board>
+    <app-messages *ngIf="showChildren && message.children && message.children.length > 0" [placeId]="placeId" [messages]="message.children"></app-messages>
 
   </div>
 </ng-container>

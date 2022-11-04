@@ -71,6 +71,17 @@ export interface IChannel {
   weight: number;
 }
 
+export const EMPTY_CHANNEL: IChannel = {
+  id_place: 0,
+  parent: 0,
+  first_parent: 0,
+  name: '',
+  description: '',
+  time_changed: '',
+  time_viewed: '',
+  weight: 0
+}
+
 export interface IAttachment {
   id: number;
   messageId: number;

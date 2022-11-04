@@ -109,7 +109,8 @@ export class AppService {
         return this.httpClient.post(
           `${this.apiPath}/channels.php`,
           { },
-          { observe: 'body', withCredentials: true });
+          { observe: 'body', withCredentials: true }
+        );
       }),
       tap((channels) => this.channels = channels as IChannel[]),
       switchMap(() => of(true))

@@ -13,7 +13,7 @@ import { LoginPageComponent } from './pages/login-page/login-page.component';
 import { AppGuard } from './app.guard';
 import { ChannelPageComponent } from './pages/channel-page/channel-page.component';
 import { MainMenuComponent } from './components/main-menu/main-menu.component';
-import { BoardComponent } from './components/board/board.component';
+import { MessagesComponent } from './components/board/messages.component';
 import { AsPipe } from './pipes/as.pipe';
 import { MessageFormComponent } from './message-form/message-form.component';
 import {LinkyModule} from "ngx-linky";
@@ -37,7 +37,7 @@ import {LinkyModule} from "ngx-linky";
     LoginPageComponent,
     ChannelPageComponent,
     MainMenuComponent,
-    BoardComponent,
+    MessagesComponent,
     AsPipe,
     MessageFormComponent,
   ],
