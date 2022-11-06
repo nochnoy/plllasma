@@ -71,6 +71,11 @@ export interface IChannel {
   weight: number;
 }
 
+export interface ICity {
+  channel: IChannel
+  children: IChannel[];
+}
+
 export const EMPTY_CHANNEL: IChannel = {
   id_place: 0,
   parent: 0,

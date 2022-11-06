@@ -1,0 +1,41 @@
+:host {
+  display: flex;
+  flex-direction: row;
+  justify-content: stretch;
+  background-color: var(--color-page-bg);
+  height: 100vh;
+
+  .controls {
+    display: flex;
+    flex-direction: column;
+    width: 30rem;
+
+    textarea {
+      box-sizing: border-box;
+      height: 100%;
+      border: none;
+      border-right: 1px solid black;
+      resize: none;
+      background-color: white;
+      padding: 0.4rem;
+      outline: none;
+      font-size: 0.6rem;
+      white-space: nowrap;
+    }
+
+    .json-input {
+      font-size: 0.7rem;
+      &:focus {
+        outline: none;
+      }
+    }
+  }
+
+  .messages {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.4rem;
+    overflow-y: scroll;
+  }
+
+}

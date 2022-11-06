@@ -4,6 +4,7 @@ import {IChannel, IFocus, ILike, IUploadingAttachment, IUserData, LoginStatus} f
 import {map, switchMap, tap} from "rxjs/operators";
 import {HttpClient} from "@angular/common/http";
 import {UserService} from "./user.service";
+import {ChannelService} from "./channel.service";
 
 @Injectable({
   providedIn: 'root'
@@ -11,14 +12,14 @@ import {UserService} from "./user.service";
 export class AppService {
 
   constructor(
-    private httpClient: HttpClient,
-    private userService: UserService
+    public httpClient: HttpClient,
+    public userService: UserService,
+    public channelService: ChannelService
   ) { }
 
   readonly apiPath = '../api';
 
   user?: IUserData;
-  channels: IChannel[] = [];
   focusesCount = new Subject<number>();
   currentFocus?: IFocus;
 
@@ -65,7 +66,7 @@ export class AppService {
       switchMap((result) => {
         if (result) {
           return of({}).pipe(
-            switchMap(() => this.loadChannels$()),
+            switchMap(() => this.channelService.loadChannels$()),
             switchMap(() => of(true))
           );
         } else {
@@ -101,20 +102,6 @@ export class AppService {
       `${this.apiPath}/focus-add.php`,
       focus,
       { observe: 'body', withCredentials: true })
-  }
-
-  loadChannels$(): Observable<any> {
-    return of({}).pipe(
-      switchMap(() => {
-        return this.httpClient.post(
-          `${this.apiPath}/channels.php`,
-          { },
-          { observe: 'body', withCredentials: true }
-        );
-      }),
-      tap((channels) => this.channels = channels as IChannel[]),
-      switchMap(() => of(true))
-    );
   }
 
   getChannel$(channelId:number, lastVieved:string): Observable<any> {

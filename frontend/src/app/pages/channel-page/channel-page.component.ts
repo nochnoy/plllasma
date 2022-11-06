@@ -6,6 +6,7 @@ import {switchMap, tap} from "rxjs/operators";
 import {EMPTY_CHANNEL, IChannel} from "../../model/app-model";
 import {Channel} from "../../model/messages/channel.model";
 import {Thread} from "../../model/messages/thread.model";
+import {ChannelService} from "../../services/channel.service";
 
 @Component({
   selector: 'app-channel-page',
@@ -17,6 +18,7 @@ export class ChannelPageComponent implements OnInit {
   constructor(
     public appService: AppService,
     public activatedRoute: ActivatedRoute,
+    public channelService: ChannelService
   ) { }
 
   readonly defaultChannelId = 1;
@@ -33,7 +35,7 @@ export class ChannelPageComponent implements OnInit {
         } else {
           channelId = this.defaultChannelId;
         }
-        const channel = this.appService.channels.find((channel) => channel.id_place === channelId);
+        const channel = this.channelService.channels.find((channel) => channel.id_place === channelId);
         this.channel = channel ?? EMPTY_CHANNEL;
       }),
       switchMap(() => {

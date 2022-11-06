@@ -47,6 +47,35 @@ body {
   background-repeat: repeat-y;
 }
 
+.three-column-page {
+  display: flex;
+  flex-direction: row;
+
+  .menu {
+    min-width: 200px;
+    max-width: 200px;
+  }
+  .middle {
+    width: 100%;
+
+    header {
+      margin: 1rem 0;
+
+      h1 {
+        font-size: 1.6rem;
+        margin: 0;
+      }
+      p {
+        margin: 0;
+      }
+    }
+  }
+  .sidebar {
+    margin-left: 1rem;
+    max-width: 23rem;
+  }
+}
+
 .input {
   height: 1.5rem;
   background-color: var(--color-input-bg);

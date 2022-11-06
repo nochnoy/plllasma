@@ -1,50 +1,52 @@
-<div class="menu">
-    <app-main-menu *ngIf="appService.channels.length"></app-main-menu>
-</div>
-<div class="middle">
-  <ng-container *ngIf="channel">
-    <header>
-      <h1>{{channel.name}}</h1>
-      <p>{{channel.description}}</p>
-    </header>
+<div class="three-column-page">
+  <div class="menu">
+      <app-main-menu></app-main-menu>
+  </div>
+  <div class="middle">
+    <ng-container *ngIf="channel">
+      <header>
+        <h1>{{channel.name}}</h1>
+        <p>{{channel.description}}</p>
+      </header>
 
-    <app-message-form [channel]="channel" (onPost)="onNewMessageCreated()"></app-message-form>
+      <app-message-form [channel]="channel" (onPost)="onNewMessageCreated()"></app-message-form>
 
-    <main class="messages" *ngIf="!!channelModel">
-      <div class="thread" [class.thread-gray]="t.isDigest" *ngFor="let t of channelModel.threads">
-        <app-messages [placeId]="channel.id_place" [messages]="[t.root]" [showChildren]="t.isDigest || t.isExpanded"></app-messages>
-        <a class="expand" href *ngIf="t.commentsCount > 0 && !(t.isDigest || t.isExpanded)" (click)="onExpandClick($event, t)">{{t.commentsCountText}}</a>
+      <main class="messages" *ngIf="!!channelModel">
+        <div class="thread" [class.thread-gray]="t.isDigest" *ngFor="let t of channelModel.threads">
+          <app-messages [placeId]="channel.id_place" [messages]="[t.root]" [showChildren]="t.isDigest || t.isExpanded"></app-messages>
+          <a class="expand" href *ngIf="t.commentsCount > 0 && !(t.isDigest || t.isExpanded)" (click)="onExpandClick($event, t)">{{t.commentsCountText}}</a>
+        </div>
+      </main>
+
+    </ng-container>
+  </div>
+  <div class="sidebar">
+    <div class="halloween">
+      <div class="halloween__text">
+        Это новая Плазма, переписанная с нуля. Она всё ещё находится в разработке и как-бы не существует.
+        Вы тоже не существуете. Вы привидение!
       </div>
-    </main>
-
-  </ng-container>
-</div>
-<div class="sidebar">
-  <div class="halloween">
-    <div class="halloween__text">
-      Это новая Плазма, переписанная с нуля. Она всё ещё находится в разработке и как-бы не существует.
-      Вы тоже не существуете. Вы привидение!
+      <ul>
+        <li class="done">Клиентская часть на Angular</li>
+        <li class="done">Авторизация, роутинг, список каналов</li>
+        <li class="done">Деревья сообщений, отправка сообщений</li>
+        <li class="done">Корявый временный дизайн</li>
+        <li class="done"> Отправлялка файлов с драг-н-дропом</li>
+        <li>Звёздочки, серые ветки</li>
+        <li>Создание ответов на сообщения</li>
+        <li>Интерфейс для телефонов, оценки</li>
+        <li>Убийство старой Плазмы</li>
+        <li>Управление боковым меню, можно создавать свои каналы, каталог каналов, инбоксы как каналы, баннеры каналов</li>
+        <li>Вьювер фоток, фокусы</li>
+        <li>Проект Possic</li>
+        <li>Список юзеров, профиль юзера, лента юзера</li>
+        <li>Двусторонние игноры, общественное модерирование, тушилка флудов</li>
+        <li>Приём новых юзеров, КПП, детский сад для новичков, билборды возле метро</li>
+        <li>Клиент для Android и IOS</li>
+        <li>Скраппер инстаграмма</li>
+        <li>Поиск с морфологией</li>
+        <li>Вьювер роликов, фокусы на роликах</li>
+      </ul>
     </div>
-    <ul>
-      <li class="done">Клиентская часть на Angular</li>
-      <li class="done">Авторизация, роутинг, список каналов</li>
-      <li class="done">Деревья сообщений, отправка сообщений</li>
-      <li class="done">Корявый временный дизайн</li>
-      <li class="done"> Отправлялка файлов с драг-н-дропом</li>
-      <li>Звёздочки, серые ветки</li>
-      <li>Создание ответов на сообщения</li>
-      <li>Интерфейс для телефонов, оценки</li>
-      <li>Убийство старой Плазмы</li>
-      <li>Управление боковым меню, можно создавать свои каналы, каталог каналов, инбоксы как каналы, баннеры каналов</li>
-      <li>Вьювер фоток, фокусы</li>
-      <li>Проект Possic</li>
-      <li>Список юзеров, профиль юзера, лента юзера</li>
-      <li>Двусторонние игноры, общественное модерирование, тушилка флудов</li>
-      <li>Приём новых юзеров, КПП, детский сад для новичков, билборды возле метро</li>
-      <li>Клиент для Android и IOS</li>
-      <li>Скраппер инстаграмма</li>
-      <li>Поиск с морфологией</li>
-      <li>Вьювер роликов, фокусы на роликах</li>
-    </ul>
   </div>
 </div>
