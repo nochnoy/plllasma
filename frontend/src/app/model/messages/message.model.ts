@@ -26,13 +26,29 @@ export class Message {
   parent?: Message;
   children?: Array<Message>;
 
-  public addChild(child: Message) {
+  public getChild(childId: number): Message | null {
+    if (this.children) {
+      for (let i = 0; i < this.children.length; i++) {
+        if (this.children[i].id === childId) {
+          return this.children[i];
+        }
+      }
+    }
+    return null;
+  }
+
+  public addOrUpdateChild(newChild: Message) {
     if (!this.children) {
       this.children = new Array<Message>();
     }
-    if (child.parent !== this) {
-      this.children.push(child);
-      child.setParent(this);
+    const oldChild = this.getChild(newChild.id);
+    if (oldChild) {
+      oldChild.merge(newChild);
+    } else {
+      if (newChild.parent !== this) {
+        this.children.push(newChild);
+        newChild.setParent(this);
+      }
     }
   }
 
@@ -51,7 +67,7 @@ export class Message {
       let child: Message;
       for (let i = 0; i < this.children.length; i++) {
         child = this.children[i];
-        newParent.addChild(child);
+        newParent.addOrUpdateChild(child);
       }
       this.children.length = 0;
     }

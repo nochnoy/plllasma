@@ -10,7 +10,6 @@ export class Channel {
         let t: Thread | undefined;
         let threadId: number;
         let threadsById = new Map<number, Thread>();
-        let digest: Thread;
         let starredTrees = new Array<Thread>();
 
         this.threads = new Array<Thread>();
@@ -54,8 +53,8 @@ export class Channel {
                 // Если само рутовое сообщение звезданутое - то нет смысла для него делать дайджест
                 t.isExpanded = true; // тупо раскроем его
             } else {
-                digest = t.buildDigest();
-                this.threads.unshift(digest);
+              // Из ветки создаёт новую - серую, укороченную
+              this.threads.unshift(t.buildDigest());
             }
         }
 

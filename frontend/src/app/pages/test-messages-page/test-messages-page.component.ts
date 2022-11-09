@@ -39,13 +39,17 @@ export class TestMessagesPageComponent implements OnInit {
   }
 
   update(): void {
+    let parsed: any;
     this.isModelError = false;
     try {
-      const j = JSON.parse(this.json);
-      this.channelModel.deserialize(j);
+      parsed = JSON.parse(this.json);
     }
     catch(e) {
       this.isModelError = true;
+      parsed = null;
+    }
+    if (parsed) {
+      this.channelModel.deserialize(parsed);
     }
   }
 

@@ -43,7 +43,7 @@ export class Thread {
 
     if (m.parentId) {
       let parent = this.getOrCreateMessage(m.parentId);
-      parent.addChild(m);
+      parent.addOrUpdateChild(m);
       if (m.isStarred) {
         m.important = true;
         parent.important = true;
@@ -62,8 +62,8 @@ export class Thread {
 
   public addDigestCopy(m: Message): Message {
     let c: Message;
+    const old = this.getMessage(m.id); // если такое сообщение уже есть в ветке
 
-    const old = this.getMessage(m.id);
     if (old) {
       // Если уже есть старое сообщение с таким id - вольём в него данные из нового
       c = old;
@@ -74,8 +74,9 @@ export class Thread {
 
     if (c.parentId) {
       let parent = this.getOrCreateMessage(c.parentId);
-      parent.addChild(c);
+      parent.addOrUpdateChild(c);
     } else {
+      // Это рутовое сообщение этой ветки
       this.root = c;
     }
 
@@ -179,6 +180,7 @@ export class Thread {
     }
   }
 
+  // На основе ветки создаёт новую - серую, укороченную
   public buildDigest(): Thread {
     let starredMessage: Message;
     let dm: Message;
@@ -187,18 +189,19 @@ export class Thread {
     dt.isDigest = true;
     dt.starredMaxId = this.starredMaxId;
 
-    // Строим серые деревья (дайджесты)
-
+    console.log(`ВЕТКА ${this.root.text}`);
     for (let i = 0; i < this.starred.length; i++) {
       starredMessage = this.starred[i];
+      console.log(`   звезданутое сообщение ${starredMessage.text}`); // <<<<<<<<<<<<<<<<<<<<<<<<
       m = starredMessage;
       while (m) {
         dm = dt.addDigestCopy(m);
+        console.log(`      создаём копию сообщения ${dm.text}`); // <<<<<<<<<<<<<<<<<<<<<<<<
         m = m.parent;
       }
     }
 
-    // Строим схлопы в дайджестах
+    // Строим схлопы
 
     this.shlops.length = 0;
     this.findShlops(dt.root);
@@ -215,14 +218,13 @@ export class Thread {
 
       let startParent = shlop.start.parent;
       startParent?.removeChild(shlop.start); // ВНИМАНИЕ! Мы удаляем детей сообщения, но они всё ещё фигурируют в хеше дерева (map)
-      startParent?.addChild(s);
+      startParent?.addOrUpdateChild(s);
       shlop.finish.transferChildrenTo(s);
     }
 
-    // Сортируем построенное дерево
+    // Сортируем и возвращаем
 
     dt.sort();
-
     return dt;
   }
 
@@ -237,7 +239,7 @@ export class Thread {
     let parent = m.parent;
     m.transferChildrenTo(m.shlop.finish); // Дети, которые крепились к схлоп-сообщению, вешаются в конец схлопнутой последовательности
     parent?.removeChild(m);
-    parent?.addChild(m.shlop.start);
+    parent?.addOrUpdateChild(m.shlop.start);
     this.sort();
   }
 
