@@ -9,9 +9,9 @@
 
 <div class="messages" *ngIf="!!channelModel">
   <ng-container *ngIf="!isModelError">
-    <div class="thread" [class.thread-gray]="t.isDigest" *ngFor="let t of channelModel.threads">
-      <app-messages [placeId]="channel.id_place" [messages]="[t.root]" [showChildren]="t.isDigest || t.isExpanded"></app-messages>
-      <a class="expand" href *ngIf="t.commentsCount > 0 && !(t.isDigest || t.isExpanded)" (click)="onExpandClick($event, t)">{{t.commentsCountText}}</a>
+    <div class="thread" [class.thread-gray]="t.isGray" *ngFor="let t of channelModel.threads">
+      <app-messages [placeId]="channel.id_place" [messages]="[t.root]" [showChildren]="t.isGray || t.isExpanded"></app-messages>
+      <a class="expand" href *ngIf="t.commentsCount > 0 && !(t.isGray || t.isExpanded)" (click)="onExpandClick($event, t)">{{t.commentsCountText}}</a>
     </div>
   </ng-container>
   <ng-container *ngIf="isModelError">

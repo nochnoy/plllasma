@@ -8,14 +8,14 @@ export const BLANK_THREAD = <Thread>{};
 export class Thread {
 
   constructor(rootId: number) {
-    this.rootId = rootId;
+    this.rootMessageId = rootId;
   }
 
-  public rootId: number;
+  public rootMessageId: number;
   public root: Message = BLANK_MESSAGE;
   public starred = new Array<Message>();
   public starredMaxId = 0;
-  public isDigest = false;
+  public isGray = false;
   public isExpanded = false;
   public commentsCount: number = 0;
   public commentsCountText = '';
@@ -39,7 +39,7 @@ export class Thread {
 
   public addMessage(rawMessage: any): Message {
     let m = this.getOrCreateMessage(rawMessage.id);
-    m.deserialize(rawMessage, this.rootId);
+    m.deserialize(rawMessage, this.rootMessageId);
 
     if (m.parentId) {
       let parent = this.getOrCreateMessage(m.parentId);
@@ -60,34 +60,39 @@ export class Thread {
     return m;
   }
 
-  public addDigestCopy(m: Message): Message {
-    let c: Message;
-    const old = this.getMessage(m.id); // если такое сообщение уже есть в ветке
+  /***
+   * Берёт оригинальное сообщение и создаёт его серую копию в этой ветке. Для строительства серых веток.
+   * @param nonGrayMessage
+   */
+  public addGrayMessage(nonGrayMessage: Message): Message {
+    let grayMessage: Message;
+    const old = this.getMessage(nonGrayMessage.id); // если такое сообщение уже есть в ветке
 
     if (old) {
       // Если уже есть старое сообщение с таким id - вольём в него данные из нового
-      c = old;
-      c.merge(m);
+      grayMessage = old;
+      grayMessage.merge(nonGrayMessage);
     } else {
-      c = m.clone();
+      grayMessage = nonGrayMessage.clone();
+      this.map.set(grayMessage.id, grayMessage);
     }
 
-    if (c.parentId) {
-      let parent = this.getOrCreateMessage(c.parentId);
-      parent.addOrUpdateChild(c);
+    if (grayMessage.parentId) {
+      let parent = this.getOrCreateMessage(grayMessage.parentId);
+      parent.addOrUpdateChild(grayMessage);
     } else {
       // Это рутовое сообщение этой ветки
-      this.root = c;
+      this.root = grayMessage;
     }
 
-    c.thread = this; // А то всякие мерджи давали ему ссылку на оригинальное дерево
+    grayMessage.thread = this; // А то всякие мерджи давали ему ссылку на оригинальное дерево
 
     // Серыми становятся все сообщения в дайджесте кроме звезданутых
-    if (!c.isStarred) {
-      c.display = MessageDisplayType.GRAY;
+    if (!grayMessage.isStarred) {
+      grayMessage.display = MessageDisplayType.GRAY;
     }
 
-    return c;
+    return grayMessage;
   }
 
   private getMessage(id: number): Message | undefined {
@@ -180,31 +185,30 @@ export class Thread {
     }
   }
 
-  // На основе ветки создаёт новую - серую, укороченную
-  public buildDigest(): Thread {
+  buildGrayThread(): Thread {
     let starredMessage: Message;
-    let dm: Message;
-    let m: Message | undefined;
-    let dt = new Thread(this.rootId);
-    dt.isDigest = true;
-    dt.starredMaxId = this.starredMaxId;
+    let grayMessage: Message;
+    let message: Message | undefined;
+    let grayThread = new Thread(this.rootMessageId);
+    grayThread.isGray = true;
+    grayThread.starredMaxId = this.starredMaxId;
 
-    console.log(`ВЕТКА ${this.root.text}`);
     for (let i = 0; i < this.starred.length; i++) {
       starredMessage = this.starred[i];
-      console.log(`   звезданутое сообщение ${starredMessage.text}`); // <<<<<<<<<<<<<<<<<<<<<<<<
-      m = starredMessage;
-      while (m) {
-        dm = dt.addDigestCopy(m);
-        console.log(`      создаём копию сообщения ${dm.text}`); // <<<<<<<<<<<<<<<<<<<<<<<<
-        m = m.parent;
+      message = starredMessage;
+      while (message) {
+        grayMessage = grayThread.addGrayMessage(message);
+        message = message.parent;
       }
     }
 
-    // Строим схлопы
+    grayThread.sort();
+    return grayThread;
+  }
 
+  buildShlops(): void {
     this.shlops.length = 0;
-    this.findShlops(dt.root);
+    this.findShlops(this.root);
 
     let shlop: Shlop;
     for (let i = 0; i < this.shlops.length; i++) {
@@ -214,18 +218,20 @@ export class Thread {
       let s = new ShlopMessage(shlop);
       s.id = shlop.start.id;
       s.display = MessageDisplayType.SHLOP;
-      s.thread = dt;
+      s.thread = this;
 
       let startParent = shlop.start.parent;
       startParent?.removeChild(shlop.start); // ВНИМАНИЕ! Мы удаляем детей сообщения, но они всё ещё фигурируют в хеше дерева (map)
       startParent?.addOrUpdateChild(s);
       shlop.finish.transferChildrenTo(s);
     }
+  }
 
-    // Сортируем и возвращаем
-
-    dt.sort();
-    return dt;
+  // На основе ветки создаёт новую - серую, укороченную
+  public buildDigest(): Thread {
+    const t = this.buildGrayThread();
+    t.buildShlops();
+    return t;
   }
 
   public unshlop(m: ShlopMessage) {

@@ -59,7 +59,7 @@ export class TestMessagesPageComponent implements OnInit {
       thread.isExpanded = true;
     } else {
       of({}).pipe(
-        switchMap(() => this.appService.getThread$(thread.rootId, this.channel.time_viewed)),
+        switchMap(() => this.appService.getThread$(thread.rootMessageId, this.channel.time_viewed)),
         tap((input: any) => {
           thread.addMessages(input.messages);
           thread.isExpanded = true;

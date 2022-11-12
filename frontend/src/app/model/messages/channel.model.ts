@@ -41,7 +41,7 @@ export class Channel {
                     starredTrees.push(t);
                 }
             } else {
-                console.warn('Ignoring child of unexistent root message ' + t.rootId);
+                console.warn('Ignoring child of unexistent root message ' + t.rootMessageId);
             }
         }
 
@@ -54,18 +54,19 @@ export class Channel {
                 t.isExpanded = true; // тупо раскроем его
             } else {
               // Из ветки создаёт новую - серую, укороченную
-              this.threads.unshift(t.buildDigest());
+              const digestThread = t.buildDigest();
+              this.threads.unshift(digestThread);
             }
         }
 
         // Сортируем канал - вверху дайджесты, дальше всё по убыванию id
 
         this.threads.sort((a:Thread, b:Thread): number => {
-            if (a.isDigest && !b.isDigest) {
+            if (a.isGray && !b.isGray) {
                 return -1;
-            } else if (!a.isDigest && b.isDigest) {
+            } else if (!a.isGray && b.isGray) {
                 return 1;
-            } else if (a.isDigest && b.isDigest) {
+            } else if (a.isGray && b.isGray) {
                 if (a.starredMaxId > b.starredMaxId) {
                     return -1;
                 } else if (a.starredMaxId < b.starredMaxId) {
@@ -73,10 +74,10 @@ export class Channel {
                 } else {
                     return 0;
                 }
-            } else if (!a.isDigest && !b.isDigest) {
-                if (a.rootId > b.rootId) {
+            } else if (!a.isGray && !b.isGray) {
+                if (a.rootMessageId > b.rootMessageId) {
                     return -1;
-                } else if (a.rootId < b.rootId) {
+                } else if (a.rootMessageId < b.rootMessageId) {
                     return 1;
                 } else {
                     return 0;
