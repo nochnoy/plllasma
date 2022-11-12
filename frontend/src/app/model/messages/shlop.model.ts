@@ -7,8 +7,7 @@ export class Shlop {
     length: number = 0;
     lengthText: string = '';
 
-    public setLength(value:number) {
-        this.length = value;
-        this.lengthText = 'Скрыто ' + this.length + Utils.chisl(this.length, ['сообщение', 'сообщения', 'сообщений']);
+    public updateLengthText() {
+        this.lengthText = `Скрыто ${this.length} ${Utils.chisl(this.length, ['сообщение', 'сообщения', 'сообщений'])}`;
     }
 }

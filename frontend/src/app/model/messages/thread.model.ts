@@ -144,7 +144,8 @@ export class Thread {
         case m.important:           // потому что это родитель сообщения со звёздочкой
           // Если мы были в процессе набора схлопа - закрываем его
           if (shlop) {
-            if (shlop.length > 2) {
+            if (shlop.length > 1) {
+              shlop.updateLengthText();
               this.shlops.push(shlop);
             }
             shlop = undefined; // Этот схлоп закончился. Ищем следующий.
