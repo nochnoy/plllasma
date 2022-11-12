@@ -46,6 +46,33 @@ function getChannelJson($channelId, $lastViewed) {
 	return '['.buildMessagesJson($a, $lastViewed).']';
 }
 
+// Возвращает JSON с сообщениями канала, появившимися после $after
+function getChannelUpdateJson($channelId, $lastViewed, $after) {
+	global $mysqli;
+
+	$a = array();
+	$rootIds = array();
+	$childIds = array();
+
+	// Получаем из БД страницу из 50 сообщений верхнего уровня
+
+	$sql  = 'SELECT';
+	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments';
+	$sql .= ' FROM tbl_messages';
+	$sql .= ' WHERE id_place='.$channelId.' AND time_created>'.$after;
+	$sql .= ' ORDER BY time_created DESC';
+	$sql .= ' LIMIT 50';
+	$result = mysqli_query($mysqli, $sql);
+
+	while ($row = mysqli_fetch_array($result)) {
+		$a[$row[0]] = $row;
+	}
+
+	// Выводим всё полученное в JSON
+
+	return '['.buildMessagesJson($a, $lastViewed).']';
+}
+
 // Возвращает JSON с сообщениями ветки. Внимание, рутовое сообщение не присылается!
 function getThreadJson($threadId, $lastViewed) {
 	global $mysqli;
@@ -70,8 +97,8 @@ function getThreadJson($threadId, $lastViewed) {
 	return '['.buildMessagesJson($a, $lastViewed).']';
 }
 
-// Получает массив row'ов сообщений
-// Возвращает json c этими сообщениями
+// Получает плоский массив row'ов сообщений
+// Возвращает json c плоским массивом сообщений
 function buildMessagesJson($a, $lastViewed) {
 	$s = '';
 	foreach ($a as $key => $row) {
