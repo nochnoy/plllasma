@@ -74,7 +74,7 @@ export class Thread {
       grayMessage.merge(nonGrayMessage);
     } else {
       grayMessage = this.getOrCreateMessage(nonGrayMessage.id);
-      grayMessage.merge(nonGrayMessage.clone());
+      grayMessage.merge(nonGrayMessage);
     }
 
     if (grayMessage.parentId) {
