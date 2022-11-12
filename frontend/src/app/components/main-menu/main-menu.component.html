@@ -4,7 +4,9 @@
 </div>
 <div class="channels" *ngIf="channelService?.channels?.length">
   <div *ngFor="let city of channelService.cities">
-    <a *ngFor="let channel of city.children" [routerLink]="'/channel/' + channel.id_place">{{channel.name}}</a>
+    <a *ngFor="let channel of city.children"
+       [class.star]="channel.time_changed > channel.time_viewed"
+       [routerLink]="'/channel/' + channel.id_place">{{channel.name}}</a>
     <a routerLink="/test-messages">Стенд</a>
   </div>
 </div>

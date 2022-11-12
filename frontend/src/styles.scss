@@ -16,6 +16,7 @@
   --color-black: black;
   --color-gray: #757575;
   --color-page-bg: #D7CABB;
+  --color-star: rgb(241, 95, 95);
 
   --border-radius: 3px;
   --margin-standard: 0.4rem;
@@ -209,16 +210,11 @@ body {
 
 /* Звёздочки */
 
-u {
-  text-decoration: none;
-}
-u:after {
+.star:after {
   content: "●";
-  color: rgb(241, 95, 95);
-  font-size: 17px;
-  margin-left: 3px;
-  margin-right: 3px;
-  text-decoration: none;
+  color: var(--color-star);
+  font-size: 1rem;
+  padding-left: 0.2rem;
 }
 
 /* Иконки юзеров */
