@@ -73,8 +73,8 @@ export class Thread {
       grayMessage = old;
       grayMessage.merge(nonGrayMessage);
     } else {
-      grayMessage = nonGrayMessage.clone();
-      this.map.set(grayMessage.id, grayMessage);
+      grayMessage = this.getOrCreateMessage(nonGrayMessage.id);
+      grayMessage.merge(nonGrayMessage.clone());
     }
 
     if (grayMessage.parentId) {
