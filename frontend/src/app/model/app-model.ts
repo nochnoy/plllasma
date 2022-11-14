@@ -69,6 +69,8 @@ export interface IChannel {
   time_changed: string;
   time_viewed: string;
   weight: number;
+  selected?: boolean;
+  time_viewed_deferred?: string;
 }
 
 export interface ICity {

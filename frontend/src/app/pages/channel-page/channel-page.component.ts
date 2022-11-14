@@ -57,6 +57,22 @@ export class ChannelPageComponent implements OnInit {
         } else {
           this.channelModel = new Channel();
           this.channelModel.deserialize(input);
+
+          // Канал который был выбран до этого, актуализируют свою time_viewed и лишается звёздочки
+          this.channelService.channels
+            .filter((channel) => channel.id_place !== channelId)
+            .forEach((channel) => {
+              if (channel.time_viewed_deferred) {
+                channel.time_viewed = channel.time_viewed_deferred;
+                delete channel.time_viewed_deferred;
+              }
+            });
+
+          // Выбранный канал сохраняет time_viewed до момента когда мы с него уйдём
+          const channelAtMenu = this.channelService.channels.find((channel) => channel.id_place === channelId);
+          if (channelAtMenu) {
+            channelAtMenu.time_viewed_deferred = input.viewed;
+          }
         }
       })
     );

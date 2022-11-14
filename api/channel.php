@@ -1,5 +1,10 @@
 <? 
-// REST для получения канала
+/** REST для получения канала
+    Параметры:
+    cid     - id канала
+    lv      - дата последнего просмотра канала юзером
+    after   - (опциональный) - дата, после которой появились сообщения - пришлются только они
+*/
 
 include("include/main.php");
 
@@ -15,9 +20,9 @@ if (!canRead($placeId)) {
 
 if (!empty($after)) {
     // Передали параметр after - значит это получение обновлений о канале. Выдадим только обновившиеся сообщения.
-    $result = '{"id":'.$placeId.', "messages":'.getChannelUpdateJson($placeId, $lastViewed, $after).'}';
+    $messagesResult = getChannelUpdateJson($placeId, $lastViewed, $after);
 } else {
-    $result = '{"id":'.$placeId.', "messages":'.getChannelJson($placeId, $lastViewed).'}';
+    $messagesResult = getChannelJson($placeId, $lastViewed);
 }
 
 // Помечаем канал как просмотренный
@@ -25,5 +30,11 @@ $sql = $mysqli->prepare('UPDATE lnk_user_place SET time_viewed=NOW() WHERE id_pl
 $sql->bind_param("ii", $placeId, $user['id_user']);
 $sql->execute();
 
-exit($result);
+// Получаем время просмотра
+$sql = $mysqli->prepare('SELECT NOW()');
+$sql->execute();
+$result = $sql->get_result();
+$row = mysqli_fetch_array($result);
+
+exit('{"id":'.$placeId.', "messages":'.$messagesResult.', "viewed":"'.$row[0].'"}');
 ?>
