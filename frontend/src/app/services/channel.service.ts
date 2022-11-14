@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import {IChannel, ICity} from "../model/app-model";
+import {EMPTY_CHANNEL, IChannel, ICity} from "../model/app-model";
 import {Observable, of} from "rxjs";
 import {switchMap, tap} from "rxjs/operators";
 import {HttpService} from "./http.service";
@@ -51,7 +51,10 @@ export class ChannelService {
   }
 
   getChannel(channelId: number, time_viewed: string): Channel {
+    const channelAtMenu: IChannel = this.channels.find((c) => c.id_place === channelId) || {...EMPTY_CHANNEL};
     let channelModel = this.channelModels.get(channelId);
+
+    channelAtMenu.spinner = true;
 
     if (!channelModel) {
       channelModel = new Channel();
@@ -62,9 +65,12 @@ export class ChannelService {
     of({}).pipe(
       switchMap(() => this.httpService.getChannel$(channelId, time_viewed)),
       tap((input) => {
+        channelAtMenu.spinner = false;
+
         if (input.error) {
           console.error(`Сервер вернул ошибку ${input.error}`);
         } else {
+
           channelModel!.deserialize(input);
 
           // Канал который был выбран до этого, актуализируют свою time_viewed и лишается звёздочки

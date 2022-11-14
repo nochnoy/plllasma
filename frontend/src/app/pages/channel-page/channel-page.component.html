@@ -5,7 +5,7 @@
   <div class="middle">
     <ng-container *ngIf="channel">
       <header>
-        <h1>{{channel.name}}</h1>
+        <h1 [class.spinner]="channel.spinner">{{channel.name}}</h1>
         <p>{{channel.description}}</p>
       </header>
 

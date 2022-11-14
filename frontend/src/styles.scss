@@ -234,21 +234,22 @@ body {
 
 .spinner {
   display: inline-block;
-  &:before {
+  &:after {
+    margin-left: 0.2rem;
     content: '';
     box-sizing: border-box;
     position: absolute;
-    width: 2rem;
-    height: 2rem;
+    width: 1.2rem;
+    height: 1.2rem;
     border-radius: 50%;
     border: 2px solid rgba(0,0,0,0);
     border-top-color: #000;
     animation: spinner .6s linear infinite;
   }
-  &:after {
+  /*&:after {
     content: 'Загрузка';
     line-height: 2rem;
     margin-left: 2.3rem;
-  }
+  }*/
 
 }

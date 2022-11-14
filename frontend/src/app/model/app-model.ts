@@ -71,6 +71,7 @@ export interface IChannel {
   weight: number;
   selected?: boolean;
   time_viewed_deferred?: string;
+  spinner?: boolean;
 }
 
 export interface ICity {
