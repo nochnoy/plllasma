@@ -38,44 +38,12 @@ export class ChannelPageComponent implements OnInit {
         const channel = this.channelService.channels.find((channel) => channel.id_place === channelId);
         this.channel = channel ?? EMPTY_CHANNEL;
       }),
-      switchMap(() => {
+      tap(() => {
         if (this.channel !== EMPTY_CHANNEL) {
-          return this.load$(this.channel.id_place);
-        } else {
-          return of({});
+          this.channelModel = this.channelService.getChannel(this.channel.id_place, this.channel?.time_viewed ?? '');
         }
       }),
     ).subscribe();
-  }
-
-  load$(channelId: number): Observable<any> {
-    return of({}).pipe(
-      switchMap(() => this.appService.getChannel$(channelId, this.channel?.time_viewed ?? '')),
-      tap((input) => {
-        if (input.error) {
-          console.error(`Сервер вернул ошибку ${input.error}`);
-        } else {
-          this.channelModel = new Channel();
-          this.channelModel.deserialize(input);
-
-          // Канал который был выбран до этого, актуализируют свою time_viewed и лишается звёздочки
-          this.channelService.channels
-            .filter((channel) => channel.id_place !== channelId)
-            .forEach((channel) => {
-              if (channel.time_viewed_deferred) {
-                channel.time_viewed = channel.time_viewed_deferred;
-                delete channel.time_viewed_deferred;
-              }
-            });
-
-          // Выбранный канал сохраняет time_viewed до момента когда мы с него уйдём
-          const channelAtMenu = this.channelService.channels.find((channel) => channel.id_place === channelId);
-          if (channelAtMenu) {
-            channelAtMenu.time_viewed_deferred = input.viewed;
-          }
-        }
-      })
-    );
   }
 
   onExpandClick(event: any, thread: Thread) {
@@ -95,7 +63,7 @@ export class ChannelPageComponent implements OnInit {
   }
 
   onNewMessageCreated(): void {
-    this.load$(this.channel?.id_place ?? 0).subscribe();
+    this.channelModel = this.channelService.getChannel(this.channel.id_place, this.channel?.time_viewed ?? '');
   }
 
 }

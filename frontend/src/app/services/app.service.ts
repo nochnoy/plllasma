@@ -104,16 +104,6 @@ export class AppService {
       { observe: 'body', withCredentials: true })
   }
 
-  getChannel$(channelId:number, lastVieved:string): Observable<any> {
-    return this.httpClient.post(
-      `${this.apiPath}/channel.php`,
-      {
-        cid: channelId.toString(),
-        lv: lastVieved
-      },
-      { observe: 'body', withCredentials: true })
-  }
-
   getThread$(threadId:number, lastVieved:string) {
     return this.httpClient.post(
       `${this.apiPath}/thread.php`,

@@ -25,4 +25,14 @@ export class HttpService {
       })
     );
   }
+
+  getChannel$(channelId:number, lastVieved:string): Observable<any> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/channel.php`,
+      {
+        cid: channelId.toString(),
+        lv: lastVieved
+      },
+      { observe: 'body', withCredentials: true })
+  }
 }
