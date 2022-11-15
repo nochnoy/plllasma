@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+import {EventEmitter, Injectable} from '@angular/core';
 import {EMPTY_CHANNEL, IChannel, ICity} from "../model/app-model";
 import {Observable, of} from "rxjs";
 import {switchMap, tap} from "rxjs/operators";
 import {HttpService} from "./http.service";
 import {Channel} from "../model/messages/channel.model";
+import {Message} from "../model/messages/message.model";
 
 @Injectable({
   providedIn: 'root'
@@ -17,6 +18,8 @@ export class ChannelService {
   channels: IChannel[] = [];
   channelModels = new Map<number, Channel>();
   cities: ICity[] = [];
+  selectedMessage?: Message;
+  channelInvalidSignal = new EventEmitter<number>();
 
   loadChannels$(): Observable<any> {
     return of({}).pipe(
@@ -93,6 +96,18 @@ export class ChannelService {
     ).subscribe();
 
     return channelModel;
+  }
+
+  selectMessage(message: Message): void {
+    this.selectedMessage = message;
+  }
+
+  unselectMessage(): void {
+    delete this.selectedMessage;
+  }
+
+  invalidateChannel(channelId: number): void {
+    this.channelInvalidSignal.emit(channelId);
   }
 
 }

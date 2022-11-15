@@ -1,15 +1,14 @@
 <ng-container *ngFor="let message of messages">
-  <div class="msg"
+  <div class="message"
        [class.msg-root]="!message.parent"
        [class.msg-starred]="message.isStarred"
-       *ngIf="message != null"
-  >
+       *ngIf="message != null">
 
     <ng-container [ngSwitch]="message.display">
 
       <!-- Обычное сообщение (MessageDisplayType.NORMAL) -->
       <ng-container *ngSwitchCase="0">
-        <div class="text">
+        <div class="message-text" [class.message-text__selected]="message === channelService.selectedMessage" (click)="onMessageClick(message)">
           <img class="ico" [src]="'https://plllasma.com/i/' + message.icon +'.gif'" />
           <b [class.star]="message.isStarred">{{message.nick}}</b><br>
           <span *ngIf="!!message.text" [innerHTML]="message.text | linky"></span>
@@ -21,6 +20,10 @@
             <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
           </a>
         </ng-container>
+        <app-message-form-small *ngIf="message === channelService.selectedMessage"
+                                [channelId]="placeId" [parentMessage]="message"
+                                (onPost)="onNewMessageCreated()">
+        </app-message-form-small>
       </ng-container>
 
       <!-- Серое сообщение (MessageDisplayType.GRAY) -->

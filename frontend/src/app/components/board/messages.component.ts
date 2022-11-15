@@ -1,17 +1,19 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Message, MessageDisplayType} from "../../model/messages/message.model";
 import {ShlopMessage} from "../../model/messages/shlop-message.model";
 import {AppService} from "../../services/app.service";
+import {ChannelService} from "../../services/channel.service";
 
 @Component({
   selector: 'app-messages',
   templateUrl: './messages.component.html',
   styleUrls: ['./messages.component.scss']
 })
-export class MessagesComponent implements OnInit {
+export class MessagesComponent {
 
   constructor(
     public appService: AppService,
+    public channelService: ChannelService,
   ) {}
 
   public ShlopMessageRef = ShlopMessage;
@@ -25,10 +27,6 @@ export class MessagesComponent implements OnInit {
   @Input('showChildren')
   public showChildren: boolean = true;
 
-  ngOnInit() {
-
-  }
-
   public unshlop(event: any, message: Message) {
     event.preventDefault();
     if (message instanceof ShlopMessage) {
@@ -40,5 +38,14 @@ export class MessagesComponent implements OnInit {
   unfoldGray(event: any, message: Message) {
     event.preventDefault();
     message.display = MessageDisplayType.NORMAL;
+  }
+
+  onMessageClick(message: Message): void {
+    this.channelService.selectMessage(message);
+  }
+
+  onNewMessageCreated(): void {
+    //this.channelService.getChannel(this.placeId, this.channel?.time_viewed ?? '');
+    this.channelService.invalidateChannel(this.placeId);
   }
 }

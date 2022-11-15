@@ -1,22 +1,24 @@
 import {Component, EventEmitter, HostListener, Input, Output} from '@angular/core';
-import {AppService} from "../services/app.service";
+import {AppService} from "../../services/app.service";
 import {switchMap, tap} from "rxjs/operators";
-import {IChannel, IUploadingAttachment} from "../model/app-model";
-import {Utils} from "../utils/utils";
-import {Const} from "../model/const";
+import {IChannel, IUploadingAttachment} from "../../model/app-model";
+import {Utils} from "../../utils/utils";
+import {Const} from "../../model/const";
+import {Message} from "../../model/messages/message.model";
 @Component({
-  selector: 'app-message-form',
-  templateUrl: './message-form.component.html',
-  styleUrls: ['./message-form.component.scss']
+  selector: 'app-message-form-small',
+  templateUrl: './message-form-small.component.html',
+  styleUrls: ['./message-form-small.component.scss']
 })
-export class MessageFormComponent {
+export class MessageFormSmallComponent {
 
   constructor(
     public appService: AppService
   ) { }
 
-  @Input('channel') channel?: IChannel;
-  @Output('onPost') onNewMessageCreated  = new EventEmitter<string>();
+  @Input('channelId') channelId!: number;
+  @Input('parentMessage') parentMessage?: Message;
+  @Output('onPost') onNewMessageCreated = new EventEmitter<string>();
   messageText: string = '';
   attachments: IUploadingAttachment[] = [];
   isDragging = false;
@@ -55,9 +57,9 @@ export class MessageFormComponent {
   }
 
   onSendClick(): void {
-    if (this.channel) {
+    if (this.parentMessage) {
       this.isSending = true;
-      this.appService.addMessage$(this.channel?.id_place, this.messageText, 0, this.attachments)
+      this.appService.addMessage$(this.channelId, this.messageText, this.parentMessage.id, this.attachments)
         .pipe(
           tap((result: any) => {
             this.isSending = false;

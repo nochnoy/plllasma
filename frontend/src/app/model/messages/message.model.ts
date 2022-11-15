@@ -14,14 +14,9 @@ export class Message {
   icon = '';
   text = '';
   timeCreated = '';
-  isDigest = false;
   isStarred = false;
   important = false; // не схлопывать это сообщение в серых деревьях. Оно важное.
   commentsCount = 0; // присылаемое с сервера кол-во комментов для рутовых сообщений (когда сами комменты ещё не подгружены)
-
-  // debug
-  isShloped = false;
-  isHighlighted = false;
 
   parent?: Message;
   children?: Array<Message>;

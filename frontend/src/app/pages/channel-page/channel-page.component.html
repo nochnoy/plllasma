@@ -14,7 +14,7 @@
       <main class="messages" *ngIf="!!channelModel">
         <div class="thread" [class.thread-gray]="t.isGray" *ngFor="let t of channelModel.threads">
           <app-messages [placeId]="channel.id_place" [messages]="[t.root]" [showChildren]="t.isGray || t.isExpanded"></app-messages>
-          <a class="expand" href *ngIf="t.commentsCount > 0 && !(t.isGray || t.isExpanded)" (click)="onExpandClick($event, t)">{{t.commentsCountText}}</a>
+          <a class="expand" [class.spinner]="isExpanding === t" href *ngIf="t.commentsCount > 0 && !(t.isGray || t.isExpanded)" (click)="onExpandClick($event, t)">{{t.commentsCountText}}</a>
         </div>
       </main>
 

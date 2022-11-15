@@ -1,13 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import {AppService} from "../../services/app.service";
 import {ActivatedRoute} from "@angular/router";
-import {Observable, of} from "rxjs";
+import {of} from "rxjs";
 import {switchMap, tap} from "rxjs/operators";
 import {EMPTY_CHANNEL, IChannel} from "../../model/app-model";
 import {Channel} from "../../model/messages/channel.model";
 import {Thread} from "../../model/messages/thread.model";
 import {ChannelService} from "../../services/channel.service";
+import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 
+@UntilDestroy()
 @Component({
   selector: 'app-channel-page',
   templateUrl: './channel-page.component.html',
@@ -24,6 +26,7 @@ export class ChannelPageComponent implements OnInit {
   readonly defaultChannelId = 1;
   channel: IChannel = EMPTY_CHANNEL;
   channelModel?: Channel;
+  isExpanding?: Thread;
 
   ngOnInit(): void {
     of({}).pipe(
@@ -37,32 +40,53 @@ export class ChannelPageComponent implements OnInit {
         }
         const channel = this.channelService.channels.find((channel) => channel.id_place === channelId);
         this.channel = channel ?? EMPTY_CHANNEL;
+        this.channelService.unselectMessage();
       }),
       tap(() => {
         if (this.channel !== EMPTY_CHANNEL) {
           this.channelModel = this.channelService.getChannel(this.channel.id_place, this.channel?.time_viewed ?? '');
         }
       }),
+      untilDestroyed(this)
     ).subscribe();
+
+    this.channelService.channelInvalidSignal.pipe(
+      tap((channelId) => {
+        if (this.channel && this.channel.id_place === channelId) {
+          this.onChannelInvalidated();
+        }
+      }),
+      untilDestroyed(this)
+    ).subscribe();
+
   }
 
   onExpandClick(event: any, thread: Thread) {
     event.preventDefault();
 
-    if (thread.isLoaded) {
-      thread.isExpanded = true;
-    } else {
-      of({}).pipe(
-        switchMap(() => this.appService.getThread$(thread.rootMessageId, this.channel.time_viewed)),
-        tap((input: any) => {
-          thread.addMessages(input.messages);
-          thread.isExpanded = true;
-        })
-      ).subscribe();
+    if (!this.isExpanding) {
+      if (thread.isLoaded) {
+        thread.isExpanded = true;
+      } else {
+        this.isExpanding = thread;
+        of({}).pipe(
+          switchMap(() => this.appService.getThread$(thread.rootMessageId, this.channel.time_viewed)),
+          tap((input: any) => {
+            thread.addMessages(input.messages);
+            thread.isExpanded = true;
+            delete this.isExpanding;
+          }),
+          untilDestroyed(this)
+        ).subscribe();
+      }
     }
   }
 
   onNewMessageCreated(): void {
+    this.channelService.invalidateChannel(this.channel.id_place);
+  }
+
+  onChannelInvalidated(): void {
     this.channelModel = this.channelService.getChannel(this.channel.id_place, this.channel?.time_viewed ?? '');
   }
 

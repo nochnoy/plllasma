@@ -15,9 +15,10 @@ import { ChannelPageComponent } from './pages/channel-page/channel-page.componen
 import { MainMenuComponent } from './components/main-menu/main-menu.component';
 import { MessagesComponent } from './components/board/messages.component';
 import { AsPipe } from './pipes/as.pipe';
-import { MessageFormComponent } from './message-form/message-form.component';
+import { MessageFormComponent } from './components/message-form/message-form.component';
 import {LinkyModule} from "ngx-linky";
 import { TestMessagesPageComponent } from './pages/test-messages-page/test-messages-page.component';
+import {MessageFormSmallComponent} from "./components/message-form-small/message-form-small.component";
 
 @NgModule({
   imports: [
@@ -41,6 +42,7 @@ import { TestMessagesPageComponent } from './pages/test-messages-page/test-messa
     MessagesComponent,
     AsPipe,
     MessageFormComponent,
+    MessageFormSmallComponent,
     TestMessagesPageComponent,
   ],
   providers: [AppGuard],

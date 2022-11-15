@@ -21,7 +21,7 @@
   </div>
   <div class="send-button">
     <button *ngIf="!isSending" (click)="onSendClick()">Отправить</button>
-    <div class="spinner" *ngIf="isSending"></div>
+    <div class="spinner" *ngIf="isSending">Загрузка</div>
   </div>
 </div>
 
