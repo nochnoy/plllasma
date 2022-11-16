@@ -149,6 +149,7 @@ body {
       cursor: pointer;
       a {
         pointer-events: none;
+        color: black!important;
       }
     }
 
@@ -157,13 +158,13 @@ body {
     }
 
     a {
-      color: black;
+      color: blue;
       text-decoration: none;
       &:hover {
         text-decoration: underline;
       }
       &:visited {
-        color: black;
+        color: blue;
       }
     }
   }
