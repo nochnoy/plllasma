@@ -18,7 +18,6 @@ import { AsPipe } from './pipes/as.pipe';
 import { MessageFormComponent } from './components/message-form/message-form.component';
 import {LinkyModule} from "ngx-linky";
 import { TestMessagesPageComponent } from './pages/test-messages-page/test-messages-page.component';
-import {MessageFormSmallComponent} from "./components/message-form-small/message-form-small.component";
 
 @NgModule({
   imports: [
@@ -42,7 +41,6 @@ import {MessageFormSmallComponent} from "./components/message-form-small/message
     MessagesComponent,
     AsPipe,
     MessageFormComponent,
-    MessageFormSmallComponent,
     TestMessagesPageComponent,
   ],
   providers: [AppGuard],

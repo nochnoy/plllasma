@@ -1,7 +1,7 @@
 :host {
   display: flex;
   flex-direction: column;
-  max-width: 55rem;
+  max-width: 40rem;
 
   .user {
     margin-bottom: 0.2rem;
@@ -11,149 +11,157 @@
       width: 16px;
       height: 16px;
       margin-bottom: -1px;
+      margin-right: 0.2rem;
       background-image: url('../../../assets/ghost.gif');
     }
   }
 
   .middle {
     display: flex;
-    flex-direction: row;
-    align-items: flex-end;
-    flex-grow: 1;
+    flex-direction: column;
+    align-items: stretch;
 
-    .inputs {
+    padding: 0.6rem;
+    background-color: white;
+    border: 1px solid #c5b9ac;
+    border-radius: 0.2rem;
+
+    &--drop {
+      border: 2px dashed black;
+    }
+
+    textarea {
       flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      padding: 0.8rem;
-      background-color: white;
-      border: 1px solid #c5b9ac;
-      border-radius: 0.2rem;
+      min-height: 4rem;
+      border: 0;
+      resize: none;
+      background: none;
 
-      &--drop {
-        background-color: #d6e8c6;
+      &:focus {
+        outline: 0;
       }
+    }
 
-      textarea {
-        min-height: 5rem;
-        border: 0;
-        resize: none;
-        background: none;
+    .tools {
+      min-height: 2rem;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-end;
 
-        &:focus {
-          outline: 0;
+      &-attach {
+        display: flex;
+        flex-direction: column;
+
+        &-buttons {
+          button {
+            height: 1.2rem;
+            width: 1.2rem;
+            line-height: 0.6rem;
+            padding: 0;
+          }
+          label {
+            font-size: 0.9rem;
+            color: gray;
+            margin-left: 0.4rem;
+          }
         }
       }
 
-      .tools {
+      &-send {
         display: flex;
         flex-direction: row;
-        justify-content: flex-start;
-        align-items: center;
-
+        justify-content: flex-end;
+        height: 2rem;
+        width: 12rem;
         button {
-          height: 1.4rem;
-          width: 1.4rem;
-        }
-
-        label {
+          width: 6rem;
+          height: 2rem;
           font-size: 0.9rem;
-          color: gray;
-          margin-left: 0.6rem;
+        }
+        .spinner {
+          height: 2rem;
+          line-height: 2rem;
+          margin-right: 2rem;
         }
       }
-
     }
 
-    .send-button {
-      height: 2.2rem;
-      width: 7rem;
-      margin-left: 1rem;
-      margin-bottom: 1.4rem;
-
-      button {
-        width: 100%;
-        height: 100%;
-        font-size: 0.9rem;
-      }
-    }
   }
+}
 
-  .attachments {
-    display: flex;
-    flex-wrap: wrap;
-    flex-direction: row;
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+
+  .attachment {
+    width: 80px; min-width: 80px;
+    height: 80px; min-height: 80px;
+    background-color: black;
+    border-radius: 0.2rem;
+    margin-right: 0.5rem;
     margin-bottom: 0.5rem;
 
-    .attachment {
-      width: 80px; min-width: 80px;
-      height: 80px; min-height: 80px;
-      background-color: black;
-      border-radius: 0.2rem;
-      &:not(:last-child) {
-        margin-right: 0.5rem;
+    .imagecontainer {
+      position: absolute;
+      z-index: 1;
+      width: 80px;
+      height: 80px;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+
+      img {
+        max-width: 80px;
+        max-height: 80px;
       }
+    }
 
-      .imagecontainer {
-        position: absolute;
-        z-index: 1;
-        width: 80px;
-        height: 80px;
+    .error {
+      position: absolute;
+      z-index: 2;
+      width: 80px;
+      height: 80px;
 
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
 
-        img {
-          max-width: 80px;
-          max-height: 80px;
-        }
-      }
-
-      .error {
-        position: absolute;
-        z-index: 2;
-        width: 80px;
-        height: 80px;
-
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-        align-items: center;
-
-        * {
-          color: white;
-          font-size: 0.9rem;
-          text-align: center;
-          vertical-align: center;
-          background-color: red;
-        }
-
-      }
-
-      .remove {
-        opacity: 0;
-        position: relative;
-        z-index: 3;
-        width: 80px;
-        height: 80px;
+      * {
         color: white;
-        display: flex;
-        flex-direction: row;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        font-size: 80px;
-        font-family: sans-serif;
-
-        &:hover {
-          opacity: 100%;
-        }
+        font-size: 0.9rem;
+        text-align: center;
+        vertical-align: center;
+        background-color: red;
       }
 
     }
+
+    .remove {
+      opacity: 0;
+      position: relative;
+      z-index: 3;
+      width: 80px;
+      height: 80px;
+      color: white;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      font-size: 80px;
+      font-family: sans-serif;
+
+      &:hover {
+        opacity: 100%;
+      }
+    }
+
   }
 }
 

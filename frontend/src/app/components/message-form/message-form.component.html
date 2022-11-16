@@ -1,28 +1,38 @@
-<div class="middle">
-  <div class="inputs"
-       (dragover)="onDragOver($event)"
-       (dragleave)="onDragLeave($event)"
-       (drop)="onDropSuccess($event)"
-       (dragend)="onDragEnd()"
-       [class.inputs--drop]="isDragging">
-    <div class="user"><div class="icon"></div> Привидение</div>
-    <textarea autofocus  [disabled]="isSending" [(ngModel)]="messageText"></textarea>
-    <div class="attachments" *ngIf="attachments && attachments.length">
-      <div *ngFor="let attachment of attachments" class="attachment" [title]="'Удалить ' + attachment.file.name">
-        <div class="imagecontainer"><img *ngIf="attachment.isImage" [src]="attachment.bitmap"></div>
-        <div *ngIf="attachment.error" class="error"><div>{{attachment.error}}</div></div>
-        <div class="remove" (click)="onremoveClick(attachment)">X</div>
+<div class="middle"
+     (dragover)="onDragOver($event)"
+     (dragleave)="onDragLeave($event)"
+     (drop)="onDropSuccess($event)"
+     (dragend)="onDragEnd()"
+     [class.middle--drop]="isDragging">
+
+  <div class="user"><div class="icon"></div>Привидение</div>
+
+  <textarea autofocus [disabled]="isSending" [(ngModel)]="messageText"></textarea>
+
+  <div class="tools">
+    <div class="tools-attach">
+      <div class="attachments" *ngIf="attachments && attachments.length">
+        <div *ngFor="let attachment of attachments" class="attachment" [title]="'Удалить ' + attachment.file.name">
+          <div class="imagecontainer"><img *ngIf="attachment.isImage" [src]="attachment.bitmap"></div>
+          <div *ngIf="attachment.error" class="error"><div>{{attachment.error}}</div></div>
+          <div class="remove" (click)="onremoveClick(attachment)">X</div>
+        </div>
+      </div>
+      <div class="tools-attach-buttons">
+        <button (click)="fileUpload.click()"
+                (mouseover)="dnd.hidden = false"
+                (mouseout)="dnd.hidden = true"
+                [disabled]="isSending">+
+        </button>
+        <label>Файлы<span #dnd hidden="true">. Можно драг-н-дропом. До 50 MB.</span></label>
       </div>
     </div>
-    <div class="tools">
-      <button [disabled]="isSending" (click)="fileUpload.click()">+</button>
-      <label>Добавить файлы (можно драг-н-дропом)</label>
+    <div  class="tools-send">
+      <button *ngIf="!isSending" (click)="onSendClick()">Отправить</button>
+      <div class="spinner" *ngIf="isSending">Загрузка</div>
     </div>
   </div>
-  <div class="send-button">
-    <button *ngIf="!isSending" (click)="onSendClick()">Отправить</button>
-    <div class="spinner" *ngIf="isSending">Загрузка</div>
-  </div>
+
 </div>
 
 <input #fileUpload id="fileUpload" type="file" multiple (change)="onFilesSelected($event)" />

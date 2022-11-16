@@ -20,10 +20,10 @@
             <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
           </a>
         </ng-container>
-        <app-message-form-small *ngIf="message === channelService.selectedMessage"
+        <app-message-form *ngIf="message === channelService.selectedMessage"
                                 [channelId]="placeId" [parentMessage]="message"
                                 (onPost)="onNewMessageCreated()">
-        </app-message-form-small>
+        </app-message-form>
       </ng-container>
 
       <!-- Серое сообщение (MessageDisplayType.GRAY) -->

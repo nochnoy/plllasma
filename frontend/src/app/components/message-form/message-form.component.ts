@@ -4,6 +4,7 @@ import {switchMap, tap} from "rxjs/operators";
 import {IChannel, IUploadingAttachment} from "../../model/app-model";
 import {Utils} from "../../utils/utils";
 import {Const} from "../../model/const";
+import {Message} from "../../model/messages/message.model";
 @Component({
   selector: 'app-message-form',
   templateUrl: './message-form.component.html',
@@ -15,7 +16,8 @@ export class MessageFormComponent {
     public appService: AppService
   ) { }
 
-  @Input('channel') channel?: IChannel;
+  @Input('channelId') channelId!: number;
+  @Input('parentMessage') parentMessage?: Message;
   @Output('onPost') onNewMessageCreated = new EventEmitter<string>();
   messageText: string = '';
   attachments: IUploadingAttachment[] = [];
@@ -55,18 +57,16 @@ export class MessageFormComponent {
   }
 
   onSendClick(): void {
-    if (this.channel) {
-      this.isSending = true;
-      this.appService.addMessage$(this.channel?.id_place, this.messageText, 0, this.attachments)
-        .pipe(
-          tap((result: any) => {
-            this.isSending = false;
-            this.attachments.length = 0;
-            this.messageText = '';
-            this.onNewMessageCreated.emit(this.messageText);
-          }),
-        ).subscribe();
-    }
+    this.isSending = true;
+    this.appService.addMessage$(this.channelId, this.messageText, this.parentMessage?.id || 0, this.attachments)
+      .pipe(
+        tap((result: any) => {
+          this.isSending = false;
+          this.attachments.length = 0;
+          this.messageText = '';
+          this.onNewMessageCreated.emit(this.messageText);
+        }),
+      ).subscribe();
   }
 
   onFilesSelected(event: any): void {
