@@ -66,7 +66,7 @@ export class ChannelService {
     }
 
     of({}).pipe(
-      switchMap(() => this.httpService.getChannel$(channelId, time_viewed, true)),
+      switchMap(() => this.httpService.getChannel$(channelId, time_viewed, false)),
       tap((input) => {
         channelAtMenu.spinner = false;
 
