@@ -16,8 +16,8 @@ import { MainMenuComponent } from './components/main-menu/main-menu.component';
 import { MessagesComponent } from './components/board/messages.component';
 import { AsPipe } from './pipes/as.pipe';
 import { MessageFormComponent } from './components/message-form/message-form.component';
-import {LinkyModule} from "ngx-linky";
 import { TestMessagesPageComponent } from './pages/test-messages-page/test-messages-page.component';
+import { LinkyPipe } from './pipes/linky.pipe';
 
 @NgModule({
   imports: [
@@ -27,8 +27,7 @@ import { TestMessagesPageComponent } from './pages/test-messages-page/test-messa
     ScrollingModule,
     RouterModule,
     AppRoutingModule,
-    ReactiveFormsModule,
-    LinkyModule
+    ReactiveFormsModule
   ],
   declarations: [
     AppComponent,
@@ -42,6 +41,7 @@ import { TestMessagesPageComponent } from './pages/test-messages-page/test-messa
     AsPipe,
     MessageFormComponent,
     TestMessagesPageComponent,
+    LinkyPipe,
   ],
   providers: [AppGuard],
   bootstrap: [AppComponent]
