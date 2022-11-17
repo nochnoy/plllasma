@@ -141,7 +141,6 @@ body {
   color: var(--color-black);
 
   &-text {
-    width: 100%;
     min-width: 200px;
     padding: 0;
     margin: 0;
@@ -205,9 +204,9 @@ body {
 
 .text-gray {
   margin-bottom: 2px;
-  white-space: nowrap;
+  /*white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: ellipsis;*/
   color: var(--color-gray);
   cursor: pointer;
 }
