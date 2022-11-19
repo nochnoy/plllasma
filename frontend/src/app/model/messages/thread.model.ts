@@ -251,7 +251,8 @@ export class Thread {
   }
 
   private updateCommentsCount() {
-    this.commentsCountText = '' + this.commentsCount + ' ' + Utils.chisl(this.commentsCount, ['комментарий', 'комментария', 'комментариев']);
+    const koomentariev = Utils.chisl(this.commentsCount, ['комментарий', 'комментария', 'комментариев']);
+    this.commentsCountText = `+ ${this.commentsCount} ${koomentariev}`;
   }
 
   private increaseCommentsCount() {

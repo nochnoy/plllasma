@@ -16,14 +16,18 @@
   --color-black: black;
   --color-gray: #757575;
   --color-page-bg: #D7CABB;
-  --color-selected-message-bg: #E6D5B6;
+  --color-selected-message-bg: #DDD1C1;
   --color-star: rgb(241, 95, 95);
   --color-link: #4a5c9a;
 
   --border-radius: 3px;
   --margin-standard: 0.4rem;
+  --message-level-size: 1.2rem;
+  --message-padding: 0.4rem;
 
   --attachment-icon-size: 160px;
+  --avatar-size: 16px;
+  --avatar-margin: 0.2rem;
 
   // input
   --color-input-bg: #ffffff;
@@ -137,15 +141,15 @@ body {
 
 .message {
   max-width: 100%;
-  margin-left: 32px;
+  margin-left: var(--message-level-size);
   color: var(--color-black);
 
-  &-text {
+  &-content {
     min-width: 200px;
-    padding: 0;
+    padding: var(--message-padding);
     margin: 0;
 
-    &:not(.message-text__selected) {
+    &:not(.message-content__selected) {
       cursor: pointer;
       a {
         color: black!important;
@@ -171,6 +175,29 @@ body {
     }
   }
 
+  &-text {
+    margin-top: 3px;
+    margin-left: calc(var(--avatar-size) + var(--avatar-margin));
+  }
+
+  &-likes {
+    margin-left: calc(var(--avatar-size) + var(--avatar-margin));
+    margin-top: 0.8rem;
+    margin-bottom: 0.8rem;
+
+    display: flex;
+    flex-direction: row;
+    &>div {
+      margin-right: 1rem;
+    }
+  }
+
+  &-reply-form {
+    margin-left: calc(var(--avatar-size) + var(--avatar-margin));
+    margin-top: 0.6rem;
+    margin-bottom: 1rem;
+  }
+
 }
 .msg-root {
   margin-left: 0;
@@ -180,6 +207,7 @@ body {
   padding-left:20px;
 }
 .att {
+  margin-right: 0.3rem;
   img {
     width: var(--attachment-icon-size);
     height: var(--attachment-icon-size);
@@ -191,13 +219,15 @@ body {
 
 .expand {
   display: block;
+  margin-top: -1rem;
+  margin-left: calc(var(--message-padding) + var(--avatar-margin));
   margin-bottom: 9px;
-  padding-left: 16px;
   color: var(--color-black);
   text-decoration: none;
 }
 .expand:hover {
-  color: var(--color-black);
+  color: var(--color-link);
+  text-decoration: underline;
 }
 
 /* Gray */
@@ -233,11 +263,11 @@ body {
 
 /* Иконки юзеров */
 
-.ico {
+.avatar {
   margin-bottom: -1px;
-  margin-right: 0.2rem;
-  width: 16px;
-  height: 16px;
+  margin-right: var(--avatar-margin);
+  width: var(--avatar-size);
+  height: var(--avatar-size);
 }
 
 // Крутилка

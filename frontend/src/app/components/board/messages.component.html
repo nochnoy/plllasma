@@ -8,28 +8,41 @@
 
       <!-- Обычное сообщение (MessageDisplayType.NORMAL) -->
       <ng-container *ngSwitchCase="0">
-        <div class="message-text" [class.message-text__selected]="message === channelService.selectedMessage" (click)="onMessageClick(message)">
-          <img class="ico" [src]="'https://plllasma.com/i/' + message.icon +'.gif'" />
+        <div class="message-content" [class.message-content__selected]="message === channelService.selectedMessage" (click)="onMessageClick(message)">
+          <img class="avatar" [src]="'https://plllasma.com/i/' + message.icon +'.gif'" />
           <b [class.star]="message.isStarred">{{message.nick}}</b><br>
-          <span *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></span>
+          <div class="message-text" *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></div>
+
+          <ng-container *ngIf="message.attachments">
+            <a *ngFor="let attachment of message.attachments"
+               class="att" target="_blank"
+               [href]="'../api/file.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id">
+              <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
+            </a>
+          </ng-container>
+
+          <div class="message-likes" *ngIf="message === channelService.selectedMessage">
+            <div><a href (click)="onReplyClick($event)">{{this.isReplyMode ? 'Отменить' : 'Ответить'}}</a></div>
+            <div><a href (click)="onLikeClick($event, '')">👍</a> 99</div>
+            <div><a href (click)="onLikeClick($event, '')">😄</a> 99</div>
+            <div><a href (click)="onLikeClick($event, '')">🤔</a> 99</div>
+            <div><a href (click)="onLikeClick($event, '')">😵</a> 99</div>
+          </div>
+
+          <div class="message-reply-form" *ngIf="message === channelService.selectedMessage && this.isReplyMode">
+            <app-message-form [channelId]="placeId" [parentMessage]="message"
+                              (onPost)="onNewMessageCreated()">
+            </app-message-form>
+          </div>
+
         </div>
-        <ng-container *ngIf="message.attachments">
-          <a *ngFor="let attachment of message.attachments"
-             class="att" target="_blank"
-             [href]="'../api/file.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id">
-            <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
-          </a>
-        </ng-container>
-        <app-message-form *ngIf="message === channelService.selectedMessage"
-                                [channelId]="placeId" [parentMessage]="message"
-                                (onPost)="onNewMessageCreated()">
-        </app-message-form>
+
       </ng-container>
 
       <!-- Серое сообщение (MessageDisplayType.GRAY) -->
       <ng-container *ngSwitchCase="1">
         <div class="text text-gray" (click)="unfoldGray($event, message)">
-          <img class="ico" [src]="'https://plllasma.com/i/' + message.icon +'.gif'">
+          <img class="avatar" [src]="'https://plllasma.com/i/' + message.icon +'.gif'">
           <b [class.star]="message.isStarred">{{message.nick}}</b><br>
           <span *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></span>
         </div>
@@ -42,7 +55,6 @@
         </ng-container>
       </ng-container>
 
-      <!-- Схлоп (MessageDisplayType.SHLOP) -->
       <ng-container *ngSwitchCase="10">
         <div class="text text-gray" (click)="unshlop($event, message)">
           {{(message | as : ShlopMessageRef).shlop.lengthText}}

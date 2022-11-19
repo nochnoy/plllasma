@@ -16,7 +16,8 @@ export class MessagesComponent {
     public channelService: ChannelService,
   ) {}
 
-  public ShlopMessageRef = ShlopMessage;
+  ShlopMessageRef = ShlopMessage;
+  isReplyMode = false;
 
   @Input('placeId')
   public placeId: number = 0;
@@ -48,4 +49,15 @@ export class MessagesComponent {
     //this.channelService.getChannel(this.placeId, this.channel?.time_viewed ?? '');
     this.channelService.invalidateChannel(this.placeId);
   }
+
+  onLikeClick(event: any, id: string): void {
+    event.preventDefault();
+    alert('Пока не работает');
+  }
+
+  onReplyClick(event: any): void {
+    event.preventDefault();
+    this.isReplyMode = !this.isReplyMode;
+  }
 }
+
