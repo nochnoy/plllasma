@@ -18,6 +18,7 @@ import { AsPipe } from './pipes/as.pipe';
 import { MessageFormComponent } from './components/message-form/message-form.component';
 import { TestMessagesPageComponent } from './pages/test-messages-page/test-messages-page.component';
 import { LinkyPipe } from './pipes/linky.pipe';
+import { NewlinePipe } from './pipes/newline.pipe';
 
 @NgModule({
   imports: [
@@ -42,6 +43,7 @@ import { LinkyPipe } from './pipes/linky.pipe';
     MessageFormComponent,
     TestMessagesPageComponent,
     LinkyPipe,
+    NewlinePipe,
   ],
   providers: [AppGuard],
   bootstrap: [AppComponent]

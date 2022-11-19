@@ -11,7 +11,7 @@
         <div class="message-text" [class.message-text__selected]="message === channelService.selectedMessage" (click)="onMessageClick(message)">
           <img class="ico" [src]="'https://plllasma.com/i/' + message.icon +'.gif'" />
           <b [class.star]="message.isStarred">{{message.nick}}</b><br>
-          <span *ngIf="!!message.text" [innerHTML]="message.text | linky"></span>
+          <span *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></span>
         </div>
         <ng-container *ngIf="message.attachments">
           <a *ngFor="let attachment of message.attachments"
@@ -31,7 +31,7 @@
         <div class="text text-gray" (click)="unfoldGray($event, message)">
           <img class="ico" [src]="'https://plllasma.com/i/' + message.icon +'.gif'">
           <b [class.star]="message.isStarred">{{message.nick}}</b><br>
-          <span *ngIf="!!message.text" [innerHTML]="message.text | linky"></span>
+          <span *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></span>
         </div>
         <ng-container *ngIf="message.attachments">
           <a *ngFor="let attachment of message.attachments"
