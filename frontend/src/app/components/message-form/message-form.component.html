@@ -1,11 +1,14 @@
-<div class="middle"
+<div class="form"
      (dragover)="onDragOver($event)"
      (dragleave)="onDragLeave($event)"
      (drop)="onDropSuccess($event)"
      (dragend)="onDragEnd()"
-     [class.middle--drop]="isDragging">
+     [class.form--reply]="replyMode"
+     [class.form--drop]="isDragging">
 
-  <div class="user"><div class="icon"></div>Привидение</div>
+  <div class="user">
+    <div><div class="icon"></div>Привидение</div>
+  </div>
 
   <textarea autofocus [disabled]="isSending" [(ngModel)]="messageText"></textarea>
 
@@ -32,7 +35,5 @@
       <div class="spinner" *ngIf="isSending">Загрузка</div>
     </div>
   </div>
-
+  <input #fileUpload id="fileUpload" type="file" multiple (change)="onFilesSelected($event)" />
 </div>
-
-<input #fileUpload id="fileUpload" type="file" multiple (change)="onFilesSelected($event)" />

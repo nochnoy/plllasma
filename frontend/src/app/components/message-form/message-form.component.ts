@@ -18,6 +18,7 @@ export class MessageFormComponent {
 
   @Input('channelId') channelId!: number;
   @Input('parentMessage') parentMessage?: Message;
+  @Input('replyMode') replyMode: boolean = false;
   @Output('onPost') onNewMessageCreated = new EventEmitter<string>();
   messageText: string = '';
   attachments: IUploadingAttachment[] = [];
@@ -102,6 +103,10 @@ export class MessageFormComponent {
     this.attachments = this.attachments.filter((a) => a !== attachment);
     if (!this.attachments.length) {
     }
+  }
+
+  onCloseClick(event: any): void {
+    event?.preventDefault();
   }
 
 }

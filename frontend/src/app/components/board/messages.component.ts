@@ -17,7 +17,6 @@ export class MessagesComponent {
   ) {}
 
   ShlopMessageRef = ShlopMessage;
-  isReplyMode = false;
 
   @Input('placeId')
   public placeId: number = 0;
@@ -53,11 +52,6 @@ export class MessagesComponent {
   onLikeClick(event: any, id: string): void {
     event.preventDefault();
     alert('Пока не работает');
-  }
-
-  onReplyClick(event: any): void {
-    event.preventDefault();
-    this.isReplyMode = !this.isReplyMode;
   }
 }
 

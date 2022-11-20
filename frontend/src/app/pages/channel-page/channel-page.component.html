@@ -2,14 +2,16 @@
   <div class="menu">
       <app-main-menu></app-main-menu>
   </div>
-  <div class="middle">
+  <div class="form">
     <ng-container *ngIf="channel">
       <header>
         <h1 [class.spinner]="channel.spinner">{{channel.name}}</h1>
         <p>{{channel.description}}</p>
       </header>
 
-      <app-message-form [channelId]="channel.id_place" (onPost)="onNewMessageCreated()"></app-message-form>
+      <div class="form">
+        <app-message-form class="form-content" [channelId]="channel.id_place" (onPost)="onNewMessageCreated()"></app-message-form>
+      </div>
 
       <main class="messages" *ngIf="!!channelModel">
         <div class="thread" [class.thread-gray]="t.isGray" *ngFor="let t of channelModel.threads">

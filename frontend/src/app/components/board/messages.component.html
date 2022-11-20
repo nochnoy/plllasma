@@ -24,15 +24,16 @@
         </ng-container>
 
         <div class="message-likes" *ngIf="message === channelService.selectedMessage">
-          <div><a href (click)="onReplyClick($event)">{{this.isReplyMode ? 'Отменить' : 'Ответить'}}</a></div>
           <div><a href (click)="onLikeClick($event, '')">👍</a> 99</div>
           <div><a href (click)="onLikeClick($event, '')">😄</a> 99</div>
           <div><a href (click)="onLikeClick($event, '')">🤔</a> 99</div>
           <div><a href (click)="onLikeClick($event, '')">😵</a> 99</div>
         </div>
 
-        <div class="message-reply-form" *ngIf="message === channelService.selectedMessage && this.isReplyMode">
-          <app-message-form [channelId]="placeId" [parentMessage]="message"
+        <div class="message-reply-form" *ngIf="message === channelService.selectedMessage">
+          <app-message-form [channelId]="placeId"
+                            [parentMessage]="message"
+                            [replyMode]="true"
                             (onPost)="onNewMessageCreated()">
           </app-message-form>
         </div>

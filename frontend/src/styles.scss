@@ -63,7 +63,7 @@ body {
     min-width: 200px;
     max-width: 200px;
   }
-  .middle {
+  .form {
     width: 100%;
 
     header {
@@ -183,12 +183,13 @@ body {
 
     &-gray {
       color: var(--color-gray-message)!important;
-      font-weight: normal!important;
-      a, a:visited, a:hover {
-        color: var(--color-gray-message)!important;
-      }
-      .avatar {
-        opacity: 0.4;
+      .message-text {
+        a, a:visited, a:hover {
+          color: var(--color-gray-message) !important;
+        }
+        .avatar {
+          opacity: 0.4;
+        }
       }
     }
   }
@@ -218,6 +219,7 @@ body {
     margin-left: calc(var(--avatar-size) + var(--avatar-margin));
     margin-top: 0.6rem;
     margin-bottom: 1rem;
+    max-width: 30rem;
   }
 
 }
@@ -241,8 +243,8 @@ body {
 
 .expand {
   display: block;
-  margin-top: -1rem;
-  margin-left: calc(var(--message-padding) + var(--avatar-margin));
+  margin-top: -1.2rem;
+  margin-left: 0.8rem;
   margin-bottom: 9px;
   color: var(--color-black);
   text-decoration: none;
