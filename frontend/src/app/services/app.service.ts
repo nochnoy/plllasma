@@ -62,7 +62,15 @@ export class AppService {
           },
           { observe: 'body', withCredentials: true });
       }),
-      map((result: any) => !result.error),
+      map((result: any) => {
+        if (result.error) {
+          return false;
+        } else {
+          this.userService.user.nick = result.nick;
+          this.userService.user.icon = result.icon;
+          return true;
+        }
+      }),
       switchMap((result) => {
         if (result) {
           return of({}).pipe(

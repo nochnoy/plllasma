@@ -6,8 +6,13 @@
      [class.form--reply]="replyMode"
      [class.form--drop]="isDragging">
 
-  <div class="user">
-    <div><div class="icon"></div>Привидение</div>
+  <div class="user" (click)="isGhost = !isGhost">
+    <ng-container *ngIf="!isGhost">
+      <img class="avatar" [src]="'https://plllasma.com/i/' + userIcon" />{{userName}}▾
+    </ng-container>
+    <ng-container *ngIf="isGhost">
+      <div class="icon"></div>{{'Привидение'}}▴
+    </ng-container>
   </div>
 
   <textarea autofocus [disabled]="isSending" [(ngModel)]="messageText"></textarea>

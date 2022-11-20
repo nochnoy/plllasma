@@ -1,19 +1,21 @@
-import {Component, EventEmitter, HostListener, Input, Output} from '@angular/core';
+import {Component, EventEmitter, HostListener, Input, OnInit, Output} from '@angular/core';
 import {AppService} from "../../services/app.service";
 import {switchMap, tap} from "rxjs/operators";
 import {IChannel, IUploadingAttachment} from "../../model/app-model";
 import {Utils} from "../../utils/utils";
 import {Const} from "../../model/const";
 import {Message} from "../../model/messages/message.model";
+import {UserService} from "../../services/user.service";
 @Component({
   selector: 'app-message-form',
   templateUrl: './message-form.component.html',
   styleUrls: ['./message-form.component.scss']
 })
-export class MessageFormComponent {
+export class MessageFormComponent implements OnInit{
 
   constructor(
-    public appService: AppService
+    public appService: AppService,
+    public userService: UserService,
   ) { }
 
   @Input('channelId') channelId!: number;
@@ -22,8 +24,16 @@ export class MessageFormComponent {
   @Output('onPost') onNewMessageCreated = new EventEmitter<string>();
   messageText: string = '';
   attachments: IUploadingAttachment[] = [];
+  isGhost = false;
   isDragging = false;
   isSending = false;
+  userName = '';
+  userIcon = '';
+
+  ngOnInit() {
+    this.userName = this.userService.user.nick ?? '';
+    this.userIcon = this.userService.user.icon + '.gif';
+  }
 
   addAttachments(files: File[]) {
     const newAttachments: IUploadingAttachment[] = files.map((file) => {

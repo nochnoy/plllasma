@@ -205,19 +205,22 @@ body {
 
   &-likes {
     margin-left: calc(var(--avatar-size) + var(--avatar-margin));
-    margin-top: 0.8rem;
-    margin-bottom: 0.8rem;
 
     display: flex;
     flex-direction: row;
-    &>div {
-      margin-right: 1rem;
+
+    a {
+      padding: 0.8rem;
+      &:hover {
+        text-decoration: none;
+        background-color: white;
+      }
     }
+
   }
 
   &-reply-form {
     margin-left: calc(var(--avatar-size) + var(--avatar-margin));
-    margin-top: 0.6rem;
     margin-bottom: 1rem;
     max-width: 30rem;
   }

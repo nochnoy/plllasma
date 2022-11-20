@@ -24,10 +24,10 @@
         </ng-container>
 
         <div class="message-likes" *ngIf="message === channelService.selectedMessage">
-          <div><a href (click)="onLikeClick($event, '')">👍</a> 99</div>
-          <div><a href (click)="onLikeClick($event, '')">😄</a> 99</div>
-          <div><a href (click)="onLikeClick($event, '')">🤔</a> 99</div>
-          <div><a href (click)="onLikeClick($event, '')">😵</a> 99</div>
+          <a href (click)="onLikeClick($event, '')">👍</a>
+          <a href (click)="onLikeClick($event, '')">😄</a>
+          <a href (click)="onLikeClick($event, '')">🤔</a>
+          <a href (click)="onLikeClick($event, '')">😵</a>
         </div>
 
         <div class="message-reply-form" *ngIf="message === channelService.selectedMessage">
