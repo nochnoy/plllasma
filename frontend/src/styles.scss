@@ -151,6 +151,9 @@ body {
 
     &:not(.message-content__selected) {
       cursor: pointer;
+      &:hover {
+        background-color: var(--color-selected-message-bg);
+      }
       a {
         color: black!important;
         &:hover {

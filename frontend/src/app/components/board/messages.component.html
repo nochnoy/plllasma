@@ -8,7 +8,9 @@
 
       <!-- Обычное сообщение (MessageDisplayType.NORMAL) -->
       <ng-container *ngSwitchCase="0">
-        <div class="message-content" [class.message-content__selected]="message === channelService.selectedMessage" (click)="onMessageClick(message)">
+        <div class="message-content"
+             [class.message-content__selected]="message === channelService.selectedMessage"
+             (click)="onMessageClick(message)">
           <img class="avatar" [src]="'https://plllasma.com/i/' + message.icon +'.gif'" />
           <b [class.star]="message.isStarred">{{message.nick}}</b><br>
           <div class="message-text" *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></div>
