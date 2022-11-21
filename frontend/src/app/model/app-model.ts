@@ -72,6 +72,8 @@ export interface IChannel {
   selected?: boolean;
   time_viewed_deferred?: string;
   spinner?: boolean;
+  shortName?: string;
+  blackStar?: boolean;
 }
 
 export interface ICity {

@@ -27,6 +27,15 @@ export class ChannelService {
       tap((channels) => {
         this.channels = channels as IChannel[];
 
+        // Вырежем канал "Мы"
+        this.channels = this.channels.filter((channel) => channel.id_place !== 46);
+
+        // Мусорка - с чёрной звёздочкой
+        const musorgka = this.channels.find((channel) => channel.id_place === 26);
+        if (musorgka) {
+          musorgka.blackStar = true;
+        }
+
         // TODO: по хорошему всё это выкинуть и при получении каналов выстроть их дерево. parent, children все дела.
         this.cities = this.channels
           .filter((channel) => !channel.parent)
@@ -47,6 +56,7 @@ export class ChannelService {
         });
         this.cities = this.cities.sort((a, b) => a.channel.weight - b.channel.weight);
 
+        this.channels.forEach((channel) => channel.shortName = channel.name.substr(0, 14));
       }),
       switchMap(() => of(true))
     );
