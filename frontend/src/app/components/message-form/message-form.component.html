@@ -3,6 +3,7 @@
      (dragleave)="onDragLeave($event)"
      (drop)="onDropSuccess($event)"
      (dragend)="onDragEnd()"
+     [class.form--ghost]="isGhost"
      [class.form--reply]="replyMode"
      [class.form--drop]="isDragging">
 
