@@ -80,6 +80,7 @@ body {
   }
   .sidebar {
     margin-left: 1rem;
+    padding-left: 1rem;
     max-width: 23rem;
   }
 }
@@ -139,6 +140,10 @@ body {
 /* Thread */
 
 /* Message */
+
+.messages {
+  max-width: 80rem;
+}
 
 .message {
 
@@ -246,7 +251,7 @@ body {
 
 .expand {
   display: block;
-  margin-top: -1.2rem;
+  margin-top: -1.1rem;
   margin-left: 0.8rem;
   margin-bottom: 9px;
   color: var(--color-black);

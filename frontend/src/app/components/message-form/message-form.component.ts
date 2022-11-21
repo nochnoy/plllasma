@@ -69,7 +69,7 @@ export class MessageFormComponent implements OnInit{
 
   onSendClick(): void {
     this.isSending = true;
-    this.appService.addMessage$(this.channelId, this.messageText, this.parentMessage?.id || 0, this.attachments)
+    this.appService.addMessage$(this.channelId, this.messageText, this.parentMessage?.id || 0, this.isGhost, this.attachments)
       .pipe(
         tap((result: any) => {
           this.isSending = false;

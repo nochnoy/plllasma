@@ -122,10 +122,11 @@ export class AppService {
       { observe: 'body', withCredentials: true })
   }
 
-  addMessage$(channelId: number, message: string, parentMessageId: number = 0, attachments: IUploadingAttachment[] = []): Observable<any> {
+  addMessage$(channelId: number, message: string, parentMessageId: number = 0, ghost = false, attachments: IUploadingAttachment[] = []): Observable<any> {
     const formData = new FormData();
     formData.append(`placeId`, channelId + '');
     formData.append(`message`, message);
+    formData.append(`ghost`, ghost ? '1' : '0');
 
     if (parentMessageId) {
       formData.append(`parent`, parentMessageId + '');

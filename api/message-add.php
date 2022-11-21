@@ -10,6 +10,7 @@ $previewHeight 		= 160;
 $placeId 			= @$_POST['placeId'];
 $parentMessageId 	= @$_POST['parent'];
 $message 			= @trim($_POST['message']);
+$ghost 				= @trim($_POST['ghost']) == '1';
 
 $channelFolder 		= getcwd().'/../attachments/'.$placeId.'/';
 $iconFolder 		= getcwd().'/images/attachment-icons/';
@@ -52,11 +53,19 @@ if (!empty($parentMessageId)) {
 	}
 }
 
+if ($ghost) {
+	$icon = '1';
+	$nick = '';
+} else {
+	$icon = $user['icon'];
+	$nick = $user['nick'];
+}
+
 mysqli_query($mysqli,
 	'INSERT INTO tbl_messages SET'.
 	' icon=1'. // привидение
-	',anonim=1'. // привидение
-	',nick="Привидение"'.
+	',anonim='.($ghost ? '1' : '0'). // привидение
+	',nick="'.$nick.'"'.
 	',id_user='.$user['id_user'].
 	',id_place='.$placeId.
 	',id_first_parent='.$id_first_parent.
