@@ -63,8 +63,8 @@ if ($ghost) {
 
 mysqli_query($mysqli,
 	'INSERT INTO tbl_messages SET'.
-	' icon=1'. // привидение
-	',anonim='.($ghost ? '1' : '0'). // привидение
+	' icon="'.$icon.'"'.
+	',anonim='.($ghost ? '1' : '0').
 	',nick="'.$nick.'"'.
 	',id_user='.$user['id_user'].
 	',id_place='.$placeId.
