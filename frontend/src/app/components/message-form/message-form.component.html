@@ -37,7 +37,7 @@
       </div>
     </div>
     <div  class="tools-send">
-      <button *ngIf="!isSending" (click)="onSendClick()">{{isGhost ? 'Уууууу' : (replyMode ? 'Ответить' : 'Отправить')}}</button>
+      <button *ngIf="!isSending" (click)="onSendClick()">{{replyMode ? 'Ответить' : 'Отправить'}}</button>
       <div class="spinner" *ngIf="isSending">Загрузка</div>
     </div>
   </div>

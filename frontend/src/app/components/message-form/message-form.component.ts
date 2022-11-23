@@ -6,6 +6,9 @@ import {Utils} from "../../utils/utils";
 import {Const} from "../../model/const";
 import {Message} from "../../model/messages/message.model";
 import {UserService} from "../../services/user.service";
+import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
+
+@UntilDestroy()
 @Component({
   selector: 'app-message-form',
   templateUrl: './message-form.component.html',
@@ -68,16 +71,19 @@ export class MessageFormComponent implements OnInit{
   }
 
   onSendClick(): void {
-    this.isSending = true;
-    this.appService.addMessage$(this.channelId, this.messageText, this.parentMessage?.id || 0, this.isGhost, this.attachments)
-      .pipe(
-        tap((result: any) => {
-          this.isSending = false;
-          this.attachments.length = 0;
-          this.messageText = '';
-          this.onNewMessageCreated.emit(this.messageText);
-        }),
-      ).subscribe();
+    if (this.messageText.trim() || this.attachments.length) {
+      this.isSending = true;
+      this.appService.addMessage$(this.channelId, this.messageText, this.parentMessage?.id || 0, this.isGhost, this.attachments)
+        .pipe(
+          tap((result: any) => {
+            this.isSending = false;
+            this.attachments.length = 0;
+            this.messageText = '';
+            this.onNewMessageCreated.emit(this.messageText);
+          }),
+          untilDestroyed(this)
+        ).subscribe();
+    }
   }
 
   onFilesSelected(event: any): void {
