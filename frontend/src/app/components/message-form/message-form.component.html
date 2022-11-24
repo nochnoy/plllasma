@@ -7,7 +7,7 @@
      [class.form--reply]="replyMode"
      [class.form--drop]="isDragging">
 
-  <div class="user" (click)="isGhost = !isGhost">
+  <div class="user" (click)="onGhostClick()">
     <ng-container *ngIf="!isGhost">
       <img class="avatar" [src]="'https://plllasma.com/i/' + userIcon" />{{userName}}▾
     </ng-container>

@@ -34,6 +34,17 @@ export class HttpService {
         lv: lastVieved,
         unseen
       },
-      { observe: 'body', withCredentials: true })
+      { observe: 'body', withCredentials: true }
+    )
+  }
+
+  log(message: string): void {
+    this.httpClient.post(
+      `${HttpService.apiPath}/log.php`,
+      {
+        message
+      },
+      { observe: 'body', withCredentials: true }
+    ).subscribe();
   }
 }

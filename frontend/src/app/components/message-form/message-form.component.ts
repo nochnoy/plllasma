@@ -121,8 +121,9 @@ export class MessageFormComponent implements OnInit{
     }
   }
 
-  onCloseClick(event: any): void {
-    event?.preventDefault();
+  onGhostClick(): void {
+    this.isGhost = !this.isGhost;
+    this.appService.log(this.isGhost ? 'PIII привидение' : 'PIII не привидение');
   }
 
 }

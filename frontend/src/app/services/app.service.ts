@@ -5,6 +5,7 @@ import {map, switchMap, tap} from "rxjs/operators";
 import {HttpClient} from "@angular/common/http";
 import {UserService} from "./user.service";
 import {ChannelService} from "./channel.service";
+import {HttpService} from "./http.service";
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +15,7 @@ export class AppService {
   constructor(
     public httpClient: HttpClient,
     public userService: UserService,
+    public httpService: HttpService,
     public channelService: ChannelService
   ) { }
 
@@ -150,6 +152,10 @@ export class AppService {
       `${this.apiPath}/files-upload.php`,
       formData,
       { observe: 'body', withCredentials: true })
+  }
+
+  log(message: string): void {
+    this.httpService.log(message);
   }
 
 }

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import {distinct, distinctUntilChanged, filter, switchMap, tap} from "rxjs/operators";
-import {ActivatedRoute, ActivatedRouteSnapshot, Router} from "@angular/router";
+import {switchMap, tap} from "rxjs/operators";
+import {Router} from "@angular/router";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {UserService} from "./services/user.service";
 import {AppService} from "./services/app.service";
@@ -18,13 +18,13 @@ export class AppComponent implements OnInit {
   constructor(
     public appService: AppService,
     public userService: UserService,
-    public router: Router,
-    public activatedRoute: ActivatedRoute,
+    public router: Router
   ) {}
 
   ngOnInit(): void {
     of({}).pipe(
       switchMap(() => this.appService.login$()), // В начале попытаемся авторизоваться сессией
+      tap(() => this.appService.log('PIII Вошёл')),
       switchMap(() => this.userService.loginStatus$), // Дальше слушаем статус авторизованности
       tap((loginStatus) => {
         switch (loginStatus) {

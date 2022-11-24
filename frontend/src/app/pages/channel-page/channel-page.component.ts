@@ -41,6 +41,7 @@ export class ChannelPageComponent implements OnInit {
         const channel = this.channelService.channels.find((channel) => channel.id_place === channelId);
         this.channel = channel ?? EMPTY_CHANNEL;
         this.channelService.unselectMessage();
+        this.appService.log(`PIII перешёл на ${this.channel?.shortName}`);
       }),
       tap(() => {
         if (this.channel !== EMPTY_CHANNEL) {
@@ -65,6 +66,7 @@ export class ChannelPageComponent implements OnInit {
     event.preventDefault();
 
     if (!this.isExpanding) {
+      this.appService.log(`PIII на канале ${this.channel?.shortName} раскрыл ветку ${thread.root.text.substr(0, 50)}`);
       if (thread.isLoaded) {
         thread.isExpanded = true;
       } else {
