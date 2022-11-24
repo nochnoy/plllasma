@@ -82,6 +82,10 @@ body {
     margin-left: 1rem;
     padding-left: 1rem;
     max-width: 23rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
   }
 }
 

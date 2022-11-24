@@ -8,6 +8,7 @@ import {Channel} from "../../model/messages/channel.model";
 import {Thread} from "../../model/messages/thread.model";
 import {ChannelService} from "../../services/channel.service";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
+import {HttpService} from "../../services/http.service";
 
 @UntilDestroy()
 @Component({
@@ -19,6 +20,7 @@ export class ChannelPageComponent implements OnInit {
 
   constructor(
     public appService: AppService,
+    public httpService: HttpService,
     public activatedRoute: ActivatedRoute,
     public channelService: ChannelService
   ) { }
@@ -27,6 +29,7 @@ export class ChannelPageComponent implements OnInit {
   channel: IChannel = EMPTY_CHANNEL;
   channelModel?: Channel;
   isExpanding?: Thread;
+  hereAndNowUsers: string[] = [];
 
   ngOnInit(): void {
     of({}).pipe(
@@ -60,6 +63,9 @@ export class ChannelPageComponent implements OnInit {
       untilDestroyed(this)
     ).subscribe();
 
+    this.httpService.getHereAndNow$().pipe(
+      tap((users) => this.hereAndNowUsers = users)
+    ).subscribe();
   }
 
   onExpandClick(event: any, thread: Thread) {

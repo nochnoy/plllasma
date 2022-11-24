@@ -28,6 +28,12 @@
   </div>
   <div class="sidebar">
     <div class="beta">
+
+      <div class="nowandhere" *ngIf="hereAndNowUsers.length">
+        <div class="nowandhere-label">Здесь сейчас: </div>
+        <div *ngFor="let user of hereAndNowUsers; let i = index;" class="nowandhere-user">{{i > 0 ? ', ' : ''}}{{user}}</div>
+      </div>
+
       <div class="beta__text">
         Это новая Плазма. Она ещё не готова.
       </div>

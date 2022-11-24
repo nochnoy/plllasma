@@ -38,6 +38,22 @@ export class HttpService {
     )
   }
 
+  getHereAndNow$(): Observable<string[]> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/hereandnow.php`,
+      {},
+      { observe: 'body', withCredentials: true }
+    ).pipe(
+      switchMap((result: any) => {
+        if (Array.isArray(result)) {
+          return of(result);
+        } else {
+          return of([]);
+        }
+      })
+    );
+  }
+
   log(message: string): void {
     this.httpClient.post(
       `${HttpService.apiPath}/log.php`,
