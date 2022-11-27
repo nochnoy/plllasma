@@ -1,8 +1,26 @@
 <main>
   <form [formGroup]="form">
+    <div class="title">Плазма</div>
     <input class="input" placeholder="Логин" type="text" formControlName="login" autofocus>
     <input class="input" placeholder="Пароль" type="password" formControlName="password">
-    <button class="button" (click)="onLogin()">Войти</button>
-    <a href>Регистрация</a>
+    <div class="process">
+      <div class="error" *ngIf="!authorizing && form.pristine && error">
+        <ng-container *ngIf="error === 1">😳</ng-container>
+        <ng-container *ngIf="error === 2">🙁</ng-container>
+        <ng-container *ngIf="error === 3">😟</ng-container>
+        <ng-container *ngIf="error > 3">😬</ng-container>
+      </div>
+      <div class="spinner-container" *ngIf="authorizing">
+        <div class="spinner"></div>
+      </div>
+    </div>
+    <button class="button"
+            [disabled]="form.invalid || authorizing"
+            (click)="onLogin()">
+      Войти
+    </button>
+    <div class="info">
+      Пишите на почту:<br> <a href="mailto:no-subject@yandex.ru">no-subject@yandex.ru</a>
+    </div>
   </form>
 </main>

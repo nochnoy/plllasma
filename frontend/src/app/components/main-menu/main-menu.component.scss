@@ -1,11 +1,14 @@
 :host {
   display: flex;
   flex-direction: column;
+  background-image: url('~src/assets/bg.gif');
+  background-repeat: repeat-y;
+  height: max(1vh, 100%);
 
   .logo {
     display: inline-block;
     position: absolute;
-    z-index: -1;
+    z-index: 1;
     width: 146px;
     height: 133px;
     background-image: url('~src/assets/logo.gif');

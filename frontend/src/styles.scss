@@ -51,8 +51,6 @@
 
 body {
   background-color: var(--color-page-bg);
-  background-image: url('~src/assets/bg.gif');
-  background-repeat: repeat-y;
 }
 
 .three-column-page {
@@ -175,7 +173,7 @@ body {
   max-width: 80rem;
 }
 
-.message {
+.error {
 
   &-branch {
     max-width: 100%;

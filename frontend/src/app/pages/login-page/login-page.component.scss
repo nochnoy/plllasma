@@ -1,6 +1,5 @@
 main {
   --controls-height: 3rem;
-  // background-image: url("~src/assets/bg-logo.png");
   background-position: center;
   background-repeat: no-repeat;
   background-size: 34rem 34rem;
@@ -18,10 +17,6 @@ main {
     flex-wrap: nowrap;
     justify-content: center;
     align-items: center;
-
-    *:first-child {
-      margin-top: 10rem;
-    }
 
     *:not(:last-child) {
       margin-bottom: var(--margin-standard);
@@ -41,18 +36,52 @@ main {
 
     .button {
       color: #f1eeec;
-      margin-top: 1rem;
-      width: 6rem;
+      width: 9rem;
       height: var(--controls-height);
       line-height: var(--controls-height);
 
       &:hover {
         background-color: #1f6f8f;
       }
+      &:disabled {
+        background-color: #9a9a9a;
+      }
+    }
+  }
+
+  .title {
+    max-width: 10rem;
+    text-align: center;
+    font-size: 2.4rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .process {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 3rem;
+
+    .spinner-container {
+      margin-right: 2rem;
+      margin-top: -2rem;
     }
 
+    .error {
+      font-size: 1.4rem;
+    }
+  }
+
+  .info {
+    margin-top: 1rem;
+    max-width: 10rem;
+    text-align: center;
+    line-height: 1.4rem;
+    font-size: 1rem;
+
     a {
-      padding: 4rem;
+      white-space: nowrap;
       color: var(--color-black);
       &:visited {
         color: var(--color-black);
