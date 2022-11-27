@@ -1,4 +1,4 @@
-import {Injectable} from '@angular/core';
+import {Injectable, isDevMode} from '@angular/core';
 import {Observable, of, Subject} from "rxjs";
 import {IChannel, IFocus, ILike, IUploadingAttachment, IUserData, LoginStatus} from "../model/app-model";
 import {map, switchMap, tap} from "rxjs/operators";
@@ -155,7 +155,9 @@ export class AppService {
   }
 
   log(message: string): void {
-    this.httpService.log(message);
+    if (!isDevMode) {
+      this.httpService.log(message);
+    }
   }
 
 }
