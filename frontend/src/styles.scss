@@ -19,7 +19,7 @@
   --color-page-bg: #D7CABB;
   --color-selected-message-bg: #DDD1C1;
   --color-star: rgb(241, 95, 95);
-  --color-link: #4a5c9a;
+  --color-link: #745A50;
 
   --border-radius: 3px;
   --margin-standard: 0.4rem;
@@ -58,13 +58,39 @@ body {
 .three-column-page {
   display: flex;
   flex-direction: row;
+  justify-content: flex-start;
+  align-items: stretch;
+  min-height: max(100vh, 100%);
 
-  .menu {
-    min-width: 200px;
-    max-width: 200px;
+  @media (min-width: 20rem) {
+    .aside {
+      min-width: 200px;
+      max-width: 200px;
+    }
+    .main {
+      width: 100%;
+    }
+    .sidebar {
+      width: 8rem;
+    }
   }
-  .form {
-    width: 100%;
+  @media (min-width: 60rem) {
+    .aside {
+      min-width: 200px;
+      max-width: 200px;
+    }
+    .main {
+      width: 0.7fr;
+    }
+    .sidebar {
+      width: 0.3fr;
+    }
+  }
+
+  .aside {
+    overflow-y: initial;
+  }
+  .main {
 
     header {
       margin: 1rem 0;
@@ -80,12 +106,12 @@ body {
   }
   .sidebar {
     margin-left: 1rem;
-    padding-left: 1rem;
-    max-width: 23rem;
+    padding: 0.9rem;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
+    background-color: #C4B8AA;
   }
 }
 

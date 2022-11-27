@@ -1,3 +1,7 @@
+:host {
+  min-height: 100vh;
+}
+
 .form {
   min-height: 10rem;
   display: flex;
@@ -13,57 +17,18 @@
   margin-top: 1rem;
 }
 
-.beta {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-
-  &__text {
-    padding: 1.2rem;
-    margin: 1rem 1rem 0 0;
-    border-radius: 0.2rem;
-    background-color: rgba(38, 93, 121, 0.56);
-    color: white;
-    line-height: 1.4rem;
-  }
-
-  ul {
-    color: #5C7C8A;
-    position: relative;
-    list-style: none;
-    margin: 2rem;
-    line-height: 1.2rem;
-    padding-left: 1.5em;
-  }
-  li {
-    margin-bottom: 0.8rem;
-  }
-  li:before {
-    content: "•";
-    position: absolute;
-    left: 0;
-  }
-  li.done:before {
-    content: "✔";
-  }
-
-}
-
 .nowandhere {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   flex-wrap: wrap;
-  margin: 1rem 3rem 0 3rem;
-
-  &>* {
-    margin-right: 0.2rem;
-  }
+  min-width: 8rem;
+  font-size: 0.9rem;
 
   &-label {
-
+    font-weight: bold;
   }
   &-user {
-
+    white-space: nowrap;
+    margin-bottom: 0.2rem;
   }
 }

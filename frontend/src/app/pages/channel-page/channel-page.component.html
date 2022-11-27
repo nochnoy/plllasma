@@ -1,8 +1,8 @@
 <div class="three-column-page">
-  <div class="menu">
+  <aside class="aside">
       <app-main-menu></app-main-menu>
-  </div>
-  <div class="form">
+  </aside>
+  <main class="main">
     <ng-container *ngIf="channel">
       <header>
         <h1 [class.spinner]="channel.spinner">{{channel.name}}</h1>
@@ -13,7 +13,7 @@
         <app-message-form class="form-content" [channelId]="channel.id_place" (onPost)="onNewMessageCreated()"></app-message-form>
       </div>
 
-      <main class="messages" *ngIf="!!channelModel">
+      <div class="messages" *ngIf="!!channelModel">
         <div class="thread" [class.thread-gray]="t.isGray" *ngFor="let t of channelModel.threads">
           <app-messages [placeId]="channel.id_place" [messages]="[t.root]" [showChildren]="t.isGray || t.isExpanded"></app-messages>
           <div class="message-branch" *ngIf="t.commentsCount > 0 && !(t.isGray || t.isExpanded)" (click)="onExpandClick($event, t)">
@@ -22,41 +22,16 @@
             </div>
           </div>
         </div>
-      </main>
+      </div>
 
     </ng-container>
-  </div>
+  </main>
   <div class="sidebar">
-    <div class="beta">
 
-      <div class="nowandhere" *ngIf="hereAndNowUsers.length">
-        <div class="nowandhere-label">Здесь сейчас: </div>
-        <div *ngFor="let user of hereAndNowUsers; let i = index;" class="nowandhere-user">{{i > 0 ? ', ' : ''}}{{user}}</div>
-      </div>
-
-      <div class="beta__text">
-        Это новая Плазма. Она ещё не готова.
-      </div>
-      <ul>
-        <li class="done">Звёздочки, серые ветки</li>
-        <li class="done">Экспериментальный интерфейс выделения сообщений, ответы</li>
-        <li class="done">Не привидения</li>
-        <li>Оценки</li>
-        <li>Интерфейс для телефонов</li>
-        <li>Листание страниц</li>
-        <li>Инбокс</li>
-        <li>Убийство старой Плазмы</li>
-        <li>Управление боковым меню, можно создавать свои каналы, каталог каналов, инбоксы как каналы, баннеры каналов</li>
-        <li>Вьювер фоток, фокусы</li>
-        <li>Проект Possic</li>
-        <li>Список юзеров, профиль юзера, лента юзера</li>
-        <li>Двусторонние игноры, общественное модерирование, тушилка флудов</li>
-        <li>Приём новых юзеров, КПП, детский сад для новичков, билборды возле метро</li>
-        <li>Клиент для Android и IOS</li>
-        <li>Скраппер инстаграмма</li>
-        <li>Поиск с морфологией</li>
-        <li>Вьювер роликов, фокусы на роликах</li>
-      </ul>
+    <div class="nowandhere" *ngIf="hereAndNowUsers.length">
+      <div class="nowandhere-label">Здесь сейчас:</div>
+      <div *ngFor="let user of hereAndNowUsers; let i = index;" class="nowandhere-user">{{user}}</div>
     </div>
+
   </div>
 </div>

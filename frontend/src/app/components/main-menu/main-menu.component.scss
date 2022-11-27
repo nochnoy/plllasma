@@ -5,7 +5,7 @@
   .logo {
     display: inline-block;
     position: absolute;
-    z-index: 1;
+    z-index: -1;
     width: 146px;
     height: 133px;
     background-image: url('~src/assets/logo.gif');
@@ -32,8 +32,6 @@
   }
 
   .channels {
-    position: absolute;
-    z-index: 3;
     margin-left: 40px;
     margin-top: 106px;
 
