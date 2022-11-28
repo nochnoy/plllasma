@@ -1,6 +1,6 @@
 <ng-container *ngFor="let message of messages">
   <div class="message-branch"
-       [class.msg-root]="!message.parent"
+       [class.message-branch-root]="!message.parent"
        [class.msg-starred]="message.isStarred"
        *ngIf="message != null">
 
@@ -12,16 +12,16 @@
            [class.message-content__selected]="message === channelService.selectedMessage"
            (click)="onMessageClick(message)">
         <img class="avatar" [src]="'https://plllasma.com/i/' + message.icon +'.gif'" />
-        <b [class.star]="message.isStarred">{{message.nick}}</b><br>
-        <div class="message-text" *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></div>
+        <b [class.star]="message.isStarred">{{message.nick}}</b>
+        <span class="message-text" *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></span>
 
-        <ng-container *ngIf="message.attachments">
+        <div *ngIf="message.attachments">
           <a *ngFor="let attachment of message.attachments"
              class="att" target="_blank"
              [href]="'../api/file.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id">
             <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
           </a>
-        </ng-container>
+        </div>
 
         <div class="message-likes" *ngIf="message === channelService.selectedMessage">
           <a href (click)="onLikeClick($event, '')">👍</a>
@@ -46,24 +46,24 @@
            (click)="unfoldGray($event, message)">
 
         <img class="avatar" [src]="'https://plllasma.com/i/' + message.icon +'.gif'">
-        <b [class.star]="message.isStarred">{{message.nick}}</b><br>
-        <div class="message-text" *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></div>
+        <b [class.star]="message.isStarred">{{message.nick}}</b>
+        <span class="message-text" *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></span>
 
-        <ng-container *ngIf="message.attachments">
+        <div *ngIf="message.attachments">
           <a *ngFor="let attachment of message.attachments"
              class="att" target="_blank"
              [href]="'../api/file.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id">
             <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
           </a>
-        </ng-container>
+        </div>
 
       </div>
 
       <!-- Схлоп (MessageDisplayType.SHLOP) -->
-      <div  *ngSwitchCase="10"
-            class="message-content message-content-gray" (click)="unshlop($event, message)">
-        + {{(message | as : ShlopMessageRef).shlop.lengthText}}
-      </div>
+      <a href *ngSwitchCase="10"
+            class="message-content message-content-gray expand" (click)="unshlop($event, message)">
+        {{(message | as : ShlopMessageRef).shlop.lengthText}}
+      </a>
 
     </ng-container><!-- ngSwitch -->
 
