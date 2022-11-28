@@ -1,10 +1,10 @@
 <main>
   <form [formGroup]="form">
     <div class="title">Плазма</div>
-    <input class="input" placeholder="Логин" type="text" formControlName="login" autofocus>
-    <input class="input" placeholder="Пароль" type="password" formControlName="password">
+    <input class="input" placeholder="Логин" name="login" type="text" formControlName="login" autofocus>
+    <input class="input" placeholder="Пароль" name="password" type="password" formControlName="password">
     <div class="process">
-      <div class="error" *ngIf="!authorizing && form.pristine && error">
+      <div class="message" *ngIf="!authorizing && form.pristine && error">
         <ng-container *ngIf="error === 1">😦</ng-container>
         <ng-container *ngIf="error === 2">🙁</ng-container>
         <ng-container *ngIf="error === 3">😟</ng-container>

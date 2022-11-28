@@ -23,7 +23,7 @@
       <div class="attachments" *ngIf="attachments && attachments.length">
         <div *ngFor="let attachment of attachments" class="attachment" [title]="'Удалить ' + attachment.file.name">
           <div class="imagecontainer"><img *ngIf="attachment.isImage" [src]="attachment.bitmap"></div>
-          <div *ngIf="attachment.error" class="error"><div>{{attachment.error}}</div></div>
+          <div *ngIf="attachment.error" class="message"><div>{{attachment.error}}</div></div>
           <div class="remove" (click)="onremoveClick(attachment)">X</div>
         </div>
       </div>
