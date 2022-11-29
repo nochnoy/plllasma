@@ -165,9 +165,63 @@ body {
   }
 }
 
-/* Thread */
+/* Сообщения */
 
-/* Ссылка "раскрыть ветку" */
+.message {
+  min-width: 200px;
+  padding: var(--message-padding);
+  margin: 0;
+
+  &:not(.message__selected) {
+    cursor: pointer;
+    &:hover {
+      background-color: var(--color-selected-message-bg);
+    }
+    a {
+      color: black!important;
+      &:hover {
+        color: var(--color-link)!important;
+      }
+    }
+  }
+
+  &__selected {
+    background-color: var(--color-selected-message-bg);
+  }
+
+  a {
+    color: var(--color-link);
+    text-decoration: none;
+    &:hover {
+      text-decoration: underline;
+    }
+    &:visited {
+      color: var(--color-link);
+    }
+  }
+
+  b {
+    padding-right: 0.3rem;
+  }
+
+  p {
+    display: inline;
+    margin: 0;
+  }
+
+  &-gray {
+    color: var(--color-gray-message)!important;
+    a, a:visited, a:hover {
+      color: var(--color-gray-message) !important;
+    }
+    .avatar {
+      opacity: 0.4;
+    }
+    &.expand:before {
+      opacity: 0.4;
+    }
+  }
+}
 
 .expand {
   display: block;
@@ -190,108 +244,45 @@ body {
   text-decoration: underline;
 }
 
-/* Message */
+.branch {
+  max-width: 100%;
+  margin-left: var(--message-level-size);
+  color: var(--color-black);
 
-.messages {
-  max-width: 80rem;
+  &-root {
+    margin-left: 0;
+  }
 }
 
-.message {
+.likes {
+  margin-left: calc(var(--avatar-size) + var(--avatar-margin));
 
-  &-branch {
-    max-width: 100%;
-    margin-left: var(--message-level-size);
-    color: var(--color-black);
+  display: flex;
+  flex-direction: row;
 
-    &-root {
-      margin-left: 0;
-    }
-  }
-
-  &-content {
-    min-width: 200px;
-    padding: var(--message-padding);
-    margin: 0;
-
-    &:not(.message-content__selected) {
-      cursor: pointer;
-      &:hover {
-        background-color: var(--color-selected-message-bg);
-      }
-      a {
-        color: black!important;
-        &:hover {
-          color: var(--color-link)!important;
-        }
-      }
-    }
-
-    &__selected {
-      background-color: var(--color-selected-message-bg);
-    }
-
-    a {
-      color: var(--color-link);
+  a {
+    padding: 0.8rem;
+    &:hover {
       text-decoration: none;
-      &:hover {
-        text-decoration: underline;
-      }
-      &:visited {
-        color: var(--color-link);
-      }
+      background-color: white;
     }
-
-    b {
-      padding-right: 0.3rem;
-    }
-
-    &-gray {
-      color: var(--color-gray-message)!important;
-      a, a:visited, a:hover {
-        color: var(--color-gray-message) !important;
-      }
-      .avatar {
-        opacity: 0.4;
-      }
-      &.expand:before {
-        opacity: 0.4;
-      }
-    }
-  }
-
-  &-likes {
-    margin-left: calc(var(--avatar-size) + var(--avatar-margin));
-
-    display: flex;
-    flex-direction: row;
-
-    a {
-      padding: 0.8rem;
-      &:hover {
-        text-decoration: none;
-        background-color: white;
-      }
-    }
-
-  }
-
-  &-reply-form {
-    margin-left: calc(var(--avatar-size) + var(--avatar-margin));
-    margin-bottom: 1rem;
-    max-width: 30rem;
   }
 
 }
-.children {
-  padding-left:20px;
-}
-.att {
+
+.attachment {
   margin-right: 0.3rem;
   img {
     width: var(--attachment-icon-size);
     height: var(--attachment-icon-size);
     opacity: 0.7;
   }
+}
+
+.reply {
+  margin-left: calc(var(--avatar-size) + var(--avatar-margin));
+  margin-bottom: 1rem;
+  max-width: 30rem;
 }
 
 /* Звёздочки */

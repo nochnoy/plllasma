@@ -13,10 +13,10 @@
         <app-message-form class="form-content" [channelId]="channel.id_place" (onPost)="onNewMessageCreated()"></app-message-form>
       </div>
 
-      <div class="messages" *ngIf="!!channelModel">
+      <div *ngIf="!!channelModel" class="messages">
         <div class="thread" [class.thread-gray]="t.isGray" *ngFor="let t of channelModel.threads">
           <app-messages [placeId]="channel.id_place" [messages]="[t.root]" [showChildren]="t.isGray || t.isExpanded"></app-messages>
-          <div class="message-branch message-branch-expand" *ngIf="t.commentsCount > 0 && !(t.isGray || t.isExpanded)" (click)="onExpandClick($event, t)">
+          <div class="branch" *ngIf="t.commentsCount > 0 && !(t.isGray || t.isExpanded)" (click)="onExpandClick($event, t)">
             <a class="expand" [class.spinner]="isExpanding === t" href >{{t.commentsCountText}}</a>
           </div>
         </div>
