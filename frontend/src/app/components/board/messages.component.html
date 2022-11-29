@@ -10,6 +10,9 @@
       <div *ngSwitchCase="0"
            class="message"
            [class.message__selected]="message === channelService.selectedMessage"
+           [class.message__hover-by-child]="message.isHoveByChild"
+           (mouseenter)="onMessageHover(message, true)"
+           (mouseleave)="onMessageHover(message, false)"
            (click)="onMessageClick(message)">
         <img class="avatar" [src]="'https://plllasma.com/i/' + message.icon +'.gif'" />
         <b [class.star]="message.isStarred">{{message.nick}}</b>
@@ -43,6 +46,9 @@
       <!-- Серое сообщение (MessageDisplayType.GRAY) -->
       <div *ngSwitchCase="1"
            class="message message-gray"
+           [class.message__hover-by-child]="message.isHoveByChild"
+           (mouseenter)="onMessageHover(message, true)"
+           (mouseleave)="onMessageHover(message, false)"
            (click)="unfoldGray($event, message)">
 
         <img class="avatar" [src]="'https://plllasma.com/i/' + message.icon +'.gif'">

@@ -17,7 +17,9 @@
   --color-gray: #757575;
   --color-gray-message: #8A8A8A;
   --color-page-bg: #D7CABB;
+  --color-page-bg-dark: #C4B8AA;
   --color-selected-message-bg: #DDD1C1;
+  --color-hover-by-child-message-bg: #d0c3b2;
   --color-star: rgb(241, 95, 95);
   --color-link: #745A50;
 
@@ -109,7 +111,7 @@ body {
     flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
-    background-color: #C4B8AA;
+    background-color: #d0c3b2;
   }
 }
 
@@ -187,6 +189,10 @@ body {
 
   &__selected {
     background-color: var(--color-selected-message-bg);
+  }
+
+  &__hover-by-child {
+    background-color: var(--color-hover-by-child-message-bg);
   }
 
   a {

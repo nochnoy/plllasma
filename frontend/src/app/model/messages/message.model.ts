@@ -15,6 +15,7 @@ export class Message {
   text = '';
   timeCreated = '';
   isStarred = false;
+  isHoveByChild = false;
   important = false; // не схлопывать это сообщение в серых деревьях. Оно важное.
   commentsCount = 0; // присылаемое с сервера кол-во комментов для рутовых сообщений (когда сами комменты ещё не подгружены)
 
