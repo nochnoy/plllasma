@@ -17,7 +17,7 @@
   --color-gray: #757575;
   --color-gray-message: #8A8A8A;
   --color-page-bg: #D7CABB;
-  --color-page-bg-dark: #a9a094;
+  --color-page-bg-dark: #C4B8AA;
   --color-selected-message-bg: #DDD1C1;
   --color-hover-by-child-message-bg: #DDD1C1;
   --color-star: rgb(241, 95, 95);
@@ -259,12 +259,6 @@ body {
   &-root {
     margin-left: 0;
   }
-}
-
-.message-date {
-  padding-top: 0.2rem;
-  font-size: 0.8rem;
-  color: var(--color-page-bg-dark);
 }
 
 .likes {
