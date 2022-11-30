@@ -19,6 +19,8 @@ import { MessageFormComponent } from './components/message-form/message-form.com
 import { TestMessagesPageComponent } from './pages/test-messages-page/test-messages-page.component';
 import { LinkyPipe } from './pipes/linky.pipe';
 import { NewlinePipe } from './pipes/newline.pipe';
+import {LinksToStubsPipe} from "./pipes/links-to-stubs.pipe";
+import {ShortenPipe} from "./pipes/shorten.pipe";
 
 @NgModule({
   imports: [
@@ -43,6 +45,8 @@ import { NewlinePipe } from './pipes/newline.pipe';
     MessageFormComponent,
     TestMessagesPageComponent,
     LinkyPipe,
+    LinksToStubsPipe,
+    ShortenPipe,
     NewlinePipe,
   ],
   providers: [AppGuard],

@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import Autolinker, {AutolinkerConfig, TruncateConfig} from 'autolinker';
+import Autolinker, {AutolinkerConfig, ReplaceFnReturn, TruncateConfig} from 'autolinker';
 
 @Pipe({ name: 'linky' })
 export class LinkyPipe implements PipeTransform {
@@ -8,7 +8,7 @@ export class LinkyPipe implements PipeTransform {
     const config: AutolinkerConfig = {
       truncate: {
         length: 30,
-        location: 'smart'
+        location: 'smart',
       }
     }
 

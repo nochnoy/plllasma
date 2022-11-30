@@ -53,7 +53,7 @@
 
         <img class="avatar" [src]="'https://plllasma.com/i/' + message.icon +'.gif'">
         <b [class.star]="message.isStarred">{{message.nick}}</b>
-        <p *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></p>
+        <p *ngIf="!!message.text" [innerHTML]="message.text | linky | linksToStubs | shorten"></p>
 
         <div *ngIf="message.attachments">
           <a *ngFor="let attachment of message.attachments"
