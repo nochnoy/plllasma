@@ -21,6 +21,7 @@ import { LinkyPipe } from './pipes/linky.pipe';
 import { NewlinePipe } from './pipes/newline.pipe';
 import {LinksToStubsPipe} from "./pipes/links-to-stubs.pipe";
 import {ShortenPipe} from "./pipes/shorten.pipe";
+import {PlasmaDatePipe} from "./pipes/plasmadate.pipe";
 
 @NgModule({
   imports: [
@@ -47,6 +48,7 @@ import {ShortenPipe} from "./pipes/shorten.pipe";
     LinkyPipe,
     LinksToStubsPipe,
     ShortenPipe,
+    PlasmaDatePipe,
     NewlinePipe,
   ],
   providers: [AppGuard],

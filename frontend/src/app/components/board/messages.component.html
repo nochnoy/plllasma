@@ -26,6 +26,9 @@
           </a>
         </div>
 
+        <div *ngIf="message === channelService.selectedMessage"
+             class="message-date">{{message.timeCreated | plasmadate}}</div>
+
         <div class="likes" *ngIf="message === channelService.selectedMessage">
           <a href (click)="onLikeClick($event, '')">👍</a>
           <a href (click)="onLikeClick($event, '')">😄</a>
