@@ -261,6 +261,13 @@ body {
   }
 }
 
+.message-date {
+  padding-top: 0.2rem;
+  font-size: 0.8rem;
+  color: #aba196;
+}
+
+
 .likes {
   margin-left: calc(var(--avatar-size) + var(--avatar-margin));
 
