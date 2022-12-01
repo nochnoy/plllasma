@@ -42,7 +42,6 @@ export class MessagesComponent {
 
   onMessageClick(message: Message): void {
     this.channelService.selectMessage(message);
-    this.appService.log(`PIII выделил сообщение ${message.nick}:${message.text.substr(0, 50)}`);
   }
 
   onNewMessageCreated(): void {

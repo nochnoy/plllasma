@@ -123,7 +123,6 @@ export class MessageFormComponent implements OnInit{
 
   onGhostClick(): void {
     this.isGhost = !this.isGhost;
-    this.appService.log(this.isGhost ? 'PIII привидение' : 'PIII не привидение');
   }
 
 }

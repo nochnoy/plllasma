@@ -24,7 +24,6 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     of({}).pipe(
       switchMap(() => this.appService.login$()), // В начале попытаемся авторизоваться сессией
-      tap(() => this.appService.log('PIII Вошёл')),
       switchMap(() => this.userService.loginStatus$), // Дальше слушаем статус авторизованности
       tap((loginStatus) => {
         switch (loginStatus) {
