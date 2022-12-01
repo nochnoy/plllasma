@@ -111,7 +111,11 @@ body {
     flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
-    background-color: #d2c4b4;
+
+    //background-color: #d2c4b4; // ириска
+    //background-color: #C4B8AA; // dark
+    background-color: #d2c5b6; // прозрачный dark
+
     color: #4f4f4f;
   }
 }

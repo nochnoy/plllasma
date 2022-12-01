@@ -56,20 +56,17 @@ main {
     padding-bottom: 1.5rem;
   }
 
-  .process {
+  .progress {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     height: 3rem;
+    font-size: 1.4rem;
 
-    .spinner-container {
+    .spinner {
       margin-right: 2rem;
-      margin-top: -2rem;
-    }
-
-    .error {
-      font-size: 1.4rem;
+      padding-bottom: 1rem;
     }
   }
 
