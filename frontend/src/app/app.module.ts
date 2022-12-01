@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import {ErrorHandler, NgModule} from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HttpClientModule } from "@angular/common/http";
 import { AppComponent } from './app.component';
@@ -22,6 +22,7 @@ import { NewlinePipe } from './pipes/newline.pipe';
 import {LinksToStubsPipe} from "./pipes/links-to-stubs.pipe";
 import {ShortenPipe} from "./pipes/shorten.pipe";
 import {PlasmaDatePipe} from "./pipes/plasmadate.pipe";
+import {ErrorService} from "./services/error.service";
 
 @NgModule({
   imports: [
@@ -31,7 +32,7 @@ import {PlasmaDatePipe} from "./pipes/plasmadate.pipe";
     ScrollingModule,
     RouterModule,
     AppRoutingModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
   ],
   declarations: [
     AppComponent,
@@ -51,7 +52,10 @@ import {PlasmaDatePipe} from "./pipes/plasmadate.pipe";
     PlasmaDatePipe,
     NewlinePipe,
   ],
-  providers: [AppGuard],
+  providers: [
+    AppGuard,
+    {provide: ErrorHandler, useClass: ErrorService},
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
