@@ -27,7 +27,9 @@
     }
 
     &--reply {
-      background-color: var(--color-background)!important;
+      &:not(.form--ghost) {
+        background-color: var(--color-background) !important;
+      }
       &:hover {
         background-color: white!important;
       }
