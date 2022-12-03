@@ -21,7 +21,7 @@
   --color-selected-message-bg: #DDD1C1;
   --color-hover-by-child-message-bg: #DDD1C1;
   --color-star: rgb(241, 95, 95);
-  --color-link: #745A50;
+  --color-link: #695146;
 
   --border-radius: 3px;
   --margin-standard: 0.4rem;
@@ -184,12 +184,6 @@ body {
     &:hover {
       background-color: var(--color-selected-message-bg);
     }
-    a {
-      color: black!important;
-      &:hover {
-        color: var(--color-link)!important;
-      }
-    }
   }
 
   &__selected {
@@ -205,9 +199,6 @@ body {
     text-decoration: none;
     &:hover {
       text-decoration: underline;
-    }
-    &:visited {
-      color: var(--color-link);
     }
   }
 
