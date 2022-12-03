@@ -38,6 +38,7 @@ main {
       color: #f1eeec;
       width: 9rem;
       height: var(--controls-height);
+      margin-top: 1rem;
       line-height: var(--controls-height);
 
       &:hover {
@@ -52,8 +53,8 @@ main {
   .title {
     max-width: 10rem;
     text-align: center;
-    font-size: 2.4rem;
-    padding-bottom: 1.5rem;
+    font-size: 2.2rem;
+    margin-bottom: 0!important;
   }
 
   .progress {
@@ -61,7 +62,7 @@ main {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    height: 3rem;
+    height: 2.4rem;
     font-size: 1.4rem;
 
     .spinner {

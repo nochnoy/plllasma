@@ -2,8 +2,6 @@
   <form [formGroup]="form">
     <div class="logo"></div>
     <div class="title">Плазма</div>
-    <input class="input" placeholder="Логин" name="login" type="text" formControlName="login" autofocus>
-    <input class="input" placeholder="Пароль" name="password" type="password" formControlName="password">
     <div class="progress">
       <ng-container *ngIf="!authorizing && form.pristine && error">
         <ng-container *ngIf="error === 1">😦</ng-container>
@@ -15,6 +13,8 @@
         <div class="spinner"></div>
       </ng-container>
     </div>
+    <input class="input" placeholder="Логин" name="login" type="text" formControlName="login" autofocus>
+    <input class="input" placeholder="Пароль" name="password" type="password" formControlName="password">
     <button class="button"
             [disabled]="form.invalid || authorizing"
             (click)="onLogin()">
