@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, HostListener, OnInit} from '@angular/core';
 import {AppService} from "../../services/app.service";
 import {ActivatedRoute} from "@angular/router";
 import {of} from "rxjs";
@@ -94,6 +94,28 @@ export class ChannelPageComponent implements OnInit {
 
   onChannelInvalidated(): void {
     this.channelModel = this.channelService.getChannel(this.channel.id_place, this.channel?.time_viewed ?? '');
+  }
+
+  @HostListener('document:click', ['$event'])
+  onGlobalClick(event: any): void {
+    // Клик за пределами сообщений = развыделение сообщения
+    let messageElementFound = false;
+    let element = event.target;
+    for (let i = 0; i < 100; i++) {
+      if (element) {
+        const classes: string[] = Array.from(element.classList);
+        if (classes.some((cls) => cls === 'message__selected')) {
+          messageElementFound = true;
+          break;
+        }
+        element = element.parentElement;
+      } else {
+        break;
+      }
+    }
+    if (!messageElementFound) {
+      this.channelService.unselectMessage();
+    }
   }
 
 }
