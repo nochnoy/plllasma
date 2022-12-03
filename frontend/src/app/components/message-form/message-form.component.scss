@@ -35,13 +35,15 @@
       }
     }
 
-    .user {
+    .user-line {
       display: flex;
       flex-direction: row;
       justify-content: flex-start;
       margin-bottom: 0.2rem;
       font-weight: bold;
-      cursor: pointer;
+      .user {
+        cursor: pointer;
+      }
       .icon {
         display: inline-block;
         width: 16px;

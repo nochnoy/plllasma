@@ -7,16 +7,18 @@
      [class.form--reply]="replyMode"
      [class.form--drop]="isDragging">
 
-  <div class="user" (click)="onGhostClick()">
-    <ng-container *ngIf="!isGhost">
-      <img class="avatar" [src]="'https://plllasma.com/i/' + userIcon" />{{userName}}▾
-    </ng-container>
-    <ng-container *ngIf="isGhost">
-      <div class="icon"></div>{{'Привидение'}}▴
-    </ng-container>
+  <div class="user-line" (click)="onUserLineClick()">
+    <div class="user" (click)="onGhostClick()">
+      <ng-container *ngIf="!isGhost">
+        <img class="avatar" [src]="'https://plllasma.com/i/' + userIcon" />{{userName}}▾
+      </ng-container>
+      <ng-container *ngIf="isGhost">
+        <div class="icon"></div>{{'Привидение'}}▴
+      </ng-container>
+    </div>
   </div>
 
-  <textarea autofocus [disabled]="isSending" [(ngModel)]="messageText"></textarea>
+  <textarea #textarea autofocus [disabled]="isSending" [(ngModel)]="messageText"></textarea>
 
   <div class="tools">
     <div class="tools-attach">

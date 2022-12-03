@@ -1,4 +1,4 @@
-import {Component, EventEmitter, HostListener, Input, OnInit, Output} from '@angular/core';
+import {Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, ViewChild} from '@angular/core';
 import {AppService} from "../../services/app.service";
 import {switchMap, tap} from "rxjs/operators";
 import {IChannel, IUploadingAttachment} from "../../model/app-model";
@@ -21,6 +21,7 @@ export class MessageFormComponent implements OnInit{
     public userService: UserService,
   ) { }
 
+  @ViewChild('textarea') textarea?: ElementRef;
   @Input('channelId') channelId!: number;
   @Input('parentMessage') parentMessage?: Message;
   @Input('replyMode') replyMode: boolean = false;
@@ -119,6 +120,11 @@ export class MessageFormComponent implements OnInit{
     this.attachments = this.attachments.filter((a) => a !== attachment);
     if (!this.attachments.length) {
     }
+  }
+
+  onUserLineClick(): void {
+    // Юзер промахнулся и кликнул слева от ника. Выделим поле ввода.
+    this.textarea?.nativeElement.focus();
   }
 
   onGhostClick(): void {
