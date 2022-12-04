@@ -1,6 +1,6 @@
 <div class="three-column-page">
   <aside class="aside">
-      <app-main-menu></app-main-menu>
+      <app-main-menu (itemClick)="onMenuItemClick(channel)"></app-main-menu>
   </aside>
   <main class="main">
     <ng-container *ngIf="channel">

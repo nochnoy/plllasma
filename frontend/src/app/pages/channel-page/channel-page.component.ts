@@ -1,7 +1,7 @@
 import {Component, HostListener, OnInit} from '@angular/core';
 import {AppService} from "../../services/app.service";
 import {ActivatedRoute} from "@angular/router";
-import {of} from "rxjs";
+import {Observable, of} from "rxjs";
 import {switchMap, tap} from "rxjs/operators";
 import {EMPTY_CHANNEL, IChannel} from "../../model/app-model";
 import {Channel} from "../../model/messages/channel.model";
@@ -116,6 +116,24 @@ export class ChannelPageComponent implements OnInit {
     if (!messageElementFound) {
       this.channelService.unselectMessage();
     }
+  }
+
+  onMenuItemClick(channel:IChannel): void {
+    // Сообщения канала обновим только если ткнули в ссылку самого канала
+    const refreshMessages = this.channel && channel.id_place === this.channel.id_place;
+    this.refreshEverything(refreshMessages);
+  }
+
+  // TODO: Потом выкинуть, когда сервер начнёт присылать инфу о том что нового появилось
+  refreshEverything(refreshMessages = false): void {
+    of({}).pipe(
+      switchMap(() => this.httpService.getHereAndNow$()),
+      tap(() => {
+        if (refreshMessages) {
+          this.onChannelInvalidated();
+        }
+      }),
+    ).subscribe();
   }
 
 }
