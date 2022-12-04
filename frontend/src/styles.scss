@@ -88,23 +88,36 @@ body {
     flex-grow: 1;
   }
   .sidebar {
-    min-width: 8rem;
-    max-width: 8rem;
     margin-left: 1rem;
     padding: 0.9rem;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-
-    //background-color: #d2c4b4; // ириска
-    //background-color: #C4B8AA; // dark
     background-color: #d2c5b6; // прозрачный dark
-
     color: #4f4f4f;
 
     &>* {
       max-width: 20rem;
+    }
+  }
+
+  @media (min-width: 8rem) {
+    .sidebar {
+      min-width: 8rem;
+      max-width: 8rem;
+    }
+  }
+  @media (min-width: 80rem) {
+    .sidebar {
+      min-width: 14rem;
+      max-width: 14rem;
+    }
+  }
+  @media (min-width: 120rem) {
+    .sidebar {
+      min-width: 24rem;
+      max-width: 24rem;
     }
   }
 }
