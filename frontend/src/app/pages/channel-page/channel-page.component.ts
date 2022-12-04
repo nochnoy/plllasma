@@ -127,6 +127,7 @@ export class ChannelPageComponent implements OnInit {
   // TODO: Потом выкинуть, когда сервер начнёт присылать инфу о том что нового появилось
   refreshEverything(refreshMessages = false): void {
     of({}).pipe(
+      switchMap(() => this.channelService.loadChannels$()),
       switchMap(() => this.httpService.getHereAndNow$()),
       tap(() => {
         if (refreshMessages) {
