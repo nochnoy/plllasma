@@ -21,7 +21,8 @@
   --color-selected-message-bg: #DDD1C1;
   --color-hover-by-child-message-bg: #DDD1C1;
   --color-star: rgb(241, 95, 95);
-  --color-link: #5b524e;
+  --color-link: #886211;
+  --color-link-hover: #d0930e;
 
   --border-radius: 3px;
   --margin-standard: 0.4rem;
@@ -58,39 +59,18 @@ body {
 .three-column-page {
   display: flex;
   flex-direction: row;
-  justify-content: flex-start;
+  justify-content: stretch;
   align-items: stretch;
   min-height: max(100vh, 100%);
 
-  @media (min-width: 20rem) {
-    .aside {
-      min-width: 200px;
-      max-width: 200px;
-    }
-    .main {
-      width: 100%;
-    }
-    .sidebar {
-      width: 8rem;
-    }
-  }
-  @media (min-width: 60rem) {
-    .aside {
-      min-width: 200px;
-      max-width: 200px;
-    }
-    .main {
-      width: 0.7fr;
-    }
-    .sidebar {
-      width: 0.3fr;
-    }
+  .aside {
+    min-width: 200px;
+    max-width: 200px;
   }
 
-  .aside {
-    overflow-y: initial;
-  }
   .main {
+    flex-grow: 1;
+    max-width: 70rem;
 
     header {
       margin: 1rem 0;
@@ -104,19 +84,28 @@ body {
       }
     }
   }
+  .spacer {
+    flex-grow: 1;
+  }
   .sidebar {
+    min-width: 8rem;
+    max-width: 8rem;
     margin-left: 1rem;
     padding: 0.9rem;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
-    align-items: stretch;
+    align-items: center;
 
     //background-color: #d2c4b4; // ириска
     //background-color: #C4B8AA; // dark
     background-color: #d2c5b6; // прозрачный dark
 
     color: #4f4f4f;
+
+    &>* {
+      max-width: 20rem;
+    }
   }
 }
 
@@ -199,6 +188,7 @@ body {
     text-decoration: none;
     &:hover {
       text-decoration: underline;
+      color: var(--color-link-hover);
     }
   }
 
@@ -242,12 +232,11 @@ body {
   }
 }
 .expand:hover {
-  color: var(--color-link);
+  color: var(--color-link-hover);
   text-decoration: underline;
 }
 
 .branch {
-  max-width: 100%;
   margin-left: var(--message-level-size);
   color: var(--color-black);
 
@@ -286,12 +275,6 @@ body {
     height: var(--attachment-icon-size);
     opacity: 0.7;
   }
-}
-
-.reply {
-  margin-left: calc(var(--avatar-size) + var(--avatar-margin));
-  margin-bottom: 1rem;
-  max-width: 30rem;
 }
 
 /* Звёздочки */
