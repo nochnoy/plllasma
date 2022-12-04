@@ -104,7 +104,8 @@ export class ChannelPageComponent implements OnInit {
     for (let i = 0; i < 100; i++) {
       if (element) {
         const classes: string[] = Array.from(element.classList);
-        if (classes.some((cls) => cls === 'message__selected')) {
+        // TODO: Пиздец. Это конечно надо менять. ngIf'ы ломают иерархию, хер поймёшь куда пришёлся тык.
+        if (element.localName === 'attachmants' || element.localName === 'button' || classes.some((cls) => cls === 'message__selected')) {
           messageElementFound = true;
           break;
         }

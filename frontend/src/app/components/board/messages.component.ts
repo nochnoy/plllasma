@@ -56,7 +56,7 @@ export class MessagesComponent {
 
   onMessageHover(message: Message, isHover: boolean): void {
     if (message.parent) {
-      message.parent.isHoveByChild = isHover;
+      message.parent.isHoverByChild = isHover;
     }
   }
 }

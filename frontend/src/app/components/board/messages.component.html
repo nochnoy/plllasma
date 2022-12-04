@@ -10,7 +10,7 @@
       <div *ngSwitchCase="0"
            class="message"
            [class.message__selected]="message === channelService.selectedMessage"
-           [class.message__hover-by-child]="message.isHoveByChild"
+           [class.message__hover-by-child]="message.isHoverByChild"
            (mouseenter)="onMessageHover(message, true)"
            (mouseleave)="onMessageHover(message, false)"
            (click)="onMessageClick(message)">
@@ -49,7 +49,7 @@
       <!-- Серое сообщение (MessageDisplayType.GRAY) -->
       <div *ngSwitchCase="1"
            class="message message-gray"
-           [class.message__hover-by-child]="message.isHoveByChild"
+           [class.message__hover-by-child]="message.isHoverByChild"
            (mouseenter)="onMessageHover(message, true)"
            (mouseleave)="onMessageHover(message, false)"
            (click)="unfoldGray($event, message)">
