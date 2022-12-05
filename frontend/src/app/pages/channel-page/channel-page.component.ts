@@ -62,9 +62,13 @@ export class ChannelPageComponent implements OnInit {
       untilDestroyed(this)
     ).subscribe();
 
-    this.httpService.getHereAndNow$().pipe(
+    this.getHereAndNow$().subscribe();
+  }
+
+  getHereAndNow$(): Observable<any> {
+    return this.httpService.getHereAndNow$().pipe(
       tap((users) => this.hereAndNowUsers = users)
-    ).subscribe();
+    );
   }
 
   onExpandClick(event: any, thread: Thread) {
@@ -129,7 +133,7 @@ export class ChannelPageComponent implements OnInit {
   refreshEverything(refreshMessages = false): void {
     of({}).pipe(
       switchMap(() => this.channelService.loadChannels$()),
-      switchMap(() => this.httpService.getHereAndNow$()),
+      switchMap(() => this.getHereAndNow$()),
       tap(() => {
         if (refreshMessages) {
           this.onChannelInvalidated();
