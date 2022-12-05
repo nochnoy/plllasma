@@ -100,7 +100,7 @@ export class ChannelPageComponent implements OnInit {
     this.channelModel = this.channelService.getChannel(this.channel.id_place, this.channel?.time_viewed ?? '');
   }
 
-  @HostListener('document:click', ['$event'])
+  @HostListener('document:mousedown', ['$event'])
   onGlobalClick(event: any): void {
     // Клик за пределами сообщений = развыделение сообщения
     let messageElementFound = false;

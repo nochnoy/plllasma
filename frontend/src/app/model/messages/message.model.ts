@@ -18,7 +18,11 @@ export class Message {
   isHoverByChild = false;
   important = false; // не схлопывать это сообщение в серых деревьях. Оно важное.
   commentsCount = 0; // присылаемое с сервера кол-во комментов для рутовых сообщений (когда сами комменты ещё не подгружены)
-
+  sps = 0;
+  heh = 0;
+  nep = 0;
+  ogo = 0;
+  myLike?: 'sps' | 'heh' | 'nep' | 'ogo';
   parent?: Message;
   children?: Array<Message>;
 
@@ -87,6 +91,10 @@ export class Message {
     c.isStarred = this.isStarred;
     c.important = this.important;
     c.attachments = this.attachments;
+    c.sps = this.sps;
+    c.heh  = this.heh;
+    c.nep = this.nep;
+    c.ogo = this.ogo;
 
     return c;
   }
@@ -102,6 +110,10 @@ export class Message {
     this.isStarred = m.isStarred;
     this.important = m.important;
     this.attachments = m.attachments;
+    this.sps = m.sps;
+    this.heh  = m.heh;
+    this.nep = m.nep;
+    this.ogo = m.ogo;
   }
 
   public deserialize(raw: any, rootId: number) {
@@ -113,6 +125,10 @@ export class Message {
     this.text = raw.t;
     this.timeCreated = raw.d;
     this.isStarred = raw.star;
+    this.sps = raw.sps;
+    this.heh  = raw.he;
+    this.nep = raw.nep;
+    this.ogo = raw.ogo;
 
     this.attachments.length = 0;
     for (let i = 0; i < raw.a; i++) {

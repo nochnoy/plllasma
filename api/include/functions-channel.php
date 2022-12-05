@@ -12,7 +12,7 @@ function getChannelJson($channelId, $lastViewed) {
 	// Получаем из БД страницу из 50 сообщений верхнего уровня
 
 	$sql  = 'SELECT';
-	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments';
+	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo';
 	$sql .= ' FROM tbl_messages';
 	$sql .= ' WHERE id_place='.$channelId.' AND id_parent=0';
 	$sql .= ' ORDER BY time_created DESC';
@@ -57,7 +57,7 @@ function getChannelUpdateJson($channelId, $lastViewed, $after) {
 	// Получаем из БД страницу из 50 сообщений верхнего уровня
 
 	$sql  = 'SELECT';
-	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments';
+	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo';
 	$sql .= ' FROM tbl_messages';
 	$sql .= ' WHERE id_place='.$channelId.' AND time_created>'.$after;
 	$sql .= ' ORDER BY time_created DESC';
@@ -82,7 +82,7 @@ function getThreadJson($threadId, $lastViewed) {
 	// Получаем из БД страницу из 50 сообщений верхнего уровня
 
 	$sql  = 'SELECT';
-	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments';
+	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo';
 	$sql .= ' FROM tbl_messages';
 	$sql .= ' WHERE id_first_parent='.$threadId;
 	$sql .= ' ORDER BY time_created DESC';
@@ -121,6 +121,10 @@ function buildMessagesJson($a, $lastViewed) {
 		$s .= ',"t":"'	. jsonifyMessageText($row[5]).'"';	// text
 		$s .= ',"d":"'	. $row[6].'"';						// time_created
 		$s .= ',"a":'	. ($row[11] ? $row[11] : 0).'';		// attachments
+		$s .= ',"sps":'	. ($row[12] ? $row[12] : 0).'';		// sps
+		$s .= ',"he":'	. ($row[13] ? $row[13] : 0).'';		// he
+		$s .= ',"nep":'	. ($row[14] ? $row[14] : 0).'';		// nep
+		$s .= ',"ogo":'	. ($row[15] ? $row[15] : 0).'';		// ogo
 
 		// иконка
 		if ($row[9] == 1) { 

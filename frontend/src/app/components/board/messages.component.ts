@@ -3,6 +3,7 @@ import {Message, MessageDisplayType} from "../../model/messages/message.model";
 import {ShlopMessage} from "../../model/messages/shlop-message.model";
 import {AppService} from "../../services/app.service";
 import {ChannelService} from "../../services/channel.service";
+import {HttpService} from "../../services/http.service";
 
 @Component({
   selector: 'app-messages',
@@ -13,6 +14,7 @@ export class MessagesComponent {
 
   constructor(
     public appService: AppService,
+    public httpService: HttpService,
     public channelService: ChannelService,
   ) {}
 
@@ -49,9 +51,13 @@ export class MessagesComponent {
     this.channelService.invalidateChannel(this.placeId);
   }
 
-  onLikeClick(event: any, id: string): void {
+  onLikeClick(event: any, message: Message, like: 'sps' | 'heh' | 'nep' | 'ogo'): void {
     event.preventDefault();
-    alert('Пока не работает');
+    if (!message.myLike) {
+      this.httpService.likeMessage(message.id, like);
+      message[like]++;
+      message.myLike = like;
+    }
   }
 
   onMessageHover(message: Message, isHover: boolean): void {

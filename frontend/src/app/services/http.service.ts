@@ -63,4 +63,16 @@ export class HttpService {
       { observe: 'body', withCredentials: true }
     ).subscribe();
   }
+
+  likeMessage(messageId: number, like: 'sps' | 'heh' | 'nep' | 'ogo') {
+    this.httpClient.post(
+      `${HttpService.apiPath}/like.php`,
+      {
+        messageId,
+        like
+      },
+      {observe: 'body', withCredentials: true}
+    ).subscribe();
+  }
+
 }
