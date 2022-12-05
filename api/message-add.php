@@ -14,6 +14,7 @@ $ghost 				= @trim($_POST['ghost']) == '1';
 
 $channelFolder 		= getcwd().'/../attachments/'.$placeId.'/';
 $iconFolder 		= getcwd().'/images/attachment-icons/';
+$userIconFolder		= getcwd().'/../i/';
 
 $id_parent = 0;
 $id_first_parent = 0;
@@ -57,7 +58,7 @@ if ($ghost) {
 	$icon = '1';
 	$nick = '';
 } else {
-	$icon = $user['icon'];
+	$icon = file_exists($userIconFolder.$user['id_user'].".gif") ? '1' : '0';
 	$nick = $user['nick'];
 }
 
