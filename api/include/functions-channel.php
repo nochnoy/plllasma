@@ -30,7 +30,7 @@ function getChannelJson($channelId, $lastViewed) {
 	if ($row[0] > 0 && $row[0] < MAX_STARRED_THREADS) { // Если звезданутых больше 20ти значит юзер не был здесь слишком долго и дайджестов не получит.
 
 		$sql  = 'SELECT';
-		$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, -1, icon, anonim, id_user, attachments'; 
+		$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, -1, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo'; 
 		$sql .= ' FROM tbl_messages';
 		$sql .= ' WHERE';
 		$sql .= ' (id_first_parent<>0 && id_first_parent IN (SELECT id_first_parent FROM tbl_messages WHERE id_place='.$channelId.' AND time_created >= "'.$lastViewed.'"))';
