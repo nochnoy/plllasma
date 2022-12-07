@@ -4,6 +4,7 @@ import {ShlopMessage} from "../../model/messages/shlop-message.model";
 import {AppService} from "../../services/app.service";
 import {ChannelService} from "../../services/channel.service";
 import {HttpService} from "../../services/http.service";
+import {delay, tap} from "rxjs/operators";
 
 @Component({
   selector: 'app-messages',
@@ -54,7 +55,12 @@ export class MessagesComponent {
   onLikeClick(event: any, message: Message, like: 'sps' | 'heh' | 'nep' | 'ogo'): void {
     event.preventDefault();
     if (!message.myLike) {
-      this.httpService.likeMessage(message.id, like);
+      this.httpService.likeMessage(message.id, like).pipe(
+        delay(600),
+        tap(() => {
+          this.channelService.unselectMessage();
+        })
+      ).subscribe();
       message[like]++;
       message.myLike = like;
     }
