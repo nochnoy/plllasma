@@ -54,7 +54,7 @@ import {ErrorService} from "./services/error.service";
   ],
   providers: [
     AppGuard,
-    {provide: ErrorHandler, useClass: ErrorService},
+    /*{provide: ErrorHandler, useClass: ErrorService},*/
   ],
   bootstrap: [AppComponent]
 })
