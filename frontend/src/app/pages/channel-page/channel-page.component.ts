@@ -30,11 +30,13 @@ export class ChannelPageComponent implements OnInit {
   channelModel?: Channel;
   isExpanding?: Thread;
   hereAndNowUsers: string[] = [];
+  currentPage = 0;
 
   ngOnInit(): void {
     of({}).pipe(
       switchMap(() => this.activatedRoute.url),
       tap((urlSegments) => {
+        this.currentPage = 0;
         let channelId: number;
         if (urlSegments.length) {
           channelId = parseInt(urlSegments[0].path, 10) ?? this.defaultChannelId;
@@ -47,7 +49,7 @@ export class ChannelPageComponent implements OnInit {
       }),
       tap(() => {
         if (this.channel !== EMPTY_CHANNEL) {
-          this.channelModel = this.channelService.getChannel(this.channel.id_place, this.channel?.time_viewed ?? '');
+          this.channelModel = this.channelService.getChannel(this.channel.id_place, this.channel?.time_viewed ?? '', this.currentPage);
         }
       }),
       untilDestroyed(this)
@@ -63,6 +65,18 @@ export class ChannelPageComponent implements OnInit {
     ).subscribe();
 
     this.getHereAndNow$().subscribe();
+  }
+
+  get pagesToShow(): number[] {
+    const result: number[] = [];
+    const count = this.channelModel?.pagesCount ?? 0;
+    for (let i = 0; i < count; i++) {
+      result.push(i);
+    }
+    return result;
+  }
+  get pagesNoAll(): boolean {
+    return false;
   }
 
   getHereAndNow$(): Observable<any> {
@@ -97,7 +111,7 @@ export class ChannelPageComponent implements OnInit {
   }
 
   onChannelInvalidated(): void {
-    this.channelModel = this.channelService.getChannel(this.channel.id_place, this.channel?.time_viewed ?? '');
+    this.channelModel = this.channelService.getChannel(this.channel.id_place, this.channel?.time_viewed ?? '', this.currentPage);
   }
 
   @HostListener('document:mousedown', ['$event'])
@@ -140,6 +154,13 @@ export class ChannelPageComponent implements OnInit {
         }
       }),
     ).subscribe();
+  }
+
+  onPagination(event: any, page: number): void {
+    event.preventDefault();
+    this.currentPage = page;
+    this.onChannelInvalidated();
+    window.scroll({ top: 0, left: 0 });
   }
 
 }

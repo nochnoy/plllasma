@@ -3,6 +3,7 @@ import {Thread} from './thread.model';
 export class Channel {
 
   public id: number = 0;
+  public pagesCount: number = 0;
   public threads: Array<Thread> = [];
 
   public deserialize(input: any) {
@@ -13,6 +14,7 @@ export class Channel {
     let threadsById = new Map<number, Thread>();
     let starredTrees = new Array<Thread>();
 
+    this.pagesCount = input.pages ?? 0;
     this.threads = new Array<Thread>();
 
     // Бежим по сообщениям и распихиваем их по тредам

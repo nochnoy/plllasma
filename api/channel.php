@@ -15,6 +15,7 @@ $placeId = $input['cid']; // id канала
 $lastViewed = $input['lv']; // Дата когда юзер в последний раз был на этом канале.
 $after = @$input['after']; // Дата. Если указана - выдаст только сообщения, созданные после этой даты.
 $unseen = @$input['unseen'];
+$page = @$input['page'] ?? 0;
 
 $viewed = '';
 
@@ -24,9 +25,10 @@ if (!canRead($placeId)) {
 
 if (!empty($after)) {
     // Передали параметр after - значит это получение обновлений о канале. Выдадим только обновившиеся сообщения.
+    // page вместе с after не работает
     $messagesResult = getChannelUpdateJson($placeId, $lastViewed, $after);
 } else {
-    $messagesResult = getChannelJson($placeId, $lastViewed);
+    $messagesResult = getChannelJson($placeId, $lastViewed, $page);
 }
 
 if (empty($unseen)) {
@@ -45,5 +47,13 @@ if (empty($unseen)) {
     
 }
 
-exit('{"id":'.$placeId.', "messages":'.$messagesResult.', "viewed":"'.$viewed.'"}');
+// Получаем общее кол-во сообщений
+$sql = $mysqli->prepare('SELECT COUNT(id_message) FROM tbl_messages WHERE id_parent=0 AND id_place='.$placeId);
+$sql->execute();
+$result = $sql->get_result();
+$row = mysqli_fetch_array($result);
+$total = $row[0] ?? 0;
+$pagesCount = ceil($total / PAGE_SIZE);
+
+exit('{"id":'.$placeId.', "pages":'.$pagesCount.', "messages":'.$messagesResult.', "viewed":"'.$viewed.'"}');
 ?>

@@ -26,6 +26,7 @@
 
   --border-radius: 3px;
   --margin-standard: 0.4rem;
+  --margin-section: 0.7rem; // расстояние между крупными блоками - например формой и заголовком сканала
   --message-level-size: 1.2rem;
   --message-padding: 0.4rem;
 
@@ -73,7 +74,7 @@ body {
     max-width: 70rem;
 
     header {
-      margin: 1rem 0;
+      margin-top: var(--margin-section);
 
       h1 {
         font-size: 1.5rem;
@@ -89,7 +90,7 @@ body {
   }
   .sidebar {
     margin-left: 1rem;
-    padding: 0.9rem;
+    padding: var(--margin-section);
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -348,5 +349,33 @@ body {
     border: 2px solid rgba(0,0,0,0);
     border-top-color: #000;
     animation: spinner .6s linear infinite;
+  }
+}
+
+// Пагинатор
+.paginator {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  border-top: 1px solid var(--color-page-bg-dark);
+  margin: var(--margin-section) 1rem;
+  padding-top: var(--margin-section);
+
+  a {
+    display: inline-block;
+    width: 1.2rem;
+    height: 1.2rem;
+    line-height: 1.2rem;
+    padding: 0.2rem;
+    font-size: 0.9rem;
+    text-align: center;
+    color: black;
+    margin-right: 0.2rem;
+    text-decoration: none;
+    &.current {
+      background-color: white;
+      border-radius: 0.2rem;
+    }
   }
 }

@@ -2,7 +2,7 @@
 // Функции для работы с каналом и его ветками
 
 // Возвращает JSON с сообщениями канала - 50 верхних плюс звезданутые и те, на которых висят завезданутые
-function getChannelJson($channelId, $lastViewed) {
+function getChannelJson($channelId, $lastViewed, $page = 0) {
 	global $mysqli;
 
 	$a = array();
@@ -12,11 +12,11 @@ function getChannelJson($channelId, $lastViewed) {
 	// Получаем из БД страницу из 50 сообщений верхнего уровня
 
 	$sql  = 'SELECT';
-	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo';
+	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo ';
 	$sql .= ' FROM tbl_messages';
 	$sql .= ' WHERE id_place='.$channelId.' AND id_parent=0';
 	$sql .= ' ORDER BY time_created DESC';
-	$sql .= ' LIMIT 50';
+	$sql .= ' LIMIT '.PAGE_SIZE.' OFFSET '.($page * PAGE_SIZE);
 	$result = mysqli_query($mysqli, $sql);
 
 	while ($row = mysqli_fetch_array($result)) {
@@ -61,7 +61,7 @@ function getChannelUpdateJson($channelId, $lastViewed, $after) {
 	$sql .= ' FROM tbl_messages';
 	$sql .= ' WHERE id_place='.$channelId.' AND time_created>'.$after;
 	$sql .= ' ORDER BY time_created DESC';
-	$sql .= ' LIMIT 50';
+	$sql .= ' LIMIT '.PAGE_SIZE;
 	$result = mysqli_query($mysqli, $sql);
 
 	while ($row = mysqli_fetch_array($result)) {

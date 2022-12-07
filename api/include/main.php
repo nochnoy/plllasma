@@ -23,6 +23,7 @@ define("DB_DB", "plllasma");
 define("COOKIE_KEY_CODE", "contortion_key");
 define("PATH_TO_STORAGE", "../../attachments/");
 define("MAX_STARRED_THREADS", 20); // порог кол-ва новых сообщений после которого перестаём строить серые ветки
+define("PAGE_SIZE", 50);
 
 $allowed_http_origins = [
     "https://plllasma.ru",

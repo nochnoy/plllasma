@@ -63,7 +63,7 @@ export class ChannelService {
 
   }
 
-  getChannel(channelId: number, time_viewed: string): Channel {
+  getChannel(channelId: number, time_viewed: string, page = 0): Channel {
     const channelAtMenu: IChannel = this.channels.find((c) => c.id_place === channelId) || {...EMPTY_CHANNEL};
     let channelModel = this.channelModels.get(channelId);
 
@@ -76,7 +76,7 @@ export class ChannelService {
     }
 
     of({}).pipe(
-      switchMap(() => this.httpService.getChannel$(channelId, time_viewed)),
+      switchMap(() => this.httpService.getChannel$(channelId, time_viewed, page)),
       tap((input) => {
         channelAtMenu.spinner = false;
 

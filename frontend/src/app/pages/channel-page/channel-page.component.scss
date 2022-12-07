@@ -3,6 +3,7 @@
 }
 
 .form {
+  margin: var(--margin-section) 0;
   min-height: 10rem;
   display: flex;
   flex-direction: column;
@@ -11,10 +12,6 @@
     flex-grow: 1;
     max-width: 40rem;
   }
-}
-
-.messages {
-  margin-top: 1rem;
 }
 
 .nowandhere {

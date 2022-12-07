@@ -7,6 +7,7 @@ import {Const} from "../../model/const";
 import {Message} from "../../model/messages/message.model";
 import {UserService} from "../../services/user.service";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
+import {ChannelService} from "../../services/channel.service";
 
 @UntilDestroy()
 @Component({
@@ -19,6 +20,7 @@ export class MessageFormComponent implements OnInit{
   constructor(
     public appService: AppService,
     public userService: UserService,
+    public channelService: ChannelService
   ) { }
 
   @ViewChild('textarea') textarea?: ElementRef;
@@ -80,6 +82,7 @@ export class MessageFormComponent implements OnInit{
             this.isSending = false;
             this.attachments.length = 0;
             this.messageText = '';
+            this.channelService.unselectMessage();
             this.onNewMessageCreated.emit(this.messageText);
           }),
           untilDestroyed(this)

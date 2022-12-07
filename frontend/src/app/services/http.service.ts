@@ -26,12 +26,13 @@ export class HttpService {
     );
   }
 
-  getChannel$(channelId:number, lastVieved:string, unseen = false): Observable<any> {
+  getChannel$(channelId:number, lastVieved:string, page = 0, unseen = false): Observable<any> {
     return this.httpClient.post(
       `${HttpService.apiPath}/channel.php`,
       {
         cid: channelId.toString(),
         lv: lastVieved,
+        page,
         unseen
       },
       { observe: 'body', withCredentials: true }
@@ -64,15 +65,15 @@ export class HttpService {
     ).subscribe();
   }
 
-  likeMessage(messageId: number, like: 'sps' | 'heh' | 'nep' | 'ogo') {
-    this.httpClient.post(
+  likeMessage(messageId: number, like: 'sps' | 'heh' | 'nep' | 'ogo'): Observable<any> {
+    return this.httpClient.post(
       `${HttpService.apiPath}/like.php`,
       {
         messageId,
         like
       },
       {observe: 'body', withCredentials: true}
-    ).subscribe();
+    );
   }
 
 }

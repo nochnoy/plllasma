@@ -22,6 +22,15 @@
         </div>
       </div>
 
+      <div class="paginator">
+        <a *ngFor="let page of pagesToShow"
+           href
+           [class.current]="page === currentPage"
+           (click)="onPagination($event, page)">
+          {{page + 1}}
+        </a>
+      </div>
+
     </ng-container>
   </main>
   <div class="spacer">
