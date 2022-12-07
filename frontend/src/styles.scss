@@ -358,9 +358,7 @@ body {
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
-  border-top: 1px solid var(--color-page-bg-dark);
-  margin: var(--margin-section) 1rem;
-  padding-top: var(--margin-section);
+  margin: 3rem 1rem;
 
   a {
     display: inline-block;
