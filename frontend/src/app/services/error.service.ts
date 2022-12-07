@@ -11,8 +11,8 @@ export class ErrorService implements ErrorHandler{
 
   handleError(error: any) {
     setTimeout(() => {
-      this.appService.log('CLIENT ERROR: ' + error.message);
+      console?.error(error?.stack);
+      this.appService.log('CLIENT ERROR: ' + error?.message);
     }, 1000);
-    console.error(error.stack);
   }
 }
