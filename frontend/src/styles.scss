@@ -368,11 +368,17 @@ body {
     padding: 0.2rem;
     font-size: 0.9rem;
     text-align: center;
-    color: black;
+    color: #4b4b4b;
     margin-right: 0.2rem;
     text-decoration: none;
     &.current {
-      background-color: white;
+      color: var(--color-page-bg);
+      background-color: #4b4b4b;
+      border-radius: 0.2rem;
+    }
+    &:hover {
+      color: var(--color-page-bg);
+      background-color: #4b4b4b;
       border-radius: 0.2rem;
     }
   }
