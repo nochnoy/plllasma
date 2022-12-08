@@ -55,5 +55,7 @@ $row = mysqli_fetch_array($result);
 $total = $row[0] ?? 0;
 $pagesCount = ceil($total / PAGE_SIZE);
 
+logActivity('channel '.$placeId);
+
 exit('{"id":'.$placeId.', "pages":'.$pagesCount.', "messages":'.$messagesResult.', "viewed":"'.$viewed.'"}');
 ?>
