@@ -16,6 +16,7 @@ const routes: Routes = [
       {path: '**', component: ChannelPageComponent, canActivate: [AppGuard]},
     ]
   },
+  { path: 'members', loadChildren: () => import('./modules/members/members.module').then(m => m.MembersModule) },
   { path: '**', redirectTo: '', pathMatch: 'full' },
 ];
 
