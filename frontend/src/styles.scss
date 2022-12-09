@@ -358,7 +358,7 @@ body {
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
-  margin: 3rem 1rem;
+  margin: 1rem 1rem;
 
   a {
     display: inline-block;
@@ -373,12 +373,12 @@ body {
     text-decoration: none;
     &.current {
       color: var(--color-page-bg);
-      background-color: #4b4b4b;
+      background-color: gray;
       border-radius: 0.2rem;
     }
     &:hover {
       color: var(--color-page-bg);
-      background-color: #4b4b4b;
+      background-color: gray;
       border-radius: 0.2rem;
     }
   }
