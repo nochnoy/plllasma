@@ -17,6 +17,8 @@ const routes: Routes = [
     ]
   },
   { path: 'members', loadChildren: () => import('./modules/members/members.module').then(m => m.MembersModule) },
+  { path: 'about', loadChildren: () => import('./modules/about/about.module').then(m => m.AboutModule) },
+  { path: 'settings', loadChildren: () => import('./modules/settings/settings.module').then(m => m.SettingsModule) },
   { path: '**', redirectTo: '', pathMatch: 'full' },
 ];
 

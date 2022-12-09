@@ -17,19 +17,21 @@
 
   .tools {
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     position: absolute;
     z-index: 2;
     width: 30px;
     height: 210px;
-    background-image: url('~src/assets/icons.gif');
+    margin-top: 10px;
 
-    div {
+    a {
       width: 30px;
-      height: 30px;
-      cursor: pointer;
+      margin-bottom: 12px;
     }
 
+    .members {
+      background-image: url('~src/assets/members.gif');
+    }
     .logoff {
       background-image: url('~src/assets/logoff.gif');
     }

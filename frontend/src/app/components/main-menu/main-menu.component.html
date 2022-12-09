@@ -1,6 +1,10 @@
 <div class="logo"></div>
 <div class="tools">
-  <div class="logoff" (click)="logoffClick()"></div>
+  <a routerLink="/about"><img src="assets/shield.gif"></a>
+  <a routerLink="/members"><img src="assets/mail.gif"></a>
+  <a routerLink="/settings"><img src="assets/settings.gif"></a>
+  <a routerLink="/members"><img src="assets/members.gif"></a>
+  <a href (click)="logoffClick($event)"><img src="assets/logoff.gif"></a>
 </div>
 <div class="channels" *ngIf="channelService?.channels?.length">
   <div *ngFor="let city of channelService.cities">

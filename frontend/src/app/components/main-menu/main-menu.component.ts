@@ -20,7 +20,8 @@ export class MainMenuComponent implements OnInit {
   ngOnInit(): void {
   }
 
-  logoffClick(): void {
+  logoffClick(event: any): void {
+    event.preventDefault();
     this.appService.logoff$().subscribe();
   }
 
