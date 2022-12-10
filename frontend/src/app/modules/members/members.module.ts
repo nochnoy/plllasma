@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { MembersRoutingModule } from './members-routing.module';
 import { MemberPageComponent } from './pages/member-page/member-page.component';
 import { MembersPageComponent } from './pages/members-page/members-page.component';
+import {MainMenuComponent} from "../../components/main-menu/main-menu.component";
 
 
 @NgModule({
@@ -13,7 +14,8 @@ import { MembersPageComponent } from './pages/members-page/members-page.componen
   ],
   imports: [
     CommonModule,
-    MembersRoutingModule
+    MembersRoutingModule,
+    MainMenuComponent
   ]
 })
 export class MembersModule { }

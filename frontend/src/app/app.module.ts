@@ -12,7 +12,6 @@ import {AppRoutingModule} from "./app-routing.module";
 import { LoginPageComponent } from './pages/login-page/login-page.component';
 import { AppGuard } from './app.guard';
 import { ChannelPageComponent } from './pages/channel-page/channel-page.component';
-import { MainMenuComponent } from './components/main-menu/main-menu.component';
 import { MessagesComponent } from './components/board/messages.component';
 import { AsPipe } from './pipes/as.pipe';
 import { MessageFormComponent } from './components/message-form/message-form.component';
@@ -22,7 +21,7 @@ import { NewlinePipe } from './pipes/newline.pipe';
 import {LinksToStubsPipe} from "./pipes/links-to-stubs.pipe";
 import {ShortenPipe} from "./pipes/shorten.pipe";
 import {PlasmaDatePipe} from "./pipes/plasmadate.pipe";
-import {ErrorService} from "./services/error.service";
+import {MainMenuComponent} from "./components/main-menu/main-menu.component";
 
 @NgModule({
   imports: [
@@ -33,6 +32,7 @@ import {ErrorService} from "./services/error.service";
     RouterModule,
     AppRoutingModule,
     ReactiveFormsModule,
+    MainMenuComponent
   ],
   declarations: [
     AppComponent,
@@ -41,7 +41,6 @@ import {ErrorService} from "./services/error.service";
     DefaultPageComponent,
     LoginPageComponent,
     ChannelPageComponent,
-    MainMenuComponent,
     MessagesComponent,
     AsPipe,
     MessageFormComponent,
