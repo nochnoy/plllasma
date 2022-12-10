@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import {Observable, of} from "rxjs";
-import {switchMap} from "rxjs/operators";
+import {map, switchMap} from "rxjs/operators";
 import {HttpClient} from "@angular/common/http";
+import {IMember} from "../model/app-model";
 
 @Injectable({
   providedIn: 'root'
@@ -73,6 +74,20 @@ export class HttpService {
         like
       },
       {observe: 'body', withCredentials: true}
+    );
+  }
+
+  getMembers$(nick?: string): Observable<IMember[]> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/members.php`,
+      {
+        nick
+      },
+      {observe: 'body', withCredentials: true}
+    ).pipe(
+      map((result: any) => {
+        return result?.users;
+      })
     );
   }
 

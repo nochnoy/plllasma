@@ -105,3 +105,20 @@ export interface IUploadingAttachment {
   bitmap?: any;
   error?: string;
 }
+
+export interface IMember {
+  nick: string;
+  description: string;
+  time_logged: string;
+  time_joined: string;
+  msgcount: number;
+  city: string;
+  country: string;
+  time_visitted: string;
+  hasProfile: boolean;
+  gray: boolean;
+  dead: boolean;
+  profileStarred: boolean;
+  inboxSize: number;
+  inboxStarred: boolean;
+}

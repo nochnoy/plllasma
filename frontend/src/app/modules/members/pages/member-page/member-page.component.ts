@@ -9,6 +9,8 @@ export class MemberPageComponent implements OnInit {
 
   constructor() { }
 
+  isLoading = true;
+
   ngOnInit(): void {
   }
 
