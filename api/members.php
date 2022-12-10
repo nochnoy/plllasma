@@ -38,7 +38,7 @@ for ($i = 0; $i < count($inboxConversations); $i++) {
 // Получим массив юзеров
 $sql = $mysqli->prepare('
 SELECT
-u.id_user, u.nick, u.description, u.time_logged, u.time_joined, u.msgcount, u.city, u.country, l.time_visitted
+u.id_user, u.nick, u.sex, u.description, u.time_logged, u.time_joined, u.msgcount, u.city, u.country, l.time_visitted
 ,IF(CHAR_LENGTH(u.profile) > 20, 1, 0) AS hasProfile
 ,IF(TO_DAYS(NOW())-TO_DAYS(time_logged)>30, 1, 0) AS gray
 ,IF(TO_DAYS(NOW())-TO_DAYS(time_logged)>360 OR ISNULL(time_logged) OR time_logged="0000-00-00 00:00:00", 1, 0) AS dead
@@ -72,6 +72,9 @@ for ($i = 0; $i < count($users); $i++) {
 	$users[$i]['hasProfile'] = boolval($users[$i]['hasProfile']);
 	$users[$i]['inboxStarred'] = boolval($users[$i]['inboxStarred']);
 	$users[$i]['profileStarred'] = boolval($users[$i]['profileStarred']);
+	if (empty($users[$i]['sex'])) {
+		$users[$i]['sex'] = 0;
+	}	
 	if (empty($users[$i]['description'])) {
 		$users[$i]['description'] = '';
 	}

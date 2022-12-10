@@ -9,6 +9,12 @@ export enum LoginStatus {
   authorising = 2,
 }
 
+export enum Sex {
+  male = 0,
+  unknown = 1,
+  female = 2,
+}
+
 export interface AuthDialogResult {
   login?: string;
   password?: string;
@@ -121,4 +127,5 @@ export interface IMember {
   profileStarred: boolean;
   inboxSize: number;
   inboxStarred: boolean;
+  sex: Sex;
 }

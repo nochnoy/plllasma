@@ -19,12 +19,11 @@ export class MembersPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.isLoading = true;
-    this.httpService.getMembers$('DM_NG').pipe(
+    this.httpService.getMembers$('Марат').pipe(
       tap((result) => {
         this.isLoading = false;
 
-        const dmng = result.find((user) => user.nick === 'DM_NG');
-        console.log(dmng);
+        console.log(result);
 
 
       })
