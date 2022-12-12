@@ -12,8 +12,8 @@
     <div class="profile" *ngIf="!isLoading && member">
       <p [innerHTML]="member.profile"></p>
       <p>
-        Был в {{member.time_logged | plasmadate}}<br>
-        {{member.profile_visits}} просмотров
+        <ng-container *ngIf="member.time_logged !== '0000-00-00 00:00:00'">Был в {{member.time_logged | plasmadate}}<br></ng-container>
+        Было {{member.profile_visits}} просмотров
       </p>
     </div>
 
