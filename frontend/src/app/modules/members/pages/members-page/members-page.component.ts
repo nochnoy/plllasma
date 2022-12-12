@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import {UntilDestroy} from "@ngneat/until-destroy";
 import {HttpService} from "../../../../services/http.service";
 import {tap} from "rxjs/operators";
+import {IMember} from "../../../../model/app-model";
 
 @UntilDestroy()
 @Component({
@@ -16,16 +17,14 @@ export class MembersPageComponent implements OnInit {
   ) { }
 
   isLoading = false;
+  members: IMember[] = [];
 
   ngOnInit(): void {
     this.isLoading = true;
-    this.httpService.getMembers$('Марат').pipe(
+    this.httpService.getMembers$().pipe(
       tap((result) => {
         this.isLoading = false;
-
-        console.log(result);
-
-
+        this.members = result || [];
       })
     ).subscribe();
   }

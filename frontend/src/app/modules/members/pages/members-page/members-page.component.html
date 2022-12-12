@@ -3,13 +3,14 @@
     <app-main-menu></app-main-menu>
   </aside>
   <main class="main">
-
     <header>
       <h1 [class.spinner]="isLoading">Граждане</h1>
       <p>Список пользователей</p>
     </header>
 
-
+    <div class="members">
+      <a *ngFor="let member of members" [routerLink]="'/members/' + member.nick">{{member.nick}}</a>
+    </div>
 
   </main>
   <div class="spacer"></div>

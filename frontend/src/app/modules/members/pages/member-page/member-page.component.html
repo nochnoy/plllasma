@@ -3,13 +3,17 @@
     <app-main-menu></app-main-menu>
   </aside>
   <main class="main">
-
     <header>
-      <h1 [class.spinner]="isLoading">Гражданин</h1>
-      <p>Список пользователей</p>
+      <a class="back-link" routerLink="/members">← назад</a>
+      <h1 [class.spinner]="isLoading">{{member ? nick : 'Гражданин'}}</h1>
+      <p></p>
     </header>
 
-
+    <div *ngIf="!isLoading && member">
+      <div [innerHTML]="member.profile"></div>
+      <div>Просмотрено: {{member.profile_visits}}</div>
+      <div>Был: {{member.time_logged}}</div>
+    </div>
 
   </main>
   <div class="spacer"></div>

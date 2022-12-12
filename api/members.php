@@ -20,11 +20,11 @@ if (!empty($nick)) {
 
 // Получим массив с инфой о переписке с юзерами
 $sql = $mysqli->prepare('
-SELECT conversation_with as id_user, COUNT(id_mail) AS inboxSize, IF(unread="t", 1, 0) AS inboxStarred
-FROM tbl_mail
-WHERE id_user=?
-'.((empty($userId) ? '' : ' AND conversation_with = '.$userId)).'
-GROUP BY conversation_with
+	SELECT conversation_with as id_user, COUNT(id_mail) AS inboxSize, IF(unread="t", 1, 0) AS inboxStarred
+	FROM tbl_mail
+	WHERE id_user=?
+	'.((empty($userId) ? '' : ' AND conversation_with = '.$userId)).'
+	GROUP BY conversation_with
 ');
 $sql->bind_param("i", $user['id_user']);
 $sql->execute();
@@ -37,21 +37,35 @@ for ($i = 0; $i < count($inboxConversations); $i++) {
 
 // Получим массив юзеров
 $sql = $mysqli->prepare('
-SELECT
-u.id_user, u.nick, u.sex, u.description, u.time_logged, u.time_joined, u.msgcount, u.city, u.country, l.time_visitted
-,IF(CHAR_LENGTH(u.profile) > 20, 1, 0) AS hasProfile
-,IF(TO_DAYS(NOW())-TO_DAYS(time_logged)>30, 1, 0) AS gray
-,IF(TO_DAYS(NOW())-TO_DAYS(time_logged)>360 OR ISNULL(time_logged) OR time_logged="0000-00-00 00:00:00", 1, 0) AS dead
-,IF(u.profile_changed > l.time_visitted OR (l.time_visitted IS NULL), 1, 0) AS profileStarred
-FROM tbl_users u
-LEFT JOIN lnk_user_profile l ON (l.id_viewed_user=u.id_user AND l.id_user=?)
-'.((empty($userId) ? '' : ' WHERE u.id_user = '.$userId)).'
-ORDER BY nick ASC
+	SELECT
+	u.id_user, u.nick, u.sex, u.description, u.time_logged, u.time_joined, u.msgcount, u.city, u.country, u.profile, u.profile_visits, l.time_visitted
+	,IF(TO_DAYS(NOW())-TO_DAYS(time_logged)>30, 1, 0) AS gray
+	,IF(TO_DAYS(NOW())-TO_DAYS(time_logged)>360 OR ISNULL(time_logged) OR time_logged="0000-00-00 00:00:00", 1, 0) AS dead
+	,IF(u.profile_changed > l.time_visitted OR (l.time_visitted IS NULL), 1, 0) AS profileStarred
+	FROM tbl_users u
+	LEFT JOIN lnk_user_profile l ON (l.id_viewed_user=u.id_user AND l.id_user=?)
+	'.((empty($userId) ? '' : ' WHERE u.id_user = '.$userId)).'
+	ORDER BY nick ASC
 ');
 $sql->bind_param("i", $user['id_user']);
 $sql->execute();
 $result = $sql->get_result();
 $users = $result->fetch_all(MYSQLI_ASSOC);
+
+// Выкинем юзеров с "?" в начале ника - это не прошедшие кандидаты
+$users = array_filter(
+	$users, 
+	function($user, $key) {
+		if ($user['id_user'] == 0) {
+			return false; // Юзер "Plasma" - это технический юзер, не выводим его
+		}
+		if ($user['id_user'] == 1) {
+			return false; // Юзер "Guest" - это технический юзер, не выводим его
+		}		
+		return $user['nick'][0] != '?';
+	},
+	ARRAY_FILTER_USE_BOTH);
+$users = array_values($users); // Восстановим индексы после фильтрации
 
 for ($i = 0; $i < count($users); $i++) {
 
@@ -69,7 +83,6 @@ for ($i = 0; $i < count($users); $i++) {
 	unset($users[$i]['id_user']); // Нехуй светить айдишники
 	$users[$i]['dead'] = boolval($users[$i]['dead']);
 	$users[$i]['gray'] = boolval($users[$i]['gray']);
-	$users[$i]['hasProfile'] = boolval($users[$i]['hasProfile']);
 	$users[$i]['inboxStarred'] = boolval($users[$i]['inboxStarred']);
 	$users[$i]['profileStarred'] = boolval($users[$i]['profileStarred']);
 	if (empty($users[$i]['sex'])) {

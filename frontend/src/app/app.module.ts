@@ -24,37 +24,40 @@ import {PlasmaDatePipe} from "./pipes/plasmadate.pipe";
 import {MainMenuComponent} from "./components/main-menu/main-menu.component";
 
 @NgModule({
-  imports: [
-    BrowserModule,
-    HttpClientModule,
-    FormsModule,
-    ScrollingModule,
-    RouterModule,
-    AppRoutingModule,
-    ReactiveFormsModule,
-    MainMenuComponent
-  ],
-  declarations: [
-    AppComponent,
-    FocusListComponent,
-    ImageViewerComponent,
-    DefaultPageComponent,
-    LoginPageComponent,
-    ChannelPageComponent,
-    MessagesComponent,
-    AsPipe,
-    MessageFormComponent,
-    TestMessagesPageComponent,
-    LinkyPipe,
-    LinksToStubsPipe,
-    ShortenPipe,
-    PlasmaDatePipe,
-    NewlinePipe,
-  ],
-  providers: [
-    AppGuard,
-    /*{provide: ErrorHandler, useClass: ErrorService},*/
-  ],
-  bootstrap: [AppComponent]
+    imports: [
+        BrowserModule,
+        HttpClientModule,
+        FormsModule,
+        ScrollingModule,
+        RouterModule,
+        AppRoutingModule,
+        ReactiveFormsModule,
+        MainMenuComponent
+    ],
+    declarations: [
+        AppComponent,
+        FocusListComponent,
+        ImageViewerComponent,
+        DefaultPageComponent,
+        LoginPageComponent,
+        ChannelPageComponent,
+        MessagesComponent,
+        AsPipe,
+        MessageFormComponent,
+        TestMessagesPageComponent,
+        LinkyPipe,
+        LinksToStubsPipe,
+        ShortenPipe,
+        PlasmaDatePipe,
+        NewlinePipe,
+    ],
+    providers: [
+        AppGuard,
+        /*{provide: ErrorHandler, useClass: ErrorService},*/
+    ],
+    exports: [
+        PlasmaDatePipe
+    ],
+    bootstrap: [AppComponent]
 })
 export class AppModule { }

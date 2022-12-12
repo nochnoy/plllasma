@@ -121,7 +121,8 @@ export interface IMember {
   city: string;
   country: string;
   time_visitted: string;
-  hasProfile: boolean;
+  profile: string;
+  profile_visits: number;
   gray: boolean;
   dead: boolean;
   profileStarred: boolean;

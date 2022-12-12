@@ -384,3 +384,13 @@ body {
     }
   }
 }
+
+// Стрелочка "назад"
+.back-link {
+  display: block;
+  margin-right: 0.2rem;
+  text-decoration: none;
+  color: var(--color-link);
+  font-size: 1.2rem;
+  font-weight: normal;
+}
