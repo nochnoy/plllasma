@@ -80,7 +80,6 @@ for ($i = 0; $i < count($users); $i++) {
 	}
 
 	// Нормализуем поля
-	unset($users[$i]['id_user']); // Нехуй светить айдишники
 	$users[$i]['dead'] = boolval($users[$i]['dead']);
 	$users[$i]['gray'] = boolval($users[$i]['gray']);
 	$users[$i]['inboxStarred'] = boolval($users[$i]['inboxStarred']);
@@ -97,6 +96,17 @@ for ($i = 0; $i < count($users); $i++) {
 	if (empty($users[$i]['country'])) {
 		$users[$i]['country'] = '';
 	}
+
+	// Фотка в профиле
+	$photo = '../profilephotos/'.$users[$i]['id_user'].'.jpg';
+	if(file_exists($photo)) {
+		$users[$i]['profilephoto'] = 'https://plllasma.com/profilephotos/'.$users[$i]['id_user'].'.jpg';
+	} else {
+		$users[$i]['profilephoto'] = '';
+	}
+
+	// Нехуй светить айдишники
+	unset($users[$i]['id_user']); 
 }
 
 // Выдадим

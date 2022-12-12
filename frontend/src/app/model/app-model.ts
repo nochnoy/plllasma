@@ -129,4 +129,5 @@ export interface IMember {
   inboxSize: number;
   inboxStarred: boolean;
   sex: Sex;
+  profilephoto: string;
 }

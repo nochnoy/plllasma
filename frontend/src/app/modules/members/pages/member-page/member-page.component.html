@@ -9,10 +9,15 @@
       <p></p>
     </header>
 
-    <div *ngIf="!isLoading && member">
-      <div [innerHTML]="member.profile"></div>
-      <div>Просмотрено {{member.profile_visits}} раз</div>
-      <div>Был в {{member.time_logged | plasmadate}}</div>
+    <div class="profile" *ngIf="!isLoading && member">
+      <p>
+        <img style="float:right" *ngIf="member.profilephoto" [attr.src]="member.profilephoto">
+        <span [innerHTML]="member.profile"></span>
+      </p>
+      <p>
+        Был в {{member.time_logged | plasmadate}}<br>
+        {{member.profile_visits}} просмотров
+      </p>
     </div>
 
   </main>
