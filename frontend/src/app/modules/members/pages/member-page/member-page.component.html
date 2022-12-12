@@ -10,10 +10,7 @@
     </header>
 
     <div class="profile" *ngIf="!isLoading && member">
-      <p>
-        <img style="float:right" *ngIf="member.profilephoto" [attr.src]="member.profilephoto">
-        <span [innerHTML]="member.profile"></span>
-      </p>
+      <p [innerHTML]="member.profile"></p>
       <p>
         Был в {{member.time_logged | plasmadate}}<br>
         {{member.profile_visits}} просмотров
@@ -22,6 +19,8 @@
 
   </main>
   <div class="spacer"></div>
-  <div class="sidebar"></div>
+  <div class="sidebar">
+    <img class="profilephoto" *ngIf="member?.profilephoto" [attr.src]="member?.profilephoto">
+  </div>
 </div>
 
