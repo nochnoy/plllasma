@@ -11,8 +11,8 @@
 
     <div *ngIf="!isLoading && member">
       <div [innerHTML]="member.profile"></div>
-      <div>Просмотрено: {{member.profile_visits}}</div>
-      <div>Был: {{member.time_logged}}</div>
+      <div>Просмотрено {{member.profile_visits}} раз</div>
+      <div>Был в {{member.time_logged | plasmadate}}</div>
     </div>
 
   </main>

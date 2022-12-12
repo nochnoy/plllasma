@@ -20,43 +20,40 @@ import { LinkyPipe } from './pipes/linky.pipe';
 import { NewlinePipe } from './pipes/newline.pipe';
 import {LinksToStubsPipe} from "./pipes/links-to-stubs.pipe";
 import {ShortenPipe} from "./pipes/shorten.pipe";
-import {PlasmaDatePipe} from "./pipes/plasmadate.pipe";
 import {MainMenuComponent} from "./components/main-menu/main-menu.component";
+import {SharedModule} from "./modules/shared/shared.module";
 
 @NgModule({
     imports: [
-        BrowserModule,
-        HttpClientModule,
-        FormsModule,
-        ScrollingModule,
-        RouterModule,
-        AppRoutingModule,
-        ReactiveFormsModule,
-        MainMenuComponent
+      BrowserModule,
+      HttpClientModule,
+      FormsModule,
+      ScrollingModule,
+      RouterModule,
+      AppRoutingModule,
+      ReactiveFormsModule,
+      MainMenuComponent,
+      SharedModule
     ],
     declarations: [
-        AppComponent,
-        FocusListComponent,
-        ImageViewerComponent,
-        DefaultPageComponent,
-        LoginPageComponent,
-        ChannelPageComponent,
-        MessagesComponent,
-        AsPipe,
-        MessageFormComponent,
-        TestMessagesPageComponent,
-        LinkyPipe,
-        LinksToStubsPipe,
-        ShortenPipe,
-        PlasmaDatePipe,
-        NewlinePipe,
+      AppComponent,
+      FocusListComponent,
+      ImageViewerComponent,
+      DefaultPageComponent,
+      LoginPageComponent,
+      ChannelPageComponent,
+      MessagesComponent,
+      AsPipe,
+      MessageFormComponent,
+      TestMessagesPageComponent,
+      LinkyPipe,
+      LinksToStubsPipe,
+      ShortenPipe,
+      NewlinePipe,
     ],
     providers: [
-        AppGuard,
-        /*{provide: ErrorHandler, useClass: ErrorService},*/
-    ],
-    exports: [
-        PlasmaDatePipe
+      AppGuard,
+      /*{provide: ErrorHandler, useClass: ErrorService},*/
     ],
     bootstrap: [AppComponent]
 })
