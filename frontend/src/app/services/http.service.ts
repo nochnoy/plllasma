@@ -91,4 +91,14 @@ export class HttpService {
     );
   }
 
+  incrementMemberVisits$(nick: string): any {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/member-visits-increment.php`,
+      {
+        nick
+      },
+      {observe: 'body', withCredentials: true}
+    );
+  }
+
 }
