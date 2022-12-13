@@ -3,10 +3,13 @@
     <app-main-menu></app-main-menu>
   </aside>
   <main class="main">
+    <a class="back-link" routerLink="/members">← Назад к списку</a>
     <header>
-      <a class="back-link" routerLink="/members">← назад</a>
-      <h1 [class.spinner]="isLoading">{{member ? nick : 'Гражданин'}}</h1>
-      <p></p>
+      <img class="avatar" [src]="member?.icon" />
+      <h1 [class.spinner]="isLoading">
+        {{member ? nick : 'Гражданин'}}
+      </h1>
+      <div class="snami">С нами 12 лет. Имеет 13000 спасиб. Автор 13021 сообщений. Не женат.</div>
     </header>
 
     <div class="profile" *ngIf="!isLoading && member">

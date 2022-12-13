@@ -114,6 +114,7 @@ export interface IUploadingAttachment {
 
 export interface IMember {
   nick: string;
+  icon: string;
   description: string;
   time_logged: string;
   time_joined: string;

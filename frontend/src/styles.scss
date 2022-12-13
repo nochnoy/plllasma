@@ -390,8 +390,13 @@ body {
 .back-link {
   display: block;
   margin-right: 0.2rem;
+  margin-bottom: 1rem;
   text-decoration: none;
   color: var(--color-link);
   font-size: 1.2rem;
   font-weight: normal;
+
+  &:hover {
+    color: var(--color-link-hover);
+  }
 }

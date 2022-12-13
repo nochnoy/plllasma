@@ -86,7 +86,7 @@ export class HttpService {
       {observe: 'body', withCredentials: true}
     ).pipe(
       map((result: any) => {
-        return result?.users;
+        return result?.users as IMember[];
       })
     );
   }

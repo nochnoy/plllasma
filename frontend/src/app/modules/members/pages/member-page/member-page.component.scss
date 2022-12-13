@@ -8,3 +8,28 @@
     height: auto;
   }
 }
+
+header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  & > * {
+    margin-right: 0.5rem!important;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  .snami {
+    margin-top: 6px;
+  }
+
+  .avatar {
+    image-rendering: pixelated;
+    margin-bottom: 0!important; // Перебиваем нашу странную -2px
+    width: 32px;
+    height: 32px;
+  }
+}
