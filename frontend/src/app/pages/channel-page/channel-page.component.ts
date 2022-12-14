@@ -116,24 +116,26 @@ export class ChannelPageComponent implements OnInit {
 
   @HostListener('document:mousedown', ['$event'])
   onGlobalClick(event: any): void {
-    // Клик за пределами сообщений = развыделение сообщения
-    let messageElementFound = false;
-    let element = event.target;
-    for (let i = 0; i < 100; i++) {
-      if (element) {
-        const classes: string[] = Array.from(element.classList);
-        // TODO: Пиздец. Это конечно надо менять. ngIf'ы ломают иерархию, хер поймёшь куда пришёлся тык.
-        if (element.localName === 'attachmants' || element.localName === 'button' || classes.some((cls) => cls === 'message__selected')) {
-          messageElementFound = true;
+    if (this.channelService.selectedMessage) {
+      // Клик за пределами сообщений = развыделение сообщения
+      let messageElementFound = false;
+      let element = event.target;
+      for (let i = 0; i < 100; i++) {
+        if (element) {
+          const classes: string[] = Array.from(element.classList);
+          // TODO: Пиздец. Это конечно надо менять. ngIf'ы ломают иерархию, хер поймёшь куда пришёлся тык.
+          if (element.localName === 'attachmants' || element.localName === 'button' || classes.some((cls) => cls === 'message__selected')) {
+            messageElementFound = true;
+            break;
+          }
+          element = element.parentElement;
+        } else {
           break;
         }
-        element = element.parentElement;
-      } else {
-        break;
       }
-    }
-    if (!messageElementFound) {
-      this.channelService.unselectMessage();
+      if (!messageElementFound) {
+        this.channelService.unselectMessage();
+      }
     }
   }
 
