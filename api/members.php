@@ -38,7 +38,7 @@ for ($i = 0; $i < count($inboxConversations); $i++) {
 // Получим массив юзеров
 $sql = $mysqli->prepare('
 	SELECT
-	u.id_user, u.nick, u.icon, u.sex, u.description, u.time_logged, u.time_joined, u.msgcount, u.city, u.country, u.profile, u.profile_visits, l.time_visitted
+	u.id_user, u.nick, u.icon, u.sex, u.description, u.time_logged, u.time_joined, u.sps, u.msgcount, u.city, u.country, u.profile, u.profile_visits, l.time_visitted
 	,IF(TO_DAYS(NOW())-TO_DAYS(time_logged)>30, 1, 0) AS gray
 	,IF(TO_DAYS(NOW())-TO_DAYS(time_logged)>360 OR ISNULL(time_logged) OR time_logged="0000-00-00 00:00:00", 1, 0) AS dead
 	,IF(u.profile_changed > l.time_visitted OR (l.time_visitted IS NULL), 1, 0) AS profileStarred

@@ -9,7 +9,7 @@
       <h1 [class.spinner]="isLoading">
         {{member ? nick : 'Гражданин'}}
       </h1>
-      <div class="snami">С нами 12 лет. Имеет 13000 спасиб. Автор 13021 сообщений. Не женат.</div>
+      <div *ngIf="!isLoading && member" class="snami">С нами {{years}}. Имеет {{spasibas}}. Автор {{messages}}. {{sex}}.</div>
     </header>
 
     <div class="profile" *ngIf="!isLoading && member">

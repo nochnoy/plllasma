@@ -7,6 +7,7 @@ import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {ActivatedRoute} from "@angular/router";
 import {AppService} from "../../../../services/app.service";
 import {UserService} from "../../../../services/user.service";
+import {Utils} from "../../../../utils/utils";
 
 @UntilDestroy()
 @Component({
@@ -25,6 +26,10 @@ export class MemberPageComponent implements OnInit {
   isLoading = true;
   nick?: string;
   member?: IMember;
+  years = '';
+  spasibas = '';
+  messages = '';
+  sex = '';
 
   ngOnInit(): void {
     this.isLoading = true;
@@ -39,6 +44,22 @@ export class MemberPageComponent implements OnInit {
         const members = (result || []) as IMember[];
         if (members.length) {
           this.member = members[0];
+        }
+
+        if (this.member) {
+
+          this.spasibas = this.member.sps + ' ' + Utils.chisl(this.member.sps, ['спасибу', 'спасибы', 'спасиб']);
+
+          this.messages = this.member.msgcount + ' ' + Utils.chisl(this.member.msgcount, ['сообщения', 'сообщений', 'сообщений']);
+
+          this.sex = this.member.sex === 0 ? 'Не женат' : 'Замужем';
+
+          const registered = new Date(this.member?.time_joined ?? 0);
+          if (registered instanceof Date && !isNaN(registered.getTime())) {
+            const years = (new Date()).getFullYear() - registered.getFullYear();
+            this.years = years + ' ' + Utils.chisl(years, ['год', 'года', 'лет']);
+          }
+
         }
 
         // Если это не мой профайл - увеличим счётчик просмотров

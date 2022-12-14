@@ -119,6 +119,7 @@ export interface IMember {
   time_logged: string;
   time_joined: string;
   msgcount: number;
+  sps: number;
   city: string;
   country: string;
   time_visitted: string;
