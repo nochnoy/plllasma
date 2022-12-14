@@ -4,21 +4,28 @@
   </aside>
   <main class="main">
     <a class="back-link" routerLink="/members">← Назад к списку</a>
-    <header>
-      <img class="avatar" [src]="member?.icon" />
-      <h1 [class.spinner]="isLoading">
-        {{member ? nick : 'Гражданин'}}
-      </h1>
-      <div *ngIf="!isLoading && member" class="snami">С нами {{years}}. Имеет {{spasibas}}. Автор {{messages}}. {{sex}}.</div>
-    </header>
 
-    <div class="profile" *ngIf="!isLoading && member">
-      <p [innerHTML]="member.profile"></p>
-      <p>
-        <ng-container *ngIf="member.time_logged !== '0000-00-00 00:00:00'">Был в {{member.time_logged | plasmadate}}<br></ng-container>
-        Было {{member.profile_visits}} просмотров
-      </p>
-    </div>
+    <div *ngIf="isLoading" [class.spinner]="isLoading">Загрузка</div>
+
+    <ng-container *ngIf="!isLoading && member">
+
+      <header>
+        <img class="avatar" [src]="member?.icon" />
+        <h1>
+          {{member ? nick : 'Гражданин'}}
+        </h1>
+        <div class="snami">С нами {{years}}. Имеет {{spasibas}}. Автор {{messages}}. {{sex}}.</div>
+      </header>
+
+      <div class="profile">
+        <p [innerHTML]="member.profile"></p>
+        <p>
+          <ng-container *ngIf="member.time_logged !== '0000-00-00 00:00:00'">Был в {{member.time_logged | plasmadate}}<br></ng-container>
+          {{visits}}
+        </p>
+      </div>
+
+    </ng-container>
 
   </main>
   <div class="spacer"></div>

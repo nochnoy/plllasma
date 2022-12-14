@@ -30,6 +30,7 @@ export class MemberPageComponent implements OnInit {
   spasibas = '';
   messages = '';
   sex = '';
+  visits = '';
 
   ngOnInit(): void {
     this.isLoading = true;
@@ -53,6 +54,8 @@ export class MemberPageComponent implements OnInit {
           this.messages = this.member.msgcount + ' ' + Utils.chisl(this.member.msgcount, ['сообщения', 'сообщений', 'сообщений']);
 
           this.sex = this.member.sex === 0 ? 'Не женат' : 'Замужем';
+
+          this.visits = `Здесь было ${this.member.profile_visits} ${Utils.chisl(this.member.profile_visits, ['человек', 'человека', 'человек'])}`;
 
           const registered = new Date(this.member?.time_joined ?? 0);
           if (registered instanceof Date && !isNaN(registered.getTime())) {
