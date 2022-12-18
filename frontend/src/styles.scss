@@ -51,6 +51,7 @@
   --color-button-bg-blue: #5C7C8A;
   --color-button-bg-blue-hover: #739bab;
   --color-button-bg-blue-active: #455c67;
+  --color-input-border: #c5b9ac;
 
   --color-button-text: #FFFBF7;
 }
@@ -63,6 +64,23 @@ a {
   color: var(--color-link);
   &:hover {
     color: var(--color-link-hover);
+  }
+}
+
+input {
+  border: 1px solid var(--color-input-border);
+  border-radius: 0.2rem;
+  padding: 0.5rem;
+
+  &:focus {
+    outline: 0;
+  }
+}
+
+textarea {
+
+  &:focus {
+    outline: 0;
   }
 }
 

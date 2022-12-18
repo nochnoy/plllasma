@@ -17,16 +17,32 @@ export class MembersPageComponent implements OnInit {
   ) { }
 
   isLoading = false;
-  members: IMember[] = [];
+  allMmembers: IMember[] = [];
+  membersToShow: IMember[] = [];
+  searchPhrase = '';
 
   ngOnInit(): void {
     this.isLoading = true;
     this.httpService.getMembers$().pipe(
       tap((result) => {
         this.isLoading = false;
-        this.members = result || [];
+        this.allMmembers = result || [];
+        this.updateMembersToShow();
       })
     ).subscribe();
   }
 
+  updateMembersToShow(): void {
+    if (this.searchPhrase) {
+      this.membersToShow = this.allMmembers.filter((member) => member.nick.toUpperCase().indexOf(this.searchPhrase.toUpperCase()) > -1);
+    } else {
+      this.membersToShow = this.allMmembers;
+    }
+  }
+
+  onFilter(): void {
+    this.updateMembersToShow();
+  }
 }
+
+

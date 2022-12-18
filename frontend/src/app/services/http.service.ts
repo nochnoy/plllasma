@@ -131,10 +131,6 @@ export class HttpService {
         message
       },
       {observe: 'body', withCredentials: true}
-    ).pipe(
-      map((result: any) => {
-        return result?.messages as IMailMessage[];
-      })
     );
   }
 

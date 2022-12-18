@@ -91,14 +91,22 @@ export class MemberPageComponent implements OnInit {
     ).subscribe();
   }
 
-  onSsendMessageClick(): void {
+  onSendMessageClick(): void {
     if (this.mailMessage) {
       this.isSending = true;
       this.httpService.sendMail$(this.nick!, this.mailMessage).pipe(
-        tap(() => {
-          this.isSending = false;
+        tap((result) => {
+          if (result.ok) {
+            this.mail.unshift({
+              nick: this.userService.user.nick,
+              unread: true,
+              time_created: (new Date()).toISOString(),
+              message: this.mailMessage
+            });
+          }
           this.mailMessage = '';
-        })
+          this.isSending = false;
+        }),
       ).subscribe();
     }
   }

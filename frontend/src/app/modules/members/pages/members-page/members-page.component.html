@@ -8,8 +8,12 @@
       <p>Список пользователей</p>
     </header>
 
+    <div class="search">
+      <input [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()">
+    </div>
+
     <div class="members">
-      <a *ngFor="let member of members" [routerLink]="'/members/' + member.nick">{{member.nick}}</a>
+      <a *ngFor="let member of membersToShow" [routerLink]="'/members/' + member.nick">{{member.nick}}</a>
     </div>
 
   </main>
