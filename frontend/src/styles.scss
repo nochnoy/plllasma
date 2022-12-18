@@ -23,6 +23,7 @@
   --color-star: rgb(241, 95, 95);
   --color-link: #886211;
   --color-link-hover: #d0930e;
+  --color-date: #aba196;
 
   --border-radius: 3px;
   --margin-standard: 0.4rem;
@@ -56,6 +57,13 @@
 
 body {
   background-color: var(--color-page-bg);
+}
+
+a {
+  color: var(--color-link);
+  &:hover {
+    color: var(--color-link-hover);
+  }
 }
 
 .three-column-page {
@@ -271,7 +279,7 @@ body {
 .message-date {
   padding-top: 0.2rem;
   font-size: 0.8rem;
-  color: #aba196;
+  color: var(--color-date);
 }
 
 
@@ -390,16 +398,20 @@ body {
 // Стрелочка "назад"
 .back-link {
   display: block;
-  margin-right: 0.2rem;
-  margin-bottom: 1rem;
+  margin: 1rem 0;
   text-decoration: none;
   color: var(--color-link);
-  font-size: 1.2rem;
   font-weight: normal;
 
-  &:hover {
-    color: var(--color-link-hover);
+  i {
+    font-size: 1.2rem;
   }
+}
+
+// Дата
+.date {
+  font-size: 0.8rem;
+  color: var(--color-date);
 }
 
 .newyear {

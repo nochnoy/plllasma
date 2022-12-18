@@ -3,9 +3,7 @@
     <app-main-menu></app-main-menu>
   </aside>
   <main class="main">
-    <a class="back-link" routerLink="/members">← Назад к списку</a>
-
-    <div *ngIf="isLoading" [class.spinner]="isLoading">Загрузка</div>
+    <div *ngIf="isLoading" class="loading" [class.spinner]="isLoading">Загрузка</div>
 
     <ng-container *ngIf="!isLoading && member">
 
@@ -14,27 +12,40 @@
         <h1>
           {{member ? nick : 'Гражданин'}}
         </h1>
-        <div class="snami">С нами {{years}}. Имеет {{spasibas}}. Автор {{messages}}. {{sex}}.</div>
+        <div class="snami">
+          <span>С нами {{years}}. Имеет {{spasibas}}. Автор {{messages}}. {{sex}}.</span><br>
+          <span class="date">
+            <ng-container *ngIf="member.time_logged !== '0000-00-00 00:00:00'">Был в {{member.time_logged | plasmadate}}.</ng-container>
+            {{visits}}
+          </span>
+        </div>
       </header>
 
-      <div class="profile">
-        <p [innerHTML]="member.profile"></p>
-        <p>
-          <ng-container *ngIf="member.time_logged !== '0000-00-00 00:00:00'">Был в {{member.time_logged | plasmadate}}<br></ng-container>
-          {{visits}}
-        </p>
+      <div class="profile" *ngIf="member.profile" [innerHTML]="member.profile"></div>
+
+      <a class="back-link" routerLink="/members"><i>←</i> К списку граждан</a>
+
+      <div class="mail-title">
+        <div class="mail-title-icon"></div>
+        <div>Inbox</div>
+        <div  [class.spinner]="isMailLoading"></div>
       </div>
 
-      <div class="mail">
-        <h3>Ваша переписка:</h3>
+      <div class="mail-form">
         <textarea #textarea autofocus [(ngModel)]="mailMessage"></textarea>
-        <button *ngIf="!isSending" (click)="onSsendMessageClick()">Отправить</button>
+        <div class="mail-form-tools">
+          <button *ngIf="!isSending" (click)="onSsendMessageClick()">Отправить</button>
+        </div>
+      </div>
 
-        <div class="mailmessage" *ngFor="let message of mail">
+      <div class="mail-messages">
+        <div class="mail-message" *ngFor="let message of mail">
+          <img *ngIf="message.nick === userService.user.nick" class="avatar" [src]="'https://plllasma.com/i/' + userService.user.icon + '.gif'" />
+          <img *ngIf="message.nick !== userService.user.nick" class="avatar" [src]=member?.icon />
           <b [class.star]="message.unread">{{message.nick}}</b>
           <span [innerHTML]="message.message | linky | newline"></span>
+          <div class="date">{{message.time_created | plasmadate}}</div>
         </div>
-
       </div>
 
     </ng-container>
@@ -42,7 +53,7 @@
   </main>
   <div class="spacer"></div>
   <div class="sidebar">
-    <img class="profilephoto" *ngIf="member?.profilephoto" [attr.src]="member?.profilephoto">
+    <a [href]="member?.profilephoto" target="_blank"><img class="profilephoto" *ngIf="member?.profilephoto" [attr.src]="member?.profilephoto"></a>
   </div>
 </div>
 

@@ -1,5 +1,5 @@
-.profile {
-  max-width: var(--max-text-size);
+.loading {
+  margin: 1rem;
 }
 
 .sidebar {
@@ -14,8 +14,12 @@ header {
   flex-direction: row;
   align-items: center;
 
-  & > * {
-    margin-right: 0.5rem!important;
+  .avatar {
+    margin-right: 0.3rem!important;
+    image-rendering: pixelated;
+    margin-bottom: 0!important; // Перебиваем нашу странную -2px
+    width: 30px;
+    height: 30px;
   }
 
   h1 {
@@ -23,21 +27,83 @@ header {
   }
 
   .snami {
+    margin-left: 3rem;
     margin-top: 6px;
-  }
-
-  .avatar {
-    image-rendering: pixelated;
-    margin-bottom: 0!important; // Перебиваем нашу странную -2px
-    width: 32px;
-    height: 32px;
   }
 }
 
-.mailmessage {
-  margin-bottom: 1rem;
+.profile {
+  margin-top: 1rem;
+  max-width: var(--max-text-size);
+}
 
-  b {
-    padding-right: 0.2rem;
+.mail-title {
+  height: 2rem;
+  line-height: 2rem;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  font-size: 2rem;
+  font-weight: bold;
+
+  &-icon {
+    display: inline-block;
+    width: 31px;
+    background-image: url('~src/assets/img/newmail.gif');
+    background-position: center;
+    background-repeat: no-repeat;
+    margin-right: 0.2rem;
+    transform: scaleX(-1);
+  }
+}
+
+.mail-form {
+  width: 35rem;
+  margin: 1rem 0;
+  background-color: white;
+  border: 1px solid #c5b9ac;
+  border-radius: 0.2rem;
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+
+  textarea {
+    width: 100%;
+    height: 6rem;
+    border: 0;
+    resize: none;
+    background: none;
+
+    &:focus {
+      outline: 0;
+    }
+  }
+
+  &-tools {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+
+    button {
+      width: 6rem;
+      height: 2rem;
+      font-size: 0.9rem;
+    }
+  }
+
+}
+
+.mail-messages {
+  margin-top: 1.5rem;
+
+  .mail-message {
+    margin-bottom: 1rem;
+    max-width: var(--max-text-size);
+    overflow-x: clip;
+
+    b {
+      padding-right: 0.2rem;
+    }
   }
 }

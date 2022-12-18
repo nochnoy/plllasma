@@ -24,6 +24,7 @@ export class MemberPageComponent implements OnInit {
   ) { }
 
   isLoading = true;
+  isMailLoading = true;
   nick?: string;
   member?: IMember;
   years = '';
@@ -52,21 +53,15 @@ export class MemberPageComponent implements OnInit {
         }
 
         if (this.member) {
-
           this.spasibas = this.member.sps + ' ' + Utils.chisl(this.member.sps, ['спасибу', 'спасибы', 'спасиб']);
-
           this.messages = this.member.msgcount + ' ' + Utils.chisl(this.member.msgcount, ['сообщения', 'сообщений', 'сообщений']);
-
           this.sex = this.member.sex === 0 ? 'Не женат' : 'Замужем';
-
-          this.visits = `Здесь было ${this.member.profile_visits} ${Utils.chisl(this.member.profile_visits, ['человек', 'человека', 'человек'])}`;
-
+          this.visits = `Здесь было ${this.member.profile_visits} ${Utils.chisl(this.member.profile_visits, ['человек', 'человека', 'человек'])}.`;
           const registered = new Date(this.member?.time_joined ?? 0);
           if (registered instanceof Date && !isNaN(registered.getTime())) {
             const years = (new Date()).getFullYear() - registered.getFullYear();
             this.years = years + ' ' + Utils.chisl(years, ['год', 'года', 'лет']);
           }
-
         }
 
         // Если это не мой профайл - увеличим счётчик просмотров
@@ -79,11 +74,13 @@ export class MemberPageComponent implements OnInit {
       switchMap(() => {
         if (this.nick !== this.userService.user.nick) {
           return of({}).pipe(
-            switchMap(() => this.httpService.getMail$(this.nick!)),
+            switchMap(() => {
+              this.isMailLoading = true;
+              return this.httpService.getMail$(this.nick!);
+            }),
             tap((result) => {
-
+              this.isMailLoading = false;
               this.mail = result;
-
             }),
           );
         } else {
