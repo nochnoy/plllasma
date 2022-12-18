@@ -1,12 +1,27 @@
 import { NgModule } from '@angular/core';
-import {PlasmaDatePipe} from "../../pipes/plasmadate.pipe";
+import {PlasmaDatePipe} from "./pipes/plasmadate.pipe";
+import {AsPipe} from "./pipes/as.pipe";
+import {LinkyPipe} from "./pipes/linky.pipe";
+import {LinksToStubsPipe} from "./pipes/links-to-stubs.pipe";
+import {ShortenPipe} from "./pipes/shorten.pipe";
+import {NewlinePipe} from "./pipes/newline.pipe";
 
 @NgModule({
   declarations: [
-    PlasmaDatePipe
+    PlasmaDatePipe,
+    AsPipe,
+    LinkyPipe,
+    LinksToStubsPipe,
+    ShortenPipe,
+    NewlinePipe,
   ],
   exports: [
-    PlasmaDatePipe
+    PlasmaDatePipe,
+    AsPipe,
+    LinkyPipe,
+    LinksToStubsPipe,
+    ShortenPipe,
+    NewlinePipe,
   ],
 })
 export class SharedModule { }

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {switchMap, tap} from "rxjs/operators";
 import {HttpService} from "../../../../services/http.service";
-import {IMember} from "../../../../model/app-model";
+import {IMailMessage, IMember} from "../../../../model/app-model";
 import {of} from "rxjs";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {ActivatedRoute} from "@angular/router";
@@ -31,6 +31,10 @@ export class MemberPageComponent implements OnInit {
   messages = '';
   sex = '';
   visits = '';
+
+  mail: IMailMessage[] = [];
+  mailMessage: string = '';
+  isSending = false;
 
   ngOnInit(): void {
     this.isLoading = true;
@@ -72,8 +76,34 @@ export class MemberPageComponent implements OnInit {
           return of({});
         }
       }),
+      switchMap(() => {
+        if (this.nick !== this.userService.user.nick) {
+          return of({}).pipe(
+            switchMap(() => this.httpService.getMail$(this.nick!)),
+            tap((result) => {
+
+              this.mail = result;
+
+            }),
+          );
+        } else {
+          return of({});
+        }
+      }),
       untilDestroyed(this)
     ).subscribe();
+  }
+
+  onSsendMessageClick(): void {
+    if (this.mailMessage) {
+      this.isSending = true;
+      this.httpService.sendMail$(this.nick!, this.mailMessage).pipe(
+        tap(() => {
+          this.isSending = false;
+          this.mailMessage = '';
+        })
+      ).subscribe();
+    }
   }
 
 }

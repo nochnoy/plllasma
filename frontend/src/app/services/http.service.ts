@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import {Observable, of} from "rxjs";
 import {map, switchMap} from "rxjs/operators";
 import {HttpClient} from "@angular/common/http";
-import {IMember} from "../model/app-model";
+import {IMailMessage, IMember} from "../model/app-model";
 
 @Injectable({
   providedIn: 'root'
@@ -98,6 +98,35 @@ export class HttpService {
         nick
       },
       {observe: 'body', withCredentials: true}
+    );
+  }
+
+  getMail$(nick: string): Observable<IMailMessage[]> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/mail-read.php`,
+      {
+        nick
+      },
+      {observe: 'body', withCredentials: true}
+    ).pipe(
+      map((result: any) => {
+        return result?.messages as IMailMessage[];
+      })
+    );
+  }
+
+  sendMail$(nick: string, message: string): Observable<IMailMessage[]> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/mail-write.php`,
+      {
+        nick,
+        message
+      },
+      {observe: 'body', withCredentials: true}
+    ).pipe(
+      map((result: any) => {
+        return result?.messages as IMailMessage[];
+      })
     );
   }
 

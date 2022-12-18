@@ -25,6 +25,15 @@
         </p>
       </div>
 
+      <div class="mail">
+        <h3>Ваша переписка:</h3>
+        <textarea #textarea autofocus [(ngModel)]="mailMessage"></textarea>
+        <button *ngIf="!isSending" (click)="onSsendMessageClick()">Отправить</button>
+
+        <p *ngFor="let message of mail" class="mail-message" [innerHTML]="message.message | linky | newline"></p>
+
+      </div>
+
     </ng-container>
 
   </main>
