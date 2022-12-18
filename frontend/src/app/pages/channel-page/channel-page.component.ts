@@ -30,6 +30,7 @@ export class ChannelPageComponent implements OnInit {
   channelModel?: Channel;
   isExpanding?: Thread;
   hereAndNowUsers: string[] = [];
+  mailNotification: any = {};
   currentPage = 0;
 
   ngOnInit(): void {
@@ -80,8 +81,11 @@ export class ChannelPageComponent implements OnInit {
   }
 
   getHereAndNow$(): Observable<any> {
-    return this.httpService.getHereAndNow$().pipe(
-      tap((users) => this.hereAndNowUsers = users)
+    return of({}).pipe(
+      switchMap(() => this.httpService.getHereAndNow$()),
+      tap((users) => this.hereAndNowUsers = users),
+      switchMap(() => this.httpService.getMailNotification$()),
+      tap((mailNotification) => this.mailNotification = mailNotification),
     );
   }
 

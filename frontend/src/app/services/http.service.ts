@@ -101,6 +101,14 @@ export class HttpService {
     );
   }
 
+  getMailNotification$(): Observable<any> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/mail-notification.php`,
+      { },
+      {observe: 'body', withCredentials: true}
+    );
+  }
+
   getMail$(nick: string): Observable<IMailMessage[]> {
     return this.httpClient.post(
       `${HttpService.apiPath}/mail-read.php`,
@@ -115,7 +123,7 @@ export class HttpService {
     );
   }
 
-  sendMail$(nick: string, message: string): Observable<IMailMessage[]> {
+  sendMail$(nick: string, message: string): Observable<any> {
     return this.httpClient.post(
       `${HttpService.apiPath}/mail-write.php`,
       {
