@@ -135,9 +135,7 @@ export interface IMember {
 }
 
 export interface IMailMessage {
-  id_mail: number;
   nick: string;
-  icon: string;
   unread: boolean;
   message: string;
   time_created: string;

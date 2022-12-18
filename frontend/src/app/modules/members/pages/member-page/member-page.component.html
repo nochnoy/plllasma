@@ -30,7 +30,10 @@
         <textarea #textarea autofocus [(ngModel)]="mailMessage"></textarea>
         <button *ngIf="!isSending" (click)="onSsendMessageClick()">Отправить</button>
 
-        <p *ngFor="let message of mail" class="mail-message" [innerHTML]="message.message | linky | newline"></p>
+        <div class="mailmessage" *ngFor="let message of mail">
+          <b [class.star]="message.unread">{{message.nick}}</b>
+          <span [innerHTML]="message.message | linky | newline"></span>
+        </div>
 
       </div>
 
