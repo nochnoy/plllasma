@@ -101,6 +101,7 @@ body {
 
     &>* {
       max-width: 20rem;
+      margin-bottom: 1rem;
     }
   }
 
@@ -405,4 +406,48 @@ body {
   position: fixed;
   bottom: 0;
   right: 0;
+  margin: 0!important;
+}
+
+.mail-notification {
+  border-radius: 0.5rem;
+  width: 100%;
+  box-sizing: border-box;
+
+  .newmail-icon {
+    display: inline-block;
+    width: 100%;
+    height: 24px;
+    background-image: url('assets/img/newmail.gif');
+    background-position: center;
+    background-repeat: no-repeat;
+    margin-bottom: 0.1rem;
+    animation: 2s linear infinite blink;
+  }
+
+  a {
+    display: inline-block;
+    color: black;
+    font-size: 0.9rem;
+    text-decoration: none;
+    white-space: pre-wrap;
+
+    &:hover {
+      color: var(--color-link-hover);
+      animation-play-state: paused;
+    }
+  }
+
+}
+
+@keyframes blink {
+  0% {
+    visibility: hidden;
+  }
+  50% {
+    visibility: hidden;
+  }
+  100% {
+    visibility: visible;
+  }
 }

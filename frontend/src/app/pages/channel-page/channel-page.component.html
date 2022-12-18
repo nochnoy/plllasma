@@ -37,9 +37,22 @@
   </div>
   <div class="sidebar">
 
+    <div class="mail-notification" *ngIf="mailNotification?.message">
+      <a [routerLink]="'/members/' + mailNotification?.nick">
+        <div class="newmail-icon"></div>
+        <b>{{mailNotification?.nick}}</b>
+        <span>{{mailNotification?.message}}</span>
+      </a>
+    </div>
+
     <div class="now-here" *ngIf="hereAndNowUsers.length">
       <div class="nowandhere-label">Здесь сейчас:</div>
-      <div *ngFor="let user of hereAndNowUsers; let i = index;" class="nowandhere-user">{{user}}</div>
+      <a *ngFor="let user of hereAndNowUsers; let i = index;"
+         [routerLink]="'/members/' + user"
+         target="_blank"
+         class="nowandhere-user">
+        {{user}}
+      </a>
     </div>
 
     <img class="newyear" src="assets/img/newyear2023.png">

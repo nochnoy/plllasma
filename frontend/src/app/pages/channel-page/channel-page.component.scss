@@ -16,13 +16,15 @@
   flex-wrap: wrap;
   min-width: 8rem;
   font-size: 0.9rem;
+  font-weight: bold;
 
-  &-label {
-    font-weight: bold;
-    margin-bottom: 0.2rem;
+  a {
+    font-weight: normal;
+    color: var(--color-link);
+    text-decoration: none;
+    &:hover {
+      color: var(--color-link-hover);
+    }
   }
-  &-user {
-    white-space: nowrap;
-    margin-bottom: 0.2rem;
-  }
+
 }

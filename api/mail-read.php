@@ -33,7 +33,7 @@ $result = $sql->get_result();
 $messages = $result->fetch_all(MYSQLI_ASSOC);
 
 // Пометим сообщения как прочитанные
-mysqli_query($mysqli, 'UPDATE tbl_mail SET unread="t" WHERE id_user='.$user['id_user'].' AND conversation_with='.$recipientId);
+mysqli_query($mysqli, 'UPDATE tbl_mail SET unread="f" WHERE id_user='.$user['id_user'].' AND conversation_with='.$recipientId);
 
 exit(json_encode((object)[
 	'messages' => $messages
