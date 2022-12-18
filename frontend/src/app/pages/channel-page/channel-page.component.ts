@@ -29,6 +29,7 @@ export class ChannelPageComponent implements OnInit {
   channel: IChannel = EMPTY_CHANNEL;
   channelModel?: Channel;
   isExpanding?: Thread;
+  isNotificationsReady = false;
   hereAndNowUsers: string[] = [];
   mailNotification: any = {};
   currentPage = 0;
@@ -37,6 +38,7 @@ export class ChannelPageComponent implements OnInit {
     of({}).pipe(
       switchMap(() => this.activatedRoute.url),
       tap((urlSegments) => {
+        this.isNotificationsReady = false;
         this.currentPage = 0;
         let channelId: number;
         if (urlSegments.length) {
@@ -81,11 +83,13 @@ export class ChannelPageComponent implements OnInit {
   }
 
   getHereAndNow$(): Observable<any> {
+    this.isNotificationsReady = false;
     return of({}).pipe(
       switchMap(() => this.httpService.getHereAndNow$()),
       tap((users) => this.hereAndNowUsers = users),
       switchMap(() => this.httpService.getMailNotification$()),
       tap((mailNotification) => this.mailNotification = mailNotification),
+      tap(() => this.isNotificationsReady = true)
     );
   }
 
