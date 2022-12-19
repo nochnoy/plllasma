@@ -12,7 +12,7 @@ import {AppRoutingModule} from "./app-routing.module";
 import { LoginPageComponent } from './pages/login-page/login-page.component';
 import { AppGuard } from './app.guard';
 import { ChannelPageComponent } from './pages/channel-page/channel-page.component';
-import { MessagesComponent } from './components/board/messages.component';
+import { MessagesComponent } from './components/messages/messages.component';
 import { MessageFormComponent } from './components/message-form/message-form.component';
 import { TestMessagesPageComponent } from './pages/test-messages-page/test-messages-page.component';
 import {MainMenuComponent} from "./components/main-menu/main-menu.component";

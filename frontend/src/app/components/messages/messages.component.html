@@ -15,7 +15,10 @@
            (mouseleave)="onMessageHover(message, false)"
            (click)="onMessageClick(message)">
         <img class="avatar" [src]="'https://plllasma.com/i/' + message.icon +'.gif'" />
-        <b [class.star]="message.isStarred">{{message.nick}}</b>
+        <a class="nick"
+           [routerLink]="'/members/' + message.nick"
+           target="_blank"
+           [class.star]="message.isStarred">{{message.nick}}</a>
         <p *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></p>
 
         <div *ngIf="message.attachments">
@@ -62,7 +65,10 @@
            (click)="unfoldGray($event, message)">
 
         <img class="avatar" [src]="'https://plllasma.com/i/' + message.icon +'.gif'">
-        <b [class.star]="message.isStarred">{{message.nick}}</b>
+        <a class="nick"
+           [routerLink]="'/members/' + message.nick"
+           target="_blank"
+           [class.star]="message.isStarred">{{message.nick}}</a>
         <p *ngIf="!!message.text" [innerHTML]="message.text | linky | linksToStubs | shorten"></p>
 
         <div *ngIf="message.attachments">

@@ -234,7 +234,10 @@ textarea {
     }
   }
 
-  b {
+  .nick {
+    color: black;
+    font-weight: bold;
+    text-decoration: none;
     padding-right: 0.3rem;
   }
 
