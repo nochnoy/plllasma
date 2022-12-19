@@ -25,14 +25,14 @@
 
       <a class="back-link" routerLink="/members"><i>←</i> К списку граждан</a>
 
-      <div class="mail-title">
+      <div *ngIf="mail.length || isGoingToWrite || isMailLoading" class="mail-title">
         <div class="mail-title-icon"></div>
         <div>Inbox</div>
         <div  [class.spinner]="isMailLoading || isSending"></div>
       </div>
 
       <div *ngIf="!mail.length && !isGoingToWrite && !isMailLoading" class="mail-going">
-        <a href (click)="onOpenFormClick($event)">Написать</a>
+        <a href (click)="onOpenFormClick($event)">Написать ему в инбокс</a>
       </div>
 
       <div *ngIf="mail.length || isGoingToWrite" class="mail-form" >
