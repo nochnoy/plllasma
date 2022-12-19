@@ -36,6 +36,7 @@ export class MemberPageComponent implements OnInit {
   mail: IMailMessage[] = [];
   mailMessage: string = '';
   isSending = false;
+  isGoingToWrite = false;
 
   ngOnInit(): void {
     this.isLoading = true;
@@ -109,6 +110,11 @@ export class MemberPageComponent implements OnInit {
         }),
       ).subscribe();
     }
+  }
+
+  onOpenFormClick(event: any): void {
+    event.preventDefault();
+    this.isGoingToWrite = true;
   }
 
 }

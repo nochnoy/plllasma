@@ -31,7 +31,11 @@
         <div  [class.spinner]="isMailLoading || isSending"></div>
       </div>
 
-      <div class="mail-form">
+      <div *ngIf="!mail.length && !isGoingToWrite && !isMailLoading" class="mail-going">
+        <a href (click)="onOpenFormClick($event)">Написать</a>
+      </div>
+
+      <div *ngIf="mail.length || isGoingToWrite" class="mail-form" >
         <textarea #textarea autofocus [(ngModel)]="mailMessage"></textarea>
         <div class="mail-form-tools">
           <button [disabled]="isSending"

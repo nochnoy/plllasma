@@ -45,6 +45,7 @@ header {
   align-items: stretch;
   font-size: 2rem;
   font-weight: bold;
+  margin-bottom: 1rem;
 
   &-icon {
     display: inline-block;
@@ -53,13 +54,19 @@ header {
     background-position: center;
     background-repeat: no-repeat;
     margin-right: 0.2rem;
+    margin-top: 3px;
     transform: scaleX(-1);
   }
 }
 
+.mail-going {
+  padding-left: 31px;
+  margin-left: 0.2rem;
+}
+
 .mail-form {
   width: 35rem;
-  margin: 1rem 0;
+  margin-bottom: 1rem;
   background-color: white;
   border: 1px solid #c5b9ac;
   border-radius: 0.2rem;
