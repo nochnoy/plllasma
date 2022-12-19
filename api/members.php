@@ -10,6 +10,10 @@ loginBySessionOrToken();
 $nick = @$input['nick'];
 $userId	= null;
 
+$sql = $mysqli->prepare('SELECT NOW() as now');
+$sql->execute();
+$now = $sql->get_result()->fetch_all(MYSQLI_ASSOC)[0]['now'];
+
 // Запросили конкретного юзера?
 if (!empty($nick)) {
 	$sql = $mysqli->prepare('SELECT id_user FROM tbl_users WHERE nick=? LIMIT 1');

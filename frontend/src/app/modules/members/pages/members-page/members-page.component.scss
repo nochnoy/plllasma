@@ -14,13 +14,17 @@
   }
 }
 
+.section {
+  margin-bottom: 1rem;
+  label {
+    font-size: 1.2rem;
+    color: #8c8269;
+  }
+}
+
 .members {
   column-width: 10rem;
   margin-top: 1rem;
-
-  &-correspondents {
-    margin-bottom: 2rem;
-  }
 
   .nick {
     display: inline-block;

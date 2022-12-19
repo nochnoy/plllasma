@@ -8,27 +8,49 @@
       <p>Список пользователей</p>
     </header>
 
-    <div class="search" *ngIf="!isLoading">
-      <input autofocus [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()">
-    </div>
+    <ng-container *ngIf="!isLoading">
 
-    <div class="members members-correspondents" *ngIf="!isLoading && correspondents.length">
-      <a *ngFor="let member of correspondents"
-         class="nick"
-         [class.star]="member.inboxStarred"
-         [class.gray]="member.gray"
-         [class.dead]="member.dead"
-         [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
-    </div>
+      <div class="search">
+        <input autofocus [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()">
+      </div>
 
-    <div class="members" *ngIf="!isLoading">
-      <a *ngFor="let member of membersToShow"
-         class="nick"
-         [class.star]="member.inboxStarred"
-         [class.gray]="member.gray"
-         [class.dead]="member.dead"
-         [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
-    </div>
+      <div class="section" *ngIf="correspondents.length">
+        <label>С кем вы переписывались</label>
+        <div class="members">
+          <a *ngFor="let member of correspondents"
+             class="nick"
+             [class.star]="member.inboxStarred"
+             [class.gray]="member.gray"
+             [class.dead]="member.dead"
+             [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+        </div>
+      </div>
+
+      <div class="section">
+        <label>Зашедшие сегодня</label>
+        <div class="members">
+          <a *ngFor="let member of membersToday"
+             class="nick"
+             [class.star]="member.inboxStarred"
+             [class.gray]="member.gray"
+             [class.dead]="member.dead"
+             [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+        </div>
+      </div>
+
+      <div class="section">
+        <label>Вообще все</label>
+        <div class="members">
+          <a *ngFor="let member of membersToShow"
+             class="nick"
+             [class.star]="member.inboxStarred"
+             [class.gray]="member.gray"
+             [class.dead]="member.dead"
+             [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+        </div>
+      </div>
+
+    </ng-container>
 
   </main>
   <div class="spacer"></div>

@@ -21,16 +21,24 @@ export class MembersPageComponent implements OnInit {
   isLoading = false;
   allMmembers: IMember[] = [];
   membersToShow: IMember[] = [];
+  membersToday: IMember[] = [];
   correspondents: IMember[] = [];
   searchPhrase = '';
+  now = '';
 
   ngOnInit(): void {
     this.isLoading = true;
     this.httpService.getMembers$().pipe(
       tap((result) => {
         this.isLoading = false;
+
         this.allMmembers = result || [];
-        this.correspondents = this.allMmembers.filter((member) => {
+
+        this.membersToday = this.allMmembers.filter((member) => {
+          return member.time_logged;
+        })
+
+          this.correspondents = this.allMmembers.filter((member) => {
           return member.inboxSize > 0 && member.nick !== this.userService.user.nick && (!(member.gray || member.dead) || member.inboxStarred );
         });
         this.correspondents.sort((a, b) => {
@@ -42,6 +50,7 @@ export class MembersPageComponent implements OnInit {
             return b.inboxSize - a.inboxSize;
           }
         });
+
         this.updateMembersToShow();
       })
     ).subscribe();
