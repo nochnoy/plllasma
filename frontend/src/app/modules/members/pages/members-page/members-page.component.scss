@@ -1,15 +1,53 @@
 .search {
-  margin-top: 1rem;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin: 1rem 0 2rem 0;
+
+  input {
+    width: 15rem;
+    background-image: url('~src/assets/img/search-inline.png');
+    background-repeat: no-repeat;
+    background-position-y: center;
+    background-position-x: calc(100% - 4px);
+  }
 }
 
 .members {
   column-width: 10rem;
   margin-top: 1rem;
 
-  a {
+  &-correspondents {
+    margin-bottom: 2rem;
+  }
+
+  .nick {
     display: inline-block;
+    margin-bottom: 1rem;
     width: 10rem;
     white-space: nowrap;
     color: black;
+    font-weight: bold;
+    text-decoration: none;
+
+    &.gray {
+      color: #727272;
+      .avatar {
+        opacity: 70%!important;
+      }
+    }
+    &.dead {
+      color: #ACACAC;
+      .avatar {
+        opacity: 30%!important;
+      }
+    }
+    &:hover {
+      color: var(--color-link-hover);
+      .avatar {
+        opacity: 100%!important;
+      }
+    }
   }
 }

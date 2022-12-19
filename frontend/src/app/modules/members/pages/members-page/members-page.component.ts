@@ -3,6 +3,7 @@ import {UntilDestroy} from "@ngneat/until-destroy";
 import {HttpService} from "../../../../services/http.service";
 import {tap} from "rxjs/operators";
 import {IMember} from "../../../../model/app-model";
+import {UserService} from "../../../../services/user.service";
 
 @UntilDestroy()
 @Component({
@@ -13,12 +14,14 @@ import {IMember} from "../../../../model/app-model";
 export class MembersPageComponent implements OnInit {
 
   constructor(
-    public httpService: HttpService
+    public httpService: HttpService,
+    public userService: UserService
   ) { }
 
   isLoading = false;
   allMmembers: IMember[] = [];
   membersToShow: IMember[] = [];
+  correspondents: IMember[] = [];
   searchPhrase = '';
 
   ngOnInit(): void {
@@ -27,6 +30,18 @@ export class MembersPageComponent implements OnInit {
       tap((result) => {
         this.isLoading = false;
         this.allMmembers = result || [];
+        this.correspondents = this.allMmembers.filter((member) => {
+          return member.inboxSize > 0 && member.nick !== this.userService.user.nick && (!(member.gray || member.dead) || member.inboxStarred );
+        });
+        this.correspondents.sort((a, b) => {
+          if (a.inboxStarred && !b.inboxStarred) {
+            return -1;
+          } else if (!a.inboxStarred && b.inboxStarred) {
+            return 1;
+          } else {
+            return b.inboxSize - a.inboxSize;
+          }
+        });
         this.updateMembersToShow();
       })
     ).subscribe();

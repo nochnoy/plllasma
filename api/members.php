@@ -18,13 +18,12 @@ if (!empty($nick)) {
 	$userId = $sql->get_result()->fetch_all(MYSQLI_ASSOC)[0]['id_user'];
 }
 
-// Получим массив с инфой о переписке с юзерами
+// Получим массив с количеством писем
 $sql = $mysqli->prepare('
-	SELECT conversation_with as id_user, COUNT(id_mail) AS inboxSize, IF(unread="t", 1, 0) AS inboxStarred
+	SELECT author, COUNT(author) AS cnt
 	FROM tbl_mail
 	WHERE id_user=?
-	'.((empty($userId) ? '' : ' AND conversation_with = '.$userId)).'
-	GROUP BY conversation_with
+	GROUP BY author
 ');
 $sql->bind_param("i", $user['id_user']);
 $sql->execute();
@@ -32,7 +31,23 @@ $result = $sql->get_result();
 $inboxConversations = $result->fetch_all(MYSQLI_ASSOC);
 $inboxConversationsById = array();
 for ($i = 0; $i < count($inboxConversations); $i++) {
-	$inboxConversationsById[$inboxConversations[$i]['id_user']] = $inboxConversations[$i];
+	$inboxConversationsById[$inboxConversations[$i]['author']] = $inboxConversations[$i]['cnt'];
+}
+
+// Получим массив со звезданутыми письмами
+$sql = $mysqli->prepare('
+	SELECT author
+	FROM tbl_mail
+	WHERE id_user=? AND unread="t"
+	GROUP BY author
+');
+$sql->bind_param("i", $user['id_user']);
+$sql->execute();
+$result = $sql->get_result();
+$starredInboxConversations = $result->fetch_all(MYSQLI_ASSOC);
+$starredinboxConversationsById = array();
+for ($i = 0; $i < count($starredInboxConversations); $i++) {
+	$starredinboxConversationsById[$starredInboxConversations[$i]['author']] = 1;
 }
 
 // Получим массив юзеров
@@ -72,8 +87,12 @@ for ($i = 0; $i < count($users); $i++) {
 	// Вольём инфу об инбоксе
 	$inboxInfo = @$inboxConversationsById[$users[$i]['id_user']];
 	if (!empty($inboxInfo)) {
-		$users[$i]['inboxSize'] = $inboxInfo['inboxSize'] ?? 0;
-		$users[$i]['inboxStarred'] = $inboxInfo['inboxStarred'] ?? 0;
+		$users[$i]['inboxSize'] = $inboxInfo;
+		if (!empty($starredinboxConversationsById[$users[$i]['id_user']])) {
+			$users[$i]['inboxStarred'] = 1;
+		} else {
+			$users[$i]['inboxStarred'] = 0;
+		}
 	} else {
 		$users[$i]['inboxSize'] = 0;
 		$users[$i]['inboxStarred'] = 0;
