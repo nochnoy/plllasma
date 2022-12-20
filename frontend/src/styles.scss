@@ -24,6 +24,7 @@
   --color-link: #886211;
   --color-link-hover: #d0930e;
   --color-date: #aba196;
+  --color-pagination: #4b4b4b;
 
   --border-radius: 3px;
   --margin-standard: 0.4rem;
@@ -406,7 +407,7 @@ textarea {
     padding: 0.2rem;
     font-size: 0.9rem;
     text-align: center;
-    color: #4b4b4b;
+    color: var(--color-pagination);
     margin-right: 0.2rem;
     text-decoration: none;
 

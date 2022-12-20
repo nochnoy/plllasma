@@ -4,51 +4,184 @@
   </aside>
   <main class="main">
     <header>
-      <h1 [class.spinner]="isLoading">Граждане</h1>
-      <p>Список пользователей</p>
+      <div>
+        <h1 [class.spinner]="isLoading">Население Плазмы</h1>
+        <p>Список пользователей</p>
+      </div>
+      <div>
+        <div class="search" *ngIf="!isLoading">
+          <input autofocus [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()">
+        </div>
+      </div>
     </header>
 
-    <ng-container *ngIf="!isLoading">
+    <div *ngIf="!isLoading && !searchPhrase" class="filters">
+      <a href (click)="onTabClick($event, 'digest')" [class.selected]="tab === 'digest'">Сводка</a>
+      <a href (click)="onTabClick($event, 'profile')" [class.selected]="tab === 'profile'">С профилем</a>
+      <a href (click)="onTabClick($event, 'flexible')" [class.selected]="tab === 'flexible'">Гибкие</a>
+      <a href (click)="onTabClick($event, 'girls')" [class.selected]="tab === 'girls'">Девочки</a>
+      <a href (click)="onTabClick($event, 'byspasibas')" [class.selected]="tab === 'byspasibas'">По спасибам</a>
+      <a href (click)="onTabClick($event, 'bymessages')" [class.selected]="tab === 'bymessages'">По общительности</a>
+      <a href (click)="onTabClick($event, 'byregisterdate')" [class.selected]="tab === 'byregisterdate'">По старости</a>
+      <a href (click)="onTabClick($event, 'all')" [class.selected]="tab === 'all'">Все</a>
+    </div>
 
-      <div class="search">
-        <input autofocus [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()">
-      </div>
-
-      <div class="section" *ngIf="correspondents.length">
-        <label>С кем вы переписывались</label>
-        <div class="members">
-          <a *ngFor="let member of correspondents"
-             class="nick"
-             [class.star]="member.inboxStarred"
-             [class.gray]="member.gray"
-             [class.dead]="member.dead"
-             [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
-        </div>
-      </div>
+    <ng-container *ngIf="!isLoading && searchPhrase">
 
       <div class="section">
-        <label>Зашедшие сегодня</label>
-        <div class="members">
-          <a *ngFor="let member of membersToday"
+        <label>Поиск гражданина "{{searchPhrase}}"</label>
+        <a class="search-clear" href (click)="onSearchClearClick($event)">отменить</a>
+        <div class="members" *ngIf="membersSearching.length">
+          <a *ngFor="let member of membersSearching"
              class="nick"
-             [class.star]="member.inboxStarred"
              [class.gray]="member.gray"
              [class.dead]="member.dead"
              [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
         </div>
       </div>
+      <div *ngIf="!membersSearching.length">Таких тут нет</div>
 
-      <div class="section">
-        <label>Вообще все</label>
-        <div class="members">
-          <a *ngFor="let member of membersToShow"
-             class="nick"
-             [class.star]="member.inboxStarred"
-             [class.gray]="member.gray"
-             [class.dead]="member.dead"
-             [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+    </ng-container>
+
+    <ng-container *ngIf="!isLoading && !searchPhrase">
+
+      <ng-container *ngIf="tab === 'digest'">
+
+        <div class="section" *ngIf="membersMail.length">
+          <label>Ваша переписка</label>
+          <div class="members">
+            <a *ngFor="let member of membersMail"
+               class="nick"
+               [class.star]="member.inboxStarred"
+               [class.gray]="member.gray"
+               [class.dead]="member.dead"
+               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+          </div>
         </div>
-      </div>
+
+        <div class="section">
+          <label>Были сегодня (последние 24 часа)</label>
+          <div class="members">
+            <a *ngFor="let member of membersToday"
+               class="nick"
+               [class.star]="member.inboxStarred"
+               [class.gray]="member.gray"
+               [class.dead]="member.dead"
+               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+          </div>
+        </div>
+
+        <div class="section">
+          <label>Были не сегодня</label>
+          <div class="members">
+            <a *ngFor="let member of membersNotToday"
+               class="nick"
+               [class.star]="member.inboxStarred"
+               [class.gray]="member.gray"
+               [class.dead]="member.dead"
+               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+          </div>
+        </div>
+
+      </ng-container>
+
+      <ng-container *ngIf="tab === 'profile'">
+        <div class="section">
+          <label>С профилем</label>
+          <div class="members">
+            <a *ngFor="let member of membersProfile"
+               class="nick"
+               [class.star]="member.inboxStarred"
+               [class.gray]="member.gray"
+               [class.dead]="member.dead"
+               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="tab === 'girls'">
+        <div class="section">
+          <label>Девочки</label>
+          <div class="members">
+            <a *ngFor="let member of membersGirls"
+               class="nick"
+               [class.star]="member.inboxStarred"
+               [class.gray]="member.gray"
+               [class.dead]="member.dead"
+               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="tab === 'flexible'">
+        <div class="section">
+          <label>Гибкие</label>
+          <div class="members">
+            <a *ngFor="let member of membersFlexible"
+               class="nick"
+               [class.star]="member.inboxStarred"
+               [class.gray]="member.gray"
+               [class.dead]="member.dead"
+               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="tab === 'bymessages'">
+        <div class="section">
+          <label>По общительности</label>
+          <div class="members">
+            <a *ngFor="let member of membersByMessages"
+               class="nick"
+               [class.star]="member.inboxStarred"
+               [class.gray]="member.gray"
+               [class.dead]="member.dead"
+               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="tab === 'byregisterdate'">
+        <div class="section">
+          <label>По старости</label>
+          <div class="members">
+            <a *ngFor="let member of membersByRegisterDate"
+               class="nick"
+               [class.star]="member.inboxStarred"
+               [class.gray]="member.gray"
+               [class.dead]="member.dead"
+               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="tab === 'byspasibas'">
+        <div class="section">
+          <label>По спасибам</label>
+          <div class="members">
+            <a *ngFor="let member of membersBySpasibas"
+               class="nick"
+               [class.star]="member.inboxStarred"
+               [class.gray]="member.gray"
+               [class.dead]="member.dead"
+               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="tab === 'all'">
+        <div class="section">
+          <label>Все</label>
+          <div class="members">
+            <a *ngFor="let member of membersAll"
+               class="nick"
+               [class.star]="member.inboxStarred"
+               [class.gray]="member.gray"
+               [class.dead]="member.dead"
+               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+          </div>
+        </div>
+      </ng-container>
 
     </ng-container>
 

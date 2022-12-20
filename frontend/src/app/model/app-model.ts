@@ -118,6 +118,7 @@ export interface IMember {
   description: string;
   time_logged: string;
   time_joined: string;
+  today: boolean; // Юзер был на сайте последние 24 часа?
   msgcount: number;
   sps: number;
   city: string;
