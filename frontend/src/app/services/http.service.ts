@@ -13,7 +13,7 @@ export class HttpService {
     private httpClient: HttpClient,
   ) { }
 
-  static readonly apiPath = '../api';
+  static readonly apiPath = '/api';
 
   loadChannels$(): Observable<any> {
     return of({}).pipe(
