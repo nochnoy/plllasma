@@ -141,6 +141,12 @@ for ($i = 0; $i < count($users); $i++) {
 	unset($users[$i]['id_user']); 
 }
 
+if (!empty($nick)) {
+	logActivity('member '.$nick);
+} else {
+	logActivity('members ');
+}
+
 // Выдадим
 exit(json_encode((object)[
 	'users' => $users
