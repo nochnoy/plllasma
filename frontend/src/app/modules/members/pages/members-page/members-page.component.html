@@ -20,9 +20,9 @@
       <a href (click)="onTabClick($event, 'profile')" [class.selected]="tab === 'profile'">С профилем</a>
       <a href (click)="onTabClick($event, 'flexible')" [class.selected]="tab === 'flexible'">Гибкие</a>
       <a href (click)="onTabClick($event, 'girls')" [class.selected]="tab === 'girls'">Девочки</a>
+      <a href (click)="onTabClick($event, 'byregisterdate')" [class.selected]="tab === 'byregisterdate'">Старички</a>
       <a href (click)="onTabClick($event, 'byspasibas')" [class.selected]="tab === 'byspasibas'">По спасибам</a>
       <a href (click)="onTabClick($event, 'bymessages')" [class.selected]="tab === 'bymessages'">По общительности</a>
-      <a href (click)="onTabClick($event, 'byregisterdate')" [class.selected]="tab === 'byregisterdate'">По старости</a>
       <a href (click)="onTabClick($event, 'all')" [class.selected]="tab === 'all'">Все</a>
     </div>
 
@@ -87,7 +87,7 @@
 
       <ng-container *ngIf="tab === 'profile'">
         <div class="section">
-          <label>С профилем</label>
+          <label>Написавшие что-нибудь о себе</label>
           <div class="members">
             <a *ngFor="let member of membersProfile"
                class="nick"
@@ -115,7 +115,7 @@
 
       <ng-container *ngIf="tab === 'flexible'">
         <div class="section">
-          <label>Гибкие</label>
+          <label>Исполнители, спортсмены, любители</label>
           <div class="members">
             <a *ngFor="let member of membersFlexible"
                class="nick"
@@ -129,7 +129,7 @@
 
       <ng-container *ngIf="tab === 'bymessages'">
         <div class="section">
-          <label>По общительности</label>
+          <label>По количеству сообщений</label>
           <div class="members">
             <a *ngFor="let member of membersByMessages"
                class="nick"
@@ -143,7 +143,7 @@
 
       <ng-container *ngIf="tab === 'byregisterdate'">
         <div class="section">
-          <label>По старости</label>
+          <label>По дате регистрации</label>
           <div class="members">
             <a *ngFor="let member of membersByRegisterDate"
                class="nick"
@@ -157,7 +157,7 @@
 
       <ng-container *ngIf="tab === 'byspasibas'">
         <div class="section">
-          <label>По спасибам</label>
+          <label>По количеству оценок</label>
           <div class="members">
             <a *ngFor="let member of membersBySpasibas"
                class="nick"
@@ -171,7 +171,7 @@
 
       <ng-container *ngIf="tab === 'all'">
         <div class="section">
-          <label>Все</label>
+          <label>Вообще все</label>
           <div class="members">
             <a *ngFor="let member of membersAll"
                class="nick"

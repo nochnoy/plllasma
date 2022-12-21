@@ -81,7 +81,7 @@ export class MembersPageComponent implements OnInit {
         this.membersBySpasibas = this.membersAll.filter(a => a.sps).sort((a, b) => b.sps - a.sps);
 
         // По старости
-        this.membersByRegisterDate = this.membersAll.sort((a, b) => {
+        this.membersByRegisterDate = [...this.membersAll].sort((a, b) => {
           if (a.time_joined > b.time_joined) {
             return 1;
           } else if (a.time_joined < b.time_joined) {
