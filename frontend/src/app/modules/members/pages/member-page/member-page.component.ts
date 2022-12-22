@@ -24,7 +24,8 @@ export class MemberPageComponent implements OnInit {
   ) { }
 
   isLoading = true;
-  isMailLoading = true;
+  isMailLoading = false;
+  isMe = false;
   nick?: string;
   member?: IMember;
   years = '';
@@ -44,6 +45,8 @@ export class MemberPageComponent implements OnInit {
       switchMap(() => this.activatedRoute.url),
       switchMap((urlSegments) => {
         this.nick = urlSegments[0].path;
+        this.isMe = this.nick === this.userService.user.nick;
+        console.log('ME? ' + this.isMe);
         return this.httpService.getMembers$(this.nick);
       }),
       switchMap((result) => {
@@ -73,7 +76,10 @@ export class MemberPageComponent implements OnInit {
         }
       }),
       switchMap(() => {
-        if (this.nick !== this.userService.user.nick) {
+        if (this.isMe) {
+          this.mail = [];
+          return of({});
+        } else {
           return of({}).pipe(
             switchMap(() => {
               this.isMailLoading = true;
@@ -84,8 +90,6 @@ export class MemberPageComponent implements OnInit {
               this.mail = result;
             }),
           );
-        } else {
-          return of({});
         }
       }),
       untilDestroyed(this)

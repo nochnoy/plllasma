@@ -10,7 +10,7 @@
       </div>
       <div>
         <div class="search" *ngIf="!isLoading">
-          <input autofocus [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()">
+          <input autofocus [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()" placeholder="Поиск">
         </div>
       </div>
     </header>
@@ -32,11 +32,9 @@
         <label>Поиск гражданина "{{searchPhrase}}"</label>
         <a class="search-clear" href (click)="onSearchClearClick($event)">отменить</a>
         <div class="members" *ngIf="membersSearching.length">
-          <a *ngFor="let member of membersSearching"
-             class="nick"
-             [class.gray]="member.gray"
-             [class.dead]="member.dead"
-             [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+          <ng-container *ngFor="let member of membersSearching">
+            <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{member: member}"></ng-container>
+          </ng-container>
         </div>
       </div>
       <div *ngIf="!membersSearching.length">Таких тут нет</div>
@@ -50,36 +48,27 @@
         <div class="section" *ngIf="membersMail.length">
           <label>Ваша переписка</label>
           <div class="members">
-            <a *ngFor="let member of membersMail"
-               class="nick"
-               [class.star]="member.inboxStarred"
-               [class.gray]="member.gray"
-               [class.dead]="member.dead"
-               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+            <ng-container *ngFor="let member of membersMail">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{member: member}"></ng-container>
+            </ng-container>
           </div>
         </div>
 
         <div class="section">
           <label>Были в последние 24 часа</label>
           <div class="members">
-            <a *ngFor="let member of membersToday"
-               class="nick"
-               [class.star]="member.inboxStarred"
-               [class.gray]="member.gray"
-               [class.dead]="member.dead"
-               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+            <ng-container *ngFor="let member of membersToday">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{member: member}"></ng-container>
+            </ng-container>
           </div>
         </div>
 
         <div class="section">
           <label>Были раньше</label>
           <div class="members">
-            <a *ngFor="let member of membersNotToday"
-               class="nick"
-               [class.star]="member.inboxStarred"
-               [class.gray]="member.gray"
-               [class.dead]="member.dead"
-               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+            <ng-container *ngFor="let member of membersNotToday">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{member: member}"></ng-container>
+            </ng-container>
           </div>
         </div>
 
@@ -89,12 +78,9 @@
         <div class="section">
           <label>Написавшие что-нибудь о себе</label>
           <div class="members">
-            <a *ngFor="let member of membersProfile"
-               class="nick"
-               [class.star]="member.inboxStarred"
-               [class.gray]="member.gray"
-               [class.dead]="member.dead"
-               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+            <ng-container *ngFor="let member of membersProfile">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{member: member}"></ng-container>
+            </ng-container>
           </div>
         </div>
       </ng-container>
@@ -103,12 +89,9 @@
         <div class="section">
           <label>Девочки</label>
           <div class="members">
-            <a *ngFor="let member of membersGirls"
-               class="nick"
-               [class.star]="member.inboxStarred"
-               [class.gray]="member.gray"
-               [class.dead]="member.dead"
-               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+            <ng-container *ngFor="let member of membersGirls">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{member: member}"></ng-container>
+            </ng-container>
           </div>
         </div>
       </ng-container>
@@ -117,12 +100,9 @@
         <div class="section">
           <label>Исполнители, спортсмены, любители</label>
           <div class="members">
-            <a *ngFor="let member of membersFlexible"
-               class="nick"
-               [class.star]="member.inboxStarred"
-               [class.gray]="member.gray"
-               [class.dead]="member.dead"
-               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+            <ng-container *ngFor="let member of membersFlexible">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{member: member}"></ng-container>
+            </ng-container>
           </div>
         </div>
       </ng-container>
@@ -131,12 +111,9 @@
         <div class="section">
           <label>По количеству сообщений</label>
           <div class="members">
-            <a *ngFor="let member of membersByMessages"
-               class="nick"
-               [class.star]="member.inboxStarred"
-               [class.gray]="member.gray"
-               [class.dead]="member.dead"
-               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+            <ng-container *ngFor="let member of membersByMessages">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{member: member}"></ng-container>
+            </ng-container>
           </div>
         </div>
       </ng-container>
@@ -145,12 +122,9 @@
         <div class="section">
           <label>По дате регистрации</label>
           <div class="members">
-            <a *ngFor="let member of membersByRegisterDate"
-               class="nick"
-               [class.star]="member.inboxStarred"
-               [class.gray]="member.gray"
-               [class.dead]="member.dead"
-               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+            <ng-container *ngFor="let member of membersByRegisterDate">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{member: member}"></ng-container>
+            </ng-container>
           </div>
         </div>
       </ng-container>
@@ -159,12 +133,9 @@
         <div class="section">
           <label>По количеству оценок</label>
           <div class="members">
-            <a *ngFor="let member of membersBySpasibas"
-               class="nick"
-               [class.star]="member.inboxStarred"
-               [class.gray]="member.gray"
-               [class.dead]="member.dead"
-               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+            <ng-container *ngFor="let member of membersBySpasibas">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{member: member}"></ng-container>
+            </ng-container>
           </div>
         </div>
       </ng-container>
@@ -173,12 +144,9 @@
         <div class="section">
           <label>Вообще все</label>
           <div class="members">
-            <a *ngFor="let member of membersAll"
-               class="nick"
-               [class.star]="member.inboxStarred"
-               [class.gray]="member.gray"
-               [class.dead]="member.dead"
-               [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+            <ng-container *ngFor="let member of membersAll">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{member: member}"></ng-container>
+            </ng-container>
           </div>
         </div>
       </ng-container>
@@ -189,3 +157,13 @@
   <div class="spacer"></div>
   <div class="sidebar"></div>
 </div>
+
+<ng-template #memberTemplate let-member='member'>
+  <a
+     class="nick"
+     [class.me]="member.nick === userService.user.nick"
+     [class.star]="member.inboxStarred"
+     [class.gray]="member.gray"
+     [class.dead]="member.dead"
+     [routerLink]="'/members/' + member.nick"><img class="avatar" [src]="member.icon">{{member.nick}}</a>
+</ng-template>

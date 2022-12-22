@@ -46,7 +46,21 @@ export class MembersPageComponent implements OnInit {
         this.membersAll = result || [];
 
         // Те кто был на сайте последние 24 часа
-        this.membersToday = this.membersAll.filter((member) => member.today);
+        this.membersToday = this.membersAll.filter((member) => member.today).sort((a, b) => {
+          if (a.nick === this.userService.user.nick) {
+            return -1;
+          } else if (b.nick === this.userService.user.nick) {
+            return 1;
+          } else {
+            if (a.nick > b.nick) {
+              return 1;
+            } else if (a.nick < b.nick) {
+              return -1;
+            } else {
+              return 0;
+            }
+          }
+        });
 
         // Активные но не в списке membersToday
         this.membersNotToday = this.membersAll.filter((member) => !member.dead && this.membersToday.indexOf(member) === -1);
@@ -81,7 +95,9 @@ export class MembersPageComponent implements OnInit {
         this.membersBySpasibas = this.membersAll.filter(a => a.sps).sort((a, b) => b.sps - a.sps);
 
         // По старости
-        this.membersByRegisterDate = [...this.membersAll].sort((a, b) => {
+        this.membersByRegisterDate = [...this.membersAll]
+          .filter((member) => !member.dead)
+          .sort((a, b) => {
           if (a.time_joined > b.time_joined) {
             return 1;
           } else if (a.time_joined < b.time_joined) {

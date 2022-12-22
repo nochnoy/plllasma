@@ -11,7 +11,7 @@ header {
   justify-content: center;
 
   input {
-    width: 15rem;
+    width: 12rem;
     background-image: url('~src/assets/img/search-inline.png');
     background-repeat: no-repeat;
     background-position-y: center;
@@ -68,6 +68,11 @@ header {
     color: black;
     font-weight: bold;
     text-decoration: none;
+
+    &.me {
+      box-shadow: 0 0 12px 8px #e1d6ca;
+      background-color: #e1d6ca;
+    }
 
     &.gray {
       color: #727272;

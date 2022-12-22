@@ -76,6 +76,11 @@ input {
   &:focus {
     outline: 0;
   }
+
+  &::placeholder {
+    color: #b2bdbd;
+    font-size: 0.9rem;
+  }
 }
 
 textarea {

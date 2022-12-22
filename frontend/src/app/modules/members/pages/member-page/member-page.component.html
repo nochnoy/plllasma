@@ -25,37 +25,41 @@
 
       <a class="back-link" routerLink="/members"><i>←</i> К списку граждан</a>
 
-      <div *ngIf="mail.length || isGoingToWrite || isMailLoading" class="mail-title">
-        <div class="mail-title-icon"></div>
-        <div>Inbox</div>
-        <div  [class.spinner]="isMailLoading || isSending"></div>
-      </div>
+      <ng-container *ngIf="!isMe">
 
-      <div *ngIf="!mail.length && !isGoingToWrite && !isMailLoading" class="mail-going">
-        <a href (click)="onOpenFormClick($event)">Написать ему в инбокс</a>
-      </div>
-
-      <div *ngIf="mail.length || isGoingToWrite" class="mail-form" >
-        <textarea #textarea autofocus [(ngModel)]="mailMessage"></textarea>
-        <div class="mail-form-tools">
-          <button [disabled]="isSending"
-                  (click)="onSendMessageClick()">
-            Отправить
-          </button>
+        <div *ngIf="mail.length || isGoingToWrite || isMailLoading" class="mail-title">
+          <div class="mail-title-icon"></div>
+          <div>Inbox</div>
+          <div  [class.spinner]="isMailLoading || isSending"></div>
         </div>
-      </div>
 
-      <div class="mail-messages">
-        <div class="mail-message" *ngFor="let message of mail">
-          <div>
-            <img *ngIf="message.nick === userService.user.nick" class="avatar" [src]="'https://plllasma.com/i/' + userService.user.icon + '.gif'" />
-            <img *ngIf="message.nick !== userService.user.nick" class="avatar" [src]=member?.icon />
-            <b [class.star]="message.unread">{{message.nick}}</b>
+        <div *ngIf="!mail.length && !isGoingToWrite && !isMailLoading" class="mail-going">
+          <a href (click)="onOpenFormClick($event)">Написать ему в инбокс</a>
+        </div>
+
+        <div *ngIf="mail.length || isGoingToWrite" class="mail-form" >
+          <textarea #textarea autofocus [(ngModel)]="mailMessage"></textarea>
+          <div class="mail-form-tools">
+            <button [disabled]="isSending"
+                    (click)="onSendMessageClick()">
+              Отправить
+            </button>
           </div>
-          <span [innerHTML]="message.message | linky | newline"></span>
-          <div class="date">{{message.time_created | plasmadate}}</div>
         </div>
-      </div>
+
+        <div class="mail-messages">
+          <div class="mail-message" *ngFor="let message of mail">
+            <div>
+              <img *ngIf="message.nick === userService.user.nick" class="avatar" [src]="'https://plllasma.com/i/' + userService.user.icon + '.gif'" />
+              <img *ngIf="message.nick !== userService.user.nick" class="avatar" [src]=member?.icon />
+              <b [class.star]="message.unread">{{message.nick}}</b>
+            </div>
+            <span [innerHTML]="message.message | linky | newline"></span>
+            <div class="date">{{message.time_created | plasmadate}}</div>
+          </div>
+        </div>
+
+      </ng-container>
 
     </ng-container>
 
