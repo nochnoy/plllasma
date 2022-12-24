@@ -55,7 +55,7 @@
         </div>
 
         <div class="section">
-          <label>Были в последние 24 часа</label>
+          <label>Были последние 24 часа</label>
           <div class="members">
             <ng-container *ngFor="let member of membersToday">
               <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{member: member}"></ng-container>

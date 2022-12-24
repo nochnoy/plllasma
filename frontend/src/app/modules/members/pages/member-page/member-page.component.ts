@@ -46,7 +46,6 @@ export class MemberPageComponent implements OnInit {
       switchMap((urlSegments) => {
         this.nick = urlSegments[0].path;
         this.isMe = this.nick === this.userService.user.nick;
-        console.log('ME? ' + this.isMe);
         return this.httpService.getMembers$(this.nick);
       }),
       switchMap((result) => {

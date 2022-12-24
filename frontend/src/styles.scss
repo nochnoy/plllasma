@@ -258,6 +258,16 @@ textarea {
       width: var(--attachment-icon-size);
       height: var(--attachment-icon-size);
       opacity: 0.7;
+      &:hover {
+        opacity: 1;
+      }
+    }
+  }
+  .preview {
+    width: var(--attachment-icon-size);
+    opacity: 0.6;
+    &:hover {
+      opacity: 1;
     }
   }
 
