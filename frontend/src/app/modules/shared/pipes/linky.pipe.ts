@@ -12,18 +12,29 @@ export class LinkyPipe implements PipeTransform {
         location: 'smart',
       },
       replaceFn: (match: Match): ReplaceFnReturn => {
-        const url = (match as UrlMatch)?.getUrl();
-        /*if (url?.indexOf('youtu.be') > -1 || url?.indexOf('youtube') > -1) {
-          const youTubeCode = this.getYouTubeCode(url);
-          if (youTubeCode) {
-            console.log(youTubeCode);
-            return '<br><a href="' + url + '" target="_blank"><img class="preview" src="http://img.youtube.com/vi/' + youTubeCode + '/0.jpg" loading="lazy"></a>';
-          } else {
-            return true;
+        try {
+          const txt = match.getMatchedText();
+          if (txt.indexOf('@') > -1) {
+            debugger
           }
-        } else {*/
-          return true;
-        /*}*/
+          if (match instanceof UrlMatch) {
+            const url = (match as UrlMatch).getUrl();
+            if (url.indexOf('youtu.be') > -1 || url?.indexOf('youtube') > -1) {
+              const youTubeCode = this.getYouTubeCode(url);
+              if (youTubeCode) {
+                console.log(youTubeCode);
+                return '<br><a href="' + url + '" target="_blank"><img class="preview" src="http://img.youtube.com/vi/' + youTubeCode + '/0.jpg" loading="lazy"></a>';
+              } else {
+                return true;
+              }
+            } else {
+              return true;
+            }
+          }
+        }
+        catch(e) {
+          return false;
+        }
       }
     }
 
