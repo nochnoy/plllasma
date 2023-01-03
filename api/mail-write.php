@@ -1,4 +1,4 @@
-<? // REST для получения сообщений инбокса
+<? // REST для отправки сообщений инбокса
 
 include("include/main.php");
 loginBySessionOrToken();
@@ -32,7 +32,7 @@ if($recipientId != $user['id_user']) { // если чувак пишет сам�
 
 	$sql = $mysqli->prepare('
 		INSERT INTO tbl_mail (id_user, author, conversation_with, subject, message, time_created, unread)
-		VALUES (?, ?, ?, "", ?, NOW(), "t")
+		VALUES (?, ?, ?, "", ?, NOW(), "f")
 	');
 	$sql->bind_param("iiis", $user['id_user'], $user['id_user'], $recipientId, $message);
 	$sql->execute();
