@@ -2,11 +2,13 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { AppGuard } from './app.guard';
 import { ChannelPageComponent } from './pages/channel-page/channel-page.component';
+import { Channel2PageComponent } from './pages/channel2-page/channel2-page.component';
 import {LoginPageComponent} from "./pages/login-page/login-page.component";
 import {TestMessagesPageComponent} from "./pages/test-messages-page/test-messages-page.component";
 
 const routes: Routes = [
   { path: '', component: ChannelPageComponent, canActivate: [AppGuard] },
+  { path: 'channel2', component: Channel2PageComponent, canActivate: [AppGuard] },
   { path: 'login', component: LoginPageComponent },
   { path: 'test-messages', component: TestMessagesPageComponent },
   {
