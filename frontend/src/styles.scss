@@ -509,3 +509,12 @@ textarea {
     visibility: visible;
   }
 }
+
+.youtube-link {
+  &:first-child {
+    &:before {
+      content: ' '; 
+      display: block;
+    }
+  }
+}

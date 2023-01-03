@@ -13,17 +13,13 @@ export class LinkyPipe implements PipeTransform {
       },
       replaceFn: (match: Match): ReplaceFnReturn => {
         try {
-          const txt = match.getMatchedText();
-          if (txt.indexOf('@') > -1) {
-            debugger
-          }
           if (match instanceof UrlMatch) {
             const url = (match as UrlMatch).getUrl();
             if (url.indexOf('youtu.be') > -1 || url?.indexOf('youtube') > -1) {
               const youTubeCode = this.getYouTubeCode(url);
               if (youTubeCode) {
                 console.log(youTubeCode);
-                return '<br><a href="' + url + '" target="_blank"><img class="preview" src="http://img.youtube.com/vi/' + youTubeCode + '/0.jpg" loading="lazy"></a>';
+                return '<a class="youtube-link" href="' + url + '" target="_blank"><img class="preview" src="http://img.youtube.com/vi/' + youTubeCode + '/0.jpg" loading="lazy"></a>';
               } else {
                 return true;
               }
