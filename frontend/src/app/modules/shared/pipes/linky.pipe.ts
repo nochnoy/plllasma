@@ -19,7 +19,7 @@ export class LinkyPipe implements PipeTransform {
               const youTubeCode = this.getYouTubeCode(url);
               if (youTubeCode) {
                 console.log(youTubeCode);
-                return '<a class="youtube-link" href="' + url + '" target="_blank"><img class="preview" src="http://img.youtube.com/vi/' + youTubeCode + '/0.jpg" loading="lazy"></a>';
+                return '<a class="youtube-link" href="' + url + '" target="_blank"><img class="preview" src="https://img.youtube.com/vi/' + youTubeCode + '/0.jpg" loading="lazy"></a>';
               } else {
                 return true;
               }
