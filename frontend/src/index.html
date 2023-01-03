@@ -6,8 +6,29 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <style>
+    #preloader {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    #preloader p {
+      margin: 0.2rem;
+    }
+    #preloader p:nth-child(2) {
+      font-size: 0.8rem;
+      white-space: nobreak;
+      opacity: 30%;
+    }
+  </style>
 </head>
 <body>
+  <div id="preloader">
+    <p>Загрузка...</p>
+    <p>В случае проблем <a href="mailto:">пишите</a></p>
+  </div>
   <app-root></app-root>
 </body>
 </html>

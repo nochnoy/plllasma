@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, Renderer2 } from '@angular/core';
 import {switchMap, tap} from "rxjs/operators";
 import {Router} from "@angular/router";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
@@ -13,11 +13,12 @@ import { LoginStatus } from './model/app-model';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, AfterViewInit {
 
   constructor(
     public appService: AppService,
     public userService: UserService,
+    private renderer: Renderer2,
     public router: Router
   ) {}
 
@@ -46,6 +47,11 @@ export class AppComponent implements OnInit {
       //filter((loginStatus) => loginStatus === LoginStatus.authorised),
       untilDestroyed(this)
     ).subscribe();
+  }
+
+  ngAfterViewInit() {
+    let loader = this.renderer.selectRootElement('#preloader');
+    this.renderer.setStyle(loader, 'display', 'none');
   }
 
 }
