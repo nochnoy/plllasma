@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import {Observable, of} from "rxjs";
 import {map, switchMap} from "rxjs/operators";
 import {HttpClient} from "@angular/common/http";
-import {IMailMessage, IMember} from "../model/app-model";
+import {IMailMessage, IMember, IMozaic} from "../model/app-model";
 
 @Injectable({
   providedIn: 'root'
@@ -131,6 +131,18 @@ export class HttpService {
         message
       },
       {observe: 'body', withCredentials: true}
+    );
+  }
+
+  mozaicRead$(): Observable<IMozaic> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/mozaic-read.php`,
+      { },
+      {observe: 'body', withCredentials: true}
+    ).pipe(
+      map((result: any) => {
+        return result?.mozaic as IMozaic;
+      })
     );
   }
 

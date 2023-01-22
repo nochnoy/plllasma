@@ -458,7 +458,7 @@ textarea {
   color: var(--color-date);
 }
 
-.newyear {
+.banner {
   position: fixed;
   bottom: 0;
   right: 0;
@@ -513,7 +513,7 @@ textarea {
 .youtube-link {
   &:first-child {
     &:before {
-      content: ' '; 
+      content: ' ';
       display: block;
     }
   }
