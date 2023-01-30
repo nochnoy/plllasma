@@ -1,0 +1,9 @@
+<div class="mozaic" [style.grid-auto-rows]="cellSize + 'px'">
+  <ng-container *ngIf="mozaic">
+    <div *ngFor="let item of mozaic?.items; let z = index;"
+         [style.grid-column]="item.x + '/' + (item.x + item.w)"
+         [style.grid-row]="item.y + '/' + (item.y + item.h)">
+
+    </div>
+  </ng-container>
+</div>

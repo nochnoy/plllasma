@@ -1,7 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, ElementRef, OnInit} from '@angular/core';
 import {UntilDestroy} from "@ngneat/until-destroy";
 import { HttpService } from 'src/app/services/http.service';
-import { UserService } from 'src/app/services/user.service';
 import {tap} from "rxjs/operators";
 import {IMozaic, IMozaicItem} from "../../model/app-model";
 
@@ -11,29 +10,8 @@ import {IMozaic, IMozaicItem} from "../../model/app-model";
   templateUrl: './channel2-page.component.html',
   styleUrls: ['./channel2-page.component.scss']
 })
-export class Channel2PageComponent implements OnInit {
+export class Channel2PageComponent {
 
-  constructor(
-    public httpService: HttpService,
-    public userService: UserService
-  ) { }
 
-  isLoading = false;
-  mozaic?: IMozaic;
-
-  ngOnInit(): void {
-    this.httpService.mozaicRead$().pipe(
-      tap((result) => {
-        if (result) {
-          this.mozaic = result;
-        }
-      }),
-    ).subscribe();
-  }
-
-  getStyle(item: IMozaicItem): string {
-    return `left:${(item.x * 20)}px; top:${(item.y * 20)}px; right:${((item.x + item.w) * 20)}px; bottom:${((item.y + item.h) * 20)}px;`;
-    //return `inset: 10px 50px 20px 10px`;
-  }
 
 }

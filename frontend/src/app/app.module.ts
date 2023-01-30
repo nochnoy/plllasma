@@ -18,6 +18,7 @@ import { TestMessagesPageComponent } from './pages/test-messages-page/test-messa
 import {MainMenuComponent} from "./components/main-menu/main-menu.component";
 import {SharedModule} from "./modules/shared/shared.module";
 import { Channel2PageComponent } from './pages/channel2-page/channel2-page.component';
+import { MozaicComponent } from './components/mozaic/mozaic.component';
 
 @NgModule({
     imports: [
@@ -42,6 +43,7 @@ import { Channel2PageComponent } from './pages/channel2-page/channel2-page.compo
       MessageFormComponent,
       TestMessagesPageComponent,
       Channel2PageComponent,
+      MozaicComponent,
     ],
     providers: [
       AppGuard,
