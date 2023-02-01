@@ -1,4 +1,4 @@
-import {Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewChild} from '@angular/core';
+import {Component, ElementRef, HostListener, OnDestroy, OnInit, Renderer2, ViewChild} from '@angular/core';
 import {HttpService} from "../../services/http.service";
 import {IMozaic, IMozaicItem} from "../../model/app-model";
 import {tap} from "rxjs/operators";
@@ -15,12 +15,13 @@ export class MozaicComponent implements OnInit, OnDestroy {
     private elementRef: ElementRef,
   ) { }
 
-  mozaic?: IMozaic;
+  mozaic = {} as IMozaic;
   rectInterval: any;
-
-  rectX = 0;
-  rectWidth = 0;
+  rect: DOMRect = new DOMRect(0,0,0,0);
   cellSize: number = 0;
+  selectedItem?: IMozaicItem;
+  isDragging = false;
+  dragStart?: DOMPoint;
 
   ngOnInit(): void {
     this.httpService.mozaicRead$().pipe(
@@ -32,22 +33,74 @@ export class MozaicComponent implements OnInit, OnDestroy {
     ).subscribe();
 
     this.rectInterval = setInterval(() => {
-      const rect = this.elementRef.nativeElement.getBoundingClientRect();
-      if (this.rectX !== rect.x || this.rectWidth !== rect.width) {
-        this.onRectChanged(rect.x, rect.width);
-      }
+      this.rect = this.elementRef.nativeElement.getBoundingClientRect();
+      this.cellSize = this.rect.width / 12;
     }, 1000);
-
   }
 
   ngOnDestroy() {
     clearInterval(this.rectInterval);
   }
 
-  onRectChanged(x: number, width: number): void {
-    this.rectX = x;
-    this.rectWidth = width;
-    this.cellSize = width / 12;
+  isInsideRect(event: PointerEvent): boolean {
+    if (event.clientX >= this.rect.x && event.clientX <= this.rect.y + this.rect.width) {
+      if (event.clientY >= this.rect.y && event.clientY <= this.rect.y + this.rect.height) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @HostListener('document:mousedown', ['$event'])
+  onMouseDown(event: PointerEvent) {
+    console.log('mousedown');
+    this.dragStart = new DOMPoint(event.clientX, event.clientY);
+  }
+
+  @HostListener('document:mousemove', ['$event'])
+  onMouseMove(event: PointerEvent) {
+    if (this.dragStart) {
+      console.log('mousemove');
+
+
+
+    }
+  }
+
+  @HostListener('document:mouseup', ['$event'])
+  onMouseUp(event: PointerEvent) {
+    console.log('mouseup');
+    delete this.dragStart;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onClick(event: PointerEvent) {
+    if (this.isInsideRect(event)) {
+      const block: any = event?.target;
+      const id = parseInt(block.id);
+      const item = this.mozaic?.items.find((item) => item.id === id);
+      if (item) {
+
+        if (this.selectedItem) {
+          this.selectedItem.selected = false;
+        }
+
+        this.selectedItem = item;
+        this.selectedItem.selected = true;
+
+        // Выделенный всегда всплывает наверх
+        this.mozaic!.items = this.mozaic?.items.filter((i) => i !== item);
+        this.mozaic!.items.push(this.selectedItem);
+
+        const cellX = (event.clientX - this.rect.x) / this.cellSize;
+        const cellY = (event.clientY - this.rect.y) / this.cellSize;
+        const shiftX = cellX % 1;
+        const shiftY = cellY % 1;
+
+        console.log(`YOU VE BEEN CLICKING ${cellX}:${cellY} WITH SHIFT ${shiftX}:${shiftY}`);
+
+      }
+    }
   }
 
 }

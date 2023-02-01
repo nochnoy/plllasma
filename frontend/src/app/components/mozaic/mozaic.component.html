@@ -1,9 +1,13 @@
-<div class="mozaic" [style.grid-auto-rows]="cellSize + 'px'">
+<div class="mozaic"
+     [style.grid-auto-rows]="cellSize + 'px'">
   <ng-container *ngIf="mozaic">
     <div *ngFor="let item of mozaic?.items; let z = index;"
+         [attr.id]="item.id"
+         [class.selected]="item.selected"
+         [style.background-color]="item.color"
          [style.grid-column]="item.x + '/' + (item.x + item.w)"
          [style.grid-row]="item.y + '/' + (item.y + item.h)">
-
+      <div *ngIf="item.selected">я хы-гы</div>
     </div>
   </ng-container>
 </div>

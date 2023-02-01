@@ -147,8 +147,11 @@ export interface IMozaic {
 }
 
 export interface IMozaicItem {
+  id: number;
   x: number;
   y: number;
   w: number;
   h: number;
+  color?: string;
+  selected?: boolean;
 }
