@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import {Observable, of} from "rxjs";
 import {map, switchMap} from "rxjs/operators";
 import {HttpClient} from "@angular/common/http";
-import {IMailMessage, IMember, IMozaic} from "../model/app-model";
+import {IMailMessage, IMember} from "../model/app-model";
+import {IMozaic} from "../model/mozaic.model";
 
 @Injectable({
   providedIn: 'root'

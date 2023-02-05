@@ -1,8 +1,5 @@
 import {Component, ElementRef, OnInit} from '@angular/core';
 import {UntilDestroy} from "@ngneat/until-destroy";
-import { HttpService } from 'src/app/services/http.service';
-import {tap} from "rxjs/operators";
-import {IMozaic, IMozaicItem} from "../../model/app-model";
 
 @UntilDestroy()
 @Component({

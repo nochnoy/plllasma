@@ -1,3 +1,10 @@
+:host {
+  --mozaic-block-padding: 5px; // отступы между блоками
+
+  --z-mozaic-drag-item: 10;
+  --z-mozaic-drag-item-placeholder: 9;
+}
+
 .mozaic {
   display: grid;
   grid-auto-columns: calc(100% / 12);
@@ -6,19 +13,43 @@
   height: 20rem;
   background-color: #bebebe;
 
-  >* {
+  // Контент блоков прозрачен для кликов когда мозаика редактируется
+  &.editmode {
+    .item {
+      .content {
+        pointer-events: none;
+      }
+    }
+  }
+
+  .item {
     display: inline-block;
     position: relative;
     box-sizing: border-box;
     overflow-x: hidden;
     overflow-y: hidden;
-    background-color: azure;
+    user-select: none;
+    padding: var(--mozaic-block-padding);
 
     &.selected {
-      border: 1px solid black;
+      cursor: move;
     }
 
-    >* {
+    &.dragging {
+      position: absolute;
+      z-index: var(--z-mozaic-drag-item);
+      left: 100px;
+      top: 100px;
+    }
+
+    &.dragging-placeholder {
+      z-index: var(--z-mozaic-drag-item-placeholder);
+      .content {
+        background-color: rgba(0, 0, 0, 0.3);
+      }
+    }
+
+    .content {
       display:block;
       width: 100%;
       height: 100%;

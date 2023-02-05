@@ -141,17 +141,3 @@ export interface IMailMessage {
   message: string;
   time_created: string;
 }
-
-export interface IMozaic {
-  items: IMozaicItem[];
-}
-
-export interface IMozaicItem {
-  id: number;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  color?: string;
-  selected?: boolean;
-}

@@ -1,7 +1,7 @@
 import {Component, ElementRef, HostListener, OnDestroy, OnInit, Renderer2, ViewChild} from '@angular/core';
 import {HttpService} from "../../services/http.service";
-import {IMozaic, IMozaicItem} from "../../model/app-model";
 import {tap} from "rxjs/operators";
+import {IMozaic, IMozaicItem, mozaicDragTreshold} from "../../model/mozaic.model";
 
 @Component({
   selector: 'app-mozaic',
@@ -16,12 +16,23 @@ export class MozaicComponent implements OnInit, OnDestroy {
   ) { }
 
   mozaic = {} as IMozaic;
-  rectInterval: any;
-  rect: DOMRect = new DOMRect(0,0,0,0);
+  mozaicRect: DOMRect = new DOMRect(0,0,0,0);
+  mozaicRectUpdateInterval: any;
   cellSize: number = 0;
+  isEditMode = true; // Когда юзер редактирует мозайку
+
+  mouseX = 0;
+  mouseY = 0;
+  mouseDownPoint?: DOMPoint; // точка где была зажата мышка
+  mouseDownItem?: IMozaicItem; // блок на котором была зажата мышка
+  isMouseDownAndMoving = false; // мы зажали мышь и тащим её?
   selectedItem?: IMozaicItem;
-  isDragging = false;
-  dragStart?: DOMPoint;
+
+  draggingItem?: IMozaicItem;
+  draggingItemX = 0;
+  draggingItemY = 0;
+  draggingItemCellX = 0;
+  draggingItemCellY = 0;
 
   ngOnInit(): void {
     this.httpService.mozaicRead$().pipe(
@@ -32,73 +43,147 @@ export class MozaicComponent implements OnInit, OnDestroy {
       }),
     ).subscribe();
 
-    this.rectInterval = setInterval(() => {
-      this.rect = this.elementRef.nativeElement.getBoundingClientRect();
-      this.cellSize = this.rect.width / 12;
+    this.mozaicRectUpdateInterval = setInterval(() => {
+      this.mozaicRect = this.elementRef.nativeElement.getBoundingClientRect();
+      this.cellSize = this.mozaicRect.width / 12;
     }, 1000);
   }
 
   ngOnDestroy() {
-    clearInterval(this.rectInterval);
+    clearInterval(this.mozaicRectUpdateInterval);
   }
 
   isInsideRect(event: PointerEvent): boolean {
-    if (event.clientX >= this.rect.x && event.clientX <= this.rect.y + this.rect.width) {
-      if (event.clientY >= this.rect.y && event.clientY <= this.rect.y + this.rect.height) {
+    if (event.clientX >= this.mozaicRect.x && event.clientX <= this.mozaicRect.x + this.mozaicRect.width) {
+      if (event.clientY >= this.mozaicRect.y && event.clientY <= this.mozaicRect.y + this.mozaicRect.height) {
         return true;
       }
     }
     return false;
   }
 
-  @HostListener('document:mousedown', ['$event'])
-  onMouseDown(event: PointerEvent) {
-    console.log('mousedown');
-    this.dragStart = new DOMPoint(event.clientX, event.clientY);
-  }
+  onClickItem(event: PointerEvent): void {
+    if (this.mouseDownItem) {
+      this.select(this.mouseDownItem);
 
-  @HostListener('document:mousemove', ['$event'])
-  onMouseMove(event: PointerEvent) {
-    if (this.dragStart) {
-      console.log('mousemove');
-
-
+      const cellX = (event.clientX - this.mozaicRect.x) / this.cellSize;
+      const cellY = (event.clientY - this.mozaicRect.y) / this.cellSize;
+      const shiftX = cellX % 1;
+      const shiftY = cellY % 1;
 
     }
+    return undefined;
+  }
+
+  select(item: IMozaicItem): void {
+    if (item !== this.selectedItem) {
+      if (this.selectedItem) {
+        this.deselect();
+      }
+
+      this.selectedItem = item;
+      this.selectedItem.selected = true;
+
+      // Выделенный всегда всплывает наверх
+      this.mozaic!.items = this.mozaic?.items.filter((i) => i !== item);
+      this.mozaic!.items.push(this.selectedItem);
+    }
+  }
+
+  deselect(): void {
+    if (this.selectedItem) {
+      this.selectedItem.selected = false;
+    }
+    delete this.selectedItem;
+  }
+
+  updateDragXY(): void {
+    if (this.mouseDownPoint && this.draggingItem) {
+      const shiftX = this.mouseX - this.mouseDownPoint.x;
+      const shiftY = this.mouseY - this.mouseDownPoint.y;
+      this.draggingItemX = this.mozaicRect.x + (this.draggingItem.x * this.cellSize) + shiftX;
+      this.draggingItemY = this.mozaicRect.y + (this.draggingItem.y * this.cellSize) + shiftY;
+      this.draggingItemCellX = Math.round((this.draggingItemX - this.mozaicRect.x) / this.cellSize);
+      this.draggingItemCellY = Math.round((this.draggingItemY - this.mozaicRect.y) / this.cellSize);
+      console.log(`${this.draggingItemCellX}:${this.draggingItemCellY}`);
+    }
+  }
+
+  startDrag(): void {
+    if (!this.draggingItem) {
+      this.draggingItem = this.selectedItem;
+      this.updateDragXY();
+      console.log('dragging!');
+    }
+  }
+
+  endDrag(): void {
+    if (this.draggingItem) {
+      this.updateDragXY();
+      this.draggingItem.x = this.draggingItemCellX;
+      this.draggingItem.y = this.draggingItemCellY;
+      delete this.draggingItem;
+    }
+  }
+
+  drag(event: PointerEvent): void {
+    if (this.draggingItem) {
+      this.updateDragXY();
+    }
+  }
+
+  @HostListener('document:mousedown', ['$event'])
+  onMouseDown(event: PointerEvent) {
+    this.isMouseDownAndMoving = false;
+    this.mouseDownPoint = new DOMPoint(event.clientX, event.clientY);
+
+    const block: any = event?.target;
+    const id = parseInt(block.id);
+    this.mouseDownItem = this.mozaic?.items.find((item) => item.id === id) ?? undefined;
   }
 
   @HostListener('document:mouseup', ['$event'])
   onMouseUp(event: PointerEvent) {
-    console.log('mouseup');
-    delete this.dragStart;
+    let needToDeselect = false;
+    if (this.mouseDownPoint) {
+      if (!this.isMouseDownAndMoving) {
+        if (this.isInsideRect(event)) {
+          // мышь не двигалась, mouseup там-же где и mousedown - значит это был клик
+          this.onClickItem(event);
+          if (!this.mouseDownItem) {
+            needToDeselect = true;
+          }
+        } else {
+          needToDeselect = true;
+        }
+      }
+
+      // Что бы это ни было, оно закончилось. Знаканчиваем следить.
+      this.endDrag();
+      if (needToDeselect) {
+        // должно стоять после endDrag и прочих кто завасит от селекта
+        this.deselect();
+      }
+      delete this.mouseDownPoint;
+      this.isMouseDownAndMoving = false;
+    }
   }
 
-  @HostListener('document:click', ['$event'])
-  onClick(event: PointerEvent) {
-    if (this.isInsideRect(event)) {
-      const block: any = event?.target;
-      const id = parseInt(block.id);
-      const item = this.mozaic?.items.find((item) => item.id === id);
-      if (item) {
-
-        if (this.selectedItem) {
-          this.selectedItem.selected = false;
+  @HostListener('document:mousemove', ['$event'])
+  onMouseMove(event: PointerEvent) {
+    this.mouseX = event.clientX;
+    this.mouseY = event.clientY;
+    if (this.mouseDownPoint) {
+      if (!this.isMouseDownAndMoving) {
+        if (Math.abs(event.clientX - this.mouseDownPoint.x) > mozaicDragTreshold || Math.abs(event.clientY - this.mouseDownPoint.y) > mozaicDragTreshold) {
+          this.isMouseDownAndMoving = true;
+          if (this.selectedItem && this.mouseDownItem === this.selectedItem) {
+            this.startDrag();
+          }
         }
-
-        this.selectedItem = item;
-        this.selectedItem.selected = true;
-
-        // Выделенный всегда всплывает наверх
-        this.mozaic!.items = this.mozaic?.items.filter((i) => i !== item);
-        this.mozaic!.items.push(this.selectedItem);
-
-        const cellX = (event.clientX - this.rect.x) / this.cellSize;
-        const cellY = (event.clientY - this.rect.y) / this.cellSize;
-        const shiftX = cellX % 1;
-        const shiftY = cellY % 1;
-
-        console.log(`YOU VE BEEN CLICKING ${cellX}:${cellY} WITH SHIFT ${shiftX}:${shiftY}`);
-
+      }
+      if (this.isMouseDownAndMoving) {
+        this.drag(event);
       }
     }
   }
