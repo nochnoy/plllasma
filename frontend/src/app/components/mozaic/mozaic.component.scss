@@ -38,14 +38,12 @@
     &.dragging {
       position: absolute;
       z-index: var(--z-mozaic-drag-item);
-      left: 100px;
-      top: 100px;
-    }
 
-    &.dragging-placeholder {
-      z-index: var(--z-mozaic-drag-item-placeholder);
-      .content {
-        background-color: rgba(0, 0, 0, 0.3);
+      &-placeholder {
+        z-index: var(--z-mozaic-drag-item-placeholder);
+        .content {
+          background-color: rgba(0, 0, 0, 0.3);
+        }
       }
     }
 

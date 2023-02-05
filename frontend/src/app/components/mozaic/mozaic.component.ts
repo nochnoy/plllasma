@@ -65,12 +65,6 @@ export class MozaicComponent implements OnInit, OnDestroy {
   onClickItem(event: PointerEvent): void {
     if (this.mouseDownItem) {
       this.select(this.mouseDownItem);
-
-      const cellX = (event.clientX - this.mozaicRect.x) / this.cellSize;
-      const cellY = (event.clientY - this.mozaicRect.y) / this.cellSize;
-      const shiftX = cellX % 1;
-      const shiftY = cellY % 1;
-
     }
     return undefined;
   }
@@ -105,7 +99,6 @@ export class MozaicComponent implements OnInit, OnDestroy {
       this.draggingItemY = this.mozaicRect.y + (this.draggingItem.y * this.cellSize) + shiftY;
       this.draggingItemCellX = Math.round((this.draggingItemX - this.mozaicRect.x) / this.cellSize);
       this.draggingItemCellY = Math.round((this.draggingItemY - this.mozaicRect.y) / this.cellSize);
-      console.log(`${this.draggingItemCellX}:${this.draggingItemCellY}`);
     }
   }
 
@@ -113,7 +106,6 @@ export class MozaicComponent implements OnInit, OnDestroy {
     if (!this.draggingItem) {
       this.draggingItem = this.selectedItem;
       this.updateDragXY();
-      console.log('dragging!');
     }
   }
 
