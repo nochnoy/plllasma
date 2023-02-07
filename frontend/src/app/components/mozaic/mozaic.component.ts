@@ -165,13 +165,17 @@ export class MozaicComponent implements OnInit, OnDestroy {
   onMouseMove(event: PointerEvent) {
     this.mouseX = event.clientX;
     this.mouseY = event.clientY;
-    if (this.mouseDownPoint) {
+    if (this.mouseDownPoint && this.mouseDownItem) {
       if (!this.isMouseDownAndMoving) {
         if (Math.abs(event.clientX - this.mouseDownPoint.x) > mozaicDragTreshold || Math.abs(event.clientY - this.mouseDownPoint.y) > mozaicDragTreshold) {
-          this.isMouseDownAndMoving = true;
-          if (this.selectedItem && this.mouseDownItem === this.selectedItem) {
-            this.startDrag();
+
+          // Выделяем то что тащим
+          if (this.mouseDownItem !== this.selectedItem) {
+            this.select(this.mouseDownItem);
           }
+
+          this.isMouseDownAndMoving = true;
+          this.startDrag();
         }
       }
       if (this.isMouseDownAndMoving) {
