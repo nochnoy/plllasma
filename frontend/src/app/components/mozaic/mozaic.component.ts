@@ -1,4 +1,13 @@
-import {Component, ElementRef, HostListener, OnDestroy, OnInit, Renderer2, ViewChild} from '@angular/core';
+import {
+  AfterContentInit,
+  Component,
+  ElementRef,
+  HostListener,
+  OnDestroy,
+  OnInit,
+  Renderer2,
+  ViewChild
+} from '@angular/core';
 import {HttpService} from "../../services/http.service";
 import {tap} from "rxjs/operators";
 import {IMozaic, IMozaicItem, mozaicDragTreshold} from "../../model/mozaic.model";
@@ -14,6 +23,8 @@ export class MozaicComponent implements OnInit, OnDestroy {
     public httpService: HttpService,
     private elementRef: ElementRef,
   ) { }
+
+  readonly mozaicGap = 5; // должна быть равна css-переменной --mozaic-gap
 
   mozaic = {} as IMozaic;
   mozaicRect: DOMRect = new DOMRect(0,0,0,0);
@@ -43,14 +54,17 @@ export class MozaicComponent implements OnInit, OnDestroy {
       }),
     ).subscribe();
 
-    this.mozaicRectUpdateInterval = setInterval(() => {
-      this.mozaicRect = this.elementRef.nativeElement.getBoundingClientRect();
-      this.cellSize = this.mozaicRect.width / 12;
-    }, 1000);
+    this.updateMozaicRect();
+    this.mozaicRectUpdateInterval = setInterval(() => this.updateMozaicRect(), 1000);
   }
 
   ngOnDestroy() {
     clearInterval(this.mozaicRectUpdateInterval);
+  }
+
+  updateMozaicRect(): void {
+    this.mozaicRect = this.elementRef.nativeElement.getBoundingClientRect();
+    this.cellSize = this.mozaicRect.width / 12;
   }
 
   isInsideRect(event: PointerEvent): boolean {

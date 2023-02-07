@@ -8,7 +8,7 @@
 				"y": 1,
 				"w": 1,
 				"h": 1,
-				"color": "gold"
+				"color": "blue"
 			},
 			{
 				"id": 2,
@@ -16,7 +16,7 @@
 				"y": 2,
 				"w": 1,
 				"h": 1,
-				"color": "gold"
+				"color": "blue"
 			},			
 			{
 				"id": 3,

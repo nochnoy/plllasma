@@ -1,5 +1,5 @@
 :host {
-  --mozaic-block-padding: 5px; // отступы между блоками
+  --mozaic-gap: 5px; // должна быть равна переменной mozaicGap
 
   --z-mozaic-drag-item: 10;
   --z-mozaic-drag-item-placeholder: 9;
@@ -29,7 +29,6 @@
     overflow-x: hidden;
     overflow-y: hidden;
     user-select: none;
-    padding: var(--mozaic-block-padding);
 
     &.selected {
       cursor: move;
