@@ -32,5 +32,8 @@
          [style.height]="(draggingItem.h * cellSize) + 'px'">
       <div class="content"></div>
     </div>
+
+    <app-selection *ngIf="selectionRect" [(rect)]="selectionRect"></app-selection>
+
   </ng-container>
 </div>

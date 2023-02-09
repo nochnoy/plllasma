@@ -1,0 +1,11 @@
+:host {
+  position: absolute;
+  z-index: var(--z-selection);
+}
+
+.stroke {
+  pointer-events: none;
+  display: inline-block;
+  border: 2px dashed black;
+  box-sizing: border-box;
+}

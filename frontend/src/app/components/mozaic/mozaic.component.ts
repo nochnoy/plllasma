@@ -1,12 +1,9 @@
 import {
-  AfterContentInit,
   Component,
   ElementRef,
   HostListener,
   OnDestroy,
   OnInit,
-  Renderer2,
-  ViewChild
 } from '@angular/core';
 import {HttpService} from "../../services/http.service";
 import {tap} from "rxjs/operators";
@@ -37,7 +34,9 @@ export class MozaicComponent implements OnInit, OnDestroy {
   mouseDownPoint?: DOMPoint; // точка где была зажата мышка
   mouseDownItem?: IMozaicItem; // блок на котором была зажата мышка
   isMouseDownAndMoving = false; // мы зажали мышь и тащим её?
+
   selectedItem?: IMozaicItem;
+  selectionRect?: DOMRect;
 
   draggingItem?: IMozaicItem;
   draggingItemX = 0;
@@ -92,6 +91,10 @@ export class MozaicComponent implements OnInit, OnDestroy {
       this.selectedItem = item;
       this.selectedItem.selected = true;
 
+      const x = this.mozaicRect.x + this.selectedItem.x * this.cellSize;
+      const y = this.mozaicRect.y + this.selectedItem.y * this.cellSize;
+      this.selectionRect = new DOMRect(x, y, this.selectedItem.w * this.cellSize, this.selectedItem.h * this.cellSize);
+
       // Выделенный всегда всплывает наверх
       this.mozaic!.items = this.mozaic?.items.filter((i) => i !== item);
       this.mozaic!.items.push(this.selectedItem);
@@ -103,6 +106,7 @@ export class MozaicComponent implements OnInit, OnDestroy {
       this.selectedItem.selected = false;
     }
     delete this.selectedItem;
+    delete this.selectionRect;
   }
 
   updateDragXY(): void {
@@ -179,8 +183,18 @@ export class MozaicComponent implements OnInit, OnDestroy {
   onMouseMove(event: PointerEvent) {
     this.mouseX = event.clientX;
     this.mouseY = event.clientY;
+
+    // Странная залипуха, защищающая от ситуации когда выделен объект, на нём лежит рамка выделения
+    // и ты пытаешься его тащить но фактически схватил рамку, т.е. ничего не схватил.
+    // Наверняка этот костыль привёт к проблемам. Посмотрим.
+    if (!this.mouseDownItem && this.selectedItem) {
+      this.mouseDownItem = this.selectedItem;
+    }
+
     if (this.mouseDownPoint && this.mouseDownItem) {
-      if (!this.isMouseDownAndMoving) {
+      if (this.isMouseDownAndMoving) {
+        this.drag(event);
+      } else {
         if (Math.abs(event.clientX - this.mouseDownPoint.x) > mozaicDragTreshold || Math.abs(event.clientY - this.mouseDownPoint.y) > mozaicDragTreshold) {
 
           // Выделяем то что тащим
@@ -191,9 +205,6 @@ export class MozaicComponent implements OnInit, OnDestroy {
           this.isMouseDownAndMoving = true;
           this.startDrag();
         }
-      }
-      if (this.isMouseDownAndMoving) {
-        this.drag(event);
       }
     }
   }
