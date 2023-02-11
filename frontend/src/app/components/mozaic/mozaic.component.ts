@@ -75,11 +75,10 @@ export class MozaicComponent implements OnInit, OnDestroy {
     return false;
   }
 
-  onClickItem(event: PointerEvent): void {
-    if (this.mouseDownItem) {
-      this.select(this.mouseDownItem);
-    }
-    return undefined;
+  isXYInsideItem(pixelsX: number, pixelsY: number, item: IMozaicItem): boolean {
+    const cellX = Math.round((pixelsX - this.mozaicRect.x) / this.cellSize);
+    const cellY = Math.round((pixelsY - this.mozaicRect.y) / this.cellSize);
+    return (cellX >= item.x && cellX <= item.x + item.w) && (cellY>= item.y && cellY <= item.y + item.h);
   }
 
   select(item: IMozaicItem): void {
@@ -142,6 +141,13 @@ export class MozaicComponent implements OnInit, OnDestroy {
     }
   }
 
+  onClickItem(event: PointerEvent): void {
+    if (this.mouseDownItem) {
+      this.select(this.mouseDownItem);
+    }
+    return undefined;
+  }
+
   @HostListener('document:mousedown', ['$event'])
   onMouseDown(event: PointerEvent) {
     this.isMouseDownAndMoving = false;
@@ -187,7 +193,7 @@ export class MozaicComponent implements OnInit, OnDestroy {
     // Странная залипуха, защищающая от ситуации когда выделен объект, на нём лежит рамка выделения
     // и ты пытаешься его тащить но фактически схватил рамку, т.е. ничего не схватил.
     // Наверняка этот костыль привёт к проблемам. Посмотрим.
-    if (!this.mouseDownItem && this.selectedItem) {
+    if (!this.mouseDownItem && this.selectedItem && this.isXYInsideItem(this.mouseX, this.mouseY, this.selectedItem)) {
       this.mouseDownItem = this.selectedItem;
     }
 
