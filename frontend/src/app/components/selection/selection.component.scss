@@ -4,8 +4,70 @@
 }
 
 .stroke {
+  position: absolute;
+  z-index: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
   pointer-events: none;
   display: inline-block;
   border: 2px dashed black;
   box-sizing: border-box;
+}
+.edge {
+  display: inline-block;
+  position: absolute;
+  z-index: 1;
+  background-color: rgba(255,0,0,0.5);
+}
+.corner {
+  display: inline-block;
+  position: absolute;
+  z-index: 2;
+  width: 11px;
+  height: 11px;
+  border: 1px solid black;
+  background-color: white;
+}
+#tl {
+  top: -5px;
+  left: -5px;
+}
+#tr {
+  top: -5px;
+  right: -5px;
+}
+#bl {
+  bottom: -5px;
+  left: -5px;
+}
+#br {
+  bottom: -5px;
+  right: -5px;
+}
+
+#t {
+  top: -5px;
+  height: 11px;
+  left: 5px;
+  right: 5px;
+}
+#b {
+  bottom: -5px;
+  height: 11px;
+  left: 8px;
+  right: 8px;
+}
+#l {
+  left: -5px;
+  width: 11px;
+  top: 5px;
+  bottom: 5px;
+}
+#r {
+  right: -5px;
+  width: 11px;
+  top: 5px;
+  bottom: 5px;
 }

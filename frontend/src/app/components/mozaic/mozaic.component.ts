@@ -89,14 +89,25 @@ export class MozaicComponent implements OnInit, OnDestroy {
 
       this.selectedItem = item;
       this.selectedItem.selected = true;
-
-      const x = this.mozaicRect.x + this.selectedItem.x * this.cellSize;
-      const y = this.mozaicRect.y + this.selectedItem.y * this.cellSize;
-      this.selectionRect = new DOMRect(x, y, this.selectedItem.w * this.cellSize, this.selectedItem.h * this.cellSize);
+      this.updateSelectionRect();
 
       // Выделенный всегда всплывает наверх
       this.mozaic!.items = this.mozaic?.items.filter((i) => i !== item);
       this.mozaic!.items.push(this.selectedItem);
+    }
+  }
+
+  updateSelectionRect(): void {
+    if (this.selectedItem) {
+      if (!this.draggingItem) {
+        const x = this.mozaicRect.x + this.selectedItem.x * this.cellSize;
+        const y = this.mozaicRect.y + this.selectedItem.y * this.cellSize;
+        this.selectionRect = new DOMRect(x, y, this.selectedItem.w * this.cellSize, this.selectedItem.h * this.cellSize);
+      } else {
+        delete this.selectionRect;
+      }
+    } else {
+      delete this.selectionRect
     }
   }
 
@@ -123,6 +134,7 @@ export class MozaicComponent implements OnInit, OnDestroy {
     if (!this.draggingItem) {
       this.draggingItem = this.selectedItem;
       this.updateDragXY();
+      this.updateSelectionRect();
     }
   }
 
@@ -132,6 +144,7 @@ export class MozaicComponent implements OnInit, OnDestroy {
       this.draggingItem.x = this.draggingItemCellX;
       this.draggingItem.y = this.draggingItemCellY;
       delete this.draggingItem;
+      this.updateSelectionRect();
     }
   }
 
