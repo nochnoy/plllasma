@@ -62,22 +62,27 @@ export class MozaicComponent implements OnInit, OnDestroy {
   }
 
   updateMozaicRect(): void {
-    this.mozaicRect = this.elementRef.nativeElement.getBoundingClientRect();
-    this.cellSize = this.mozaicRect.width / 12;
+    const rect = this.elementRef.nativeElement.getBoundingClientRect();
+    const mr = this.mozaicRect;
+    if (!this.cellSize || rect.x !== mr.x || rect.y !== mr.y || rect.width !== mr.width || rect.height !== mr.height) {
+      this.mozaicRect = rect;
+      this.cellSize = this.mozaicRect.width / 12;
+      this.updateSelectionRect();
+    }
   }
 
-  isInsideRect(event: PointerEvent): boolean {
-    if (event.clientX >= this.mozaicRect.x && event.clientX <= this.mozaicRect.x + this.mozaicRect.width) {
-      if (event.clientY >= this.mozaicRect.y && event.clientY <= this.mozaicRect.y + this.mozaicRect.height) {
+  isMouseInsideRect(): boolean {
+    if (this.mouseX >= this.mozaicRect.x && this.mouseX <= this.mozaicRect.x + this.mozaicRect.width) {
+      if (this.mouseY >= this.mozaicRect.y && this.mouseY <= this.mozaicRect.y + this.mozaicRect.height) {
         return true;
       }
     }
     return false;
   }
 
-  isXYInsideItem(pixelsX: number, pixelsY: number, item: IMozaicItem): boolean {
-    const cellX = Math.round((pixelsX - this.mozaicRect.x) / this.cellSize);
-    const cellY = Math.round((pixelsY - this.mozaicRect.y) / this.cellSize);
+  isXYInsideItem(x: number, y: number, item: IMozaicItem): boolean {
+    const cellX = Math.round((x - this.mozaicRect.x) / this.cellSize);
+    const cellY = Math.round((y - this.mozaicRect.y) / this.cellSize);
     return (cellX >= item.x && cellX <= item.x + item.w) && (cellY>= item.y && cellY <= item.y + item.h);
   }
 
@@ -107,7 +112,7 @@ export class MozaicComponent implements OnInit, OnDestroy {
         delete this.selectionRect;
       }
     } else {
-      delete this.selectionRect
+      delete this.selectionRect;
     }
   }
 
@@ -117,6 +122,11 @@ export class MozaicComponent implements OnInit, OnDestroy {
     }
     delete this.selectedItem;
     delete this.selectionRect;
+  }
+
+  updateMouseXY(event: PointerEvent | MouseEvent): void {
+    this.mouseX = event.clientX;
+    this.mouseY = event.clientY;
   }
 
   updateDragXY(): void {
@@ -148,13 +158,13 @@ export class MozaicComponent implements OnInit, OnDestroy {
     }
   }
 
-  drag(event: PointerEvent): void {
+  drag(): void {
     if (this.draggingItem) {
       this.updateDragXY();
     }
   }
 
-  onClickItem(event: PointerEvent): void {
+  onClickItem(): void {
     if (this.mouseDownItem) {
       this.select(this.mouseDownItem);
     }
@@ -163,6 +173,7 @@ export class MozaicComponent implements OnInit, OnDestroy {
 
   @HostListener('document:mousedown', ['$event'])
   onMouseDown(event: PointerEvent) {
+    this.updateMouseXY(event);
     this.isMouseDownAndMoving = false;
     this.mouseDownPoint = new DOMPoint(event.clientX, event.clientY);
 
@@ -173,12 +184,14 @@ export class MozaicComponent implements OnInit, OnDestroy {
 
   @HostListener('document:mouseup', ['$event'])
   onMouseUp(event: PointerEvent) {
+    this.updateMouseXY(event);
+
     let needToDeselect = false;
     if (this.mouseDownPoint) {
       if (!this.isMouseDownAndMoving) {
-        if (this.isInsideRect(event)) {
+        if (this.isMouseInsideRect()) {
           // мышь не двигалась, mouseup там-же где и mousedown - значит это был клик
-          this.onClickItem(event);
+          this.onClickItem();
           if (!this.mouseDownItem) {
             needToDeselect = true;
           }
@@ -200,8 +213,7 @@ export class MozaicComponent implements OnInit, OnDestroy {
 
   @HostListener('document:mousemove', ['$event'])
   onMouseMove(event: PointerEvent) {
-    this.mouseX = event.clientX;
-    this.mouseY = event.clientY;
+    this.updateMouseXY(event);
 
     // Странная залипуха, защищающая от ситуации когда выделен объект, на нём лежит рамка выделения
     // и ты пытаешься его тащить но фактически схватил рамку, т.е. ничего не схватил.
@@ -212,7 +224,7 @@ export class MozaicComponent implements OnInit, OnDestroy {
 
     if (this.mouseDownPoint && this.mouseDownItem) {
       if (this.isMouseDownAndMoving) {
-        this.drag(event);
+        this.drag();
       } else {
         if (Math.abs(event.clientX - this.mouseDownPoint.x) > mozaicDragTreshold || Math.abs(event.clientY - this.mouseDownPoint.y) > mozaicDragTreshold) {
 

@@ -1,9 +1,9 @@
 <div class="stroke"></div>
-<div class="corner" id="tl"></div>
-<div class="corner" id="tr"></div>
-<div class="corner" id="bl"></div>
-<div class="corner" id="br"></div>
-<div class="edge" id="t"></div>
-<div class="edge" id="b"></div>
-<div class="edge" id="l"></div>
-<div class="edge" id="r"></div>
+<div class="corner" id="tl" (mousedown)="onMouseDown($event, 'tl')"></div>
+<div class="corner" id="tr" (mousedown)="onMouseDown($event, 'tr')"></div>
+<div class="corner" id="bl" (mousedown)="onMouseDown($event, 'bl')"></div>
+<div class="corner" id="br" (mousedown)="onMouseDown($event, 'br')"></div>
+<div class="edge"   id="t"  (mousedown)="onMouseDown($event, 't')"></div>
+<div class="edge"   id="b"  (mousedown)="onMouseDown($event, 'b')"></div>
+<div class="edge"   id="l"  (mousedown)="onMouseDown($event, 'l')"></div>
+<div class="edge"   id="r"  (mousedown)="onMouseDown($event, 'r')"></div>

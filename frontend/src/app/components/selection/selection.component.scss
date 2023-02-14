@@ -19,7 +19,6 @@
   display: inline-block;
   position: absolute;
   z-index: 1;
-  background-color: rgba(255,0,0,0.5);
 }
 .corner {
   display: inline-block;
@@ -30,44 +29,52 @@
   border: 1px solid black;
   background-color: white;
 }
-#tl {
-  top: -5px;
-  left: -5px;
-}
-#tr {
-  top: -5px;
-  right: -5px;
-}
-#bl {
-  bottom: -5px;
-  left: -5px;
-}
-#br {
-  bottom: -5px;
-  right: -5px;
-}
 
-#t {
-  top: -5px;
-  height: 11px;
-  left: 5px;
-  right: 5px;
-}
-#b {
-  bottom: -5px;
-  height: 11px;
-  left: 8px;
-  right: 8px;
-}
 #l {
   left: -5px;
   width: 11px;
   top: 5px;
   bottom: 5px;
+  cursor: e-resize;
 }
 #r {
   right: -5px;
   width: 11px;
   top: 5px;
   bottom: 5px;
+  cursor: e-resize;
+}
+#t {
+  top: -5px;
+  height: 11px;
+  left: 5px;
+  right: 5px;
+  cursor: n-resize;
+}
+#b {
+  bottom: -5px;
+  height: 11px;
+  left: 8px;
+  right: 8px;
+  cursor: n-resize;
+}
+#tl {
+  top: -5px;
+  left: -5px;
+  cursor: nwse-resize;
+}
+#tr {
+  top: -5px;
+  right: -5px;
+  cursor: nesw-resize;
+}
+#bl {
+  bottom: -5px;
+  left: -5px;
+  cursor: nesw-resize;
+}
+#br {
+  bottom: -5px;
+  right: -5px;
+  cursor: nwse-resize;
 }
