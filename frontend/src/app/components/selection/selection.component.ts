@@ -8,8 +8,7 @@ import {
   Output
 } from '@angular/core';
 import {mozaicDragTreshold} from "../../model/mozaic.model";
-
-type Part = 'l' | 'r' | 't' | 'b' | 'tl' | 'tr' | 'bl' | 'br' ;
+import {selectionHandleSize, SelectionPart} from "../../model/selection";
 
 @Component({
   selector: 'app-selection',
@@ -24,7 +23,7 @@ export class SelectionComponent {
   ) { }
 
   mouseDownPoint?: DOMPoint;
-  mouseDownPart?: Part;
+  mouseDownPart?: SelectionPart;
   isMouseDownAndMoving = false;
   mouseX = 0;
   mouseY = 0;
@@ -70,16 +69,53 @@ export class SelectionComponent {
       const newRect = new DOMRect(this.rectBeforeDrag.x, this.rectBeforeDrag.y, this.rectBeforeDrag.width, this.rectBeforeDrag.height);
       const deltaX = this.mouseX - this.mouseDownPoint.x;
       const deltaY = this.mouseY - this.mouseDownPoint.y;
+      let [r, l, t, b] = [false, false, false, false];
 
       switch (this.mouseDownPart) {
-        case 'l': newRect.x += deltaX; newRect.width -= deltaX; break;
-        case 'r': newRect.width += deltaX; break;
-        case 't': newRect.y += deltaY; newRect.height -= deltaY; break;
-        case 'b': newRect.height += deltaY; break;
-        case 'tl': newRect.y += deltaY; newRect.height -= deltaY; newRect.x += deltaX; newRect.width -= deltaX; break;
-        case 'tr': newRect.y += deltaY; newRect.height -= deltaY; newRect.width += deltaX;  break;
-        case 'bl': newRect.height += deltaY; newRect.x += deltaX; newRect.width -= deltaX; break;
-        case 'br': newRect.height += deltaY;  newRect.width += deltaX; break;
+        case 'l': l = true; break;
+        case 'r': r = true; break;
+        case 't': t = true; break;
+        case 'b': b = true; break;
+        case 'tl': t = true; l = true; break;
+        case 'tr': t = true; r = true; break;
+        case 'bl': b = true; l = true; break;
+        case 'br': b = true; r = true; break;
+      }
+
+      if (l) {
+        if (newRect.width - deltaX < selectionHandleSize) {
+          newRect.x = (newRect.x + newRect.width) - selectionHandleSize;
+          newRect.width = selectionHandleSize;
+        } else {
+          newRect.x += deltaX;
+          newRect.width -= deltaX;
+        }
+      }
+
+      if (r) {
+        if (newRect.width + deltaX < selectionHandleSize) {
+          newRect.width = selectionHandleSize;
+        } else {
+          newRect.width += deltaX;
+        }
+      }
+
+      if (t) {
+        if (newRect.height - deltaY < selectionHandleSize) {
+          newRect.y = (newRect.y + newRect.height) - selectionHandleSize;
+          newRect.height = selectionHandleSize;
+        } else {
+          newRect.y += deltaY;
+          newRect.height -= deltaY;
+        }
+      }
+
+      if (b) {
+        if (newRect.height + deltaY < selectionHandleSize) {
+          newRect.height = selectionHandleSize;
+        } else {
+          newRect.height += deltaY;
+        }
       }
 
       this.rect = newRect;
@@ -90,9 +126,10 @@ export class SelectionComponent {
 
   }
 
-  onMouseDown(event: MouseEvent, part: Part): void {
+  onMouseDown(event: MouseEvent, part: SelectionPart): void {
     this.updateMouseXY(event);
     event.stopImmediatePropagation(); // Чтобы на это нажатие не среагировала матрица и не начался драг объекта
+    event.preventDefault(); // Чтобы при таскании не появлялся курсор "not-allowed"
 
     this.rectBeforeDrag = this.elementRef.nativeElement.getBoundingClientRect();
     this.mouseDownPoint = new DOMPoint(event.clientX, event.clientY);
