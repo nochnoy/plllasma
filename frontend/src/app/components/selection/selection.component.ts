@@ -4,7 +4,7 @@ import {
   ElementRef,
   EventEmitter,
   HostBinding, HostListener,
-  Input,
+  Input, OnInit,
   Output
 } from '@angular/core';
 import {mozaicDragTreshold} from "../../model/mozaic.model";
@@ -15,7 +15,7 @@ import {selectionHandleSize, SelectionPart} from "../../model/selection";
   templateUrl: './selection.component.html',
   styleUrls: ['./selection.component.scss']
 })
-export class SelectionComponent {
+export class SelectionComponent implements OnInit {
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -45,6 +45,13 @@ export class SelectionComponent {
   @Output()
   rectChange = new EventEmitter<DOMRect | undefined>();
 
+  @Output()
+  dragging = new EventEmitter<boolean>();
+
+  ngOnInit() {
+    this.dragging.emit(false);
+  }
+
   updateMouseXY(event: PointerEvent | MouseEvent): void {
     this.mouseX = event.clientX;
     this.mouseY = event.clientY;
@@ -61,7 +68,7 @@ export class SelectionComponent {
   }
 
   startDrag(): void {
-
+    this.dragging.emit(true);
   }
 
   drag(): void {
@@ -119,11 +126,12 @@ export class SelectionComponent {
       }
 
       this.rect = newRect;
+      this.rectChange.emit(newRect);
     }
   }
 
   endDrag(): void {
-
+    this.dragging.emit(false);
   }
 
   onMouseDown(event: MouseEvent, part: SelectionPart): void {

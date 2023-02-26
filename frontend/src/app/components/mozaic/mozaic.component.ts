@@ -36,13 +36,26 @@ export class MozaicComponent implements OnInit, OnDestroy {
   isMouseDownAndMoving = false; // мы зажали мышь и тащим её?
 
   selectedItem?: IMozaicItem;
-  selectionRect?: DOMRect;
+  selectionRectValue?: DOMRect;
 
   draggingItem?: IMozaicItem;
   draggingItemX = 0;
   draggingItemY = 0;
   draggingItemCellX = 0;
   draggingItemCellY = 0;
+
+  get selectionRect(): DOMRect | undefined {
+    return this.selectionRectValue;
+  }
+  set selectionRect(value: DOMRect | undefined) {
+    this.selectionRectValue = value;
+    if (value && this.draggingItem) {
+      this.draggingItem.x = Math.floor((value.x - this.mozaicRect.x) / this.cellSize);
+      this.draggingItem.y = Math.floor((value.y - this.mozaicRect.y) / this.cellSize);
+      this.draggingItem.w = 1;
+      this.draggingItem.h = 1;
+    }
+  }
 
   ngOnInit(): void {
     this.httpService.mozaicRead$().pipe(
@@ -109,10 +122,10 @@ export class MozaicComponent implements OnInit, OnDestroy {
         const y = this.mozaicRect.y + this.selectedItem.y * this.cellSize;
         this.selectionRect = new DOMRect(x, y, this.selectedItem.w * this.cellSize, this.selectedItem.h * this.cellSize);
       } else {
-        delete this.selectionRect;
+        this.selectionRect = undefined;
       }
     } else {
-      delete this.selectionRect;
+      this.selectionRect = undefined;
     }
   }
 
@@ -121,7 +134,17 @@ export class MozaicComponent implements OnInit, OnDestroy {
       this.selectedItem.selected = false;
     }
     delete this.selectedItem;
-    delete this.selectionRect;
+    this.selectionRect = undefined;
+  }
+
+  onSelectionDrag(value: boolean): void {
+    if (this.selectedItem) {
+      if (value) {
+        this.draggingItem = this.selectedItem;
+      } else {
+        this.draggingItem = undefined;
+      }
+    }
   }
 
   updateMouseXY(event: PointerEvent | MouseEvent): void {

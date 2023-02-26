@@ -33,7 +33,7 @@
       <div class="content"></div>
     </div>
 
-    <app-selection *ngIf="selectionRect" [(rect)]="selectionRect"></app-selection>
+    <app-selection *ngIf="selectionRect" [(rect)]="selectionRect" (dragging)="onSelectionDrag($event)"></app-selection>
 
   </ng-container>
 </div>
