@@ -2,9 +2,10 @@
      [class.editmode]="isEditMode"
      [style.grid-auto-rows]="cellSize + 'px'">
   <ng-container *ngIf="mozaic">
-    <ng-container *ngFor="let item of mozaic?.items; let z = index;">
 
-      <div *ngIf="item !== draggingItem"
+    <!-- Объекты -->
+    <ng-container *ngFor="let item of mozaic?.items; let z = index;">
+      <div *ngIf="item !== drag?.item"
            class="item"
            [attr.id]="item.id"
            [class.selected]="item.selected"
@@ -12,24 +13,25 @@
            [style.grid-row]="(item.y + 1) + '/' + (item.y + 1 + item.h)">
         <div class="content" [style.background-color]="item.color">{{item.x}}:{{item.y}}</div>
       </div>
-
     </ng-container>
 
-    <div *ngIf="draggingItem"
+    <!-- Таскаемая копия объекта -->
+    <div *ngIf="drag"
          class="item dragging"
-         [style.left]="draggingItemX + 'px'"
-         [style.top]="draggingItemY + 'px'"
-         [style.width]="(draggingItem.w * cellSize) + 'px'"
-         [style.height]="(draggingItem.h * cellSize) + 'px'">
-      <div class="content" [style.background-color]="draggingItem.color">{{draggingItem.x}}:{{draggingItem.y}}</div>
+         [style.left]="(mozaicRect.left + drag.resultPixelRect.left) + 'px'"
+         [style.top]="(mozaicRect.top + drag.resultPixelRect.top) + 'px'"
+         [style.width]="drag.resultPixelRect.width + 'px'"
+         [style.height]="drag.resultPixelRect.height + 'px'">
+      <div class="content" [style.background-color]="drag.item.color">{{drag.item.x}}:{{drag.item.y}}</div>
     </div>
 
-    <div *ngIf="draggingItem"
+    <!-- Тень под таскаемой копией объекта -->
+    <div *ngIf="drag"
          class="item dragging dragging-placeholder"
-         [style.left]="(mozaicRect.x + (draggingItemCellX * cellSize)) + 'px'"
-         [style.top]="(mozaicRect.y + (draggingItemCellY * cellSize)) + 'px'"
-         [style.width]="(draggingItem.w * cellSize) + 'px'"
-         [style.height]="(draggingItem.h * cellSize) + 'px'">
+         [style.left]="(mozaicRect.left + (drag.resultRect.x * cellSize)) + 'px'"
+         [style.top]="(mozaicRect.top + (drag.resultRect.y * cellSize)) + 'px'"
+         [style.width]="(drag.resultRect.w * cellSize) + 'px'"
+         [style.height]="(drag.resultRect.h * cellSize) + 'px'">
       <div class="content"></div>
     </div>
 

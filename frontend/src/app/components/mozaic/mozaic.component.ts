@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import {HttpService} from "../../services/http.service";
 import {tap} from "rxjs/operators";
-import {IMozaic, IMozaicItem, mozaicDragTreshold} from "../../model/mozaic.model";
+import {IDrag, IMozaic, IMozaicItem, mozaicDragTreshold} from "../../model/mozaic.model";
 
 @Component({
   selector: 'app-mozaic',
@@ -38,22 +38,26 @@ export class MozaicComponent implements OnInit, OnDestroy {
   selectedItem?: IMozaicItem;
   selectionRectValue?: DOMRect;
 
-  draggingItem?: IMozaicItem;
-  draggingItemX = 0;
-  draggingItemY = 0;
-  draggingItemCellX = 0;
-  draggingItemCellY = 0;
+  drag?: IDrag;
 
   get selectionRect(): DOMRect | undefined {
     return this.selectionRectValue;
   }
   set selectionRect(value: DOMRect | undefined) {
     this.selectionRectValue = value;
-    if (value && this.draggingItem) {
-      this.draggingItem.x = Math.floor((value.x - this.mozaicRect.x) / this.cellSize);
-      this.draggingItem.y = Math.floor((value.y - this.mozaicRect.y) / this.cellSize);
-      this.draggingItem.w = 1;
-      this.draggingItem.h = 1;
+    if (value && this.drag) {
+      this.drag.resultPixelRect = new DOMRect(
+        value.x - this.mozaicRect.x,
+        value.y - this.mozaicRect.y,
+        value.width,
+        value.height
+      );
+      this.drag.resultRect = {
+        x: Math.floor(this.drag.resultPixelRect.left / this.cellSize),
+        y: Math.floor(this.drag.resultPixelRect.top / this.cellSize),
+        w: Math.ceil(this.drag.resultPixelRect.width / this.cellSize),
+        h: Math.ceil(this.drag.resultPixelRect.height / this.cellSize),
+      }
     }
   }
 
@@ -117,7 +121,7 @@ export class MozaicComponent implements OnInit, OnDestroy {
 
   updateSelectionRect(): void {
     if (this.selectedItem) {
-      if (!this.draggingItem) {
+      if (!this.drag) {
         const x = this.mozaicRect.x + this.selectedItem.x * this.cellSize;
         const y = this.mozaicRect.y + this.selectedItem.y * this.cellSize;
         this.selectionRect = new DOMRect(x, y, this.selectedItem.w * this.cellSize, this.selectedItem.h * this.cellSize);
@@ -137,12 +141,14 @@ export class MozaicComponent implements OnInit, OnDestroy {
     this.selectionRect = undefined;
   }
 
+  // Дёргается когда юзер начинает или заканчивает таскать рамку выделения
+  // сеттим draggingItem чтобы нормально отрабатывал updateDragXY
   onSelectionDrag(value: boolean): void {
     if (this.selectedItem) {
       if (value) {
-        this.draggingItem = this.selectedItem;
+        this.createDrag();
       } else {
-        this.draggingItem = undefined;
+        this.destroyDrag();
       }
     }
   }
@@ -152,38 +158,65 @@ export class MozaicComponent implements OnInit, OnDestroy {
     this.mouseY = event.clientY;
   }
 
-  updateDragXY(): void {
-    if (this.mouseDownPoint && this.draggingItem) {
+  createDrag(): void {
+    if (this.selectedItem) {
+      this.drag = {
+        item: this.selectedItem,
+        resultPixelRect: new DOMRect(),
+        resultRect: {
+          x: 0,
+          y: 0,
+          w: 0,
+          h: 0
+        }
+      };
+    }
+  }
+
+  destroyDrag(): void {
+    this.drag = undefined;
+  }
+
+  updateDrag(): void {
+    if (this.drag && this.mouseDownPoint) {
       const shiftX = this.mouseX - this.mouseDownPoint.x;
       const shiftY = this.mouseY - this.mouseDownPoint.y;
-      this.draggingItemX = this.mozaicRect.x + (this.draggingItem.x * this.cellSize) + shiftX;
-      this.draggingItemY = this.mozaicRect.y + (this.draggingItem.y * this.cellSize) + shiftY;
-      this.draggingItemCellX = Math.round((this.draggingItemX - this.mozaicRect.x) / this.cellSize);
-      this.draggingItemCellY = Math.round((this.draggingItemY - this.mozaicRect.y) / this.cellSize);
+      this.drag.resultPixelRect = new DOMRect(
+        (this.drag.item.x * this.cellSize) + shiftX,
+        (this.drag.item.y * this.cellSize) + shiftY,
+        this.drag.item.w * this.cellSize,
+        this.drag.item.h * this.cellSize,
+      );
+      this.drag.resultRect.x = Math.round(this.drag.resultPixelRect.left / this.cellSize);
+      this.drag.resultRect.y = Math.round(this.drag.resultPixelRect.top / this.cellSize);
+      this.drag.resultRect.w = this.drag.resultPixelRect.width / this.cellSize;
+      this.drag.resultRect.h = this.drag.resultPixelRect.height / this.cellSize;
     }
   }
 
   startDrag(): void {
-    if (!this.draggingItem) {
-      this.draggingItem = this.selectedItem;
-      this.updateDragXY();
-      this.updateSelectionRect();
+    if (!this.drag) {
+      if (this.selectedItem) {
+        this.createDrag();
+        this.updateDrag();
+        this.updateSelectionRect();
+      }
+    }
+  }
+
+  duringDrag(): void {
+    if (this.drag) {
+      this.updateDrag();
     }
   }
 
   endDrag(): void {
-    if (this.draggingItem) {
-      this.updateDragXY();
-      this.draggingItem.x = this.draggingItemCellX;
-      this.draggingItem.y = this.draggingItemCellY;
-      delete this.draggingItem;
+    if (this.drag) {
+      this.updateDrag();
+      this.drag.item.x = this.drag.resultRect.x;
+      this.drag.item.y = this.drag.resultRect.y;
+      this.destroyDrag();
       this.updateSelectionRect();
-    }
-  }
-
-  drag(): void {
-    if (this.draggingItem) {
-      this.updateDragXY();
     }
   }
 
@@ -247,7 +280,7 @@ export class MozaicComponent implements OnInit, OnDestroy {
 
     if (this.mouseDownPoint && this.mouseDownItem) {
       if (this.isMouseDownAndMoving) {
-        this.drag();
+        this.duringDrag();
       } else {
         if (Math.abs(event.clientX - this.mouseDownPoint.x) > mozaicDragTreshold || Math.abs(event.clientY - this.mouseDownPoint.y) > mozaicDragTreshold) {
 
