@@ -148,7 +148,7 @@ export class MozaicComponent implements OnInit, OnDestroy {
       if (value) {
         this.createDrag();
       } else {
-        this.destroyDrag();
+        this.endDrag();
       }
     }
   }
@@ -215,6 +215,8 @@ export class MozaicComponent implements OnInit, OnDestroy {
       this.updateDrag();
       this.drag.item.x = this.drag.resultRect.x;
       this.drag.item.y = this.drag.resultRect.y;
+      this.drag.item.w = this.drag.resultRect.w;
+      this.drag.item.h = this.drag.resultRect.h;
       this.destroyDrag();
       this.updateSelectionRect();
     }
