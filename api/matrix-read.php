@@ -1,6 +1,6 @@
 {
 	"ok": 1,
-	"mozaic": {
+	"matrix": {
 		"items": [
 			{
 				"id": 1,

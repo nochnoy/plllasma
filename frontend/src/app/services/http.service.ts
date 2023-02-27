@@ -3,7 +3,7 @@ import {Observable, of} from "rxjs";
 import {map, switchMap} from "rxjs/operators";
 import {HttpClient} from "@angular/common/http";
 import {IMailMessage, IMember} from "../model/app-model";
-import {IMozaic} from "../model/mozaic.model";
+import {IMatrix} from "../model/matrix.model";
 
 @Injectable({
   providedIn: 'root'
@@ -135,14 +135,14 @@ export class HttpService {
     );
   }
 
-  mozaicRead$(): Observable<IMozaic> {
+  matrixRead$(): Observable<IMatrix> {
     return this.httpClient.post(
-      `${HttpService.apiPath}/mozaic-read.php`,
+      `${HttpService.apiPath}/matrix-read.php`,
       { },
       {observe: 'body', withCredentials: true}
     ).pipe(
       map((result: any) => {
-        return result?.mozaic as IMozaic;
+        return result?.matrix as IMatrix;
       })
     );
   }

@@ -5,30 +5,14 @@
   <main class="main">
     <header>
       <div>
-        <h1>Matrix has you</h1>
+        <h1>I know kung-fu</h1>
       </div>
       <div>
 
       </div>
     </header>
 
-    <app-mozaic></app-mozaic>
-
-    <!--
-    <div *ngIf="mozaic" class="mozaic"
-         appMozaicCellSize [mozaicCellSize]="300"
-         resizeObserver  (resize)="onResize($event)"
-         [attr.style]="getMozaicStyle()">
-
-      <div
-        *ngFor="let item of mozaic?.items; let z = index;"
-        [attr.style]="getStyle(item)"
-        >
-
-      </div>
-
-    </div>
-    -->
+    <app-matrix></app-matrix>
 
   </main>
   <div class="spacer"></div>

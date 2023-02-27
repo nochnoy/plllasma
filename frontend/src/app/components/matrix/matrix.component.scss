@@ -1,8 +1,8 @@
 :host {
-  --mozaic-gap: 5px; // должна быть равна переменной mozaicGap
+  --matrix-gap: 5px; // должна быть равна переменной matrixGap
 }
 
-.mozaic {
+.matrix {
   display: grid;
   grid-auto-columns: calc(100% / 12);
   width: 100%;
@@ -33,10 +33,10 @@
 
     &.dragging {
       position: absolute;
-      z-index: var(--z-mozaic-drag-item);
+      z-index: var(--z-matrix-drag-item);
 
       &-placeholder {
-        z-index: var(--z-mozaic-drag-item-placeholder);
+        z-index: var(--z-matrix-drag-item-placeholder);
         .content {
           background-color: rgba(0, 0, 0, 0.3);
         }

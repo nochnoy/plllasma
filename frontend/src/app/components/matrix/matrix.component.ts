@@ -7,35 +7,35 @@ import {
 } from '@angular/core';
 import {HttpService} from "../../services/http.service";
 import {tap} from "rxjs/operators";
-import {IDrag, IMozaic, IMozaicItem, mozaicDragTreshold} from "../../model/mozaic.model";
+import {IDrag, IMatrix, IMatrixItem, matrixDragTreshold} from "../../model/matrix.model";
 
 @Component({
-  selector: 'app-mozaic',
-  templateUrl: './mozaic.component.html',
-  styleUrls: ['./mozaic.component.scss']
+  selector: 'app-matrix',
+  templateUrl: './matrix.component.html',
+  styleUrls: ['./matrix.component.scss']
 })
-export class MozaicComponent implements OnInit, OnDestroy {
+export class MatrixComponent implements OnInit, OnDestroy {
 
   constructor(
     public httpService: HttpService,
     private elementRef: ElementRef,
   ) { }
 
-  readonly mozaicGap = 5; // должна быть равна css-переменной --mozaic-gap
+  readonly matrixGap = 5; // должна быть равна css-переменной --matrix-gap
 
-  mozaic = {} as IMozaic;
-  mozaicRect: DOMRect = new DOMRect(0,0,0,0);
-  mozaicRectUpdateInterval: any;
+  matrix = {} as IMatrix;
+  matrixRect: DOMRect = new DOMRect(0,0,0,0);
+  matrixRectUpdateInterval: any;
   cellSize: number = 0;
   isEditMode = true; // Когда юзер редактирует мозайку
 
   mouseX = 0;
   mouseY = 0;
   mouseDownPoint?: DOMPoint; // точка где была зажата мышка
-  mouseDownItem?: IMozaicItem; // блок на котором была зажата мышка
+  mouseDownItem?: IMatrixItem; // блок на котором была зажата мышка
   isMouseDownAndMoving = false; // мы зажали мышь и тащим её?
 
-  selectedItem?: IMozaicItem;
+  selectedItem?: IMatrixItem;
   selectionRectValue?: DOMRect;
 
   drag?: IDrag;
@@ -47,8 +47,8 @@ export class MozaicComponent implements OnInit, OnDestroy {
     this.selectionRectValue = value;
     if (value && this.drag) {
       this.drag.resultPixelRect = new DOMRect(
-        value.x - this.mozaicRect.x,
-        value.y - this.mozaicRect.y,
+        value.x - this.matrixRect.x,
+        value.y - this.matrixRect.y,
         value.width,
         value.height
       );
@@ -62,48 +62,48 @@ export class MozaicComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.httpService.mozaicRead$().pipe(
+    this.httpService.matrixRead$().pipe(
       tap((result) => {
         if (result) {
-          this.mozaic = result;
+          this.matrix = result;
         }
       }),
     ).subscribe();
 
-    this.updateMozaicRect();
-    this.mozaicRectUpdateInterval = setInterval(() => this.updateMozaicRect(), 1000);
+    this.updateMatrixRect();
+    this.matrixRectUpdateInterval = setInterval(() => this.updateMatrixRect(), 1000);
   }
 
   ngOnDestroy() {
-    clearInterval(this.mozaicRectUpdateInterval);
+    clearInterval(this.matrixRectUpdateInterval);
   }
 
-  updateMozaicRect(): void {
+  updateMatrixRect(): void {
     const rect = this.elementRef.nativeElement.getBoundingClientRect();
-    const mr = this.mozaicRect;
+    const mr = this.matrixRect;
     if (!this.cellSize || rect.x !== mr.x || rect.y !== mr.y || rect.width !== mr.width || rect.height !== mr.height) {
-      this.mozaicRect = rect;
-      this.cellSize = this.mozaicRect.width / 12;
+      this.matrixRect = rect;
+      this.cellSize = this.matrixRect.width / 12;
       this.updateSelectionRect();
     }
   }
 
   isMouseInsideRect(): boolean {
-    if (this.mouseX >= this.mozaicRect.x && this.mouseX <= this.mozaicRect.x + this.mozaicRect.width) {
-      if (this.mouseY >= this.mozaicRect.y && this.mouseY <= this.mozaicRect.y + this.mozaicRect.height) {
+    if (this.mouseX >= this.matrixRect.x && this.mouseX <= this.matrixRect.x + this.matrixRect.width) {
+      if (this.mouseY >= this.matrixRect.y && this.mouseY <= this.matrixRect.y + this.matrixRect.height) {
         return true;
       }
     }
     return false;
   }
 
-  isXYInsideItem(x: number, y: number, item: IMozaicItem): boolean {
-    const cellX = Math.round((x - this.mozaicRect.x) / this.cellSize);
-    const cellY = Math.round((y - this.mozaicRect.y) / this.cellSize);
+  isXYInsideItem(x: number, y: number, item: IMatrixItem): boolean {
+    const cellX = Math.round((x - this.matrixRect.x) / this.cellSize);
+    const cellY = Math.round((y - this.matrixRect.y) / this.cellSize);
     return (cellX >= item.x && cellX <= item.x + item.w) && (cellY>= item.y && cellY <= item.y + item.h);
   }
 
-  select(item: IMozaicItem): void {
+  select(item: IMatrixItem): void {
     if (item !== this.selectedItem) {
       if (this.selectedItem) {
         this.deselect();
@@ -114,16 +114,16 @@ export class MozaicComponent implements OnInit, OnDestroy {
       this.updateSelectionRect();
 
       // Выделенный всегда всплывает наверх
-      this.mozaic!.items = this.mozaic?.items.filter((i) => i !== item);
-      this.mozaic!.items.push(this.selectedItem);
+      this.matrix!.items = this.matrix?.items.filter((i) => i !== item);
+      this.matrix!.items.push(this.selectedItem);
     }
   }
 
   updateSelectionRect(): void {
     if (this.selectedItem) {
       if (!this.drag) {
-        const x = this.mozaicRect.x + this.selectedItem.x * this.cellSize;
-        const y = this.mozaicRect.y + this.selectedItem.y * this.cellSize;
+        const x = this.matrixRect.x + this.selectedItem.x * this.cellSize;
+        const y = this.matrixRect.y + this.selectedItem.y * this.cellSize;
         this.selectionRect = new DOMRect(x, y, this.selectedItem.w * this.cellSize, this.selectedItem.h * this.cellSize);
       } else {
         this.selectionRect = undefined;
@@ -233,7 +233,7 @@ export class MozaicComponent implements OnInit, OnDestroy {
 
     const block: any = event?.target;
     const id = parseInt(block.id);
-    this.mouseDownItem = this.mozaic?.items.find((item) => item.id === id) ?? undefined;
+    this.mouseDownItem = this.matrix?.items.find((item) => item.id === id) ?? undefined;
   }
 
   @HostListener('document:mouseup', ['$event'])
@@ -280,7 +280,7 @@ export class MozaicComponent implements OnInit, OnDestroy {
       if (this.isMouseDownAndMoving) {
         this.duringDrag();
       } else {
-        if (Math.abs(event.clientX - this.mouseDownPoint.x) > mozaicDragTreshold || Math.abs(event.clientY - this.mouseDownPoint.y) > mozaicDragTreshold) {
+        if (Math.abs(event.clientX - this.mouseDownPoint.x) > matrixDragTreshold || Math.abs(event.clientY - this.mouseDownPoint.y) > matrixDragTreshold) {
 
           // Выделяем то что тащим
           if (this.mouseDownItem !== this.selectedItem) {

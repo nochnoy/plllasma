@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { MozaicComponent } from './mozaic.component';
+import { MatrixComponent } from './matrix.component';
 
-describe('MozaicComponent', () => {
-  let component: MozaicComponent;
-  let fixture: ComponentFixture<MozaicComponent>;
+describe('MatrixComponent', () => {
+  let component: MatrixComponent;
+  let fixture: ComponentFixture<MatrixComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ MozaicComponent ]
+      declarations: [ MatrixComponent ]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(MozaicComponent);
+    fixture = TestBed.createComponent(MatrixComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

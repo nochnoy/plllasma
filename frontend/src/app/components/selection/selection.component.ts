@@ -7,7 +7,7 @@ import {
   Input, OnInit,
   Output
 } from '@angular/core';
-import {mozaicDragTreshold} from "../../model/mozaic.model";
+import {matrixDragTreshold} from "../../model/matrix.model";
 import {selectionHandleSize, SelectionPart} from "../../model/selection";
 
 @Component({
@@ -165,7 +165,7 @@ export class SelectionComponent implements OnInit {
       if (this.isMouseDownAndMoving) {
         this.drag();
       } else {
-        if (Math.abs(this.mouseX - this.mouseDownPoint.x) > mozaicDragTreshold || Math.abs(this.mouseY - this.mouseDownPoint.y) > mozaicDragTreshold) {
+        if (Math.abs(this.mouseX - this.mouseDownPoint.x) > matrixDragTreshold || Math.abs(this.mouseY - this.mouseDownPoint.y) > matrixDragTreshold) {
           this.isMouseDownAndMoving = true;
           this.startDrag();
         }
