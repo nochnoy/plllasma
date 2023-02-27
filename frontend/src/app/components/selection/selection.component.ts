@@ -46,10 +46,13 @@ export class SelectionComponent implements OnInit {
   rectChange = new EventEmitter<DOMRect | undefined>();
 
   @Output()
-  dragging = new EventEmitter<boolean>();
+  dragStart = new EventEmitter();
+
+  @Output()
+  dragEnd = new EventEmitter();
 
   ngOnInit() {
-    this.dragging.emit(false);
+
   }
 
   updateMouseXY(event: PointerEvent | MouseEvent): void {
@@ -68,7 +71,7 @@ export class SelectionComponent implements OnInit {
   }
 
   startDrag(): void {
-    this.dragging.emit(true);
+    this.dragStart.emit();
   }
 
   drag(): void {
@@ -131,7 +134,7 @@ export class SelectionComponent implements OnInit {
   }
 
   endDrag(): void {
-    this.dragging.emit(false);
+    this.dragEnd.emit();
   }
 
   onMouseDown(event: MouseEvent, part: SelectionPart): void {

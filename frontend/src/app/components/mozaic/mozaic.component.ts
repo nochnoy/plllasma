@@ -141,16 +141,12 @@ export class MozaicComponent implements OnInit, OnDestroy {
     this.selectionRect = undefined;
   }
 
-  // Дёргается когда юзер начинает или заканчивает таскать рамку выделения
-  // сеттим draggingItem чтобы нормально отрабатывал updateDragXY
-  onSelectionDrag(value: boolean): void {
-    if (this.selectedItem) {
-      if (value) {
-        this.createDrag();
-      } else {
-        this.endDrag();
-      }
-    }
+  onSelectionDragStart(): void {
+    this.createDrag();
+  }
+
+  onSelectionDragEnd(): void {
+    this.endDrag();
   }
 
   updateMouseXY(event: PointerEvent | MouseEvent): void {
