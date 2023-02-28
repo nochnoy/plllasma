@@ -1,7 +1,7 @@
 {
 	"ok": 1,
 	"matrix": {
-		"items": [
+		"objects": [
 			{
 				"id": 1,
 				"x": 1,
