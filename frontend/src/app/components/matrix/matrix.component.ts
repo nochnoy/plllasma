@@ -53,10 +53,10 @@ export class MatrixComponent implements OnInit, OnDestroy {
         value.height
       );
       this.drag.resultRect = {
-        x: Math.floor(this.drag.resultPixelRect.left / this.cellSize),
-        y: Math.floor(this.drag.resultPixelRect.top / this.cellSize),
-        w: Math.ceil(this.drag.resultPixelRect.width / this.cellSize),
-        h: Math.ceil(this.drag.resultPixelRect.height / this.cellSize),
+        x: Math.round(this.drag.resultPixelRect.left / this.cellSize),
+        y: Math.round(this.drag.resultPixelRect.top / this.cellSize),
+        w: Math.round(this.drag.resultPixelRect.width / this.cellSize),
+        h: Math.round(this.drag.resultPixelRect.height / this.cellSize),
       }
     }
   }
