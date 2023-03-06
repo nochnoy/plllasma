@@ -8,31 +8,31 @@
 				"y": 1,
 				"w": 1,
 				"h": 1,
-				"color": "blue"
+				"color": "red"
 			},
 			{
 				"id": 2,
-				"x": 1,
-				"y": 2,
+				"x": 2,
+				"y": 1,
 				"w": 1,
 				"h": 1,
-				"color": "blue"
+				"color": "green"
 			},			
 			{
 				"id": 3,
-				"x": 4,
-				"y": 2,
-				"w": 4,
-				"h": 2,
-				"color": "#61ACB6FF"
+				"x": 3,
+				"y": 1,
+				"w": 1,
+				"h": 1,
+				"color": "blue"
 			},
 			{
 				"id": 4,
-				"x": 5,
-				"y": 3,
-				"w": 2,
-				"h": 4,
-				"color": "green"
+				"x": 4,
+				"y": 1,
+				"w": 1,
+				"h": 1,
+				"color": "maroon"
 			}
 		]
 	}

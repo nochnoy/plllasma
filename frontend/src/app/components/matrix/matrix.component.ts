@@ -7,7 +7,13 @@ import {
 } from '@angular/core';
 import {HttpService} from "../../services/http.service";
 import {tap} from "rxjs/operators";
-import {IMatrixObjectTransform, IMatrix, IMatrixObject, matrixDragTreshold} from "../../model/matrix.model";
+import {
+  IMatrixObjectTransform,
+  IMatrix,
+  IMatrixObject,
+  matrixDragTreshold,
+  IMatrixRect
+} from "../../model/matrix.model";
 
 @Component({
   selector: 'app-matrix',
@@ -21,7 +27,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
     private elementRef: ElementRef,
   ) { }
 
-  readonly matrixGap = 5; // должна быть равна css-переменной --matrix-gap
+  readonly matrixGap = 0; // должна быть равна css-переменной --matrix-gap
 
   matrix = {} as IMatrix;
   matrixRect: DOMRect = new DOMRect(0,0,0,0);
@@ -37,6 +43,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   selectedObject?: IMatrixObject;
   selectionRectValue?: DOMRect;
+  shadowRect?: DOMRect; // xywh серого квадрата под таскаемым объектом
 
   transform?: IMatrixObjectTransform; // происходящее изменение размеров/позиции одного из объектов
 
@@ -45,7 +52,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   }
   set selectionRect(value: DOMRect | undefined) {
     this.selectionRectValue = value;
-    this.duringResize();
+    this.onResize();
   }
 
   ngOnInit(): void {
@@ -120,7 +127,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
     if (this.mouseDownPoint && this.mouseDownObject) {
       if (this.isMouseDownAndMoving) {
-        this.duringDrag();
+        this.onDrag();
       } else {
         if (Math.abs(event.clientX - this.mouseDownPoint.x) > matrixDragTreshold || Math.abs(event.clientY - this.mouseDownPoint.y) > matrixDragTreshold) {
 
@@ -147,8 +154,10 @@ export class MatrixComponent implements OnInit, OnDestroy {
     const rect = this.elementRef.nativeElement.getBoundingClientRect();
     const mr = this.matrixRect;
     if (!this.cellSize || rect.x !== mr.x || rect.y !== mr.y || rect.width !== mr.width || rect.height !== mr.height) {
+      rect.width -= this.matrixGap; // Т.к. последний столбец грида не имеют гапа
+      rect.height -= this.matrixGap; // Т.к. последняя строка грида не имеют гапа
       this.matrixRect = rect;
-      this.cellSize = this.matrixRect.width / 12;
+      this.cellSize = (this.matrixRect.width / 12) + this.matrixGap; // Считаем гап правой/нижней частью ячейки
       this.updateSelectionRect();
     }
   }
@@ -186,12 +195,21 @@ export class MatrixComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Переводит координаты/размеры клеток матрицы в экранные координаты в пикселях
+  matrixToDom(rect: IMatrixRect): DOMRect {
+    const result = new DOMRect(
+      this.matrixRect.x + rect.x * this.cellSize,
+      this.matrixRect.y + rect.y * this.cellSize,
+      rect.w * this.cellSize,
+      rect.h * this.cellSize
+  );
+    return result;
+  }
+
   updateSelectionRect(): void {
     if (this.selectedObject) {
       if (!this.transform) {
-        const x = this.matrixRect.x + this.selectedObject.x * this.cellSize;
-        const y = this.matrixRect.y + this.selectedObject.y * this.cellSize;
-        this.selectionRect = new DOMRect(x, y, this.selectedObject.w * this.cellSize, this.selectedObject.h * this.cellSize);
+        this.selectionRect = this.matrixToDom(this.selectedObject);
       } else {
         this.selectionRect = undefined;
       }
@@ -214,8 +232,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
     this.createTransform();
   }
 
-  // Дёргается пока юзер меняет размеры объекта рамкой выделения
-  duringResize(): void {
+  onResize(): void {
     if (this.selectionRectValue && this.transform) {
       this.transform.resultPixelRect = new DOMRect(
         this.selectionRectValue.x - this.matrixRect.x,
@@ -229,6 +246,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
         w: Math.round(this.transform.resultPixelRect.width / this.cellSize),
         h: Math.round(this.transform.resultPixelRect.height / this.cellSize),
       }
+      this.shadowRect = this.matrixToDom(this.transform.resultRect);
     }
   }
 
@@ -247,7 +265,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
     }
   }
 
-  duringDrag(): void {
+  onDrag(): void {
     if (this.transform && this.mouseDownPoint) {
       const shiftX = this.mouseX - this.mouseDownPoint.x;
       const shiftY = this.mouseY - this.mouseDownPoint.y;
@@ -261,6 +279,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       this.transform.resultRect.y = Math.round(this.transform.resultPixelRect.top / this.cellSize);
       this.transform.resultRect.w = this.transform.resultPixelRect.width / this.cellSize;
       this.transform.resultRect.h = this.transform.resultPixelRect.height / this.cellSize;
+      this.shadowRect = this.matrixToDom(this.transform.resultRect);
     }
   }
 

@@ -26,12 +26,12 @@
     </div>
 
     <!-- Тень под таскаемой копией объекта -->
-    <div *ngIf="transform"
+    <div *ngIf="transform && shadowRect"
          class="item dragging dragging-placeholder"
-         [style.left]="(matrixRect.left + (transform.resultRect.x * cellSize)) + 'px'"
-         [style.top]="(matrixRect.top + (transform.resultRect.y * cellSize)) + 'px'"
-         [style.width]="(transform.resultRect.w * cellSize) + 'px'"
-         [style.height]="(transform.resultRect.h * cellSize) + 'px'">
+         [style.left]="shadowRect.left + 'px'"
+         [style.top]="shadowRect.top + 'px'"
+         [style.width]="shadowRect.width + 'px'"
+         [style.height]="shadowRect.height + 'px'">
       <div class="content"></div>
     </div>
 

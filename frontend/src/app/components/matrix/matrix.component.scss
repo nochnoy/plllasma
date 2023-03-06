@@ -1,10 +1,11 @@
 :host {
-  --matrix-gap: 5px; // должна быть равна переменной matrixGap
+  --matrix-gap: 10px; // должна быть равна переменной matrixGap
 }
 
 .matrix {
   display: grid;
   grid-auto-columns: calc(100% / 12);
+  //grid-gap: var(--matrix-gap);
   width: 100%;
   min-width: 40rem;
   height: 20rem;
