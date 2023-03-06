@@ -195,17 +195,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Переводит координаты/размеры клеток матрицы в экранные координаты в пикселях
-  matrixToDom(rect: IMatrixRect): DOMRect {
-    const result = new DOMRect(
-      this.matrixRect.x + rect.x * this.cellSize,
-      this.matrixRect.y + rect.y * this.cellSize,
-      rect.w * this.cellSize,
-      rect.h * this.cellSize
-  );
-    return result;
-  }
-
   updateSelectionRect(): void {
     if (this.selectedObject) {
       if (!this.transform) {
@@ -304,6 +293,17 @@ export class MatrixComponent implements OnInit, OnDestroy {
   }
 
   // Прочая хрень /////////////////////////////////////////////////////////////
+
+  // Переводит координаты/размеры клеток матрицы в экранные координаты в пикселях
+  matrixToDom(rect: IMatrixRect): DOMRect {
+    const result = new DOMRect(
+      this.matrixRect.x + rect.x * this.cellSize,
+      this.matrixRect.y + rect.y * this.cellSize,
+      rect.w * this.cellSize,
+      rect.h * this.cellSize
+    );
+    return result;
+  }
 
   createTransform(): void {
     if (this.selectedObject) {
