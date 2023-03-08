@@ -12,7 +12,7 @@ import {
   IMatrix,
   IMatrixObject,
   matrixDragTreshold,
-  IMatrixRect
+  IMatrixRect, matrixColsCount, matrixGap
 } from "../../model/matrix.model";
 
 @Component({
@@ -26,8 +26,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
     public httpService: HttpService,
     private elementRef: ElementRef,
   ) { }
-
-  readonly matrixGap = 0; // должна быть равна css-переменной --matrix-gap
 
   matrix = {} as IMatrix;
   matrixRect: DOMRect = new DOMRect(0,0,0,0);
@@ -60,6 +58,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       tap((result) => {
         if (result) {
           this.matrix = result;
+          this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));
         }
       }),
     ).subscribe();
@@ -160,9 +159,12 @@ export class MatrixComponent implements OnInit, OnDestroy {
     const mr = this.matrixRect;
     if (!this.cellSize || rect.x !== mr.x || rect.y !== mr.y || rect.width !== mr.width || rect.height !== mr.height) {
       this.matrixRect = rect;
-      this.cellSize = (this.matrixRect.width / 12) - this.matrixGap + (this.matrixGap / 12);
+      this.cellSize = (this.matrixRect.width / matrixColsCount) - matrixGap + (matrixGap / matrixColsCount);
       console.log(`cellSize = ${this.cellSize}`);
       this.updateSelectionRect();
+      if (this.matrix.objects) {
+        this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));
+      }
     }
   }
 
@@ -227,24 +229,32 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   onResize(): void {
     if (this.selectionRectValue && this.transform) {
-      this.transform.resultPixelRect = new DOMRect(
+      this.transform.resultDomRect = new DOMRect(
         this.selectionRectValue.x - this.matrixRect.x,
         this.selectionRectValue.y - this.matrixRect.y,
         this.selectionRectValue.width,
         this.selectionRectValue.height
       );
-      this.transform.resultRect = {
-        x: Math.round(this.transform.resultPixelRect.left / this.cellSize),
-        y: Math.round(this.transform.resultPixelRect.top / this.cellSize),
-        w: Math.round(this.transform.resultPixelRect.width / this.cellSize),
-        h: Math.round(this.transform.resultPixelRect.height / this.cellSize),
+      this.transform.resultMatrixRect = {
+        x: Math.round(this.transform.resultDomRect.left / this.cellSize),
+        y: Math.round(this.transform.resultDomRect.top / this.cellSize),
+        w: Math.round(this.transform.resultDomRect.width / this.cellSize),
+        h: Math.round(this.transform.resultDomRect.height / this.cellSize),
       }
-      this.shadowRect = this.matrixRectToDomRect(this.transform.resultRect);
+      this.shadowRect = this.matrixRectToDomRect(this.transform.resultMatrixRect);
     }
   }
 
   endResize(): void {
-    this.endDrag();
+    if (this.transform) {
+      this.transform.object.x = this.transform.resultMatrixRect.x;
+      this.transform.object.y = this.transform.resultMatrixRect.y;
+      this.transform.object.w = this.transform.resultMatrixRect.w;
+      this.transform.object.h = this.transform.resultMatrixRect.h;
+      this.transform.object.domRect = this.matrixRectToDomRect(this.transform.object);
+      this.destroyTransform();
+      this.updateSelectionRect();
+    }
   }
 
   // Драг объекта /////////////////////////////////////////////////////////////
@@ -262,26 +272,27 @@ export class MatrixComponent implements OnInit, OnDestroy {
     if (this.transform && this.mouseDownPoint) {
       const shiftX = this.mouseX - this.mouseDownPoint.x;
       const shiftY = this.mouseY - this.mouseDownPoint.y;
-      this.transform.resultPixelRect = new DOMRect(
+      this.transform.resultDomRect = new DOMRect(
         (this.transform.object.x * this.cellSize) + shiftX,
         (this.transform.object.y * this.cellSize) + shiftY,
         this.transform.object.w * this.cellSize,
         this.transform.object.h * this.cellSize,
       );
-      this.transform.resultRect.x = Math.round(this.transform.resultPixelRect.left / this.cellSize);
-      this.transform.resultRect.y = Math.round(this.transform.resultPixelRect.top / this.cellSize);
-      this.transform.resultRect.w = this.transform.resultPixelRect.width / this.cellSize;
-      this.transform.resultRect.h = this.transform.resultPixelRect.height / this.cellSize;
-      this.shadowRect = this.matrixRectToDomRect(this.transform.resultRect);
+      this.transform.resultMatrixRect.x = Math.round(this.transform.resultDomRect.left / this.cellSize);
+      this.transform.resultMatrixRect.y = Math.round(this.transform.resultDomRect.top / this.cellSize);
+      this.transform.resultMatrixRect.w = this.transform.resultDomRect.width / this.cellSize;
+      this.transform.resultMatrixRect.h = this.transform.resultDomRect.height / this.cellSize;
+      this.shadowRect = this.matrixRectToDomRect(this.transform.resultMatrixRect);
     }
   }
 
   endDrag(): void {
     if (this.transform) {
-      this.transform.object.x = this.transform.resultRect.x;
-      this.transform.object.y = this.transform.resultRect.y;
-      this.transform.object.w = this.transform.resultRect.w;
-      this.transform.object.h = this.transform.resultRect.h;
+      this.transform.object.x = this.transform.resultMatrixRect.x;
+      this.transform.object.y = this.transform.resultMatrixRect.y;
+      this.transform.object.w = this.transform.resultMatrixRect.w;
+      this.transform.object.h = this.transform.resultMatrixRect.h;
+      this.transform.object.domRect = this.matrixRectToDomRect(this.transform.object);
       this.destroyTransform();
       this.updateSelectionRect();
     }
@@ -298,23 +309,21 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   // Прочая хрень /////////////////////////////////////////////////////////////
 
-  // Переводит координаты/размеры клеток матрицы в экранные координаты в пикселях
   matrixRectToDomRect(rect: IMatrixRect): DOMRect {
-    const result = new DOMRect(
-      this.matrixRect.x + rect.x * this.cellSize,
-      this.matrixRect.y + rect.y * this.cellSize,
-      rect.w * this.cellSize,
-      rect.h * this.cellSize
+    return new DOMRect(
+      this.matrixRect.x + rect.x * (this.cellSize + matrixGap),
+      this.matrixRect.y + rect.y * (this.cellSize + matrixGap),
+      rect.w * (this.cellSize + matrixGap) - matrixGap,
+      rect.h * (this.cellSize + matrixGap) - matrixGap
     );
-    return result;
   }
 
   createTransform(): void {
     if (this.selectedObject) {
       this.transform = {
         object: this.selectedObject,
-        resultPixelRect: new DOMRect(),
-        resultRect: {
+        resultDomRect: new DOMRect(),
+        resultMatrixRect: {
           x: 0,
           y: 0,
           w: 0,

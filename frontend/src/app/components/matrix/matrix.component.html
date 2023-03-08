@@ -1,27 +1,27 @@
 <div class="matrix"
-     [class.editmode]="isEditMode"
-     [style.grid-auto-rows]="cellSize + 'px'">
+     [class.editmode]="isEditMode">
   <ng-container *ngIf="matrix">
 
     <!-- Объекты -->
     <ng-container *ngFor="let item of matrix?.objects; let z = index;">
       <div *ngIf="item !== transform?.object"
            class="item"
-           [attr.id]="item.id"
-           [class.selected]="item.selected"
-           [style.grid-column]="(item.x + 1) + '/' + (item.x + 1 + item.w)"
-           [style.grid-row]="(item.y + 1) + '/' + (item.y + 1 + item.h)">
-        <div class="content" [style.background-color]="item.color">{{item.x}}:{{item.y}}</div>
+           [style.left]="item.domRect?.left + 'px'"
+           [style.top]="item.domRect?.top + 'px'"
+           [style.width]="item.domRect?.width + 'px'"
+           [style.height]="item.domRect?.height + 'px'"
+           [attr.id]="item.id">
+        <div class="content" [style.background-color]="item.color">{{item.id}}</div>
       </div>
     </ng-container>
 
     <!-- Таскаемая копия объекта -->
     <div *ngIf="transform"
          class="item dragging"
-         [style.left]="(matrixRect.left + transform.resultPixelRect.left) + 'px'"
-         [style.top]="(matrixRect.top + transform.resultPixelRect.top) + 'px'"
-         [style.width]="transform.resultPixelRect.width + 'px'"
-         [style.height]="transform.resultPixelRect.height + 'px'">
+         [style.left]="(matrixRect.left + transform.resultDomRect.left) + 'px'"
+         [style.top]="(matrixRect.top + transform.resultDomRect.top) + 'px'"
+         [style.width]="transform.resultDomRect.width + 'px'"
+         [style.height]="transform.resultDomRect.height + 'px'">
       <div class="content" [style.background-color]="transform.object.color">{{transform.object.x}}:{{transform.object.y}}</div>
     </div>
 

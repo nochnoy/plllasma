@@ -1,4 +1,6 @@
 export const matrixDragTreshold = 4;
+export const matrixGap = 10;
+export const matrixColsCount = 12;
 
 export interface IMatrix {
   objects: IMatrixObject[];
@@ -15,10 +17,11 @@ export interface IMatrixObject extends IMatrixRect {
   id: number;
   color?: string;
   selected?: boolean;
+  domRect?: DOMRect;
 }
 
 export interface IMatrixObjectTransform {
   object: IMatrixObject;
-  resultPixelRect: DOMRect;
-  resultRect: IMatrixRect;
+  resultMatrixRect: IMatrixRect;
+  resultDomRect: DOMRect;
 }
