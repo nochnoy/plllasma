@@ -33,7 +33,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   matrixRect: DOMRect = new DOMRect(0,0,0,0);
   matrixRectUpdateInterval: any;
   cellSize: number = 0;
-  isEditMode = true; // Когда юзер редактирует мозайку
+  isEditMode = true; // Когда юзер редактирует матрицу
 
   mouseX = 0;
   mouseY = 0;
@@ -152,12 +152,16 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   updateMatrixRect(): void {
     const rect = this.elementRef.nativeElement.getBoundingClientRect();
+
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    rect.width = 600;
+    rect.height = 600;
+
     const mr = this.matrixRect;
     if (!this.cellSize || rect.x !== mr.x || rect.y !== mr.y || rect.width !== mr.width || rect.height !== mr.height) {
-      rect.width -= this.matrixGap; // Т.к. последний столбец грида не имеют гапа
-      rect.height -= this.matrixGap; // Т.к. последняя строка грида не имеют гапа
       this.matrixRect = rect;
-      this.cellSize = (this.matrixRect.width / 12) + this.matrixGap; // Считаем гап правой/нижней частью ячейки
+      this.cellSize = (this.matrixRect.width / 12) - this.matrixGap + (this.matrixGap / 12);
+      console.log(`cellSize = ${this.cellSize}`);
       this.updateSelectionRect();
     }
   }
@@ -198,7 +202,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   updateSelectionRect(): void {
     if (this.selectedObject) {
       if (!this.transform) {
-        this.selectionRect = this.matrixToDom(this.selectedObject);
+        this.selectionRect = this.matrixRectToDomRect(this.selectedObject);
       } else {
         this.selectionRect = undefined;
       }
@@ -235,7 +239,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
         w: Math.round(this.transform.resultPixelRect.width / this.cellSize),
         h: Math.round(this.transform.resultPixelRect.height / this.cellSize),
       }
-      this.shadowRect = this.matrixToDom(this.transform.resultRect);
+      this.shadowRect = this.matrixRectToDomRect(this.transform.resultRect);
     }
   }
 
@@ -268,7 +272,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       this.transform.resultRect.y = Math.round(this.transform.resultPixelRect.top / this.cellSize);
       this.transform.resultRect.w = this.transform.resultPixelRect.width / this.cellSize;
       this.transform.resultRect.h = this.transform.resultPixelRect.height / this.cellSize;
-      this.shadowRect = this.matrixToDom(this.transform.resultRect);
+      this.shadowRect = this.matrixRectToDomRect(this.transform.resultRect);
     }
   }
 
@@ -295,7 +299,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   // Прочая хрень /////////////////////////////////////////////////////////////
 
   // Переводит координаты/размеры клеток матрицы в экранные координаты в пикселях
-  matrixToDom(rect: IMatrixRect): DOMRect {
+  matrixRectToDomRect(rect: IMatrixRect): DOMRect {
     const result = new DOMRect(
       this.matrixRect.x + rect.x * this.cellSize,
       this.matrixRect.y + rect.y * this.cellSize,

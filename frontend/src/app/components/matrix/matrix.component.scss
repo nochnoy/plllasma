@@ -4,14 +4,19 @@
 
 .matrix {
   display: grid;
-  grid-auto-columns: calc(100% / 12);
-  //grid-gap: var(--matrix-gap);
+  grid-gap: var(--matrix-gap);
   width: 100%;
-  min-width: 40rem;
   height: 20rem;
   background-color: #bebebe;
+  grid-auto-columns: calc((100% / 12) - var(--matrix-gap) + (var(--matrix-gap) / 12));
+  grid-auto-rows: auto; // Потому что высота клеток должна быть равна ширине. Она задаётся в темплейте.
 
-  // Контент блоков прозрачен для кликов когда мозаика редактируется
+  min-width: 600px; // <<<<<<<<<<<<<<<<<<<<<<<<<
+  max-width: 600px; // <<<<<<<<<<<<<<<<<<<<<<<<<
+  min-height: 600px; // <<<<<<<<<<<<<<<<<<<<<<<<<
+  max-height: 600px; // <<<<<<<<<<<<<<<<<<<<<<<<<
+
+  // Контент блоков прозрачен для кликов когда матрица редактируется
   &.editmode {
     .item {
       .content {
