@@ -1,14 +1,9 @@
 .matrix {
   display: block;
   width: 100%;
+  min-width: 600px;
   height: 20rem;
   background-color: #bebebe;
-
-  // <<<<<<<<<<<<<<<<<<<<<<<<<
-  min-width: 600px;
-  max-width: 600px;
-  min-height: 600px;
-  max-height: 600px;
 
   // Контент блоков прозрачен для кликов когда матрица редактируется
   &.editmode {

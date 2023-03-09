@@ -155,11 +155,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   updateMatrixRect(): void {
     const rect = this.elementRef.nativeElement.getBoundingClientRect();
-
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    rect.width = 600;
-    rect.height = 600;
-
     const mr = this.matrixRect;
     if (!this.cellSize || rect.x !== mr.x || rect.y !== mr.y || rect.width !== mr.width || rect.height !== mr.height) {
       this.matrixRect = rect;
