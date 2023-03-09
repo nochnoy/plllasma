@@ -12,7 +12,7 @@ import {
   IMatrix,
   IMatrixObject,
   matrixDragTreshold,
-  IMatrixRect, matrixColsCount, matrixGap
+  IMatrixRect, matrixColsCount
 } from "../../model/matrix.model";
 
 @Component({
@@ -33,6 +33,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
   cellSize: number = 0;
   cellSizePlusGap: number = 0;
   isEditMode = true; // Когда юзер редактирует матрицу
+
+  gap = 0;
 
   mouseX = 0;
   mouseY = 0;
@@ -55,6 +57,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.gap = Math.round(parseFloat(getComputedStyle(document.documentElement).fontSize) / 2); // gap = 0.5rem
     this.httpService.matrixRead$().pipe(
       tap((result) => {
         if (result) {
@@ -160,8 +163,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
     const mr = this.matrixRect;
     if (!this.cellSize || rect.x !== mr.x || rect.y !== mr.y || rect.width !== mr.width || rect.height !== mr.height) {
       this.matrixRect = rect;
-      this.cellSize = (this.matrixRect.width / matrixColsCount) - matrixGap + (matrixGap / matrixColsCount);
-      this.cellSizePlusGap = this.cellSize + matrixGap;
+      this.cellSize = (this.matrixRect.width / matrixColsCount) - this.gap + (this.gap / matrixColsCount);
+      this.cellSizePlusGap = this.cellSize + this.gap;
       this.updateSelectionRect();
       if (this.matrix.objects) {
         this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));
@@ -271,8 +274,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
       this.transform.resultDomRect = new DOMRect(
         (this.transform.object.x  * this.cellSizePlusGap) + shiftX,
         (this.transform.object.y  * this.cellSizePlusGap) + shiftY,
-        this.transform.object.w * this.cellSizePlusGap - matrixGap,
-        this.transform.object.h * this.cellSizePlusGap - matrixGap,
+        this.transform.object.w * this.cellSizePlusGap - this.gap,
+        this.transform.object.h * this.cellSizePlusGap - this.gap,
       );
       this.transform.resultMatrixRect = this.domRectToMatrixRect(this.transform.resultDomRect);
       this.shadowRect = this.matrixRectToDomRect(this.transform.resultMatrixRect);
@@ -306,8 +309,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
     return new DOMRect(
       this.matrixRect.x + rect.x * this.cellSizePlusGap,
       this.matrixRect.y + rect.y * this.cellSizePlusGap,
-      rect.w * this.cellSizePlusGap - matrixGap,
-      rect.h * this.cellSizePlusGap - matrixGap
+      rect.w * this.cellSizePlusGap - this.gap,
+      rect.h * this.cellSizePlusGap - this.gap
     );
   }
 
@@ -338,5 +341,4 @@ export class MatrixComponent implements OnInit, OnDestroy {
   destroyTransform(): void {
     this.transform = undefined;
   }
-
 }

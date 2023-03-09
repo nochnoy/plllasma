@@ -1,5 +1,4 @@
 export const matrixDragTreshold = 4;
-export const matrixGap = 10;
 export const matrixColsCount = 12;
 
 export interface IMatrix {
