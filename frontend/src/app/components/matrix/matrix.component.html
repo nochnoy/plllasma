@@ -11,7 +11,7 @@
            [style.width]="item.domRect?.width + 'px'"
            [style.height]="item.domRect?.height + 'px'"
            [attr.id]="item.id">
-        <div class="content" [style.background-color]="item.color">{{item.id}}</div>
+        <div class="content" [style.background-color]="item.color"></div>
       </div>
     </ng-container>
 
@@ -22,7 +22,7 @@
          [style.top]="(matrixRect.top + transform.resultDomRect.top) + 'px'"
          [style.width]="transform.resultDomRect.width + 'px'"
          [style.height]="transform.resultDomRect.height + 'px'">
-      <div class="content" [style.background-color]="transform.object.color">{{transform.object.x}}:{{transform.object.y}}</div>
+      <div class="content" [style.background-color]="transform.object.color"></div>
     </div>
 
     <!-- Тень под таскаемой копией объекта -->

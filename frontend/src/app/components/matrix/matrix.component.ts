@@ -31,6 +31,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   matrixRect: DOMRect = new DOMRect(0,0,0,0);
   matrixRectUpdateInterval: any;
   cellSize: number = 0;
+  cellSizePlusGap: number = 0;
   isEditMode = true; // Когда юзер редактирует матрицу
 
   mouseX = 0;
@@ -160,7 +161,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
     if (!this.cellSize || rect.x !== mr.x || rect.y !== mr.y || rect.width !== mr.width || rect.height !== mr.height) {
       this.matrixRect = rect;
       this.cellSize = (this.matrixRect.width / matrixColsCount) - matrixGap + (matrixGap / matrixColsCount);
-      console.log(`cellSize = ${this.cellSize}`);
+      this.cellSizePlusGap = this.cellSize + matrixGap;
       this.updateSelectionRect();
       if (this.matrix.objects) {
         this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));
@@ -178,8 +179,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
   }
 
   isXYInsideObject(x: number, y: number, object: IMatrixObject): boolean {
-    const cellX = Math.round((x - this.matrixRect.x) / this.cellSize);
-    const cellY = Math.round((y - this.matrixRect.y) / this.cellSize);
+    const cellX = Math.round((x - this.matrixRect.x) / this.cellSizePlusGap);
+    const cellY = Math.round((y - this.matrixRect.y) / this.cellSizePlusGap);
     return (cellX >= object.x && cellX <= object.x + object.w) && (cellY>= object.y && cellY <= object.y + object.h);
   }
 
@@ -235,12 +236,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
         this.selectionRectValue.width,
         this.selectionRectValue.height
       );
-      this.transform.resultMatrixRect = {
-        x: Math.round(this.transform.resultDomRect.left / this.cellSize),
-        y: Math.round(this.transform.resultDomRect.top / this.cellSize),
-        w: Math.round(this.transform.resultDomRect.width / this.cellSize),
-        h: Math.round(this.transform.resultDomRect.height / this.cellSize),
-      }
+      this.transform.resultMatrixRect = this.domRectToMatrixRect(this.transform.resultDomRect);
       this.shadowRect = this.matrixRectToDomRect(this.transform.resultMatrixRect);
     }
   }
@@ -273,15 +269,12 @@ export class MatrixComponent implements OnInit, OnDestroy {
       const shiftX = this.mouseX - this.mouseDownPoint.x;
       const shiftY = this.mouseY - this.mouseDownPoint.y;
       this.transform.resultDomRect = new DOMRect(
-        (this.transform.object.x * this.cellSize) + shiftX,
-        (this.transform.object.y * this.cellSize) + shiftY,
-        this.transform.object.w * this.cellSize,
-        this.transform.object.h * this.cellSize,
+        (this.transform.object.x  * this.cellSizePlusGap) + shiftX,
+        (this.transform.object.y  * this.cellSizePlusGap) + shiftY,
+        this.transform.object.w * this.cellSizePlusGap - matrixGap,
+        this.transform.object.h * this.cellSizePlusGap - matrixGap,
       );
-      this.transform.resultMatrixRect.x = Math.round(this.transform.resultDomRect.left / this.cellSize);
-      this.transform.resultMatrixRect.y = Math.round(this.transform.resultDomRect.top / this.cellSize);
-      this.transform.resultMatrixRect.w = this.transform.resultDomRect.width / this.cellSize;
-      this.transform.resultMatrixRect.h = this.transform.resultDomRect.height / this.cellSize;
+      this.transform.resultMatrixRect = this.domRectToMatrixRect(this.transform.resultDomRect);
       this.shadowRect = this.matrixRectToDomRect(this.transform.resultMatrixRect);
     }
   }
@@ -311,11 +304,20 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   matrixRectToDomRect(rect: IMatrixRect): DOMRect {
     return new DOMRect(
-      this.matrixRect.x + rect.x * (this.cellSize + matrixGap),
-      this.matrixRect.y + rect.y * (this.cellSize + matrixGap),
-      rect.w * (this.cellSize + matrixGap) - matrixGap,
-      rect.h * (this.cellSize + matrixGap) - matrixGap
+      this.matrixRect.x + rect.x * this.cellSizePlusGap,
+      this.matrixRect.y + rect.y * this.cellSizePlusGap,
+      rect.w * this.cellSizePlusGap - matrixGap,
+      rect.h * this.cellSizePlusGap - matrixGap
     );
+  }
+
+  domRectToMatrixRect(domRect: DOMRect): IMatrixRect {
+    return {
+      x: Math.round(domRect.left    / this.cellSizePlusGap),
+      y: Math.round(domRect.top     / this.cellSizePlusGap),
+      w: Math.round(domRect.width   / this.cellSizePlusGap),
+      h: Math.round(domRect.height  / this.cellSizePlusGap),
+    };
   }
 
   createTransform(): void {

@@ -27,6 +27,7 @@
     overflow-y: hidden;
     user-select: none;
     z-index: var(--z-matrix-items);
+    border-radius: var(--border-radius);
 
     &.dragging {
       position: absolute;
