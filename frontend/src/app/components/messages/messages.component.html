@@ -47,11 +47,11 @@
         </div>
 
         <div class="reply" *ngIf="message === channelService.selectedMessage">
-          <app-message-form [channelId]="placeId"
+          <app-message-form-2 [channelId]="placeId"
                             [parentMessage]="message"
                             [replyMode]="true"
                             (onPost)="onNewMessageCreated()">
-          </app-message-form>
+          </app-message-form-2>
         </div>
 
       </div>

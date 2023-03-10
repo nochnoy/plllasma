@@ -10,7 +10,7 @@
       </header>
 
       <div class="form">
-        <app-message-form class="form-content" [channelId]="channel.id_place" (onPost)="onNewMessageCreated()"></app-message-form>
+        <app-message-form-2 class="form-content" [channelId]="channel.id_place" (onPost)="onNewMessageCreated()"></app-message-form-2>
       </div>
 
       <div *ngIf="!!channelModel" class="messages">

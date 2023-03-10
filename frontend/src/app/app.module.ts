@@ -20,6 +20,7 @@ import {SharedModule} from "./modules/shared/shared.module";
 import { Channel2PageComponent } from './pages/channel2-page/channel2-page.component';
 import { MatrixComponent } from './components/matrix/matrix.component';
 import { SelectionComponent } from './components/selection/selection.component';
+import {MessageForm2Component} from "./components/message-form-2/message-form-2.component";
 
 @NgModule({
     imports: [
@@ -42,6 +43,7 @@ import { SelectionComponent } from './components/selection/selection.component';
       ChannelPageComponent,
       MessagesComponent,
       MessageFormComponent,
+      MessageForm2Component,
       TestMessagesPageComponent,
       Channel2PageComponent,
       MatrixComponent,
