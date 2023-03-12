@@ -5,6 +5,7 @@ import {switchMap, tap} from "rxjs/operators";
 import {HttpService} from "./http.service";
 import {Channel} from "../model/messages/channel.model";
 import {Message} from "../model/messages/message.model";
+import {UserService} from "./user.service";
 
 @Injectable({
   providedIn: 'root'
@@ -12,13 +13,15 @@ import {Message} from "../model/messages/message.model";
 export class ChannelService {
 
   constructor(
-    public httpService: HttpService
+    public httpService: HttpService,
+    public userService: UserService
   ) { }
 
   channels: IChannel[] = [];
   channelModels = new Map<number, Channel>();
   cities: ICity[] = [];
   selectedMessage?: Message;
+  selectedMessageEditing = false;
   channelInvalidSignal = new EventEmitter<number>();
 
   loadChannels$(): Observable<any> {
@@ -109,13 +112,26 @@ export class ChannelService {
   }
 
   selectMessage(message: Message): void {
+    if (this.selectedMessageEditing) {
+      return; // Нельзя селектить пока не завершим редактирование сообщения
+    }
     this.selectedMessage = message;
+    if (message.nick === this.userService.user.nick) {
+      this.selectedMessageEditing = true;
+    }
   }
 
   unselectMessage(): void {
+    if (this.selectedMessageEditing) {
+      return; // Нельзя деселектить пока не завершим редактирование сообщения
+    }
     if (this.selectedMessage) {
       delete this.selectedMessage;
     }
+  }
+
+  stopMessageEditing(): void {
+    this.selectedMessageEditing = false;
   }
 
   invalidateChannel(channelId: number): void {

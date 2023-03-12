@@ -5,6 +5,7 @@ import {AppService} from "../../services/app.service";
 import {ChannelService} from "../../services/channel.service";
 import {HttpService} from "../../services/http.service";
 import {delay, tap} from "rxjs/operators";
+import {UserService} from "../../services/user.service";
 
 @Component({
   selector: 'app-messages',
@@ -17,9 +18,12 @@ export class MessagesComponent {
     public appService: AppService,
     public httpService: HttpService,
     public channelService: ChannelService,
+    public userService: UserService
   ) {}
 
   ShlopMessageRef = ShlopMessage;
+
+  isSending = false; // TODO: функционал редактирования надо конечно унести в отдельный компонент
 
   @Input('placeId')
   public placeId: number = 0;
@@ -70,6 +74,19 @@ export class MessagesComponent {
     if (message.parent) {
       message.parent.isHoverByChild = isHover;
     }
+  }
+
+  onCancelEditClick(event: any): void {
+    event.preventDefault();
+    setTimeout(() => { // Без этого не фурычит. Не знаю почему :(
+      this.channelService.stopMessageEditing();
+      this.channelService.unselectMessage();
+
+    }, 100);
+  }
+
+  onSaveEditClick(): void {
+
   }
 }
 

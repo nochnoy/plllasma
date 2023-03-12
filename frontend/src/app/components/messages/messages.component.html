@@ -10,16 +10,25 @@
       <div *ngSwitchCase="0"
            class="message"
            [class.message__selected]="message === channelService.selectedMessage"
+           [class.message__editing]="message === channelService.selectedMessage && channelService.selectedMessageEditing"
            [class.message__hover-by-child]="message.isHoverByChild"
            (mouseenter)="onMessageHover(message, true)"
            (mouseleave)="onMessageHover(message, false)"
            (click)="onMessageClick(message)">
+
         <img class="avatar" [src]="'https://plllasma.com/i/' + message.icon +'.gif'" />
         <a class="nick"
            [routerLink]="'/members/' + message.nick"
            target="_blank"
            [class.star]="message.isStarred">{{message.nick}}</a>
-        <p *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></p>
+
+        <!-- Оригинал сообщения юзер НЕ видит когда выделит своё собственное сообщение -->
+        <ng-container *ngIf="!(message === channelService.selectedMessage && channelService.selectedMessageEditing)">
+          <p *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></p>
+        </ng-container>
+        <!-- Юзер выделил своё собственное сообщение. Покажем его в режиме редактирования. -->
+          <p *ngIf="message === channelService.selectedMessage && channelService.selectedMessageEditing"
+            class="editable" tabindex="1" autofocus contenteditable="true" [(contenteditableModel)]="message.text"></p>
 
         <div *ngIf="message.attachments">
           <a *ngFor="let attachment of message.attachments"
@@ -36,20 +45,32 @@
           <span *ngIf="message.ogo">ОГО{{message.ogo}}</span>
         </div>
 
-        <div class="message-actions" *ngIf="message === channelService.selectedMessage" [class.liked]="!!message.myLike">
-          <a href class="like-button" [class.selected]="message.myLike === 'sps'" (click)="onLikeClick($event, message, 'sps')" title="Спасиба">👍<ng-container *ngIf="message.sps"> {{message.sps}}</ng-container></a>
-          <a href class="like-button" [class.selected]="message.myLike === 'heh'" (click)="onLikeClick($event, message, 'heh')" title="Хе-хе">😄<ng-container *ngIf="message.heh"> {{message.heh}}</ng-container></a>
-          <a href class="like-button" [class.selected]="message.myLike === 'nep'" (click)="onLikeClick($event, message, 'nep')" title="Непонятно">🤔<ng-container *ngIf="message.nep"> {{message.nep}}</ng-container></a>
-          <a href class="like-button" [class.selected]="message.myLike === 'ogo'" (click)="onLikeClick($event, message, 'ogo')" title="ОГО">😵<ng-container *ngIf="message.ogo"> {{message.ogo}}</ng-container></a>
-          <div class="message-date">{{message.timeCreated | plasmadate}}</div>
-        </div>
+        <!-- Инструменты реагирования на чужое сообщение - лайки, ответ, тд -->
+        <ng-container *ngIf="message === channelService.selectedMessage && !channelService.selectedMessageEditing">
 
-        <div class="reply" *ngIf="message === channelService.selectedMessage">
-          <app-message-form-2 [channelId]="placeId"
-                            [parentMessage]="message"
-                            [replyMode]="true"
-                            (onPost)="onNewMessageCreated()">
-          </app-message-form-2>
+          <div class="message-actions" [class.liked]="!!message.myLike">
+            <a href class="like-button" [class.selected]="message.myLike === 'sps'" (click)="onLikeClick($event, message, 'sps')" title="Спасиба">👍<ng-container *ngIf="message.sps"> {{message.sps}}</ng-container></a>
+            <a href class="like-button" [class.selected]="message.myLike === 'heh'" (click)="onLikeClick($event, message, 'heh')" title="Хе-хе">😄<ng-container *ngIf="message.heh"> {{message.heh}}</ng-container></a>
+            <a href class="like-button" [class.selected]="message.myLike === 'nep'" (click)="onLikeClick($event, message, 'nep')" title="Непонятно">🤔<ng-container *ngIf="message.nep"> {{message.nep}}</ng-container></a>
+            <a href class="like-button" [class.selected]="message.myLike === 'ogo'" (click)="onLikeClick($event, message, 'ogo')" title="ОГО">😵<ng-container *ngIf="message.ogo"> {{message.ogo}}</ng-container></a>
+            <div class="message-date">{{message.timeCreated | plasmadate}}</div>
+          </div>
+
+          <div class="reply">
+            <app-message-form-2 [channelId]="placeId"
+                                [parentMessage]="message"
+                                [replyMode]="true"
+                                (onPost)="onNewMessageCreated()">
+            </app-message-form-2>
+          </div>
+
+        </ng-container>
+
+        <!-- Инструменты отправки исправленного сообщения -->
+        <div  class="tools-edit" *ngIf="message === channelService.selectedMessage && channelService.selectedMessageEditing">
+          <a href (click)="onCancelEditClick($event)">Отменить</a>
+          <button (click)="onSaveEditClick()">Сохранить</button>
+          <div class="spinner" *ngIf="isSending">Загрузка</div>
         </div>
 
       </div>
