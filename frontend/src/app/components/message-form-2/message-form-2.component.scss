@@ -25,31 +25,7 @@
 
     &--reply:not(&--ghost) {
       max-width: 32rem;
-
-      &:not(.form--ghost) {
-        background-color: var(--color-background)!important;
-      }
-
-      &:not(:hover):not(:not(.form--empty)) {
-        button {
-          background-color: var(--color-page-bg-shade);
-          border: none;
-          color: gray;
-        }
-        color: gray;
-        .avatar {
-          opacity: 0.4;
-          filter: grayscale(100%);
-        }
-      }
-
-      &:hover {
-        background-color: white!important;
-      }
-      &:not(.form--empty) {
-       background-color: white!important;
-      }
-    }/**/
+    }
 
     &--drop {
       border: 2px dashed black;
