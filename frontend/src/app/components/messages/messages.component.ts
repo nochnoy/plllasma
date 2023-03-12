@@ -86,7 +86,24 @@ export class MessagesComponent {
   }
 
   onSaveEditClick(): void {
-
+    if (this.channelService.selectedMessage) {
+      const messageId = this.channelService.selectedMessage.id;
+      const messageText = (this.channelService.selectedMessage.text).trim();
+      if (messageText && messageId) {
+        this.isSending = true;
+        this.appService.editMessage$(messageId, messageText)
+          .pipe(
+            tap((result: any) => {
+              if (this.channelService.selectedMessage) {
+                this.channelService.selectedMessage.text = result.message;
+              }
+              this.channelService.stopMessageEditing();
+              this.channelService.unselectMessage();
+              this.isSending = false;
+            }),
+          ).subscribe();
+      }
+    }
   }
 }
 

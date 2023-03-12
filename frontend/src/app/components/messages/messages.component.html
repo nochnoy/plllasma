@@ -68,8 +68,10 @@
 
         <!-- Инструменты отправки исправленного сообщения -->
         <div  class="tools-edit" *ngIf="message === channelService.selectedMessage && channelService.selectedMessageEditing">
-          <a href (click)="onCancelEditClick($event)">Отменить</a>
-          <button (click)="onSaveEditClick()">Сохранить</button>
+          <ng-container *ngIf="!isSending">
+            <a href (click)="onCancelEditClick($event)">Отменить</a>
+            <button (click)="onSaveEditClick()">Сохранить</button>
+          </ng-container>
           <div class="spinner" *ngIf="isSending">Загрузка</div>
         </div>
 

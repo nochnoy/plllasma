@@ -147,6 +147,17 @@ export class AppService {
       { observe: 'body', withCredentials: true })
   }
 
+  editMessage$(messageId: number, message: string): Observable<any> {
+    const formData = new FormData();
+    formData.append(`messageId`, messageId + '');
+    formData.append(`message`, message);
+
+    return this.httpClient.post(
+      `${this.apiPath}/message-edit.php`,
+      formData,
+      { observe: 'body', withCredentials: true })
+  }
+
   uploadFiles$(formData: FormData): Observable<any> {
     return this.httpClient.post(
       `${this.apiPath}/files-upload.php`,
