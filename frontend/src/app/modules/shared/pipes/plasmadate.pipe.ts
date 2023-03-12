@@ -22,11 +22,8 @@ export class PlasmaDatePipe implements PipeTransform {
     var second = dateObj.getSeconds();
 
     const result =
-      daysArr[day] + ', ' + numDay + " " + monthsArr[month]
-      + " " + year + ', ' + hour + ":" +
-      ((minute < 10) ? "0" + minute : minute + '')
-      + ":" +
-      ((second < 10) ? "0" + second : second + '');
+      numDay + " " + monthsArr[month] + " " + year + ', ' + daysArr[day] + ', '
+      + hour + ":" + ((minute < 10) ? "0" + minute : minute + '') + ":" + ((second < 10) ? "0" + second : second + '');
 
     return result;
   }

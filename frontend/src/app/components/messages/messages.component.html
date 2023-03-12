@@ -33,17 +33,15 @@
           <span *ngIf="message.sps">спс{{message.sps}}</span>
           <span *ngIf="message.heh">хе{{message.heh}}</span>
           <span *ngIf="message.nep">неп{{message.nep}}</span>
-          <span *ngIf="message.ogo">ого{{message.ogo}}</span>
+          <span *ngIf="message.ogo">ОГО{{message.ogo}}</span>
         </div>
 
-        <div *ngIf="message === channelService.selectedMessage"
-             class="message-date">{{message.timeCreated | plasmadate}}</div>
-
-        <div class="like-editor" [class.liked]="!!message.myLike" *ngIf="message === channelService.selectedMessage">
-          <a href [class.selected]="message.myLike === 'sps'" (click)="onLikeClick($event, message, 'sps')" title="Спасиба">👍<ng-container *ngIf="message.sps"> {{message.sps}}</ng-container></a>
-          <a href [class.selected]="message.myLike === 'heh'" (click)="onLikeClick($event, message, 'heh')" title="Хе хе хе">😄<ng-container *ngIf="message.heh"> {{message.heh}}</ng-container></a>
-          <a href [class.selected]="message.myLike === 'nep'" (click)="onLikeClick($event, message, 'nep')" title="Непонятно">🤔<ng-container *ngIf="message.nep"> {{message.nep}}</ng-container></a>
-          <a href [class.selected]="message.myLike === 'ogo'" (click)="onLikeClick($event, message, 'ogo')" title="ОГО!">😵<ng-container *ngIf="message.ogo"> {{message.ogo}}</ng-container></a>
+        <div class="message-actions" *ngIf="message === channelService.selectedMessage" [class.liked]="!!message.myLike">
+          <a href class="like-button" [class.selected]="message.myLike === 'sps'" (click)="onLikeClick($event, message, 'sps')" title="Спасиба">👍<ng-container *ngIf="message.sps"> {{message.sps}}</ng-container></a>
+          <a href class="like-button" [class.selected]="message.myLike === 'heh'" (click)="onLikeClick($event, message, 'heh')" title="Хе-хе">😄<ng-container *ngIf="message.heh"> {{message.heh}}</ng-container></a>
+          <a href class="like-button" [class.selected]="message.myLike === 'nep'" (click)="onLikeClick($event, message, 'nep')" title="Непонятно">🤔<ng-container *ngIf="message.nep"> {{message.nep}}</ng-container></a>
+          <a href class="like-button" [class.selected]="message.myLike === 'ogo'" (click)="onLikeClick($event, message, 'ogo')" title="ОГО">😵<ng-container *ngIf="message.ogo"> {{message.ogo}}</ng-container></a>
+          <div class="message-date">{{message.timeCreated | plasmadate}}</div>
         </div>
 
         <div class="reply" *ngIf="message === channelService.selectedMessage">

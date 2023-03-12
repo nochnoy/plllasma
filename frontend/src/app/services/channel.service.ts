@@ -113,7 +113,9 @@ export class ChannelService {
   }
 
   unselectMessage(): void {
-    delete this.selectedMessage;
+    if (this.selectedMessage) {
+      delete this.selectedMessage;
+    }
   }
 
   invalidateChannel(channelId: number): void {

@@ -17,6 +17,7 @@
   --color-gray: #757575;
   --color-gray-message: #8A8A8A;
   --color-page-bg: #D7CABB;
+  --color-page-bg-shade: #d2c5b6;
   --color-page-bg-dark: #C4B8AA;
   --color-selected-message-bg: #DDD1C1;
   --color-hover-by-child-message-bg: #DDD1C1;
@@ -135,7 +136,7 @@ textarea {
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    background-color: #d2c5b6; // прозрачный dark
+    background-color: var(--color-page-bg-shade);
     color: #4f4f4f;
 
     &>* {
@@ -336,24 +337,17 @@ textarea {
   }
 }
 
-.message-date {
-  padding-top: 0.2rem;
-  font-size: 0.8rem;
-  color: var(--color-date);
-}
-
-
-.like-editor {
-  margin-top: 0.4rem;
-  margin-bottom: 0.4rem;
+.message-actions {
   display: flex;
   flex-direction: row;
+  align-items: center;
+  margin-top: 0.4rem;
 
   &.liked {
     pointer-events: none;
   }
 
-  a {
+  .like-button {
     color: black;
     padding: 0.4rem;
     border-radius: 1rem;
@@ -368,6 +362,20 @@ textarea {
     }
   }
 
+  .reply-link {
+    padding-left: 1rem;
+  }
+
+  .message-date {
+    flex-grow: 1;
+    padding-left: 1rem;
+    font-size: 0.8rem;
+    color: var(--color-date);
+  }
+}
+
+.reply {
+  margin-top: 0.5rem;
 }
 
 /* Звёздочки */

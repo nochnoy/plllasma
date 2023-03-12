@@ -3,7 +3,6 @@
   flex-direction: column;
   justify-content: stretch;
   align-items: stretch;
-  max-width: 40rem;
 
   .form {
     background-color: white;
@@ -14,6 +13,7 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    max-width: 40rem;
 
     &--ghost {
       box-shadow: inset 0 0 0.8rem #cfedf5;
@@ -23,17 +23,36 @@
       }
     }
 
-    &--drop {
-      border: 2px dashed black;
-    }
+    &--reply:not(&--ghost) {
+      max-width: 32rem;
 
-    &--reply {
       &:not(.form--ghost) {
-        background-color: var(--color-background) !important;
+        background-color: var(--color-background)!important;
       }
+
+      &:not(:hover):not(:not(.form--empty)) {
+        button {
+          background-color: var(--color-page-bg-shade);
+          border: none;
+          color: gray;
+        }
+        color: gray;
+        .avatar {
+          opacity: 0.4;
+          filter: grayscale(100%);
+        }
+      }
+
       &:hover {
         background-color: white!important;
       }
+      &:not(.form--empty) {
+       background-color: white!important;
+      }
+    }/**/
+
+    &--drop {
+      border: 2px dashed black;
     }
 
     .user-line {
@@ -61,6 +80,8 @@
       border: none;
       border-radius: var(--border-radius);
       min-height: 2rem;
+      max-height: 15rem;
+      overflow-y: auto;
       &:focus {
         outline: none;
       }
