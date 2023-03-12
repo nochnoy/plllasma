@@ -23,10 +23,6 @@
       }
     }
 
-    &--reply:not(&--ghost) {
-      max-width: 32rem;
-    }
-
     &--drop {
       border: 2px dashed black;
     }
