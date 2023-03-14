@@ -11,7 +11,7 @@ loginBySessionOrToken();
 
 // Узнаем есть ли такое сообщение и что за канал
 $sql = $mysqli->prepare('
-	SELECT id_user, id_place, message
+	SELECT id_user, id_place, message, IF (time_created < (NOW() - INTERVAL 4 HOUR), 1, 0) as tooLate
 	FROM tbl_messages
 	WHERE
 	id_message = ?
@@ -25,13 +25,30 @@ if ($row = mysqli_fetch_assoc($result)) {
 
 	// есть права сюда писать?
 	if (!canWrite($row['id_place'])) {
-		die('{"error": "access"}');
+		exit(json_encode((object)[
+			'error'	  => 'access',
+			'success' => false,
+			'message' => $oldMessage
+		]));	
 	}
 
 	// это вообще твоё сообщение?
 	if ($row['id_user'].'' != $user['id_user'].'') {
-		die('{"error": "access"}');
+		exit(json_encode((object)[
+			'error'	  => 'notYourMessage',
+			'success' => false,
+			'message' => $oldMessage
+		]));	
 	}
+
+	// с момента его написания ещё не прошли 4 часа?
+	if ($row['tooLate']) {
+		exit(json_encode((object)[
+			'error'	  => 'tooLate',
+			'success' => false,
+			'message' => $oldMessage
+		]));		
+	}	
 
 	// а ответов на сообщение ещё не писали?
 	$sql = $mysqli->prepare('
@@ -45,6 +62,7 @@ if ($row = mysqli_fetch_assoc($result)) {
 	$result = $sql->get_result();
 	if (mysqli_num_rows($result) > 0) {
 		exit(json_encode((object)[
+			'error'	  => 'thereAreAnsvers',
 			'success' => false,
 			'message' => $oldMessage
 		]));
@@ -66,6 +84,7 @@ if ($row = mysqli_fetch_assoc($result)) {
 }
 
 exit(json_encode((object)[
+	'error'	  => 'messageNotFound',
 	'success' => false,
 	'message' => $oldMessage
 ]));
