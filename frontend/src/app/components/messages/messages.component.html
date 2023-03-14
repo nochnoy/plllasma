@@ -90,7 +90,7 @@
            [routerLink]="'/members/' + message.nick"
            target="_blank"
            [class.star]="message.isStarred">{{message.nick}}</a>
-        <p *ngIf="!!message.text" [innerHTML]="message.text | linky | linksToStubs | shorten"></p>
+        <p *ngIf="!!message.text" [innerHTML]="message.text | linky: true | linksToStubs | shorten"></p>
 
         <div *ngIf="message.attachments">
           <a *ngFor="let attachment of message.attachments"

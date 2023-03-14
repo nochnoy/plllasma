@@ -2,9 +2,14 @@ import { Pipe, PipeTransform } from '@angular/core';
 import Autolinker, {AutolinkerConfig, ReplaceFnReturn, TruncateConfig, UrlMatch} from 'autolinker';
 import {Match} from "autolinker/dist/commonjs/match/match";
 
+/**
+ * Превращает URL'ы в ссылки а URL'ы видеороликов - в кликабельные превьюшки
+ *
+ */
+
 @Pipe({ name: 'linky' })
 export class LinkyPipe implements PipeTransform {
-  transform(value: string): string {
+  transform(value: string, noPreviews = false): string {
 
     const config: AutolinkerConfig = {
       truncate: {
@@ -15,16 +20,20 @@ export class LinkyPipe implements PipeTransform {
         try {
           if (match instanceof UrlMatch) {
             const url = (match as UrlMatch).getUrl();
-            if (url.indexOf('youtu.be') > -1 || url?.indexOf('youtube') > -1) {
-              const youTubeCode = this.getYouTubeCode(url);
-              if (youTubeCode) {
-                console.log(youTubeCode);
-                return '<a class="youtube-link" href="' + url + '" target="_blank"><img class="preview" src="https://img.youtube.com/vi/' + youTubeCode + '/0.jpg" loading="lazy"></a>';
+            if (noPreviews) { // попросили не делать превьюшек
+              return false;
+            } else {
+              if (url.indexOf('youtu.be') > -1 || url?.indexOf('youtube') > -1) {
+                const youTubeCode = this.getYouTubeCode(url);
+                if (youTubeCode) {
+                  console.log(youTubeCode);
+                  return '<a class="youtube-link" href="' + url + '" target="_blank"><img class="preview" src="https://img.youtube.com/vi/' + youTubeCode + '/0.jpg" loading="lazy"></a>';
+                } else {
+                  return true;
+                }
               } else {
                 return true;
               }
-            } else {
-              return true;
             }
           }
         }
