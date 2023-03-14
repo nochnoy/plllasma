@@ -27,8 +27,8 @@
           <p *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></p>
         </ng-container>
         <!-- Юзер выделил своё собственное сообщение. Покажем его в режиме редактирования. -->
-          <p *ngIf="message === channelService.selectedMessage && channelService.selectedMessageEditing"
-            class="editable" tabindex="1" autofocus contenteditable="true" [(contenteditableModel)]="message.text"></p>
+        <p *ngIf="message === channelService.selectedMessage && channelService.selectedMessageEditing"
+           class="editable" tabindex="1" autofocus contenteditable="true" [(contenteditableModel)]="message.text"></p>
 
         <div *ngIf="message.attachments">
           <a *ngFor="let attachment of message.attachments"

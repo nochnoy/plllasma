@@ -117,7 +117,7 @@ export class ChannelService {
     }
     this.selectedMessage = message;
     if (message.nick === this.userService.user.nick) {
-      this.selectedMessageEditing = true;
+      this.startMessageEditing();
     }
   }
 
@@ -130,8 +130,26 @@ export class ChannelService {
     }
   }
 
-  stopMessageEditing(): void {
-    this.selectedMessageEditing = false;
+  startMessageEditing(): void {
+    if (this.selectedMessage) {
+      this.selectedMessageEditing = true;
+      this.selectedMessage.textBeforeEdit = this.selectedMessage.text;
+    }
+  }
+
+  cancelMessageEditing(): void {
+    if (this.selectedMessage) {
+      this.selectedMessage.text = this.selectedMessage.textBeforeEdit;
+      this.selectedMessage.textBeforeEdit = '';
+      this.selectedMessageEditing = false;
+    }
+  }
+
+  finishMessageEditing(): void {
+    if (this.selectedMessage) {
+      this.selectedMessage.textBeforeEdit = '';
+      this.selectedMessageEditing = false;
+    }
   }
 
   invalidateChannel(channelId: number): void {

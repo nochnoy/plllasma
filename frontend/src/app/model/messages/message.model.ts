@@ -13,6 +13,7 @@ export class Message {
   nick = '';
   icon = '';
   text = '';
+  textBeforeEdit = '';
   timeCreated = '';
   isStarred = false;
   isHoverByChild = false;

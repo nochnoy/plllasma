@@ -79,9 +79,8 @@ export class MessagesComponent {
   onCancelEditClick(event: any): void {
     event.preventDefault();
     setTimeout(() => { // Без этого не фурычит. Не знаю почему :(
-      this.channelService.stopMessageEditing();
+      this.channelService.cancelMessageEditing();
       this.channelService.unselectMessage();
-
     }, 100);
   }
 
@@ -97,7 +96,7 @@ export class MessagesComponent {
               if (this.channelService.selectedMessage) {
                 this.channelService.selectedMessage.text = result.message;
               }
-              this.channelService.stopMessageEditing();
+              this.channelService.finishMessageEditing();
               this.channelService.unselectMessage();
               this.isSending = false;
             }),
