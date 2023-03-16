@@ -2,7 +2,7 @@
   display: block;
   width: 100%;
   min-width: 600px;
-  height: 20rem;
+  min-height: 10px; // чтобы она раскукожилась. А то её размер зависит от cellSize а cellSize зависит от её размера.
   background-color: #bebebe;
 
   // Контент блоков прозрачен для кликов когда матрица редактируется

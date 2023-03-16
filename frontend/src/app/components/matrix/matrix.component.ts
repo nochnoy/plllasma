@@ -28,6 +28,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   ) { }
 
   matrix = {} as IMatrix;
+  matrixHeight = 1;
   matrixRect: DOMRect = new DOMRect(0,0,0,0);
   matrixRectUpdateInterval: any;
   cellSize: number = 0;
@@ -63,6 +64,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
         if (result) {
           this.matrix = result;
           this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));
+          this.updateMatrixHeight();
         }
       }),
     ).subscribe();
@@ -248,6 +250,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       this.transform.object.domRect = this.matrixRectToDomRect(this.transform.object);
       this.destroyTransform();
       this.updateSelectionRect();
+      this.updateMatrixHeight();
     }
   }
 
@@ -286,6 +289,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       this.transform.object.domRect = this.matrixRectToDomRect(this.transform.object);
       this.destroyTransform();
       this.updateSelectionRect();
+      this.updateMatrixHeight();
     }
   }
 
@@ -299,6 +303,14 @@ export class MatrixComponent implements OnInit, OnDestroy {
   }
 
   // Прочая хрень /////////////////////////////////////////////////////////////
+
+  updateMatrixHeight(): void {
+    let h = 1;
+    this.matrix.objects.forEach((o) => {
+      h = Math.max(h, o.y + o.h);
+    });
+    this.matrixHeight = h;
+  }
 
   matrixRectToDomRect(rect: IMatrixRect): DOMRect {
     return new DOMRect(

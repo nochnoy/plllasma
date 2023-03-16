@@ -1,4 +1,5 @@
 <div class="matrix"
+     [style.height]="((matrixHeight * cellSizePlusGap) - gap) + 'px'"
      [class.editmode]="isEditMode">
   <ng-container *ngIf="matrix">
 
