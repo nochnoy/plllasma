@@ -235,7 +235,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
         this.selectionRectValue.height
       );
       this.transform.resultMatrixRect = this.domRectToMatrixRect(this.transform.resultDomRect);
-      this.shadowRect = this.matrixRectToDomRect(this.transform.resultMatrixRect);
+      this.shadowRect = this.matrixRectToDomRect(this.keepInBoundaries(this.transform.resultMatrixRect));
     }
   }
 
@@ -273,7 +273,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
         this.transform.object.h * this.cellSizePlusGap - this.gap,
       );
       this.transform.resultMatrixRect = this.domRectToMatrixRect(this.transform.resultDomRect);
-      this.shadowRect = this.matrixRectToDomRect(this.transform.resultMatrixRect);
+      this.shadowRect = this.matrixRectToDomRect(this.keepInBoundaries(this.transform.resultMatrixRect));
     }
   }
 
@@ -316,6 +316,23 @@ export class MatrixComponent implements OnInit, OnDestroy {
       w: Math.round(domRect.width   / this.cellSizePlusGap),
       h: Math.round(domRect.height  / this.cellSizePlusGap),
     };
+  }
+
+  // Если rect оказался за пределами матрицы - поправит его
+  keepInBoundaries(rect: IMatrixRect): IMatrixRect {
+    if (rect.w > matrixColsCount) {
+      rect.w = matrixColsCount;
+    }
+    if (rect.x < 0) {
+      rect.x = 0;
+    }
+    if (rect.x + rect.w > matrixColsCount - 1) {
+      rect.x = matrixColsCount - rect.w;
+    }
+    if (rect.y < 0) {
+      rect.y = 0;
+    }
+    return rect;
   }
 
   createTransform(): void {
