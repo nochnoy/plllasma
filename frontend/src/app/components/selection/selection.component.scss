@@ -1,6 +1,11 @@
 :host {
   position: absolute;
   z-index: var(--z-selection);
+
+  pointer-events: none; // чтобы кликался контент под рамкой выделения
+  &>* {
+    pointer-events:  auto; // чтобы сама рамка таскалась и ресайзилась
+  }
 }
 
 .stroke {

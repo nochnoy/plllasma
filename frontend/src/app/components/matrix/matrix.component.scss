@@ -5,15 +5,6 @@
   min-height: 10px; // чтобы она раскукожилась. А то её размер зависит от cellSize а cellSize зависит от её размера.
   background-color: #bebebe;
 
-  // Контент блоков прозрачен для кликов когда матрица редактируется
-  &.editmode {
-    .item {
-      .content {
-        pointer-events: none;
-      }
-    }
-  }
-
   .item {
     display: inline-block;
     position: absolute;

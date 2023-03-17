@@ -15,7 +15,7 @@ import {selectionHandleSize, SelectionPart} from "../../model/selection";
   templateUrl: './selection.component.html',
   styleUrls: ['./selection.component.scss']
 })
-export class SelectionComponent implements OnInit {
+export class SelectionComponent {
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -50,10 +50,6 @@ export class SelectionComponent implements OnInit {
 
   @Output()
   dragEnd = new EventEmitter();
-
-  ngOnInit() {
-
-  }
 
   updateMouseXY(event: PointerEvent | MouseEvent): void {
     this.mouseX = event.clientX;

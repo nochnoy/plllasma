@@ -1,6 +1,4 @@
-<div class="matrix"
-     [style.height]="((matrixHeight * cellSizePlusGap) - gap) + 'px'"
-     [class.editmode]="isEditMode">
+<div class="matrix" [style.height]="((matrixHeight * cellSizePlusGap) - gap) + 'px'">
   <ng-container *ngIf="matrix">
 
     <!-- Объекты -->
@@ -11,8 +9,9 @@
            [style.top]="item.domRect?.top + 'px'"
            [style.width]="item.domRect?.width + 'px'"
            [style.height]="item.domRect?.height + 'px'"
+           [style.background-color]="item.color"
            [attr.id]="item.id">
-        <div class="content" [style.background-color]="item.color"></div>
+        типа <a href="https://ya.ru">ya</a> тогда
       </div>
     </ng-container>
 
@@ -36,6 +35,7 @@
       <div class="content"></div>
     </div>
 
+    <!-- Рамка выделения -->
     <app-selection
       *ngIf="selectionRect"
       (dragStart)="startResize()"
