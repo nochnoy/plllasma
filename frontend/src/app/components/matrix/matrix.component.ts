@@ -33,7 +33,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
   matrixRectUpdateInterval: any;
   cellSize: number = 0;
   cellSizePlusGap: number = 0;
-  isEditMode = true; // Когда юзер редактирует матрицу
 
   gap = 0;
 
@@ -44,6 +43,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   isMouseDownAndMoving = false; // мы зажали мышь и тащим её?
 
   selectedObject?: IMatrixObject;
+  softSelectedObject?: IMatrixObject;
   selectionRectValue?: DOMRect;
   shadowRect?: DOMRect; // xywh серого квадрата под таскаемым объектом
 
@@ -131,6 +131,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
     }
 
     if (this.mouseDownPoint && this.mouseDownObject) {
+      // Мы тащим выделенный объект.
       if (this.isMouseDownAndMoving) {
         this.onDrag();
       } else {
@@ -143,6 +144,30 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
           this.isMouseDownAndMoving = true;
           this.startDrag();
+        }
+      }
+    } else {
+      if (!this.selectedObject) {
+        // Мы ничего не тащим и нет выделенных объектов. Тогда попробуем софт-селектнуть объект над которым мышь.
+        const block: any = event?.target;
+        if (block?.parentNode?.nodeName !== 'APP-SELECTION') { // Проверка что мы не навелись на рамку выделения
+          let needCancelSoftSelect = false;
+          if (block.className === 'item') {
+            // Это объект в матрице. Попытаемся его софтвыделить
+            const id = parseInt(block.id);
+            this.softSelectedObject = this.matrix?.objects.find((object) => object.id === id) ?? undefined;
+            if (this.softSelectedObject) {
+              this.selectionRect = this.matrixRectToDomRect(this.softSelectedObject);
+              needCancelSoftSelect = !this.selectionRect;
+            }
+          } else {
+            needCancelSoftSelect = true;
+          }
+          if (needCancelSoftSelect) {
+            // Это хрен знает что. Считаем что юзер убрал мышку с объектов. Отменяем софтвыделение.
+            this.softSelectedObject = undefined;
+            this.selectionRect = undefined;
+          }
         }
       }
     }
@@ -225,6 +250,11 @@ export class MatrixComponent implements OnInit, OnDestroy {
   // Ресайз объекта при помощи рамки выделения ////////////////////////////////
 
   startResize(): void {
+    if (!this.selectedObject && this.softSelectedObject) {
+      // Объект был софт-выделен а юзер стал его ресайзить. Выделяем объект по-настоящему.
+      this.select(this.softSelectedObject);
+      delete this.softSelectedObject;
+    }
     this.createTransform();
   }
 

@@ -36,11 +36,10 @@
     </div>
 
     <!-- Рамка выделения -->
-    <app-selection
-      *ngIf="selectionRect"
-      (dragStart)="startResize()"
-      (dragEnd)="endResize()"
-      [(rect)]="selectionRect">
+    <app-selection *ngIf="selectionRect"
+                   (dragStart)="startResize()"
+                   (dragEnd)="endResize()"
+                   [(rect)]="selectionRect">
     </app-selection>
 
   </ng-container>
