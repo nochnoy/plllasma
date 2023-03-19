@@ -41,6 +41,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   mouseDownPoint?: DOMPoint; // точка где была зажата мышка
   mouseDownObject?: IMatrixObject; // блок на котором была зажата мышка
   isMouseDownAndMoving = false; // мы зажали мышь и тащим её?
+  isMouseDown = false; // мы зажали мышь и тащим её?
 
   selectedObject?: IMatrixObject;
   softSelectedObject?: IMatrixObject;
@@ -82,6 +83,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   @HostListener('document:mousedown', ['$event'])
   onMouseDown(event: PointerEvent) {
     this.updateMouseXY(event);
+    this.isMouseDown = true;
     this.isMouseDownAndMoving = false;
     this.mouseDownPoint = new DOMPoint(event.clientX, event.clientY);
 
@@ -93,7 +95,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   @HostListener('document:mouseup', ['$event'])
   onMouseUp(event: PointerEvent) {
     this.updateMouseXY(event);
-
+    this.isMouseDown = false;
     let needToDeselect = false;
     if (this.mouseDownPoint) {
       if (!this.isMouseDownAndMoving) {
@@ -147,29 +149,31 @@ export class MatrixComponent implements OnInit, OnDestroy {
         }
       }
     } else {
-      if (!this.selectedObject) {
-        // Мы ничего не тащим и нет выделенных объектов. Тогда попробуем софт-селектнуть объект над которым мышь.
-        const block: any = event?.target;
-        if (block?.parentNode?.nodeName !== 'APP-SELECTION') { // Проверка что мы не навелись на рамку выделения
-          let needCancelSoftSelect = false;
-          if (block.className === 'item') {
-            // Это объект в матрице. Попытаемся его софтвыделить
-            const id = parseInt(block.id);
-            this.softSelectedObject = this.matrix?.objects.find((object) => object.id === id) ?? undefined;
-            if (this.softSelectedObject) {
-              this.selectionRect = this.matrixRectToDomRect(this.softSelectedObject);
-              needCancelSoftSelect = !this.selectionRect;
+      setTimeout(() => { // Пропустим кадр чтобы успел засеттится isMouseDown
+        if (!this.selectedObject && !this.isMouseDown/* защита от деселекта при ресайзе */ ) {
+          // Мы ничего не тащим и нет выделенных объектов. Тогда попробуем софт-селектнуть объект над которым мышь.
+          const block: any = event?.target;
+          if (block?.parentNode?.nodeName !== 'APP-SELECTION') { // Проверка что мы не навелись на рамку выделения
+            let needCancelSoftSelect = false;
+            if (block.className === 'item') {
+              // Это объект в матрице. Попытаемся его софтвыделить
+              const id = parseInt(block.id);
+              this.softSelectedObject = this.matrix?.objects.find((object) => object.id === id) ?? undefined;
+              if (this.softSelectedObject) {
+                this.selectionRect = this.matrixRectToDomRect(this.softSelectedObject);
+                needCancelSoftSelect = !this.selectionRect;
+              }
+            } else {
+              needCancelSoftSelect = true;
             }
-          } else {
-            needCancelSoftSelect = true;
-          }
-          if (needCancelSoftSelect) {
-            // Это хрен знает что. Считаем что юзер убрал мышку с объектов. Отменяем софтвыделение.
-            this.softSelectedObject = undefined;
-            this.selectionRect = undefined;
+            if (needCancelSoftSelect) {
+              // Это хрен знает что. Считаем что юзер убрал мышку с объектов. Отменяем софтвыделение.
+              this.softSelectedObject = undefined;
+              this.selectionRect = undefined;
+            }
           }
         }
-      }
+      });
     }
   }
 
