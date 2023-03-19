@@ -75,11 +75,24 @@ export class MessageForm2Component implements OnInit{
   }
 
   onSendClick(): void {
+
+    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    console.log('### onSendClick()');
+
     if (this.messageText.trim() || this.attachments.length) {
       this.isSending = true;
+
+      // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+      console.log('### will send message');
+
       this.appService.addMessage$(this.channelId, this.messageText, this.parentMessage?.id || 0, this.isGhost, this.attachments)
         .pipe(
           tap((result: any) => {
+
+            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            console.log('### tap:');
+            console.log(result);
+
             this.isSending = false;
             this.attachments.length = 0;
             this.messageText = '';
