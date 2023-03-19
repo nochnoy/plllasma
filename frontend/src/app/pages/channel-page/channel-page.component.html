@@ -6,8 +6,11 @@
     <ng-container *ngIf="channel">
       <header>
         <h1 [class.spinner]="channel.spinner">{{channel.name}}</h1>
-        <p>{{channel.description}}</p>
       </header>
+
+      <ng-container *ngIf="channel?.id_place === 12">
+        <app-matrix></app-matrix>
+      </ng-container>
 
       <div class="form">
         <app-message-form-2 class="form-content" [channelId]="channel.id_place" (onPost)="onNewMessageCreated()"></app-message-form-2>

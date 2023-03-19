@@ -42,6 +42,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   mouseDownObject?: IMatrixObject; // блок на котором была зажата мышка
   isMouseDownAndMoving = false; // мы зажали мышь и тащим её?
   isMouseDown = false; // мы зажали мышь и тащим её?
+  isDragging = false;
 
   selectedObject?: IMatrixObject;
   softSelectedObject?: IMatrixObject;
@@ -254,6 +255,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   // Ресайз объекта при помощи рамки выделения ////////////////////////////////
 
   startResize(): void {
+    this.isDragging = true;
     if (!this.selectedObject && this.softSelectedObject) {
       // Объект был софт-выделен а юзер стал его ресайзить. Выделяем объект по-настоящему.
       this.select(this.softSelectedObject);
@@ -276,6 +278,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   }
 
   endResize(): void {
+    this.isDragging = false;
     if (this.transform) {
       this.transform.object.x = this.transform.resultMatrixRect.x;
       this.transform.object.y = this.transform.resultMatrixRect.y;
@@ -286,11 +289,13 @@ export class MatrixComponent implements OnInit, OnDestroy {
       this.updateSelectionRect();
       this.updateMatrixHeight();
     }
+    this.deselect();
   }
 
   // Драг объекта /////////////////////////////////////////////////////////////
 
   startDrag(): void {
+    this.isDragging = true;
     if (!this.transform) {
       if (this.selectedObject) {
         this.createTransform();
@@ -315,6 +320,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   }
 
   endDrag(): void {
+    this.isDragging = false;
     if (this.transform) {
       this.transform.object.x = this.transform.resultMatrixRect.x;
       this.transform.object.y = this.transform.resultMatrixRect.y;
@@ -325,6 +331,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       this.updateSelectionRect();
       this.updateMatrixHeight();
     }
+    this.deselect();
   }
 
   // Клик по объекту //////////////////////////////////////////////////////////

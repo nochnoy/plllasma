@@ -1,4 +1,6 @@
-<div class="matrix" [style.height]="((matrixHeight * cellSizePlusGap) - gap) + 'px'">
+<div class="matrix"
+     [class.dragging]="isDragging"
+     [style.height]="((matrixHeight * cellSizePlusGap) - gap) + 'px'">
   <ng-container *ngIf="matrix">
 
     <!-- Объекты -->

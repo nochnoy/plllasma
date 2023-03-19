@@ -17,7 +17,7 @@
   bottom: 0;
   pointer-events: none;
   display: inline-block;
-  border: 2px solid white;
+  border: 2px solid gold;
   box-sizing: border-box;
 }
 .edge {
@@ -31,7 +31,7 @@
   z-index: 2;
   width: 11px;
   height: 11px;
-  background-color: white;
+  background-color: gold;
   border-radius: var(--border-radius);
 }
 

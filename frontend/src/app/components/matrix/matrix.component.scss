@@ -3,7 +3,10 @@
   width: 100%;
   min-width: 600px;
   min-height: 10px; // чтобы она раскукожилась. А то её размер зависит от cellSize а cellSize зависит от её размера.
-  background-color: #bebebe;
+
+  &.dragging {
+    background-color: #bebebe;
+  }
 
   .item {
     display: inline-block;
