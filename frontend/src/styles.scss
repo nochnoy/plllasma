@@ -118,6 +118,10 @@ textarea {
     max-width: 70rem;
 
     header {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
       margin-top: var(--margin-section);
 
       h1 {
@@ -127,6 +131,10 @@ textarea {
       p {
         margin: 0;
       }
+    }
+
+    .matrix {
+      margin-top: 1rem;
     }
   }
   .spacer {
