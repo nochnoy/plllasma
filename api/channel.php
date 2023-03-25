@@ -55,7 +55,23 @@ $row = mysqli_fetch_array($result);
 $total = $row[0] ?? 0;
 $pagesCount = ceil($total / PAGE_SIZE);
 
+// Получаем матрицу канала 
+// TODO: хорошо бы не делать дополниетльный запрос
+$sql = $mysqli->prepare('SELECT matrix FROM tbl_places WHERE id_place=?');
+$sql->bind_param("i", $placeId);
+$sql->execute();
+$result = $sql->get_result();
+$row = mysqli_fetch_array($result);
+$matrix = $row[0] ?? '';
+
 logActivity('channel '.$placeId);
 
-exit('{"id":'.$placeId.', "pages":'.$pagesCount.', "messages":'.$messagesResult.', "viewed":"'.$viewed.'"}');
+exit(json_encode((object)[
+	'id' => $placeId,
+	'pages' => $pagesCount,
+	'messages' => json_decode($messagesResult),
+	'matrix' => json_decode($matrix),
+	'viewed' => $viewed
+]));
+
 ?>
