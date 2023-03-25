@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import {Observable, of} from "rxjs";
 import {map, switchMap} from "rxjs/operators";
 import {HttpClient} from "@angular/common/http";
-import {IMailMessage, IMember} from "../model/app-model";
+import {IFocus, IMailMessage, IMember} from "../model/app-model";
 import {IMatrix} from "../model/matrix.model";
 
 @Injectable({
@@ -130,6 +130,17 @@ export class HttpService {
       {
         nick,
         message
+      },
+      {observe: 'body', withCredentials: true}
+    );
+  }
+
+  matrixWrite$(idPlace: number, matrix: IMatrix): Observable<any> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/matrix-write.php`,
+      {
+        placeId: idPlace,
+        matrix: matrix
       },
       {observe: 'body', withCredentials: true}
     );

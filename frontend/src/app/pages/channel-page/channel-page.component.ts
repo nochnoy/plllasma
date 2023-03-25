@@ -173,4 +173,15 @@ export class ChannelPageComponent implements OnInit {
     window.scroll({ top: 0, left: 0 });
   }
 
+  onMatrixChanged(): void {
+    if (this.channelModel?.matrix) {
+      this.channel.spinner = true;
+      this.httpService.matrixWrite$(this.channel.id_place, this.channelModel.matrix).pipe(
+        tap((result) => {
+          this.channel.spinner = false;
+        }),
+      ).subscribe();
+    }
+  }
+
 }

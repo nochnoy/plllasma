@@ -1,13 +1,11 @@
 import {
   Component,
-  ElementRef,
+  ElementRef, EventEmitter,
   HostListener,
   Input,
   OnDestroy,
-  OnInit,
+  OnInit, Output,
 } from '@angular/core';
-import {HttpService} from "../../services/http.service";
-import {tap} from "rxjs/operators";
 import {
   IMatrixObjectTransform,
   IMatrix,
@@ -25,9 +23,11 @@ import {Channel} from "../../model/messages/channel.model";
 export class MatrixComponent implements OnInit, OnDestroy {
 
   constructor(
-    public httpService: HttpService,
     private elementRef: ElementRef,
   ) { }
+
+  @Output('changed')
+  changed = new EventEmitter<IMatrix>();
 
   matrix = {} as IMatrix;
   matrixHeight = 1;
@@ -71,16 +71,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.gap = Math.round(parseFloat(getComputedStyle(document.documentElement).fontSize) / 2); // gap = 0.5rem
-    /*this.httpService.matrixRead$().pipe(
-      tap((result) => {
-        if (result) {
-          this.matrix = result;
-          this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));
-          this.updateMatrixHeight();
-        }
-      }),
-    ).subscribe();*/
-
     this.updateMatrixRect();
     this.matrixRectUpdateInterval = setInterval(() => this.updateMatrixRect(), 1000);
   }
@@ -298,6 +288,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       this.destroyTransform();
       this.updateSelectionRect();
       this.updateMatrixHeight();
+      this.changed.emit(this.matrix);
     }
     this.deselect();
   }
@@ -340,6 +331,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       this.destroyTransform();
       this.updateSelectionRect();
       this.updateMatrixHeight();
+      this.changed.emit(this.matrix);
     }
     this.deselect();
   }

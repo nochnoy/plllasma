@@ -9,7 +9,7 @@
       </header>
 
       <ng-container *ngIf="channelModel?.matrix">
-        <app-matrix [channel]="channelModel!"></app-matrix>
+        <app-matrix [channel]="channelModel!" (changed)="onMatrixChanged()"></app-matrix>
       </ng-container>
 
       <div class="form">
