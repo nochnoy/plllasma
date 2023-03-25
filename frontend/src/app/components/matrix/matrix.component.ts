@@ -365,12 +365,17 @@ export class MatrixComponent implements OnInit, OnDestroy {
   }
 
   domRectToMatrixRect(domRect: DOMRect): IMatrixRect {
-    return {
+    const result = {
       x: Math.round(domRect.left    / this.cellSizePlusGap),
       y: Math.round(domRect.top     / this.cellSizePlusGap),
       w: Math.round(domRect.width   / this.cellSizePlusGap),
       h: Math.round(domRect.height  / this.cellSizePlusGap),
     };
+
+    result.w = Math.max(1, result.w);
+    result.h = Math.max(1, result.h);
+
+    return result;
   }
 
   // Если rect оказался за пределами матрицы - поправит его

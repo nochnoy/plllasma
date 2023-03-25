@@ -3,7 +3,7 @@ import {Observable, of} from "rxjs";
 import {map, switchMap} from "rxjs/operators";
 import {HttpClient} from "@angular/common/http";
 import {IFocus, IMailMessage, IMember} from "../model/app-model";
-import {IMatrix} from "../model/matrix.model";
+import {IMatrix, serializeMatrix} from "../model/matrix.model";
 
 @Injectable({
   providedIn: 'root'
@@ -140,7 +140,7 @@ export class HttpService {
       `${HttpService.apiPath}/matrix-write.php`,
       {
         placeId: idPlace,
-        matrix: matrix
+        matrix: serializeMatrix(matrix)
       },
       {observe: 'body', withCredentials: true}
     );

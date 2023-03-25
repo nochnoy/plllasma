@@ -24,3 +24,15 @@ export interface IMatrixObjectTransform {
   resultMatrixRect: IMatrixRect;
   resultDomRect: DOMRect;
 }
+
+// Очищает чисто клиентские данные которые не должны сохраняться в БД
+export function serializeMatrix(matrix: IMatrix): any {
+  const output: any = JSON.parse(JSON.stringify(matrix)); // deep clone
+
+  output.objects.forEach((o: any) => {
+    delete o.domRect;
+    delete o.selected;
+  })
+
+  return output;
+}
