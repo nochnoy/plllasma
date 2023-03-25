@@ -66,11 +66,25 @@ $matrix = $row[0] ?? '';
 
 logActivity('channel '.$placeId);
 
+try {
+    $messagesDecoded = json_decode($messagesResult);
+} catch (Exception $e) {
+    $messagesDecoded = [];
+}
+
+try {
+    $matrixDecoded = json_decode($matrix);
+} catch (Exception $e) {
+    $matrixDecoded = (object)[
+        'error' => 'Matrix JSON is broken'
+    ];
+}
+
 exit(json_encode((object)[
 	'id' => $placeId,
 	'pages' => $pagesCount,
-	'messages' => json_decode($messagesResult),
-	'matrix' => json_decode($matrix),
+	'messages' => $messagesDecoded,
+	'matrix' => $matrixDecoded,
 	'viewed' => $viewed
 ]));
 

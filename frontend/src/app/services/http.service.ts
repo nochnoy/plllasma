@@ -135,16 +135,4 @@ export class HttpService {
     );
   }
 
-  matrixRead$(): Observable<IMatrix> {
-    return this.httpClient.post(
-      `${HttpService.apiPath}/matrix-read.php`,
-      { },
-      {observe: 'body', withCredentials: true}
-    ).pipe(
-      map((result: any) => {
-        return result?.matrix as IMatrix;
-      })
-    );
-  }
-
 }

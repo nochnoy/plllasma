@@ -8,8 +8,8 @@
         <h1 [class.spinner]="channel.spinner">{{channel.name}}</h1>
       </header>
 
-      <ng-container *ngIf="channel?.id_place === 12">
-        <app-matrix></app-matrix>
+      <ng-container *ngIf="channelModel?.matrix">
+        <app-matrix [channel]="channelModel!"></app-matrix>
       </ng-container>
 
       <div class="form">

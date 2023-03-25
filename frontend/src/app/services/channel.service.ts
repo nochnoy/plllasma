@@ -104,6 +104,11 @@ export class ChannelService {
           if (channelAtMenu) {
             channelAtMenu.time_viewed_deferred = input.viewed;
           }
+
+          // Добавим матрицу. Это делается здесь а не в deserialize т.к. она не имеет отношения к веткам
+          if (channelModel) {
+            channelModel.matrix = input.matrix;
+          }
         }
       })
     ).subscribe();

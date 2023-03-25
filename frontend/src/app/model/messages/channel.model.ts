@@ -1,10 +1,12 @@
 import {Thread} from './thread.model';
+import {IMatrix} from "../matrix.model";
 
 export class Channel {
 
   public id: number = 0;
   public pagesCount: number = 0;
   public threads: Array<Thread> = [];
+  public matrix?: IMatrix;
 
   public deserialize(input: any) {
     let i: number;

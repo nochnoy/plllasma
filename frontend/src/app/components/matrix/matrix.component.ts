@@ -2,6 +2,7 @@ import {
   Component,
   ElementRef,
   HostListener,
+  Input,
   OnDestroy,
   OnInit,
 } from '@angular/core';
@@ -14,6 +15,7 @@ import {
   matrixDragTreshold,
   IMatrixRect, matrixColsCount
 } from "../../model/matrix.model";
+import {Channel} from "../../model/messages/channel.model";
 
 @Component({
   selector: 'app-matrix',
@@ -35,7 +37,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
   cellSizePlusGap: number = 0;
 
   gap = 0;
-
   mouseX = 0;
   mouseY = 0;
   mouseDownPoint?: DOMPoint; // точка где была зажата мышка
@@ -51,6 +52,15 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   transform?: IMatrixObjectTransform; // происходящее изменение размеров/позиции одного из объектов
 
+  @Input('channel')
+  set channel(channel: Channel) {
+    if (channel.matrix) {
+      this.matrix = channel.matrix;
+      this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));
+      this.updateMatrixHeight();
+    }
+  };
+
   get selectionRect(): DOMRect | undefined {
     return this.selectionRectValue;
   }
@@ -61,7 +71,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.gap = Math.round(parseFloat(getComputedStyle(document.documentElement).fontSize) / 2); // gap = 0.5rem
-    this.httpService.matrixRead$().pipe(
+    /*this.httpService.matrixRead$().pipe(
       tap((result) => {
         if (result) {
           this.matrix = result;
@@ -69,7 +79,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
           this.updateMatrixHeight();
         }
       }),
-    ).subscribe();
+    ).subscribe();*/
 
     this.updateMatrixRect();
     this.matrixRectUpdateInterval = setInterval(() => this.updateMatrixRect(), 1000);
