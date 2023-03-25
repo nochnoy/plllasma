@@ -74,25 +74,19 @@ export class MessageForm2Component implements OnInit{
     })
   }
 
+  htmlToText(html: string) {
+    return html.replace(/<\/?("[^"]*"|'[^']*'|[^>])*(>|$)/g, "");
+  }
+
   onSendClick(): void {
+    this.messageText = this.messageText.trim();
+    this.messageText = this.htmlToText(this.messageText);
 
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    console.log('### onSendClick()');
-
-    if (this.messageText.trim() || this.attachments.length) {
+    if (this.messageText || this.attachments.length) {
       this.isSending = true;
-
-      // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-      console.log('### will send message');
-
       this.appService.addMessage$(this.channelId, this.messageText, this.parentMessage?.id || 0, this.isGhost, this.attachments)
         .pipe(
           tap((result: any) => {
-
-            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            console.log('### tap:');
-            console.log(result);
-
             this.isSending = false;
             this.attachments.length = 0;
             this.messageText = '';

@@ -6,7 +6,6 @@ function jsonifyMessageText($s) {
 
 	// Сообщения в БД хранятся в специфичеки плазма-эскейпнутом виде. Раскукоживаем.
 	$s = htmlspecialchars_decode($s);
-	$s = html_entity_decode($s, ENT_QUOTES);
 
 	// убиваем тэги <a..> и </a>, оставляем только их содержимое
 	$s = preg_replace('/<a([^>]*)>/i', "", $s);

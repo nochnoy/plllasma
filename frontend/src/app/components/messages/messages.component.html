@@ -28,7 +28,7 @@
         </ng-container>
         <!-- Юзер выделил своё собственное сообщение. Покажем его в режиме редактирования. -->
         <p *ngIf="message === channelService.selectedMessage && channelService.selectedMessageEditing"
-           class="editable" tabindex="1" autofocus contenteditable="true" [(contenteditableModel)]="message.text"></p>
+           class="editable" tabindex="1" autofocus contenteditable="true" [(ngModel)]="message.text"></p>
 
         <div *ngIf="message.attachments">
           <a *ngFor="let attachment of message.attachments"

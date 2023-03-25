@@ -5,7 +5,7 @@ import {LinkyPipe} from "./pipes/linky.pipe";
 import {LinksToStubsPipe} from "./pipes/links-to-stubs.pipe";
 import {ShortenPipe} from "./pipes/shorten.pipe";
 import {NewlinePipe} from "./pipes/newline.pipe";
-import {ContenteditableModel} from "./directives/content-editable-model";
+import {ContenteditableValueAccessor} from "./directives/contenteditable-value-accessor";
 
 @NgModule({
   declarations: [
@@ -15,7 +15,7 @@ import {ContenteditableModel} from "./directives/content-editable-model";
     LinksToStubsPipe,
     ShortenPipe,
     NewlinePipe,
-    ContenteditableModel,
+    ContenteditableValueAccessor,
   ],
   exports: [
     PlasmaDatePipe,
@@ -24,7 +24,7 @@ import {ContenteditableModel} from "./directives/content-editable-model";
     LinksToStubsPipe,
     ShortenPipe,
     NewlinePipe,
-    ContenteditableModel,
+    ContenteditableValueAccessor
   ],
 })
 export class SharedModule { }
