@@ -1,4 +1,4 @@
-import {Component, HostListener, OnInit} from '@angular/core';
+import {Component, HostListener, Inject, OnInit} from '@angular/core';
 import {AppService} from "../../services/app.service";
 import {ActivatedRoute} from "@angular/router";
 import {Observable, of} from "rxjs";
@@ -9,6 +9,7 @@ import {Thread} from "../../model/messages/thread.model";
 import {ChannelService} from "../../services/channel.service";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {HttpService} from "../../services/http.service";
+import {MAT_DIALOG_DATA, MatDialog} from "@angular/material/dialog";
 
 @UntilDestroy()
 @Component({
@@ -22,7 +23,8 @@ export class ChannelPageComponent implements OnInit {
     public appService: AppService,
     public httpService: HttpService,
     public activatedRoute: ActivatedRoute,
-    public channelService: ChannelService
+    public channelService: ChannelService,
+    public dialog: MatDialog
   ) { }
 
   readonly defaultChannelId = 1;
@@ -184,4 +186,24 @@ export class ChannelPageComponent implements OnInit {
     }
   }
 
+  openDialog() {
+    this.dialog.open(DialogDataExampleDialog, {
+      data: {
+        animal: 'panda'
+      }
+    });
+  }
+
+}
+
+export interface DialogData {
+  animal: 'panda' | 'unicorn' | 'lion';
+}
+
+@Component({
+  selector: 'dialog-data-example-dialog',
+  templateUrl: 'dialog-data-example-dialog.html',
+})
+export class DialogDataExampleDialog {
+  constructor(@Inject(MAT_DIALOG_DATA) public data: DialogData) {}
 }

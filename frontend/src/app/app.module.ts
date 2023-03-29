@@ -11,7 +11,7 @@ import { DefaultPageComponent } from './pages/default-page/default-page.componen
 import {AppRoutingModule} from "./app-routing.module";
 import { LoginPageComponent } from './pages/login-page/login-page.component';
 import { AppGuard } from './app.guard';
-import { ChannelPageComponent } from './pages/channel-page/channel-page.component';
+import {ChannelPageComponent, DialogDataExampleDialog} from './pages/channel-page/channel-page.component';
 import { MessagesComponent } from './components/messages/messages.component';
 import { MessageFormComponent } from './components/message-form/message-form.component';
 import { TestMessagesPageComponent } from './pages/test-messages-page/test-messages-page.component';
@@ -20,19 +20,27 @@ import {SharedModule} from "./modules/shared/shared.module";
 import { MatrixComponent } from './components/matrix/matrix.component';
 import { SelectionComponent } from './components/selection/selection.component';
 import {MessageForm2Component} from "./components/message-form-2/message-form-2.component";
+import {MatMenuModule} from "@angular/material/menu";
+import {MatButtonModule} from "@angular/material/button";
+import {NoopAnimationsModule} from "@angular/platform-browser/animations";
+import {MatDialogModule} from "@angular/material/dialog";
 
 @NgModule({
-    imports: [
-      BrowserModule,
-      HttpClientModule,
-      FormsModule,
-      ScrollingModule,
-      RouterModule,
-      AppRoutingModule,
-      ReactiveFormsModule,
-      MainMenuComponent,
-      SharedModule
-    ],
+  imports: [
+    BrowserModule,
+    HttpClientModule,
+    FormsModule,
+    ScrollingModule,
+    RouterModule,
+    AppRoutingModule,
+    ReactiveFormsModule,
+    MainMenuComponent,
+    SharedModule,
+    MatMenuModule,
+    MatButtonModule,
+    NoopAnimationsModule,
+    MatDialogModule
+  ],
     declarations: [
       AppComponent,
       FocusListComponent,
@@ -46,6 +54,7 @@ import {MessageForm2Component} from "./components/message-form-2/message-form-2.
       TestMessagesPageComponent,
       MatrixComponent,
       SelectionComponent,
+      DialogDataExampleDialog
     ],
     providers: [
       AppGuard,
