@@ -74,13 +74,8 @@ export class MessageForm2Component implements OnInit{
     })
   }
 
-  htmlToText(html: string) {
-    return html.replace(/<\/?("[^"]*"|'[^']*'|[^>])*(>|$)/g, "");
-  }
-
   onSendClick(): void {
     this.messageText = this.messageText.trim();
-    this.messageText = this.htmlToText(this.messageText);
 
     if (this.messageText || this.attachments.length) {
       this.isSending = true;
