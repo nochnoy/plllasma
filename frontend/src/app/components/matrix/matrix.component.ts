@@ -112,7 +112,9 @@ export class MatrixComponent implements OnInit, OnDestroy {
       }
 
       // Что бы это ни было, оно закончилось. Знаканчиваем следить.
-      this.endDrag();
+      if (this.isDragging) {
+        this.endDrag();
+      }
       if (needToDeselect) {
         // должно стоять после endDrag и прочих кто завасит от селекта
         this.deselect();
@@ -156,7 +158,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
           const block: any = event?.target;
           if (block?.parentNode?.nodeName !== 'APP-SELECTION') { // Проверка что мы не навелись на рамку выделения
             let needCancelSoftSelect = false;
-            if (block.className === 'item') {
+            if (block.classList.contains('item')) {
               // Это объект в матрице. Попытаемся его софтвыделить
               const id = parseInt(block.id);
               this.softSelectedObject = this.matrix?.objects.find((object) => object.id === id) ?? undefined;
