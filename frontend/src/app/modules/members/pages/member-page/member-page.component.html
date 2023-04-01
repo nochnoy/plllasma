@@ -15,7 +15,7 @@
         <div class="snami">
           <span>С нами {{years}}. Имеет {{spasibas}}. Автор {{messages}}. {{sex}}.</span><br>
           <span class="date">
-            <ng-container *ngIf="member.time_logged !== '0000-00-00 00:00:00'">Был в {{member.time_logged | plasmadate}}.</ng-container>
+            <ng-container *ngIf="member.time_logged !== '0000-00-00 00:00:00'">Был {{member.time_logged | plasmadate}}.</ng-container>
             {{visits}}
           </span>
         </div>
