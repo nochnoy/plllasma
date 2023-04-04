@@ -4,17 +4,17 @@
   <ng-container *ngIf="matrix">
 
     <!-- Объекты -->
-    <ng-container *ngFor="let item of matrix?.objects; let z = index;">
-      <div *ngIf="item !== transform?.object"
-           class="item"
-           [style.left]="item.domRect?.left + 'px'"
-           [style.top]="item.domRect?.top + 'px'"
-           [style.width]="item.domRect?.width + 'px'"
-           [style.height]="item.domRect?.height + 'px'"
-           [style.background-color]="item.color"
-           [attr.id]="item.id">
-      </div>
-    </ng-container>
+
+    <div class="grid">
+      <ng-container  *ngFor="let object of matrix?.objects">
+        <div *ngIf="object !== transform?.object"
+             class="item"
+             [style.grid-area]="(object.y + 1) + '/' + (object.x + 1) + '/' + (object.y + 1 + object.h) + '/' + (object.x + 1 + object.w)"
+             [style.background-color]="object.color"
+             [attr.id]="object.id">
+        </div>
+      </ng-container>
+    </div>
 
     <!-- Таскаемая копия объекта -->
     <div *ngIf="transform"

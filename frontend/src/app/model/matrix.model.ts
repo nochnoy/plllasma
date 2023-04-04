@@ -1,3 +1,7 @@
+import {Const} from "./const";
+
+export const matrixCellSize = 2 * Const.remInPixels; // должна быть равна css-переменной --matrix-cell-size
+export const matrixGap = Math.round(0.5 * Const.remInPixels); // должна быть равна css-переменной --matrix-gap
 export const matrixDragTreshold = 4;
 export const matrixColsCount = 12;
 

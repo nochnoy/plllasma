@@ -4,38 +4,46 @@
   min-width: 600px;
   min-height: 10px; // чтобы она раскукожилась. А то её размер зависит от cellSize а cellSize зависит от её размера.
 
+  .grid {
+    display: grid;
+    grid-auto-columns: var(--matrix-cell-size);
+    grid-auto-rows: var(--matrix-cell-size);
+    gap: var(--matrix-gap);
+    width: 100%;
+    height: 100%;
+  }
+
   &.dragging {
     background-color: #bebebe;
   }
 
-  .item {
-    display: inline-block;
+}
+
+.item {
+  display: inline-block;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  user-select: none;
+  border-radius: var(--border-radius);
+  cursor: move;
+
+  &.dragging {
     position: absolute;
-    box-sizing: border-box;
-    overflow-x: hidden;
-    overflow-y: hidden;
-    user-select: none;
-    z-index: var(--z-matrix-items);
-    border-radius: var(--border-radius);
-    cursor: move;
+    z-index: var(--z-matrix-drag-item);
 
-    &.dragging {
-      position: absolute;
-      z-index: var(--z-matrix-drag-item);
-
-      &-placeholder {
-        z-index: var(--z-matrix-drag-item-placeholder);
-        .content {
-          background-color: rgba(0, 0, 0, 0.3);
-        }
+    &-placeholder {
+      z-index: var(--z-matrix-drag-item-placeholder);
+      .content {
+        background-color: rgba(0, 0, 0, 0.3);
       }
     }
+  }
 
-    .content {
-      display:block;
-      width: 100%;
-      height: 100%;
-      box-sizing: border-box;
-    }
+  .content {
+    display:block;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
   }
 }

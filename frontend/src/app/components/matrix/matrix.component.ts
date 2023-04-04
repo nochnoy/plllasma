@@ -3,7 +3,6 @@ import {
   ElementRef, EventEmitter,
   HostListener,
   Input,
-  OnDestroy,
   OnInit, Output,
 } from '@angular/core';
 import {
@@ -11,7 +10,7 @@ import {
   IMatrix,
   IMatrixObject,
   matrixDragTreshold,
-  IMatrixRect, matrixColsCount
+  IMatrixRect, matrixColsCount, matrixCellSize, matrixGap
 } from "../../model/matrix.model";
 import {Channel} from "../../model/messages/channel.model";
 
@@ -20,7 +19,7 @@ import {Channel} from "../../model/messages/channel.model";
   templateUrl: './matrix.component.html',
   styleUrls: ['./matrix.component.scss']
 })
-export class MatrixComponent implements OnInit, OnDestroy {
+export class MatrixComponent implements OnInit {
 
   constructor(
     private elementRef: ElementRef,
@@ -32,11 +31,10 @@ export class MatrixComponent implements OnInit, OnDestroy {
   matrix = {} as IMatrix;
   matrixHeight = 1;
   matrixRect: DOMRect = new DOMRect(0,0,0,0);
-  matrixRectUpdateInterval: any;
-  cellSize: number = 0;
-  cellSizePlusGap: number = 0;
+  cellSize: number = matrixCellSize;
+  gap = matrixGap;
+  cellSizePlusGap: number = matrixCellSize + matrixGap;
 
-  gap = 0;
   mouseX = 0;
   mouseY = 0;
   mouseDownPoint?: DOMPoint; // точка где была зажата мышка
@@ -70,13 +68,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.gap = Math.round(parseFloat(getComputedStyle(document.documentElement).fontSize) / 2); // gap = 0.5rem
     this.updateMatrixRect();
-    this.matrixRectUpdateInterval = setInterval(() => this.updateMatrixRect(), 1000);
-  }
-
-  ngOnDestroy() {
-    clearInterval(this.matrixRectUpdateInterval);
   }
 
   // Слушаем мышь /////////////////////////////////////////////////////////////
@@ -192,8 +184,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
     const mr = this.matrixRect;
     if (!this.cellSize || rect.x !== mr.x || rect.y !== mr.y || rect.width !== mr.width || rect.height !== mr.height) {
       this.matrixRect = rect;
-      this.cellSize = (this.matrixRect.width / matrixColsCount) - this.gap + (this.gap / matrixColsCount);
-      this.cellSizePlusGap = this.cellSize + this.gap;
       this.updateSelectionRect();
       if (this.matrix.objects) {
         this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));

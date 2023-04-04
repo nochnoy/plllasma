@@ -17,7 +17,7 @@
   bottom: 0;
   pointer-events: none;
   display: inline-block;
-  border: 2px solid #3b9cfa;
+  border: 2px solid var(--color-selection-frame);
   box-sizing: border-box;
 }
 .edge {
@@ -31,7 +31,7 @@
   z-index: 2;
   width: 11px;
   height: 11px;
-  background-color: #3b9cfa;
+  background-color: var(--color-selection-frame);
   border-radius: var(--border-radius);
 }
 

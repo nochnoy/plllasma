@@ -26,6 +26,7 @@
   --color-link-hover: #d0930e;
   --color-date: #aba196;
   --color-pagination: #4b4b4b;
+  --color-selection-frame: #4b4b4b;
 
   --z-selection: 11;
   --z-matrix-items: 1;
@@ -45,6 +46,9 @@
   --attachment-icon-size: 160px;
   --avatar-size: 16px;
   --avatar-margin: 0.2rem;
+
+  --matrix-cell-size: 2rem; // должна быть равна константе matrixCellSize
+  --matrix-gap: 0.5rem; // должна быть равна константе matrixGap
 
   --selection-handle-size: 11px;
 
