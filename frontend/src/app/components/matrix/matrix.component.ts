@@ -2,7 +2,7 @@ import {
   Component,
   ElementRef, EventEmitter,
   HostListener,
-  Input,
+  Input, OnDestroy,
   OnInit, Output,
 } from '@angular/core';
 import {
@@ -10,7 +10,7 @@ import {
   IMatrix,
   IMatrixObject,
   matrixDragTreshold,
-  IMatrixRect, matrixColsCount, matrixCellSize, matrixGap
+  IMatrixRect, matrixColsCount, matrixCellSize, matrixGap, matrixFlexibleCol
 } from "../../model/matrix.model";
 import {Channel} from "../../model/messages/channel.model";
 
@@ -19,7 +19,7 @@ import {Channel} from "../../model/messages/channel.model";
   templateUrl: './matrix.component.html',
   styleUrls: ['./matrix.component.scss']
 })
-export class MatrixComponent implements OnInit {
+export class MatrixComponent implements OnInit, OnDestroy {
 
   constructor(
     private elementRef: ElementRef,
@@ -34,6 +34,8 @@ export class MatrixComponent implements OnInit {
   cellSize: number = matrixCellSize;
   gap = matrixGap;
   cellSizePlusGap: number = matrixCellSize + matrixGap;
+  thirteenthWidth: number = 0; // ширина 13го столбца
+  thirteenthWidthPlusGap: number = 0; // ширина 13го столбца с гапом
 
   mouseX = 0;
   mouseY = 0;
@@ -46,9 +48,11 @@ export class MatrixComponent implements OnInit {
   selectedObject?: IMatrixObject;
   softSelectedObject?: IMatrixObject;
   selectionRectValue?: DOMRect;
-  shadowRect?: DOMRect; // xywh серого квадрата под таскаемым объектом
+  shadowRect?: DOMRect; // x/y/w/h серого квадрата под таскаемым объектом
 
   transform?: IMatrixObjectTransform; // происходящее изменение размеров/позиции одного из объектов
+
+  matrixRectUpdateInterval: any;
 
   @Input('channel')
   set channel(channel: Channel) {
@@ -69,6 +73,11 @@ export class MatrixComponent implements OnInit {
 
   ngOnInit(): void {
     this.updateMatrixRect();
+    this.matrixRectUpdateInterval = setInterval(() => this.updateMatrixRect(), 1000);
+  }
+
+  ngOnDestroy() {
+    clearInterval(this.matrixRectUpdateInterval);
   }
 
   // Слушаем мышь /////////////////////////////////////////////////////////////
@@ -184,6 +193,8 @@ export class MatrixComponent implements OnInit {
     const mr = this.matrixRect;
     if (!this.cellSize || rect.x !== mr.x || rect.y !== mr.y || rect.width !== mr.width || rect.height !== mr.height) {
       this.matrixRect = rect;
+      this.thirteenthWidth = Math.max(this.cellSize, rect.width - ((matrixColsCount - 1) * this.cellSizePlusGap) - this.gap);
+      this.thirteenthWidthPlusGap = this.thirteenthWidth + matrixGap;
       this.updateSelectionRect();
       if (this.matrix.objects) {
         this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));
@@ -348,12 +359,22 @@ export class MatrixComponent implements OnInit {
   }
 
   matrixRectToDomRect(rect: IMatrixRect): DOMRect {
-    return new DOMRect(
-      this.matrixRect.x + rect.x * this.cellSizePlusGap,
-      this.matrixRect.y + rect.y * this.cellSizePlusGap,
-      rect.w * this.cellSizePlusGap - this.gap,
-      rect.h * this.cellSizePlusGap - this.gap
-    );
+    let   x = this.matrixRect.x + rect.x * this.cellSizePlusGap;
+    let   w = rect.w * this.cellSizePlusGap - this.gap;
+    const y = this.matrixRect.y + rect.y * this.cellSizePlusGap;
+    const h = rect.h * this.cellSizePlusGap - this.gap;
+
+    // Учтём влияние тянущегося столбца
+    if (rect.x > matrixFlexibleCol) {
+      x += this.thirteenthWidthPlusGap;
+      x -= this.cellSize; // отнимем ширину самого 13го
+    }
+    if (rect.x <= matrixFlexibleCol && rect.x + rect.w > matrixFlexibleCol) {
+      w += this.thirteenthWidthPlusGap;
+      w -= this.cellSize; // отнимем ширину самого 13го
+    }
+
+    return new DOMRect(x, y, w, h);
   }
 
   domRectToMatrixRect(domRect: DOMRect): IMatrixRect {

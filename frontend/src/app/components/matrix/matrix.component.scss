@@ -6,7 +6,7 @@
 
   .grid {
     display: grid;
-    grid-auto-columns: var(--matrix-cell-size);
+    grid-template-columns: repeat(12, var(--matrix-cell-size)) minmax(var(--matrix-cell-size), 1fr) repeat(4, var(--matrix-cell-size));
     grid-auto-rows: var(--matrix-cell-size);
     gap: var(--matrix-gap);
     width: 100%;
