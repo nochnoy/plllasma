@@ -366,12 +366,20 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
     // Учтём влияние тянущегося столбца
     if (rect.x > matrixFlexibleCol) {
-      x += this.thirteenthWidthPlusGap;
+      x += this.thirteenthWidth;
       x -= this.cellSize; // отнимем ширину самого 13го
+      if (this.thirteenthWidth > this.cellSize) {
+        // Не знаю что это за эффект. Растянутый 13й перестаёт совпадать на 1 гап. Пока не пойму что это - костыль.
+        x += this.gap;
+      }
     }
     if (rect.x <= matrixFlexibleCol && rect.x + rect.w > matrixFlexibleCol) {
-      w += this.thirteenthWidthPlusGap;
+      w += this.thirteenthWidth;
       w -= this.cellSize; // отнимем ширину самого 13го
+      if (this.thirteenthWidth > this.cellSize) {
+        // Не знаю что это за эффект. Растянутый 13й перестаёт совпадать на 1 гап. Пока не пойму что это - костыль.
+        w += this.gap;
+      }
     }
 
     return new DOMRect(x, y, w, h);
