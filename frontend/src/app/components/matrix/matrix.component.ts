@@ -34,7 +34,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   cellSize: number = matrixCellSize;
   gap = matrixGap;
   cellSizePlusGap: number = matrixCellSize + matrixGap;
-  thirteenthWidth: number = 0; // ширина 13го столбца
+  flexColWidth: number = 0; // ширина 13го столбца
   thirteenthWidthPlusGap: number = 0; // ширина 13го столбца с гапом
 
   mouseX = 0;
@@ -193,8 +193,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
     const mr = this.matrixRect;
     if (!this.cellSize || rect.x !== mr.x || rect.y !== mr.y || rect.width !== mr.width || rect.height !== mr.height) {
       this.matrixRect = rect;
-      this.thirteenthWidth = Math.max(this.cellSize, rect.width - ((matrixColsCount - 1) * this.cellSizePlusGap) - this.gap);
-      this.thirteenthWidthPlusGap = this.thirteenthWidth + matrixGap;
+      this.flexColWidth = Math.max(this.cellSize, rect.width - ((matrixColsCount - 1) * this.cellSizePlusGap) - this.gap);
+      this.thirteenthWidthPlusGap = this.flexColWidth + matrixGap;
       this.updateSelectionRect();
       if (this.matrix.objects) {
         this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));
@@ -366,17 +366,17 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
     // Учтём влияние тянущегося столбца
     if (rect.x > matrixFlexibleCol) {
-      x += this.thirteenthWidth;
+      x += this.flexColWidth;
       x -= this.cellSize; // отнимем ширину самого 13го
-      if (this.thirteenthWidth > this.cellSize) {
+      if (this.flexColWidth > this.cellSize) {
         // Не знаю что это за эффект. Растянутый 13й перестаёт совпадать на 1 гап. Пока не пойму что это - костыль.
         x += this.gap;
       }
     }
     if (rect.x <= matrixFlexibleCol && rect.x + rect.w > matrixFlexibleCol) {
-      w += this.thirteenthWidth;
+      w += this.flexColWidth;
       w -= this.cellSize; // отнимем ширину самого 13го
-      if (this.thirteenthWidth > this.cellSize) {
+      if (this.flexColWidth > this.cellSize) {
         // Не знаю что это за эффект. Растянутый 13й перестаёт совпадать на 1 гап. Пока не пойму что это - костыль.
         w += this.gap;
       }
@@ -386,12 +386,22 @@ export class MatrixComponent implements OnInit, OnDestroy {
   }
 
   domRectToMatrixRect(domRect: DOMRect): IMatrixRect {
-    const result = {
-      x: Math.round(domRect.left    / this.cellSizePlusGap),
-      y: Math.round(domRect.top     / this.cellSizePlusGap),
-      w: Math.round(domRect.width   / this.cellSizePlusGap),
-      h: Math.round(domRect.height  / this.cellSizePlusGap),
-    };
+    let x = -1;
+    let y = Math.round(domRect.top     / this.cellSizePlusGap);
+    let w = Math.round(domRect.width   / this.cellSizePlusGap);
+    let h = Math.round(domRect.height  / this.cellSizePlusGap);
+
+    const w13start = matrixFlexibleCol * this.cellSizePlusGap;
+    const w13end = w13start + this.thirteenthWidthPlusGap;
+    if (domRect.left < w13start) {
+      x = Math.round(domRect.left    / this.cellSizePlusGap);
+    } else if (domRect.left <= w13end) {
+      x = matrixFlexibleCol;
+    } else if (domRect.left > w13end) {
+      x = matrixFlexibleCol + 1 + Math.round((domRect.left - w13end) / this.cellSizePlusGap);
+    }
+
+    const result = {x, y, w, h};
 
     result.w = Math.max(1, result.w);
     result.h = Math.max(1, result.h);
