@@ -4,7 +4,7 @@ export const matrixCellSize = 2 * Const.remInPixels; // должна быть р
 export const matrixGap = Math.round(0.5 * Const.remInPixels); // должна быть равна css-переменной --matrix-gap
 export const matrixDragTreshold = 4;
 export const matrixColsCount = 17;
-export const matrixFlexibleCol = 12; // 13й тянущийся столбец (считаем с нуля)
+export const matrixFlexCol = 12; // 13й тянущийся столбец (считаем с нуля)
 
 export interface IMatrix {
   objects: IMatrixObject[];

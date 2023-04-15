@@ -10,7 +10,7 @@ import {
   IMatrix,
   IMatrixObject,
   matrixDragTreshold,
-  IMatrixRect, matrixColsCount, matrixCellSize, matrixGap, matrixFlexibleCol
+  IMatrixRect, matrixColsCount, matrixCellSize, matrixGap, matrixFlexCol
 } from "../../model/matrix.model";
 import {Channel} from "../../model/messages/channel.model";
 
@@ -35,7 +35,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   gap = matrixGap;
   cellSizePlusGap: number = matrixCellSize + matrixGap;
   flexColWidth: number = 0; // ширина 13го столбца
-  thirteenthWidthPlusGap: number = 0; // ширина 13го столбца с гапом
+  flexColWidthPlusGap: number = 0; // ширина 13го столбца с гапом
 
   mouseX = 0;
   mouseY = 0;
@@ -194,7 +194,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
     if (!this.cellSize || rect.x !== mr.x || rect.y !== mr.y || rect.width !== mr.width || rect.height !== mr.height) {
       this.matrixRect = rect;
       this.flexColWidth = Math.max(this.cellSize, rect.width - ((matrixColsCount - 1) * this.cellSizePlusGap) - this.gap);
-      this.thirteenthWidthPlusGap = this.flexColWidth + matrixGap;
+      this.flexColWidthPlusGap = this.flexColWidth + matrixGap;
       this.updateSelectionRect();
       if (this.matrix.objects) {
         this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));
@@ -318,7 +318,16 @@ export class MatrixComponent implements OnInit, OnDestroy {
         this.transform.object.w * this.cellSizePlusGap - this.gap,
         this.transform.object.h * this.cellSizePlusGap - this.gap,
       );
-      this.transform.resultMatrixRect = this.domRectToMatrixRect(this.transform.resultDomRect);
+      const resultMatrixRect = this.domRectToMatrixRect(this.transform.resultDomRect);
+
+      // Если таскаемый объект над 13м столбцом - посчитаем как он должен деформироваться
+      const flexColCapacity = Math.floor(this.flexColWidthPlusGap / this.cellSizePlusGap); // ширина 13го в клетках
+      const leftSide = Math.max(0, resultMatrixRect.w - Math.max(0, matrixFlexCol - resultMatrixRect.x)) // часть блока слева от 13го столбца
+      const rightSide = Math.max(0, resultMatrixRect.w - leftSide); // правая часть
+      resultMatrixRect.w = leftSide + rightSide;
+
+      this.transform.resultMatrixRect = resultMatrixRect;
+
       this.shadowRect = this.matrixRectToDomRect(this.keepInBoundaries(this.transform.resultMatrixRect));
     }
   }
@@ -365,7 +374,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
     const h = rect.h * this.cellSizePlusGap - this.gap;
 
     // Учтём влияние тянущегося столбца
-    if (rect.x > matrixFlexibleCol) {
+    if (rect.x > matrixFlexCol) {
       x += this.flexColWidth;
       x -= this.cellSize; // отнимем ширину самого 13го
       if (this.flexColWidth > this.cellSize) {
@@ -373,7 +382,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
         x += this.gap;
       }
     }
-    if (rect.x <= matrixFlexibleCol && rect.x + rect.w > matrixFlexibleCol) {
+    if (rect.x <= matrixFlexCol && rect.x + rect.w > matrixFlexCol) {
       w += this.flexColWidth;
       w -= this.cellSize; // отнимем ширину самого 13го
       if (this.flexColWidth > this.cellSize) {
@@ -391,14 +400,14 @@ export class MatrixComponent implements OnInit, OnDestroy {
     let w = Math.round(domRect.width   / this.cellSizePlusGap);
     let h = Math.round(domRect.height  / this.cellSizePlusGap);
 
-    const w13start = matrixFlexibleCol * this.cellSizePlusGap;
-    const w13end = w13start + this.thirteenthWidthPlusGap;
+    const w13start = matrixFlexCol * this.cellSizePlusGap;
+    const w13end = w13start + this.flexColWidthPlusGap;
     if (domRect.left < w13start) {
       x = Math.round(domRect.left    / this.cellSizePlusGap);
     } else if (domRect.left <= w13end) {
-      x = matrixFlexibleCol;
+      x = matrixFlexCol;
     } else if (domRect.left > w13end) {
-      x = matrixFlexibleCol + 1 + Math.round((domRect.left - w13end) / this.cellSizePlusGap);
+      x = matrixFlexCol + 1 + Math.round((domRect.left - w13end) / this.cellSizePlusGap);
     }
 
     const result = {x, y, w, h};
