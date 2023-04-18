@@ -318,16 +318,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
         this.transform.object.w * this.cellSizePlusGap - this.gap,
         this.transform.object.h * this.cellSizePlusGap - this.gap,
       );
-      const resultMatrixRect = this.domRectToMatrixRect(this.transform.resultDomRect);
 
-      // Если таскаемый объект над 13м столбцом - посчитаем как он должен деформироваться
-      const flexColCapacity = Math.floor(this.flexColWidthPlusGap / this.cellSizePlusGap); // ширина 13го в клетках
-      const leftSide = Math.max(0, resultMatrixRect.w - Math.max(0, matrixFlexCol - resultMatrixRect.x)) // часть блока слева от 13го столбца
-      const rightSide = Math.max(0, resultMatrixRect.w - leftSide); // правая часть
-      resultMatrixRect.w = leftSide + rightSide;
-
-      this.transform.resultMatrixRect = resultMatrixRect;
-
+      this.transform.resultMatrixRect =  this.domRectToMatrixRect(this.transform.resultDomRect);
       this.shadowRect = this.matrixRectToDomRect(this.keepInBoundaries(this.transform.resultMatrixRect));
     }
   }
@@ -400,6 +392,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
     let w = Math.round(domRect.width   / this.cellSizePlusGap);
     let h = Math.round(domRect.height  / this.cellSizePlusGap);
 
+    // Учитываем смещение 13го столбца и столбцов за ним
     const w13start = matrixFlexCol * this.cellSizePlusGap;
     const w13end = w13start + this.flexColWidthPlusGap;
     if (domRect.left < w13start) {
@@ -410,12 +403,20 @@ export class MatrixComponent implements OnInit, OnDestroy {
       x = matrixFlexCol + 1 + Math.round((domRect.left - w13end) / this.cellSizePlusGap);
     }
 
-    const result = {x, y, w, h};
+    // На 13м столбце реальная ширина объекта может сжаться чтобы сохранить его визуальную ширину
+    if (x <= matrixFlexCol && matrixFlexCol <= x + w - 1) {
+      const flexColCapacity = Math.floor(this.flexColWidthPlusGap / this.cellSizePlusGap); // ширина 13го в клетках
+      const leftSide = Math.max(0, w - Math.max(0, x + w - matrixFlexCol)) // часть блока слева от 13го столбца
+      const rightSide = Math.max(0, w - leftSide); // правая часть
+      const rightSideShrinked = rightSide ? Math.max(1, rightSide - flexColCapacity) : 0;
+      w = leftSide + rightSideShrinked;
+    }
 
-    result.w = Math.max(1, result.w);
-    result.h = Math.max(1, result.h);
+    // Соблюдаем границы
+    w = Math.max(1, w);
+    h = Math.max(1, h);
 
-    return result;
+    return {x, y, w, h};
   }
 
   // Если rect оказался за пределами матрицы - поправит его
