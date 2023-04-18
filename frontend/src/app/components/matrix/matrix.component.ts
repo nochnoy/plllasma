@@ -312,9 +312,16 @@ export class MatrixComponent implements OnInit, OnDestroy {
     if (this.transform && this.mouseDownPoint) {
       const shiftX = this.mouseX - this.mouseDownPoint.x;
       const shiftY = this.mouseY - this.mouseDownPoint.y;
+
+      let flexColShift = 0;
+      if (this.transform.object.x > matrixFlexCol) {
+        // Учтём ширину резинового столбца
+        flexColShift = this.flexColWidthPlusGap - this.cellSize;
+      }
+
       this.transform.resultDomRect = new DOMRect(
-        (this.transform.object.x  * this.cellSizePlusGap) + shiftX,
-        (this.transform.object.y  * this.cellSizePlusGap) + shiftY,
+        (this.transform.object.x   * this.cellSizePlusGap) + flexColShift + shiftX,
+        (this.transform.object.y   * this.cellSizePlusGap) + shiftY,
         this.transform.object.w * this.cellSizePlusGap - this.gap,
         this.transform.object.h * this.cellSizePlusGap - this.gap,
       );
