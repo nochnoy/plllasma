@@ -22,9 +22,10 @@ export class SelectionComponent {
     private elementRef: ElementRef
   ) { }
 
+  isMouseDownAndMoving = false;
+  isDragStarted = false;
   mouseDownPoint?: DOMPoint;
   mouseDownPart?: SelectionPart;
-  isMouseDownAndMoving = false;
   mouseX = 0;
   mouseY = 0;
 
@@ -67,6 +68,7 @@ export class SelectionComponent {
   }
 
   startDrag(): void {
+    this.isDragStarted = true;
     this.dragStart.emit();
   }
 
@@ -130,7 +132,10 @@ export class SelectionComponent {
   }
 
   endDrag(): void {
-    this.dragEnd.emit();
+    if (this.isDragStarted) {
+      this.dragEnd.emit();
+      this.isDragStarted = false;      
+    }
   }
 
   onMouseDown(event: MouseEvent, part: SelectionPart): void {
