@@ -410,13 +410,17 @@ export class MatrixComponent implements OnInit, OnDestroy {
       x = matrixFlexCol + 1 + Math.round((domRect.left - w13end) / this.cellSizePlusGap);
     }
 
-    // На 13м столбце реальная ширина объекта может сжаться чтобы сохранить его визуальную ширину
+    // Определяем ширину куска оказавшегося над 13м столбцом, сокращаем её до 1
+    // и соответственно меняем ширину объекта чтобы он не выглядел увеличенным
     if (x <= matrixFlexCol && matrixFlexCol <= x + w - 1) {
+      const xVisual = Math.round(domRect.left / this.cellSizePlusGap); // x если бы все столбцы были одинаковые
+      const xShift = xVisual - x; // на сколько смещён x внутри 13го стоблца
       const flexColCapacity = Math.floor(this.flexColWidthPlusGap / this.cellSizePlusGap); // ширина 13го в клетках
       const leftSide = Math.max(0, w - Math.max(0, x + w - matrixFlexCol)) // часть блока слева от 13го столбца
-      const rightSide = Math.max(0, w - leftSide); // правая часть
-      const rightSideShrinked = rightSide ? Math.max(1, rightSide - flexColCapacity) : 0;
-      w = leftSide + rightSideShrinked;
+      const inAndRightSide = Math.max(0, w - leftSide); // внутренняя плюс правая часть
+      const shrinkSize = flexColCapacity - xShift;
+      const inAndRightSideShrinked = Math.max(1, inAndRightSide - shrinkSize);
+      w = leftSide + inAndRightSideShrinked;
     }
 
     // Соблюдаем границы
