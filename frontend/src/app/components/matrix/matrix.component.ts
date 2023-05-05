@@ -303,6 +303,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
     if (!this.transform) {
       if (this.selectedObject) {
         this.createTransform();
+        this.raskukojTransform();
         this.updateSelectionRect();
       }
     }
@@ -354,6 +355,41 @@ export class MatrixComponent implements OnInit, OnDestroy {
       this.select(this.mouseDownObject);
     }
     return undefined;
+  }
+
+  // 13й гибкий столбец ///////////////////////////////////////////////////////
+
+  skukojWidth(domRect: DOMRect, x: number, w: number): number {
+    // Определяем ширину куска оказавшегося над 13м столбцом, сокращаем её до 1
+    // и соответственно меняем ширину объекта чтобы он не выглядел увеличенным
+    if (x <= matrixFlexCol && matrixFlexCol <= x + w - 1) {
+      const xVisual = Math.round(domRect.left / this.cellSizePlusGap); // x если бы все столбцы были одинаковые
+      const xShift = xVisual - x; // на сколько смещён x внутри 13го стоблца
+      const flexColCapacity = Math.floor(this.flexColWidthPlusGap / this.cellSizePlusGap); // ширина 13го в клетках
+      const leftSide = Math.max(0, w - Math.max(0, x + w - matrixFlexCol)) // часть блока слева от 13го столбца
+      const inAndRightSide = Math.max(0, w - leftSide); // внутренняя плюс правая часть
+      const shrinkSize = flexColCapacity - xShift;
+      const inAndRightSideShrinked = Math.max(1, inAndRightSide - shrinkSize);
+      w = leftSide + inAndRightSideShrinked;
+    }
+    return w;
+  }
+
+  // Дёргается когда юзер начинает тащить/ресайзить блок
+  // Проверяет, не был ли блок на резиновом столбце и если да 
+  // то увеличивает ширину объекта на визуальную ширину 13го столбца
+  raskukojTransform(): void {
+    const transform = this.transform!!;
+    const x = transform.object.x;
+    const w = transform.object.w;
+    if (x <= matrixFlexCol && matrixFlexCol <= x + w - 1) {
+      // Блок находился на 13м столбце, значит увеличим его ширину на ширину столбца
+      const flexColCapacity = Math.round(this.flexColWidthPlusGap / this.cellSizePlusGap); // ширина 13го в клетках
+      const rakukojedWidth = w - 1 + flexColCapacity;
+      transform.resultMatrixRect.w = rakukojedWidth;
+      transform.object.w = rakukojedWidth;
+      transform.resultDomRect.width = rakukojedWidth * this.cellSizePlusGap;
+    }
   }
 
   // Прочая хрень /////////////////////////////////////////////////////////////
@@ -410,18 +446,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       x = matrixFlexCol + 1 + Math.round((domRect.left - w13end) / this.cellSizePlusGap);
     }
 
-    // Определяем ширину куска оказавшегося над 13м столбцом, сокращаем её до 1
-    // и соответственно меняем ширину объекта чтобы он не выглядел увеличенным
-    if (x <= matrixFlexCol && matrixFlexCol <= x + w - 1) {
-      const xVisual = Math.round(domRect.left / this.cellSizePlusGap); // x если бы все столбцы были одинаковые
-      const xShift = xVisual - x; // на сколько смещён x внутри 13го стоблца
-      const flexColCapacity = Math.floor(this.flexColWidthPlusGap / this.cellSizePlusGap); // ширина 13го в клетках
-      const leftSide = Math.max(0, w - Math.max(0, x + w - matrixFlexCol)) // часть блока слева от 13го столбца
-      const inAndRightSide = Math.max(0, w - leftSide); // внутренняя плюс правая часть
-      const shrinkSize = flexColCapacity - xShift;
-      const inAndRightSideShrinked = Math.max(1, inAndRightSide - shrinkSize);
-      w = leftSide + inAndRightSideShrinked;
-    }
+    w = this.skukojWidth(domRect, x, w);
 
     // Соблюдаем границы
     w = Math.max(1, w);
