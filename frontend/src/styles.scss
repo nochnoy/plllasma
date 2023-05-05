@@ -28,10 +28,11 @@
   --color-pagination: #4b4b4b;
   --color-selection-frame: #4b4b4b;
 
-  --z-selection: 11;
+  --z-matrix-bg: -1;
   --z-matrix-items: 1;
+  --z-matrix-drag-item-placeholder: 9;  
   --z-matrix-drag-item: 10;
-  --z-matrix-drag-item-placeholder: 9;
+  --z-selection: 11;  
 
   --border-radius: 3px;
   --margin-standard: 0.4rem;
@@ -49,6 +50,9 @@
 
   --matrix-cell-size: 2rem; // должна быть равна константе matrixCellSize
   --matrix-gap: 0.5rem; // должна быть равна константе matrixGap
+  --matrix-cols-count: 17; // должна быть равна константе matrixColsCount
+  --matrix-flex-col: 12; // должна быть равна константе matrixFlexCol
+  --matrix-right-cols-count: calc(var(--matrix-cols-count) - var(--matrix-flex-col) - 1); // кол-во столбцов справа от резинового
 
   --selection-handle-size: 11px;
 

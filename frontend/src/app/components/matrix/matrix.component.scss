@@ -4,6 +4,35 @@
   min-width: 600px;
   min-height: 10px; // чтобы она раскукожилась. А то её размер зависит от cellSize а cellSize зависит от её размера.
 
+  .bg {
+    position: relative;
+    z-index: var(--z-matrix-bg); 
+    left: 0;
+    right: 0;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: stretch;
+    align-items: stretch;
+    opacity: 0.3;
+
+    :nth-child(1) {
+      display: inline-block;
+      background-color: gold;
+      min-width: calc((var(--matrix-cell-size) + var(--matrix-gap)) * var(--matrix-flex-col));
+    }
+    :nth-child(2) {
+      display: inline-block;
+      background-color: red;
+      flex-grow: 1;
+    }
+    :nth-child(3) {
+      display: inline-block;
+      background-color: greenyellow;
+      min-width: calc((var(--matrix-cell-size) + var(--matrix-gap)) * var(--matrix-right-cols-count));
+    }
+  }
+
   .grid {
     display: grid;
     grid-template-columns: repeat(12, var(--matrix-cell-size)) minmax(var(--matrix-cell-size), 1fr) repeat(4, var(--matrix-cell-size));
@@ -12,11 +41,6 @@
     width: 100%;
     height: 100%;
   }
-
-  &.dragging {
-    background-color: #bebebe;
-  }
-
 }
 
 .item {
