@@ -18,18 +18,20 @@
 
     :nth-child(1) {
       display: inline-block;
-      background-color: gold;
+      background-image: url('~src/assets/img/matrix-bg.png');
       min-width: calc((var(--matrix-cell-size) + var(--matrix-gap)) * var(--matrix-flex-col));
     }
     :nth-child(2) {
       display: inline-block;
-      background-color: red;
+      background-image: url('~src/assets/img/matrix-flex-bg.png');
+      background-size: calc(100% - var(--matrix-gap)) calc(var(--matrix-cell-size) + var(--matrix-gap));
+      background-repeat: repeat-y;
       flex-grow: 1;
     }
     :nth-child(3) {
       display: inline-block;
-      background-color: greenyellow;
-      min-width: calc((var(--matrix-cell-size) + var(--matrix-gap)) * var(--matrix-right-cols-count));
+      background-image: url('~src/assets/img/matrix-bg.png');
+      min-width: calc(((var(--matrix-cell-size) + var(--matrix-gap)) * var(--matrix-right-cols-count)) - var(--matrix-gap));
     }
   }
 
