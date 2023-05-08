@@ -6,24 +6,22 @@
     <ng-container *ngIf="channel">
       <header>
         <h1 [class.spinner]="channel.spinner">{{channel.name}}</h1>
+        <div *ngIf="channelModel?.id === 12">
+          <button mat-button [matMenuTriggerFor]="menu">Редактировать ▾</button>
+          <mat-menu #menu="matMenu">
+            <button mat-menu-item>Добавить текст</button>
+            <button mat-menu-item>Добавить изображение</button>            
+            <button mat-menu-item>Добавить заголовок</button>
+            <button mat-menu-item>Добавить ссылку на канал</button>
+            <button mat-menu-item (click)="openDialog()">Настройки канала</button>
+          </mat-menu>
+        </div>        
       </header>
 
       <ng-container *ngIf="channelModel?.id === 12">
-
         <ng-container *ngIf="channelModel?.matrix">
           <app-matrix [channel]="channelModel!" (changed)="onMatrixChanged()"></app-matrix>
         </ng-container>
-
-        <div>
-          <button mat-button [matMenuTriggerFor]="menu">Menu</button>
-          <mat-menu #menu="matMenu">
-            <button mat-menu-item>Item 1</button>
-            <button mat-menu-item>Item 2</button>
-          </mat-menu>
-
-          <button mat-button (click)="openDialog()">Open dialog</button>
-        </div>
-
       </ng-container>
 
       <div class="form">
