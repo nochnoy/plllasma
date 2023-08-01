@@ -24,6 +24,14 @@ define("COOKIE_KEY_CODE", "contortion_key");
 define("PATH_TO_STORAGE", "../../attachments/");
 define("MAX_STARRED_THREADS", 20); // порог кол-ва новых сообщений после которого перестаём строить серые ветки
 define("PAGE_SIZE", 50);
+define("TRASH_PLACE", 21); // <<<<<<<<<<<<<<<<<<<<<<<
+define("ROLE_READER", 0);
+define("ROLE_WRITER", 1);
+define("ROLE_MODERATOR", 2);
+define("ROLE_ADMIN", 3);
+define("ROLE_OWNER", 4);
+define("ROLE_GOD", 5);
+define("ROLE_NOBODY", 9);
 
 $allowed_http_origins = [
     "https://plllasma.ru",

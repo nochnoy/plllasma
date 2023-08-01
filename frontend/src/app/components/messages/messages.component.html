@@ -24,6 +24,7 @@
 
         <!-- Оригинал сообщения юзер НЕ видит когда выделит своё собственное сообщение -->
         <ng-container *ngIf="!(message === channelService.selectedMessage && channelService.selectedMessageEditing)">
+          <!-- <<<<<<<<<<< -->{{message.id}}<!-- <<<<<<<<<<< -->
           <p *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></p>
         </ng-container>
         <!-- Юзер выделил своё собственное сообщение. Покажем его в режиме редактирования. -->
@@ -53,6 +54,11 @@
             <a href class="like-button" [class.selected]="message.myLike === 'heh'" (click)="onLikeClick($event, message, 'heh')" title="Хе-хе">😄<ng-container *ngIf="message.heh"> {{message.heh}}</ng-container></a>
             <a href class="like-button" [class.selected]="message.myLike === 'nep'" (click)="onLikeClick($event, message, 'nep')" title="Непонятно">🤔<ng-container *ngIf="message.nep"> {{message.nep}}</ng-container></a>
             <a href class="like-button" [class.selected]="message.myLike === 'ogo'" (click)="onLikeClick($event, message, 'ogo')" title="ОГО">😵<ng-container *ngIf="message.ogo"> {{message.ogo}}</ng-container></a>
+
+            <div class="moderate" *ngIf="canModerate">
+              <a href class="like-button" (click)="onTrashClick($event, message)" title="В мусор">🗑️ В мусор</a>
+            </div>
+
             <div class="message-date">{{message.timeCreated | plasmadate}}</div>
           </div>
 
@@ -110,7 +116,12 @@
 
     </ng-container><!-- ngSwitch -->
 
-    <app-messages *ngIf="showChildren && message.children && message.children.length > 0" [placeId]="placeId" [messages]="message.children"></app-messages>
+    <app-messages
+      *ngIf="showChildren && message.children && message.children.length > 0"
+      [placeId]="placeId"
+      [canModerate]="canModerate"
+      [messages]="message.children">
+    </app-messages>
 
   </div>
 </ng-container>

@@ -34,6 +34,9 @@ export class MessagesComponent {
   @Input('showChildren')
   public showChildren: boolean = true;
 
+  @Input('canModerate')
+  public canModerate: boolean = false;
+
   public unshlop(event: any, message: Message) {
     event.preventDefault();
     if (message instanceof ShlopMessage) {
@@ -67,6 +70,17 @@ export class MessagesComponent {
       ).subscribe();
       message[like]++;
       message.myLike = like;
+    }
+  }
+
+  onTrashClick(event: any, message: Message): void {
+    event.preventDefault();
+    if (window.confirm('Удалить сообщение и подсообщения в Мусорку?')) {
+      this.httpService.trashMessage(message.id).pipe(
+        tap(() => {
+          this.channelService.invalidateChannel(this.placeId);
+        })
+      ).subscribe();
     }
   }
 

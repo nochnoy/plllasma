@@ -30,9 +30,9 @@
 
   --z-matrix-bg: -1;
   --z-matrix-items: 1;
-  --z-matrix-drag-item-placeholder: 9;  
+  --z-matrix-drag-item-placeholder: 9;
   --z-matrix-drag-item: 10;
-  --z-selection: 11;  
+  --z-selection: 11;
 
   --border-radius: 3px;
   --margin-standard: 0.4rem;
@@ -396,6 +396,10 @@ textarea {
   flex-direction: row;
   align-items: center;
   margin-top: 0.4rem;
+
+  .moderate {
+    margin-left: 1rem;
+  }
 
   &.liked {
     pointer-events: none;

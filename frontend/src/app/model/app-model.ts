@@ -75,6 +75,7 @@ export interface IChannel {
   time_changed: string;
   time_viewed: string;
   weight: number;
+  canModerate: boolean;
   selected?: boolean;
   time_viewed_deferred?: string;
   spinner?: boolean;
@@ -95,7 +96,8 @@ export const EMPTY_CHANNEL: IChannel = {
   description: '',
   time_changed: '',
   time_viewed: '',
-  weight: 0
+  weight: 0,
+  canModerate: false
 }
 
 export interface IAttachment {

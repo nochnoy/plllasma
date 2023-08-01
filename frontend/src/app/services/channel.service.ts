@@ -59,7 +59,11 @@ export class ChannelService {
         });
         this.cities = this.cities.sort((a, b) => a.channel.weight - b.channel.weight);
 
-        this.channels.forEach((channel) => channel.shortName = channel.name.substr(0, 14));
+        this.channels.forEach((channel) => {
+          const rawChannel = channel as any;
+          channel.shortName = channel.name.substr(0, 14);
+          channel.canModerate = (rawChannel.role === 5);
+        });
       }),
       switchMap(() => of(true))
     );
@@ -121,9 +125,10 @@ export class ChannelService {
       return; // Нельзя селектить пока не завершим редактирование сообщения
     }
     this.selectedMessage = message;
+    /* <<<<<<<<<<<<<<<<<<<<< временно убрал редактирование своих сообщений чтоб можно было отвечать на них
     if (message.nick === this.userService.user.nick) {
       this.startMessageEditing();
-    }
+    }*/
   }
 
   unselectMessage(): void {
