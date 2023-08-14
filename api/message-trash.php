@@ -31,8 +31,9 @@ if ($message = mysqli_fetch_assoc($result)) {
 	$childrenIds = getChildrenMessageIds($messageId, intval($message['id_first_parent']));
 
 	// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-	echo(json_encode($childrenIds));
+	echo(json_encode($childrenIds, JSON_PARTIAL_OUTPUT_ON_ERROR));
 	die();
+	// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 	// Если у сообщения был родитель - значит скопируем родителя и сделаем его firstParent'ом новой ветки
 	// Если сообщение само было firstParent'ом - значит так и останется
@@ -119,7 +120,6 @@ function &getChildrenMessageIds($messageId, $messageFirstParentId) {
 	$log = array(); // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 	if (empty($messageFirstParentId)) { // значит что он сам firstParent
-		echo('Он сам firstParent');
 		$oldFirstParent = $messageId;
 	} else {
 		$oldFirstParent = $messageFirstParentId;
@@ -143,22 +143,41 @@ function &getChildrenMessageIds($messageId, $messageFirstParentId) {
 			$rec->parent = NULL;
 		} else {
 			$rec->parent = &getOrCreateRec($messagesByIds, $rec->id_parent);
+			// Если у парента нет такой ноды - добавим её
+			$childExistsInParent = false;
+			foreach ($rec->parent->children as $child) {
+				if ($child->id_message == $rec->id_message) {
+					$childExistsInParent = true;
+					break;
+				}
+			}
+			if (!$childExistsInParent) {
+				$parent = &$rec->parent;
+				$children = &$parent->children;
+				$rec->parent->children[] = &$rec; // array_push не работает с ссылками, добавляем так
+			}
 		}
 
 		if ($rec->id_message == $messageId) {
 			$ourMessageRef = &$rec; // Это ссылка на искомое сообщение в дереве
+			if (empty($messageFirstParentId)) {
+				$firstParentRef = &$rec; // Удаляемое сообщение - и есть рутовое
+			}
 		}
-		if ($rec->id_message == $messageFirstParentId) {
-			$firstParentRef = &$rec; // Это ссылка на рутовое сообщение дерева
+
+		if (!empty($messageFirstParentId)) {
+			if ($rec->id_message == $messageFirstParentId) {
+				$firstParentRef = &$rec; // Это ссылка на рутовое сообщение дерева
+			}
 		}
 		
 	}
 
 	$result = (object)[
 		'log' => $log,
-		'message' => $ourMessageRef,
-		'firstParent' => $firstParentRef,
-		'allThreadMessages' => $messagesByIds
+		'message' => getMessageDigest($ourMessageRef),
+		'firstParent' => getMessageDigest($firstParentRef),
+		'digest' => getMessagesDigest($messagesByIds)
 	];
 
 	return $result;
@@ -182,5 +201,52 @@ function &getOrCreateRec(&$messagesByIds, $messageId) {
 	}
 	return $rec;
 };
+
+// Строит краткую инфу по всем сообщениям и их детям/родителям
+function getMessagesDigest(&$messagesByIds) {
+	$digest = array();
+	foreach ($messagesByIds as $message) {
+		$s = getMessageDigest($message);
+		array_push($digest, $s);
+	}
+	return $digest;
+}
+function getMessageDigest(&$message) {
+	$digest = 'NONE';
+	if (!empty($message)) {
+
+		$parentDigest = 'NONE';
+		if (!empty($message->parent)) {
+			$parentDigest = ''
+				. '{' 
+				. 'id:'  . $message->parent->id_message 
+				. '|idp:' . $message->parent->id_parent
+				. '|p' 	 . ( empty($message->parent->parent) ? 'NONE' : $message->parent->parent->id_message )
+				. '}'
+				;
+		}
+
+		$childrenDigest = 'NONE';
+		if (!empty($message->children)) {
+			$childrenDigest = '';
+			foreach ($message->children as $child) {
+				$childrenDigest .= ''
+					. '{' 
+					. 'id:'  . $child->id_message 
+					. '|idp' . $child->id_parent
+					. '|p' 	 . ( empty($child->parent) ? 'NONE' : $child->parent->id_message )
+					. '}  '
+					;
+			}
+		}
+
+		$digest = 
+			'id:' . $message->id_message . ' ' .
+			'idparent:' . $message->id_parent . ' ' . 
+			'parent:' . $parentDigest . ' ' .
+			'children:' . $childrenDigest;
+	}
+	return '['.$digest.']';
+}
 
 ?>
