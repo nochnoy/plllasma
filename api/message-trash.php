@@ -117,7 +117,6 @@ function &getChildrenMessageIds($messageId, $messageFirstParentId) {
 	$messagesByIds = array();
 	$ourMessageRef = NULL;
 	$firstParentRef = NULL;
-	$log = array(); // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 	if (empty($messageFirstParentId)) { // значит что он сам firstParent
 		$oldFirstParent = $messageId;
@@ -136,7 +135,6 @@ function &getChildrenMessageIds($messageId, $messageFirstParentId) {
 	$result = $sql->get_result();
 	while ($row = mysqli_fetch_assoc($result)) {
 
-		array_push($log, $row['id_message']);
 		$rec = &getOrCreateRec($messagesByIds, intval($row['id_message']));
 		$rec->id_parent = (intval($row['id_parent']));
 		if (empty($rec->id_parent)) {
@@ -173,11 +171,16 @@ function &getChildrenMessageIds($messageId, $messageFirstParentId) {
 		
 	}
 
+	// Дерево построили, теперь пробежимся по нему, соберём айдишники
+
+	// Выводим результат
 	$result = (object)[
-		'log' => $log,
-		'message' => getMessageDigest($ourMessageRef),
-		'firstParent' => getMessageDigest($firstParentRef),
-		'digest' => getMessagesDigest($messagesByIds)
+		'childrenIds' => getIdsOfChildrenRecursively($ourMessageRef),
+		'debuggingInfo' => (object)[
+			'message' => getMessageDigest($ourMessageRef),
+			'messages' => getMessagesDigest($messagesByIds),
+			'firstParent' => getMessageDigest($firstParentRef)
+		]
 	];
 
 	return $result;
@@ -247,6 +250,19 @@ function getMessageDigest(&$message) {
 			'children:' . $childrenDigest;
 	}
 	return '['.$digest.']';
+}
+
+function getIdsOfChildrenRecursively(&$message) {
+	$result = array();
+	if (!empty($message->children)) {
+		foreach($message->children as $child) {
+			array_push($result, $child->id_message);
+			$subChildrenIds = getIdsOfChildrenRecursively($child);
+			$result = array_merge($result, $subChildrenIds);
+		}
+		$result = array_unique($result);
+	}
+	return $result;
 }
 
 ?>
