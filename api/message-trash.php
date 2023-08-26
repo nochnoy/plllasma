@@ -27,30 +27,28 @@ if ($message = mysqli_fetch_assoc($result)) {
 		]));
 	}
 
-	// Прежде чем что-то менять, соберём массив id детей
-	$childrenIds = getChildrenMessageIds($messageId, intval($message['id_first_parent']));
+	// Прежде чем что-то двигать, соберём массив id детей в исходном дереве
+	$result = getChildrenMessageIds($messageId, intval($message['id_first_parent']));
+	$childrenIds = $result->childrenIds;
 
-	// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-	echo(json_encode($childrenIds, JSON_PARTIAL_OUTPUT_ON_ERROR));
-	die();
-	// <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-	// Если у сообщения был родитель - значит скопируем родителя и сделаем его firstParent'ом новой ветки
-	// Если сообщение само было firstParent'ом - значит так и останется
 	if (!empty($message['id_parent'])) {
+		// Если у сообщения был родитель - значит скопируем родителя и сделаем его firstParent'ом новой ветки
 
 		// делаем копию родителя
 		$sql = $mysqli->prepare('
-			INSERT INTO tbl_messages
-			SELECT *
-			FROM tbl_messages
+			INSERT INTO tbl_messages (id_user, anonim, id_place, icon, nick, subject, message, time_created, children, id_first_parent, id_parent, attachments, emote_sps, emote_osj, 	emote_byn, emote_wut, emote_heh, emote_ogo, muted)
+			SELECT id_user, anonim, id_place, icon, nick, subject, message, time_created, children, id_first_parent, id_parent, attachments, emote_sps, emote_osj, 	emote_byn, emote_wut, emote_heh, emote_ogo, muted
+			FROM tbl_messages m
 			WHERE
 			id_message = ?
 			LIMIT 1
 		');
 		$sql->bind_param("i", $message['id_parent']);
 		$sql->execute();
-		$newFirstParentId = mysqli_insert_id($mysqli);
+
+		$newMessageParentId 		= mysqli_insert_id($mysqli);
+		$newMessageFirstParentId 	= mysqli_insert_id($mysqli);
+		$newChildrenFirstParentId 	= mysqli_insert_id($mysqli);
 
 		// меняем поля копии
 		$sql = $mysqli->prepare('
@@ -63,11 +61,16 @@ if ($message = mysqli_fetch_assoc($result)) {
 			id_message = ?
 			LIMIT 1
 		');
-		$sql->bind_param("ii", $trashPlaceId, $newFirstParentId);
+		$sql->bind_param("ii", $trashPlaceId, $newChildrenFirstParentId);
 		$sql->execute();
 
 	} else {
-		$newFirstParentId = $messageId;
+		// Если сообщение само было firstParent'ом - значит так и останется
+
+		$newMessageParentId 		= 0;
+		$newMessageFirstParentId 	= 0;
+		$newChildrenFirstParentId 	= $messageId;
+		
 	}
 
 	// переносим удаляемое в мусорку
@@ -81,23 +84,44 @@ if ($message = mysqli_fetch_assoc($result)) {
 		id_message = ?
 		LIMIT 1
 	');
-	$newParentId = $newFirstParentId == $messageId ? 0 : $newFirstParentId;
-	$newFirstParent = $newFirstParentId == $messageId ? 0 : $newFirstParentId;
 	$sql->bind_param(
 		"iiii", 
 		$trashPlaceId, 
-		$newParentId,
-		$newFirstParent,
+		$newMessageParentId,
+		$newMessageFirstParentId,
 		$messageId
 	);
 	$sql->execute();
 
-	// переносим детей в мусорку
-	// задаём детям firstParent
+	// переносим детей в мусорку и задаём им firstParent
+	if (count($childrenIds) > 0) {
+		
+		$types = 'ii' . str_repeat('i', count($childrenIds));
+
+		$values = array();
+		$values[] = $trashPlaceId;
+		$values[] = $newChildrenFirstParentId;
+		$values = array_merge($values, $childrenIds);
+
+		$childrenQuestions = str_repeat('?,', count($childrenIds) - 1) . '?';
+
+		$sql = '
+			UPDATE tbl_messages
+			SET
+			id_place = ?,
+			id_first_parent = ?
+			WHERE
+			id_message IN ('.$childrenQuestions.')
+		';
+		
+		$stmt = $mysqli->prepare($sql);
+		$stmt->bind_param($types, ...$values);
+		$stmt->execute();
+
+	}
 
 	// обновить кол-во детей в обеих ветках - старой и новой
 	// обновить звёздочки в обоих каналах
-
 
 	exit(json_encode((object)[
 		'success' => true
