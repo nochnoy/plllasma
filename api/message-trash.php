@@ -19,7 +19,7 @@ $sql->execute();
 $result = $sql->get_result();
 if ($message = mysqli_fetch_assoc($result)) {
 
-	// есть право сюда писать?
+	// ошибка: не может модерировать
 	if (!canTrash($message['id_place'])) {
 		exit(json_encode((object)[
 			'error'	  => 'access',
@@ -30,6 +30,14 @@ if ($message = mysqli_fetch_assoc($result)) {
 	$oldPlaceId 		= intval($message['id_place']);
 	$oldFirstParent 	= intval($message['id_first_parent']);
 	$oldMessageParentId = intval($message['id_parent']);
+
+	// ошибка: исходный и конечный каналы совпадают
+	if ($oldPlaceId == $trashPlaceId) {
+		exit(json_encode((object)[
+			'error'	  => 'sourceAndTargetChannelsAreEqual',
+			'success' => false,
+		]));
+	}
 
 	// Прежде чем что-то двигать, соберём массив id детей в исходном дереве
 	$result = getChildrenMessageIds($messageId, intval($message['id_first_parent']));
@@ -127,7 +135,7 @@ if ($message = mysqli_fetch_assoc($result)) {
 	// Посчитаем количество детей в старой ветке
 	$sql = $mysqli->prepare('
 		UPDATE tbl_messages
-		SET children = (SELECT COUNT(id_message) FROM (SELECT id_message FROM tbl_messages) as m WHERE id_first_parent = ?)
+		SET children = (SELECT COUNT(id_message) FROM (SELECT id_message, id_first_parent FROM tbl_messages) as m WHERE id_first_parent = ?)
 		WHERE id_message = ?
 		LIMIT 1
 	');
@@ -141,7 +149,7 @@ if ($message = mysqli_fetch_assoc($result)) {
 	// Посчитаем количество детей в новой ветке
 	$sql = $mysqli->prepare('
 		UPDATE tbl_messages
-		SET children = (SELECT COUNT(id_message) FROM (SELECT id_message FROM tbl_messages) as m WHERE id_first_parent = ?)
+		SET children = (SELECT COUNT(id_message) FROM (SELECT id_message, id_first_parent FROM tbl_messages) as m WHERE id_first_parent = ?)
 		WHERE id_message = ?
 		LIMIT 1
 	');

@@ -24,7 +24,6 @@
 
         <!-- Оригинал сообщения юзер НЕ видит когда выделит своё собственное сообщение -->
         <ng-container *ngIf="!(message === channelService.selectedMessage && channelService.selectedMessageEditing)">
-          <!-- <<<<<<<<<<< -->{{message.id}}<!-- <<<<<<<<<<< -->
           <p *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></p>
         </ng-container>
         <!-- Юзер выделил своё собственное сообщение. Покажем его в режиме редактирования. -->

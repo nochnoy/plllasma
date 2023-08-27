@@ -125,10 +125,9 @@ export class ChannelService {
       return; // Нельзя селектить пока не завершим редактирование сообщения
     }
     this.selectedMessage = message;
-    /* <<<<<<<<<<<<<<<<<<<<< временно убрал редактирование своих сообщений чтоб можно было отвечать на них
     if (message.nick === this.userService.user.nick) {
       this.startMessageEditing();
-    }*/
+    }
   }
 
   unselectMessage(): void {

@@ -141,10 +141,6 @@ export class AppService {
       });
     }
 
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    console.log('### addMessage$()');
-    console.log(formData);
-
     return this.httpClient.post(
       `${this.apiPath}/message-add.php`,
       formData,
