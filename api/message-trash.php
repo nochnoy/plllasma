@@ -27,6 +27,9 @@ if ($message = mysqli_fetch_assoc($result)) {
 		]));
 	}
 
+	$oldPlaceId = intval($message['id_place']);
+	$oldFirstParent = intval($message['id_first_parent']);
+
 	// Прежде чем что-то двигать, соберём массив id детей в исходном дереве
 	$result = getChildrenMessageIds($messageId, intval($message['id_first_parent']));
 	$childrenIds = $result->childrenIds;
@@ -120,8 +123,63 @@ if ($message = mysqli_fetch_assoc($result)) {
 
 	}
 
-	// обновить кол-во детей в обеих ветках - старой и новой
-	// обновить звёздочки в обоих каналах
+	// Посчитаем количество детей в старой ветке
+	$sql = $mysqli->prepare('
+		UPDATE tbl_messages
+		SET children = (SELECT COUNT(id_message) FROM (SELECT id_message FROM tbl_messages) as m WHERE id_first_parent = ?)
+		WHERE id_message = ?
+		LIMIT 1
+	');
+	$sql->bind_param(
+		"ii", 
+		$oldFirstParent, 
+		$oldFirstParent,
+	);
+	$sql->execute();
+
+	// Посчитаем количество детей в новой ветке
+	$sql = $mysqli->prepare('
+		UPDATE tbl_messages
+		SET children = (SELECT COUNT(id_message) FROM (SELECT id_message FROM tbl_messages) as m WHERE id_first_parent = ?)
+		WHERE id_message = ?
+		LIMIT 1
+	');
+	$sql->bind_param(
+		"ii", 
+		$newChildrenFirstParentId, 
+		$newChildrenFirstParentId,
+	);
+	$sql->execute();	
+
+	// Обновляем звёздочки на исходном канале
+	$sql = $mysqli->prepare('
+		UPDATE tbl_places
+		SET time_changed = (SELECT MAX(time_created) FROM (SELECT id_message, id_first_parent, time_created FROM tbl_messages) as m WHERE id_first_parent = ? OR id_message = ?)
+		WHERE id_place = ?
+		LIMIT 1
+	');
+	$sql->bind_param(
+		"iii",
+		$oldFirstParent,
+		$oldFirstParent,
+		$oldPlaceId,
+	);
+	$sql->execute();
+
+	// Обновляем звёздочки на Мусорке
+	$sql = $mysqli->prepare('
+		UPDATE tbl_places
+		SET time_changed = (SELECT MAX(time_created) FROM (SELECT id_message, id_first_parent, time_created FROM tbl_messages) as m WHERE id_first_parent = ? OR id_message = ?)
+		WHERE id_place = ?
+		LIMIT 1
+	');
+	$sql->bind_param(
+		"iii",
+		$newChildrenFirstParentId,
+		$newChildrenFirstParentId,
+		$trashPlaceId,
+	);
+	$sql->execute();	
 
 	exit(json_encode((object)[
 		'success' => true
