@@ -27,14 +27,15 @@ if ($message = mysqli_fetch_assoc($result)) {
 		]));
 	}
 
-	$oldPlaceId = intval($message['id_place']);
-	$oldFirstParent = intval($message['id_first_parent']);
+	$oldPlaceId 		= intval($message['id_place']);
+	$oldFirstParent 	= intval($message['id_first_parent']);
+	$oldMessageParentId = intval($message['id_parent']);
 
 	// Прежде чем что-то двигать, соберём массив id детей в исходном дереве
 	$result = getChildrenMessageIds($messageId, intval($message['id_first_parent']));
 	$childrenIds = $result->childrenIds;
 
-	if (!empty($message['id_parent'])) {
+	if (!empty($oldMessageParentId)) {
 		// Если у сообщения был родитель - значит скопируем родителя и сделаем его firstParent'ом новой ветки
 
 		// делаем копию родителя
@@ -46,7 +47,7 @@ if ($message = mysqli_fetch_assoc($result)) {
 			id_message = ?
 			LIMIT 1
 		');
-		$sql->bind_param("i", $message['id_parent']);
+		$sql->bind_param("i", $oldMessageParentId);
 		$sql->execute();
 
 		$newMessageParentId 		= mysqli_insert_id($mysqli);
@@ -180,6 +181,18 @@ if ($message = mysqli_fetch_assoc($result)) {
 		$trashPlaceId,
 	);
 	$sql->execute();	
+
+	// Переносим аттачменты 
+
+	moveAttachments($oldPlaceId, $trashPlaceId, [$messageId]);
+	moveAttachments($oldPlaceId, $trashPlaceId, $childrenIds);
+	if ($newMessageParentId != 0) {
+		// Переносимое сообщение не было рутовым, была сделана копия его парента
+		// Сделаем копии аттачментов парента
+		copyMessageAttachments($oldPlaceId, $trashPlaceId, $oldMessageParentId, $newMessageParentId);
+	}
+
+	// Готово
 
 	exit(json_encode((object)[
 		'success' => true
@@ -345,6 +358,79 @@ function getIdsOfChildrenRecursively(&$message) {
 		$result = array_unique($result);
 	}
 	return $result;
+}
+
+function moveAttachments($sourcePlaceId, $targetPlaceId, $messageIds) {
+	if (!file_exists('../attachments/' . $targetPlaceId)) {
+		mkdir('../attachments/' . $targetPlaceId, 0777);
+	}
+
+	$pathFrom = '../attachments/' . $sourcePlaceId . '/';
+	$pathTo = '../attachments/' . $targetPlaceId . '/';
+
+	for ($i = 0; $i < count($messageIds); $i++) {
+		$j = 0;
+		while (true) {
+			$body = $messageIds[$i] . '_' . $j;
+			$fileList = glob($pathFrom . $body . '.*');
+			if (count($fileList) > 0) {
+
+				// сам файл
+				$extension = getFileExtension($fileList[0]);
+				$from = $pathFrom . $body . '.' . $extension;
+				$to = $pathTo . $body . '.' . $extension;
+
+				if (copy($from, $to)) {
+					unlink($from);
+				}
+
+				// тумбнейл
+				$from = $pathFrom . $body . 't.jpg';
+				$to = $pathTo . $body . 't.jpg';
+
+				if (copy($from, $to)) {
+					unlink($from);
+				}
+
+				$j++;
+			} else {
+				break;
+			}
+		}
+	}
+}
+
+function copyMessageAttachments($sourcePlaceId, $targetPlaceId, $sourceMessageId, $targetMessageId) {
+	if (!file_exists('../attachments/' . $targetPlaceId)) {
+		mkdir('../attachments/' . $targetPlaceId, 0777);
+	}
+
+	$pathFrom = '../attachments/' . $sourcePlaceId . '/';
+	$pathTo = '../attachments/' . $targetPlaceId . '/';
+
+	$j = 0;
+	while (true) {
+		$sourceFileName = $sourceMessageId . '_' . $j;
+		$targetFileName = $targetMessageId . '_' . $j;
+		$fileList = glob($pathFrom . $sourceFileName . '.*');
+		if (count($fileList) > 0) {
+
+			// сам файл
+			$extension = getFileExtension($fileList[0]);
+			$from = $pathFrom . $sourceFileName . '.' . $extension;
+			$to = $pathTo . $targetFileName . '.' . $extension;
+			copy($from, $to);
+
+			// тумбнейл
+			$from = $pathFrom . $sourceFileName . 't.jpg';
+			$to = $pathTo . $targetFileName . 't.jpg';
+			copy($from, $to);
+
+			$j++;
+		} else {
+			break;
+		}
+	}	
 }
 
 ?>
