@@ -65,7 +65,7 @@ export class MessagesComponent {
       this.httpService.likeMessage(message.id, like).pipe(
         delay(600),
         tap(() => {
-          this.channelService.unselectMessage();
+          this.channelService.deselectMessage();
         })
       ).subscribe();
       message[like]++;
@@ -84,17 +84,27 @@ export class MessagesComponent {
     }
   }
 
+  onReplyClick(event: any): void {
+    event.preventDefault();
+    this.channelService.startMessageReply();
+  }
+
   onMessageHover(message: Message, isHover: boolean): void {
     if (message.parent) {
       message.parent.isHoverByChild = isHover;
     }
   }
 
+  onEditClick(event: any): void {
+    event.preventDefault();
+    this.channelService.startMessageEditing();
+  }
+
   onCancelEditClick(event: any): void {
     event.preventDefault();
     setTimeout(() => { // Без этого не фурычит. Не знаю почему :(
       this.channelService.cancelMessageEditing();
-      this.channelService.unselectMessage();
+      this.channelService.deselectMessage();
     }, 100);
   }
 
@@ -107,12 +117,16 @@ export class MessagesComponent {
         this.appService.editMessage$(messageId, messageText)
           .pipe(
             tap((result: any) => {
-              if (this.channelService.selectedMessage) {
-                this.channelService.selectedMessage.text = result.message;
-              }
-              this.channelService.finishMessageEditing();
-              this.channelService.unselectMessage();
               this.isSending = false;
+              if (result.error) {
+                alert('Поздно :(');
+              } else {
+                if (this.channelService.selectedMessage) {
+                  this.channelService.selectedMessage.text = result.message;
+                }
+                this.channelService.finishMessageEditing();
+                this.channelService.deselectMessage();
+              }
             }),
           ).subscribe();
       }

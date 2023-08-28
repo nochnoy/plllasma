@@ -93,8 +93,12 @@
         display: flex;
         flex-direction: row;
         justify-content: flex-end;
+        align-items: center;
         height: 2rem;
         width: 12rem;
+        * {
+          margin-left: 1rem;
+        }
         button {
           width: 6rem;
           height: 2rem;

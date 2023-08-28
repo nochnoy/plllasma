@@ -395,20 +395,24 @@ textarea {
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin-top: 0.4rem;
-
-  .moderate {
-    margin-left: 1rem;
-  }
-
-  &.liked {
-    pointer-events: none;
-  }
+  margin-top: 0.8rem;
 
   .like-button {
     color: black;
     padding: 0.4rem;
-    border-radius: 1rem;
+    border-radius: var(--border-radius);
+    background-color: #EFEFEF;
+    border: #cbbca3 1px solid;
+    margin-right: 0.3rem;
+    &.liked {
+      pointer-events: none;
+    }
+    &-emote {
+      border-radius: 0.4rem;
+      width: 2rem;
+      text-align: center;
+      background-color: #fae6cb;
+    }
     &.selected {
       background-color: #ffffff;
       font-weight: bold;

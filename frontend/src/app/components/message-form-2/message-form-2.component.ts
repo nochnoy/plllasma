@@ -74,6 +74,11 @@ export class MessageForm2Component implements OnInit{
     })
   }
 
+  onCancelEditClick(event: any): void {
+    event.preventDefault();
+    this.channelService.cancelMessageReply();
+  }
+
   onSendClick(): void {
     this.messageText = this.messageText.trim();
 
@@ -85,7 +90,7 @@ export class MessageForm2Component implements OnInit{
             this.isSending = false;
             this.attachments.length = 0;
             this.messageText = '';
-            this.channelService.unselectMessage();
+            this.channelService.deselectMessage();
             this.onNewMessageCreated.emit(this.messageText);
           }),
           untilDestroyed(this)

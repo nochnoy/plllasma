@@ -21,7 +21,6 @@ export class ChannelService {
   channelModels = new Map<number, Channel>();
   cities: ICity[] = [];
   selectedMessage?: Message;
-  selectedMessageEditing = false;
   channelInvalidSignal = new EventEmitter<number>();
 
   loadChannels$(): Observable<any> {
@@ -121,27 +120,47 @@ export class ChannelService {
   }
 
   selectMessage(message: Message): void {
-    if (this.selectedMessageEditing) {
+    if (this.selectedMessage === message) {
+      return; // Уже заселекчено
+    }
+    if (this.selectedMessage && !this.selectedMessage.canDeselect) {
       return; // Нельзя селектить пока не завершим редактирование сообщения
     }
+    this.deselectMessage();
     this.selectedMessage = message;
-    if (message.nick === this.userService.user.nick) {
-      this.startMessageEditing();
+  }
+
+  deselectMessage(): void {
+    if (this.selectedMessage) {
+      if (!this.selectedMessage.canDeselect) {
+        return; // Нельзя деселектить пока не завершим редактирование сообщения
+      }
+      this.selectedMessage.isEditMode = false;
+      this.selectedMessage.isReplyMode = false;
+      delete this.selectedMessage;
     }
   }
 
-  unselectMessage(): void {
-    if (this.selectedMessageEditing) {
-      return; // Нельзя деселектить пока не завершим редактирование сообщения
-    }
+  startMessageReply(): void {
     if (this.selectedMessage) {
-      delete this.selectedMessage;
+      this.selectedMessage.isReplyMode = true;
+      this.selectedMessage.isEditMode = false;
+      this.selectedMessage.canDeselect = false;
+    }
+  }
+
+  cancelMessageReply(): void {
+    if (this.selectedMessage) {
+      this.selectedMessage.isReplyMode = false;
+      this.selectedMessage.canDeselect = true;
     }
   }
 
   startMessageEditing(): void {
     if (this.selectedMessage) {
-      this.selectedMessageEditing = true;
+      this.selectedMessage.isEditMode = true;
+      this.selectedMessage.isReplyMode = false;
+      this.selectedMessage.canDeselect = false;
       this.selectedMessage.textBeforeEdit = this.selectedMessage.text;
     }
   }
@@ -150,14 +169,16 @@ export class ChannelService {
     if (this.selectedMessage) {
       this.selectedMessage.text = this.selectedMessage.textBeforeEdit;
       this.selectedMessage.textBeforeEdit = '';
-      this.selectedMessageEditing = false;
+      this.selectedMessage.isEditMode = false;
+      this.selectedMessage.canDeselect = true;
     }
   }
 
   finishMessageEditing(): void {
     if (this.selectedMessage) {
       this.selectedMessage.textBeforeEdit = '';
-      this.selectedMessageEditing = false;
+      this.selectedMessage.isEditMode = false;
+      this.selectedMessage.canDeselect = true;
     }
   }
 

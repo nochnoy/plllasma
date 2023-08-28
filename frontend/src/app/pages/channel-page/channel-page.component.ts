@@ -50,7 +50,7 @@ export class ChannelPageComponent implements OnInit {
         }
         const channel = this.channelService.channels.find((channel) => channel.id_place === channelId);
         this.channel = channel ?? EMPTY_CHANNEL;
-        this.channelService.unselectMessage();
+        this.channelService.deselectMessage();
       }),
       tap(() => {
         if (this.channel !== EMPTY_CHANNEL) {
@@ -144,7 +144,7 @@ export class ChannelPageComponent implements OnInit {
         }
       }
       if (!messageElementFound) {
-        this.channelService.unselectMessage();
+        this.channelService.deselectMessage();
       }
     }
   }

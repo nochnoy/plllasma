@@ -42,6 +42,7 @@
       </div>
     </div>
     <div  class="tools-send">
+      <a href *ngIf="replyMode" (click)="onCancelEditClick($event)">Отменить</a>
       <button *ngIf="!isSending" (click)="onSendClick()">{{replyMode ? 'Ответить' : 'Отправить'}}</button>
       <div class="spinner" *ngIf="isSending">Загрузка</div>
     </div>
