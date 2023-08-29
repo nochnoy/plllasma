@@ -32,12 +32,6 @@ export class ChannelService {
         // Вырежем канал "Мы"
         this.channels = this.channels.filter((channel) => channel.id_place !== 46);
 
-        // Мусорка - с чёрной звёздочкой
-        const musorgka = this.channels.find((channel) => channel.id_place === 26);
-        if (musorgka) {
-          musorgka.blackStar = true;
-        }
-
         // TODO: по хорошему всё это выкинуть и при получении каналов выстроть их дерево. parent, children все дела.
         this.cities = this.channels
           .filter((channel) => !channel.parent)
@@ -63,6 +57,7 @@ export class ChannelService {
           channel.shortName = channel.name.substr(0, 14);
           channel.canModerate = (rawChannel.role === 5);
         });
+
       }),
       switchMap(() => of(true))
     );

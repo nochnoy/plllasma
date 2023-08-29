@@ -80,7 +80,6 @@ export interface IChannel {
   time_viewed_deferred?: string;
   spinner?: boolean;
   shortName?: string;
-  blackStar?: boolean;
 }
 
 export interface ICity {
