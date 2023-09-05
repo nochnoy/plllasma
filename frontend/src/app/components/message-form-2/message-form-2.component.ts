@@ -90,7 +90,10 @@ export class MessageForm2Component implements OnInit{
             this.isSending = false;
             this.attachments.length = 0;
             this.messageText = '';
-            this.channelService.deselectMessage();
+            if (this.channelService.selectedMessage) {
+              this.channelService.selectedMessage.canDeselect = true;
+              this.channelService.deselectMessage();
+            }
             this.onNewMessageCreated.emit(this.messageText);
           }),
           untilDestroyed(this)
