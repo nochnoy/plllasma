@@ -24,7 +24,7 @@ define("COOKIE_KEY_CODE", "contortion_key");
 define("PATH_TO_STORAGE", "../../attachments/");
 define("MAX_STARRED_THREADS", 20); // порог кол-ва новых сообщений после которого перестаём строить серые ветки
 define("PAGE_SIZE", 50);
-define("TRASH_PLACE", 21);
+define("TRASH_PLACE", 5);
 define("ROLE_READER", 0);
 define("ROLE_WRITER", 1);
 define("ROLE_MODERATOR", 2);
