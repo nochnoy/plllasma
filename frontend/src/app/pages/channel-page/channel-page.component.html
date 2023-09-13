@@ -11,10 +11,9 @@
           <button mat-button>🔨 Настроить канал</button>
           <button mat-button [matMenuTriggerFor]="menu">🎨 Дизайнить ▾</button>
           <mat-menu #menu="matMenu">
-            <button mat-menu-item>Добавить текст</button>
-            <button mat-menu-item>Добавить изображение</button>
-            <button mat-menu-item>Добавить заголовок</button>
-            <button mat-menu-item>Добавить ссылку на канал</button>
+            <button mat-menu-item (click)="onAddMatrixImage()">Добавить картинку</button>
+            <button mat-menu-item (click)="onAddMatrixText()">Добавить текст</button>
+            <button mat-menu-item (click)="onAddMatrixDoor()">Добавить ссылку на канал</button>
             <button mat-menu-item (click)="openDialog()">Настройки канала</button>
           </mat-menu>
         </div>

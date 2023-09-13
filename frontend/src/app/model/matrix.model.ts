@@ -7,6 +7,7 @@ export const matrixColsCount = 17;
 export const matrixFlexCol = 12; // 13й тянущийся столбец (считаем с нуля)
 
 export interface IMatrix {
+  newObjectId: number;
   objects: IMatrixObject[];
 }
 
@@ -17,17 +18,31 @@ export interface IMatrixRect {
   h: number;
 }
 
+export enum MatrixObjectTypeEnum {
+  text = 0,
+  image = 1,
+  door = 2
+}
+
 export interface IMatrixObject extends IMatrixRect {
   id: number;
   color?: string;
   selected?: boolean;
   domRect?: DOMRect;
+  type?: MatrixObjectTypeEnum
 }
 
 export interface IMatrixObjectTransform {
   object: IMatrixObject;
   resultMatrixRect: IMatrixRect;
   resultDomRect: DOMRect;
+}
+
+export function newMatrix(): IMatrix {
+  return {
+    newObjectId: 0,
+    objects: []
+  }
 }
 
 // Очищает чисто клиентские данные которые не должны сохраняться в БД

@@ -33,7 +33,7 @@
         </div>
       </div>
       <div class="tools-attach-buttons">
-        <button (click)="fileUpload.click()"
+        <button (click)="onAddAttachmensClick()"
                 (mouseover)="dnd.hidden = false"
                 (mouseout)="dnd.hidden = true"
                 [disabled]="isSending">+
@@ -47,5 +47,4 @@
       <div class="spinner" *ngIf="isSending">Загрузка</div>
     </div>
   </div>
-  <input #fileUpload id="fileUpload" type="file" multiple (change)="onFilesSelected($event)" />
 </div>

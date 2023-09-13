@@ -6,7 +6,7 @@
 
   .bg {
     position: relative;
-    z-index: var(--z-matrix-bg); 
+    z-index: var(--z-matrix-bg);
     left: 0;
     right: 0;
 
@@ -53,6 +53,9 @@
   user-select: none;
   border-radius: var(--border-radius);
   cursor: move;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
 
   &.dragging {
     position: absolute;
@@ -73,3 +76,8 @@
     box-sizing: border-box;
   }
 }
+
+#martixFileUpload {
+  display: none;
+}
+

@@ -8,6 +8,7 @@ import {Message} from "../../model/messages/message.model";
 import {UserService} from "../../services/user.service";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {ChannelService} from "../../services/channel.service";
+import {UploadService} from "../../services/upload.service";
 
 @UntilDestroy()
 @Component({
@@ -20,7 +21,8 @@ export class MessageForm2Component implements OnInit{
   constructor(
     public appService: AppService,
     public userService: UserService,
-    public channelService: ChannelService
+    public channelService: ChannelService,
+    public uploadService: UploadService,
   ) { }
 
   @ViewChild('textarea') textarea?: ElementRef;
@@ -101,8 +103,15 @@ export class MessageForm2Component implements OnInit{
     }
   }
 
-  onFilesSelected(event: any): void {
-    this.addAttachments(Array.from(event.target?.files) ?? []);
+  onAddAttachmensClick(): void {
+    this.uploadService.upload().pipe(
+      tap((files) => {
+        if (files.length) {
+          this.addAttachments(files);
+        }
+      }),
+      untilDestroyed(this)
+    ).subscribe();
   }
 
   onDragOver(event: any) {

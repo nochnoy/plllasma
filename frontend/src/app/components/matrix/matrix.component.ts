@@ -13,6 +13,9 @@ import {
   IMatrixRect, matrixColsCount, matrixCellSize, matrixGap, matrixFlexCol
 } from "../../model/matrix.model";
 import {Channel} from "../../model/messages/channel.model";
+import {IUploadingAttachment} from "../../model/app-model";
+import {Utils} from "../../utils/utils";
+import {Const} from "../../model/const";
 
 @Component({
   selector: 'app-matrix',
@@ -53,6 +56,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
   transform?: IMatrixObjectTransform; // происходящее изменение размеров/позиции одного из объектов
 
   matrixRectUpdateInterval: any;
+
+  attachments: IUploadingAttachment[] = [];
 
   @Input('channel')
   set channel(channel: Channel) {
@@ -376,7 +381,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
   }
 
   // Дёргается когда юзер начинает тащить/ресайзить блок
-  // Проверяет, не был ли блок на резиновом столбце и если да 
+  // Проверяет, не был ли блок на резиновом столбце и если да
   // то увеличивает ширину объекта на визуальную ширину 13го столбца
   raskukojTransform(): void {
     const transform = this.transform!!;
@@ -489,5 +494,41 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   destroyTransform(): void {
     this.transform = undefined;
+  }
+
+  addAttachments(files: File[]) {
+    const newAttachments: IUploadingAttachment[] = files.map((file) => {
+      return {
+        file: file,
+        isImage: file?.type?.split('/')[0] === 'image',
+        isReady: false
+      } as IUploadingAttachment;
+    });
+    const checkAttachmentsReady = () => {
+      if (!newAttachments.some((attachment) => !attachment || !attachment.isReady)) {
+        this.attachments = [...this.attachments, ...newAttachments];
+      }
+    }
+    newAttachments.forEach((attachment: IUploadingAttachment) => {
+      const reader = new FileReader();
+      if (Utils.bytesToMegabytes(attachment.file.size) > Const.maxFileUploadSizeMb) {
+        attachment.error = 'Слишком большой';
+      }
+      if (attachment.isImage) {
+        reader.onload = (e: any) => {
+          attachment.bitmap = e.target.result;
+          attachment.isReady = true;
+          checkAttachmentsReady();
+        };
+      } else {
+        attachment.isReady = true;
+        checkAttachmentsReady();
+      }
+      reader.readAsDataURL(attachment.file);
+    })
+  }
+
+  onFilesSelected(event: any): void {
+    this.addAttachments(Array.from(event.target?.files) ?? []);
   }
 }

@@ -6,6 +6,7 @@ import {HttpService} from "./http.service";
 import {Channel} from "../model/messages/channel.model";
 import {Message} from "../model/messages/message.model";
 import {UserService} from "./user.service";
+import {newMatrix} from "../model/matrix.model";
 
 @Injectable({
   providedIn: 'root'
@@ -105,7 +106,11 @@ export class ChannelService {
 
           // Добавим матрицу. Это делается здесь а не в deserialize т.к. она не имеет отношения к веткам
           if (channelModel) {
-            channelModel.matrix = input.matrix;
+            if (input.matrix) {
+              channelModel.matrix = input.matrix;
+            } else {
+              channelModel.matrix = newMatrix();
+            }
           }
         }
       })

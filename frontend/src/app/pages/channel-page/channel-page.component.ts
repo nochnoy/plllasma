@@ -1,15 +1,19 @@
 import {Component, HostListener, Inject, OnInit} from '@angular/core';
 import {AppService} from "../../services/app.service";
 import {ActivatedRoute} from "@angular/router";
-import {Observable, of} from "rxjs";
-import {switchMap, tap} from "rxjs/operators";
-import {EMPTY_CHANNEL, IChannel} from "../../model/app-model";
+import {Observable, of, Subject} from "rxjs";
+import {switchMap, tap, filter} from "rxjs/operators";
+import {EMPTY_CHANNEL, IChannel, IUploadingAttachment} from "../../model/app-model";
 import {Channel} from "../../model/messages/channel.model";
 import {Thread} from "../../model/messages/thread.model";
 import {ChannelService} from "../../services/channel.service";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {HttpService} from "../../services/http.service";
 import {MAT_DIALOG_DATA, MatDialog} from "@angular/material/dialog";
+import {IMatrixObject, MatrixObjectTypeEnum} from "../../model/matrix.model";
+import {UploadService} from "../../services/upload.service";
+import {Utils} from "../../utils/utils";
+import {Const} from "../../model/const";
 
 @UntilDestroy()
 @Component({
@@ -24,7 +28,8 @@ export class ChannelPageComponent implements OnInit {
     public httpService: HttpService,
     public activatedRoute: ActivatedRoute,
     public channelService: ChannelService,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    public uploadService: UploadService,
   ) { }
 
   readonly defaultChannelId = 1;
@@ -192,6 +197,83 @@ export class ChannelPageComponent implements OnInit {
         animal: 'panda'
       }
     });
+  }
+
+  onAddMatrixImage(): void {
+    this.uploadService.upload().pipe(
+      switchMap((files) => { // Подготовим файлы
+        const result = new Subject<IUploadingAttachment[]>();
+        if (files.length) {
+
+          let newAttachments: IUploadingAttachment[] = files.map((file) => {
+            return {
+              file: file,
+              isImage: file?.type?.split('/')[0] === 'image',
+              isReady: false
+            } as IUploadingAttachment;
+          });
+          const checkAttachmentsReady = () => {
+            if (!newAttachments.some((attachment) => !attachment || !attachment.isReady)) {
+              newAttachments = newAttachments.filter((attachment) => attachment.isImage); // только картинки
+              const erroredAttachment = newAttachments.find((attachment) => attachment.error);
+              if (erroredAttachment) {
+                // Нашли аттач с ошибкой, очищаем все - ничего загружать не будем
+                alert(`${erroredAttachment.file.name} ${erroredAttachment.error}`);
+                newAttachments = [];
+              }
+              result.next(newAttachments);
+            }
+          }
+          newAttachments.forEach((attachment: IUploadingAttachment) => {
+            const reader = new FileReader();
+            if (Utils.bytesToMegabytes(attachment.file.size) > Const.maxFileUploadSizeMb) {
+              attachment.error = 'слишком большой';
+            }
+            if (attachment.isImage) {
+              reader.onload = (e: any) => {
+                attachment.bitmap = e.target.result;
+                attachment.isReady = true;
+                checkAttachmentsReady();
+              };
+            } else {
+              attachment.isReady = true;
+              checkAttachmentsReady();
+            }
+            reader.readAsDataURL(attachment.file);
+          })
+
+        }
+        return result;
+      }),
+      filter((attachments: IUploadingAttachment[]) => !!attachments?.length),
+      tap((attachments: IUploadingAttachment[]) => {
+
+        debugger
+        //this.appService.addMatrixImages$(this.channel.id_place, this.attachments);
+      }),
+      untilDestroyed(this)
+    ).subscribe();
+
+    /*if (this.channelModel?.matrix) {
+      const o: IMatrixObject = {
+        type: MatrixObjectTypeEnum.image,
+        y: 0,
+        x: 0,
+        w: 2,
+        h: 2,
+        color: 'red',
+        id: this.channelModel.matrix.newObjectId++
+      };
+      this.channelModel.matrix.objects.push(o);
+    }*/
+  }
+
+  onAddMatrixText(): void {
+
+  }
+
+  onAddMatrixDoor(): void {
+
   }
 
 }

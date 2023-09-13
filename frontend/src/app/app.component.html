@@ -1,3 +1,4 @@
 <ng-container>
   <router-outlet></router-outlet>
 </ng-container>
+<input #fileUpload id="fileUpload" type="file" multiple (change)="onFilesSelected($event)" />

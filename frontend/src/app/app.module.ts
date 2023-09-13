@@ -13,7 +13,6 @@ import { LoginPageComponent } from './pages/login-page/login-page.component';
 import { AppGuard } from './app.guard';
 import {ChannelPageComponent, DialogDataExampleDialog} from './pages/channel-page/channel-page.component';
 import { MessagesComponent } from './components/messages/messages.component';
-import { MessageFormComponent } from './components/message-form/message-form.component';
 import { TestMessagesPageComponent } from './pages/test-messages-page/test-messages-page.component';
 import {MainMenuComponent} from "./components/main-menu/main-menu.component";
 import {SharedModule} from "./modules/shared/shared.module";
@@ -49,7 +48,6 @@ import {MatDialogModule} from "@angular/material/dialog";
       LoginPageComponent,
       ChannelPageComponent,
       MessagesComponent,
-      MessageFormComponent,
       MessageForm2Component,
       TestMessagesPageComponent,
       MatrixComponent,
