@@ -2,10 +2,10 @@
 
 include("include/main.php");
 
-$maxMegabytes 		= 50; // 50 Мб макс
+$maxMegabytes 		= ATTACHMENT_MAX_WEIGHT_MB;
 
-$previewWidth 		= 160;
-$previewHeight 		= 160;
+$previewWidth 		= PREVIEW_IMAGE_WIDTH;
+$previewHeight 		= PREVIEW_IMAGE_WIDTH;
 
 $placeId 			= @$_POST['placeId'];
 $parentMessageId 	= @$_POST['parent'];
@@ -38,9 +38,11 @@ if (!empty($parentMessageId)) {
 	if ($row = mysqli_fetch_assoc($result)) {
 		$id_parent = (int)$row['id_message'];
 
+		// Защита от случаев когда ветку унесли в Мусорку а народ ещё видит её в старом канале и в него же отвечает
 		if ($row['id_place'] != $placeId) {
+			$placeId = $row['id_place']; 
 			if (!canWrite($placeId)) {
-				die('{"error": "placeMoved"}');
+				die('{"error": "access"}');
 			}
 		} 
 

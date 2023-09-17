@@ -32,6 +32,9 @@ define("ROLE_ADMIN", 3);
 define("ROLE_OWNER", 4);
 define("ROLE_GOD", 5);
 define("ROLE_NOBODY", 9);
+define("PREVIEW_IMAGE_WIDTH", 160);
+define("PREVIEW_IMAGE_HEIGHT", 160);
+define("ATTACHMENT_MAX_WEIGHT_MB", 50);
 
 $allowed_http_origins = [
     "https://plllasma.ru",
