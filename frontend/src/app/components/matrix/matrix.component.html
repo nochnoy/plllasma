@@ -9,7 +9,7 @@
              class="item"
              [style.grid-area]="(object.y + 1) + '/' + (object.x + 1) + '/' + (object.y + 1 + object.h) + '/' + (object.x + 1 + object.w)"
              [style.background-color]="object.color"
-             [style.background-image]="'url(/assets/firstinmatrix.jpg)'"
+             [style.background-image]="'url(/matrix/' + this.channel?.id + '/' + object.image + ')'"
              [attr.id]="object.id">
         </div>
       </ng-container>

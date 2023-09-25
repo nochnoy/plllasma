@@ -170,4 +170,20 @@ export class AppService {
     }
   }
 
+  addMatrixImages$(channelId: number, attachments: IUploadingAttachment[] = []): Observable<any> {
+    const formData = new FormData();
+    formData.append(`placeId`, channelId + '');
+
+    const files = attachments.filter((a) => !a.error).map((a) => a.file);
+    if (files.length) {
+      files.forEach((file: any, i: number) => {
+        formData.append(`f${i}`, file);
+      });
+    }
+
+    return this.httpClient.post(
+      `${this.apiPath}/matrix-images-add.php`,
+      formData,
+      { observe: 'body', withCredentials: true })
+  }
 }

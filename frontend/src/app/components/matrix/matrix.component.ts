@@ -60,13 +60,18 @@ export class MatrixComponent implements OnInit, OnDestroy {
   attachments: IUploadingAttachment[] = [];
 
   @Input('channel')
-  set channel(channel: Channel) {
-    if (channel.matrix) {
+  set channel(channel: Channel | null) {
+    this.channelValue = channel;
+    if (channel?.matrix) {
       this.matrix = channel.matrix;
       this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));
       this.updateMatrixHeight();
     }
   };
+  get channel(): Channel | null {
+    return this.channelValue;
+  }
+  channelValue: Channel | null = null;
 
   get selectionRect(): DOMRect | undefined {
     return this.selectionRectValue;

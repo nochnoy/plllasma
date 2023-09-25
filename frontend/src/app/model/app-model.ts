@@ -1,3 +1,7 @@
+export interface IHttpResult {
+  error?: string;
+}
+
 export interface IUserData {
   nick: string;
   icon: string;

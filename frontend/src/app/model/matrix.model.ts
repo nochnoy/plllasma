@@ -30,6 +30,7 @@ export interface IMatrixObject extends IMatrixRect {
   selected?: boolean;
   domRect?: DOMRect;
   type?: MatrixObjectTypeEnum
+  image?: string;
 }
 
 export interface IMatrixObjectTransform {

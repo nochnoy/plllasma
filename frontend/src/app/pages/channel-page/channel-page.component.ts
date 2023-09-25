@@ -3,7 +3,7 @@ import {AppService} from "../../services/app.service";
 import {ActivatedRoute} from "@angular/router";
 import {Observable, of, Subject} from "rxjs";
 import {switchMap, tap, filter} from "rxjs/operators";
-import {EMPTY_CHANNEL, IChannel, IUploadingAttachment} from "../../model/app-model";
+import {EMPTY_CHANNEL, IChannel, IHttpResult, IUploadingAttachment} from "../../model/app-model";
 import {Channel} from "../../model/messages/channel.model";
 import {Thread} from "../../model/messages/thread.model";
 import {ChannelService} from "../../services/channel.service";
@@ -14,6 +14,7 @@ import {IMatrixObject, MatrixObjectTypeEnum} from "../../model/matrix.model";
 import {UploadService} from "../../services/upload.service";
 import {Utils} from "../../utils/utils";
 import {Const} from "../../model/const";
+import {IHttpAddMatrixImages} from "../../model/rest-model";
 
 @UntilDestroy()
 @Component({
@@ -246,26 +247,35 @@ export class ChannelPageComponent implements OnInit {
         return result;
       }),
       filter((attachments: IUploadingAttachment[]) => !!attachments?.length),
-      tap((attachments: IUploadingAttachment[]) => {
-
-        debugger
-        //this.appService.addMatrixImages$(this.channel.id_place, this.attachments);
+      switchMap((attachments: IUploadingAttachment[]) => {
+        return this.appService.addMatrixImages$(this.channel.id_place, attachments);
+      }),
+      tap((result: IHttpAddMatrixImages) => {
+        if (result.error) {
+          console.error(result.error); // TODO: сделать вывод ошибок, с логированием
+        } else {
+          const images = result.images;
+          if (images) {
+            images.forEach((image) => {
+              if (this.channelModel?.matrix) {
+                const o: IMatrixObject = {
+                  type: MatrixObjectTypeEnum.image,
+                  y: 0,
+                  x: 0,
+                  w: 2,
+                  h: 2,
+                  color: 'red',
+                  image: image,
+                  id: this.channelModel.matrix.newObjectId++
+                };
+                this.channelModel.matrix.objects.push(o);
+              }
+            })
+          }
+        }
       }),
       untilDestroyed(this)
     ).subscribe();
-
-    /*if (this.channelModel?.matrix) {
-      const o: IMatrixObject = {
-        type: MatrixObjectTypeEnum.image,
-        y: 0,
-        x: 0,
-        w: 2,
-        h: 2,
-        color: 'red',
-        id: this.channelModel.matrix.newObjectId++
-      };
-      this.channelModel.matrix.objects.push(o);
-    }*/
   }
 
   onAddMatrixText(): void {
