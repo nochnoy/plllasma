@@ -1,16 +1,15 @@
+import {Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output,} from '@angular/core';
 import {
-  Component,
-  ElementRef, EventEmitter,
-  HostListener,
-  Input, OnDestroy,
-  OnInit, Output,
-} from '@angular/core';
-import {
-  IMatrixObjectTransform,
   IMatrix,
   IMatrixObject,
+  IMatrixObjectTransform,
+  IMatrixRect,
+  matrixCellSize,
+  matrixColsCount,
   matrixDragTreshold,
-  IMatrixRect, matrixColsCount, matrixCellSize, matrixGap, matrixFlexCol
+  matrixFlexCol,
+  matrixGap,
+  MatrixObjectTypeEnum
 } from "../../model/matrix.model";
 import {Channel} from "../../model/messages/channel.model";
 import {IUploadingAttachment} from "../../model/app-model";
@@ -362,9 +361,25 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   onClickObject(): void {
     if (this.mouseDownObject) {
-      this.select(this.mouseDownObject);
+      if (this.mouseDownObject === this.selectedObject) { // Был выделен объект и мы ткнули в него ещё раз
+        this.onDoubleClickObject();
+      } else {
+        this.select(this.mouseDownObject);
+      }
     }
     return undefined;
+  }
+
+  onDoubleClickObject(): void {
+    if (this.selectedObject) {
+      switch (this.selectedObject.type) {
+
+        case MatrixObjectTypeEnum.image:
+          window.open('/matrix' + '/' + this.channel?.id + '/' + this.selectedObject.image, '_blank');
+          break;
+
+      }
+    }
   }
 
   // 13й гибкий столбец ///////////////////////////////////////////////////////
