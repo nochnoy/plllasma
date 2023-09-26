@@ -46,8 +46,9 @@ for ($i = 0; $i < count($_FILES); $i++) {
 			case "gif":
 			case 'png':
 			case 'webp':
-				copy($received_file, $matrixFolder.$original_name);
-				array_push($images, $original_name);
+				$newName = guid4().'.'.$extention;				
+				copy($received_file, $matrixFolder.$newName);
+				array_push($images, $newName);
 		}
 
 	}
