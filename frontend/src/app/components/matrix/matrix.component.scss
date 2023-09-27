@@ -57,6 +57,10 @@
   background-repeat: no-repeat;
   background-position: center;
 
+  &.selected {
+    cursor: pointer;
+  }
+
   &.dragging {
     position: absolute;
     z-index: var(--z-matrix-drag-item);

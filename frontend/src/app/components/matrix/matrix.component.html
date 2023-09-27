@@ -7,6 +7,7 @@
       <ng-container  *ngFor="let object of matrix?.objects">
         <div *ngIf="object !== transform?.object"
              class="item"
+             [class.selected]="selectedObject === object"
              [style.grid-area]="(object.y + 1) + '/' + (object.x + 1) + '/' + (object.y + 1 + object.h) + '/' + (object.x + 1 + object.w)"
              [style.background-color]="object.color"
              [style.background-image]="'url(/matrix/' + this.channel?.id + '/' + object.image + ')'"
