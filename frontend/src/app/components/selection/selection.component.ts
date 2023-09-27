@@ -134,7 +134,7 @@ export class SelectionComponent {
   endDrag(): void {
     if (this.isDragStarted) {
       this.dragEnd.emit();
-      this.isDragStarted = false;      
+      this.isDragStarted = false;
     }
   }
 

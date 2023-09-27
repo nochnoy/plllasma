@@ -41,6 +41,9 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   mouseX = 0;
   mouseY = 0;
+  scrollX = 0;
+  scrollY = 0;
+
   mouseDownPoint?: DOMPoint; // точка где была зажата мышка
   mouseDownObject?: IMatrixObject; // блок на котором была зажата мышка
   isMouseDownAndMoving = false; // мы зажали мышь и тащим её?
@@ -82,11 +85,19 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.updateMatrixRect();
-    this.matrixRectUpdateInterval = setInterval(() => this.updateMatrixRect(), 1000);
+    this.matrixRectUpdateInterval = setInterval(() => this.updateMatrixRect(), 100);
   }
 
   ngOnDestroy() {
     clearInterval(this.matrixRectUpdateInterval);
+  }
+
+  // Слушаем Скролл /////////////////////////////////////////////////////////////
+
+  @HostListener('document:scroll')
+  onScroll() {
+    this.scrollX = window.scrollX;
+    this.scrollY = window.scrollY;
   }
 
   // Слушаем мышь /////////////////////////////////////////////////////////////
@@ -428,10 +439,10 @@ export class MatrixComponent implements OnInit, OnDestroy {
   }
 
   matrixRectToDomRect(rect: IMatrixRect): DOMRect {
-    let   x = this.matrixRect.x + rect.x * this.cellSizePlusGap;
-    let   w = rect.w * this.cellSizePlusGap - this.gap;
-    const y = this.matrixRect.y + rect.y * this.cellSizePlusGap;
-    const h = rect.h * this.cellSizePlusGap - this.gap;
+    let x = this.matrixRect.x + rect.x * this.cellSizePlusGap;
+    let w = rect.w * this.cellSizePlusGap - this.gap;
+    let y = this.matrixRect.y + rect.y * this.cellSizePlusGap;
+    let h = rect.h * this.cellSizePlusGap - this.gap;
 
     // Учтём влияние тянущегося столбца
     if (rect.x > matrixFlexCol) {
@@ -450,6 +461,9 @@ export class MatrixComponent implements OnInit, OnDestroy {
         w += this.gap;
       }
     }
+
+    x += this.scrollX;
+    y += this.scrollY;
 
     return new DOMRect(x, y, w, h);
   }

@@ -28,8 +28,8 @@
     <!-- Таскаемая копия объекта -->
     <div *ngIf="transform"
          class="item dragging"
-         [style.left]="(matrixRect.left + transform.resultDomRect.left) + 'px'"
-         [style.top]="(matrixRect.top + transform.resultDomRect.top) + 'px'"
+         [style.left]="(matrixRect.left + transform.resultDomRect.left + scrollX) + 'px'"
+         [style.top]="(matrixRect.top + transform.resultDomRect.top + scrollY) + 'px'"
          [style.width]="transform.resultDomRect.width + 'px'"
          [style.height]="transform.resultDomRect.height + 'px'">
       <div class="content" [style.background-color]="transform.object.color"></div>
