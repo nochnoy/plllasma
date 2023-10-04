@@ -41,8 +41,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   mouseX = 0;
   mouseY = 0;
-  scrollX = 0;
-  scrollY = 0;
 
   mouseDownPoint?: DOMPoint; // точка где была зажата мышка
   mouseDownObject?: IMatrixObject; // блок на котором была зажата мышка
@@ -90,14 +88,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     clearInterval(this.matrixRectUpdateInterval);
-  }
-
-  // Слушаем Скролл /////////////////////////////////////////////////////////////
-
-  @HostListener('document:scroll')
-  onScroll() {
-    this.scrollX = window.scrollX;
-    this.scrollY = window.scrollY;
   }
 
   // Слушаем мышь /////////////////////////////////////////////////////////////
@@ -461,9 +451,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
         w += this.gap;
       }
     }
-
-    x += this.scrollX;
-    y += this.scrollY;
 
     return new DOMRect(x, y, w, h);
   }
