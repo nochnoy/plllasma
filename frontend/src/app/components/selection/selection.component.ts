@@ -53,8 +53,8 @@ export class SelectionComponent {
   dragEnd = new EventEmitter();
 
   updateMouseXY(event: PointerEvent | MouseEvent): void {
-    this.mouseX = event.clientX;
-    this.mouseY = event.clientY;
+    this.mouseX = event.pageX;
+    this.mouseY = event.pageY;
   }
 
   updateRect(): void {
@@ -144,7 +144,10 @@ export class SelectionComponent {
     event.preventDefault(); // Чтобы при таскании не появлялся курсор "not-allowed"
 
     this.rectBeforeDrag = this.elementRef.nativeElement.getBoundingClientRect();
-    this.mouseDownPoint = new DOMPoint(event.clientX, event.clientY);
+    this.rectBeforeDrag!.x += window.scrollX;
+    this.rectBeforeDrag!.y += window.scrollY;
+
+    this.mouseDownPoint = new DOMPoint(event.pageX, event.pageY);
     this.mouseDownPart = part;
     this.isMouseDownAndMoving = false;
   }
