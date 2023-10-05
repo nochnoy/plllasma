@@ -101,7 +101,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
     const block: any = event?.target;
     const id = parseInt(block.id);
-    this.mouseDownObject = this.matrix?.objects.find((object) => object.id === id) ?? undefined;
+    this.mouseDownObject = this.matrix?.objects?.find((object) => object.id === id) ?? undefined;
   }
 
   @HostListener('document:mouseup', ['$event'])
@@ -572,6 +572,14 @@ export class MatrixComponent implements OnInit, OnDestroy {
           }
         }
       }
+    }
+  }
+
+  // Команды юзера /////////////////////////////////////////////////////////////
+
+  clearCommand(): void {
+    if (this.matrix.objects) {
+      this.matrix.objects.length = 0;
     }
   }
 }

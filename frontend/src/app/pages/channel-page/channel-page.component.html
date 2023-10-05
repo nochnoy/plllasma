@@ -15,7 +15,7 @@
           <mat-menu #menu="matMenu">
             <button mat-menu-item (click)="onAddMatrixImage()">Добавить картинку</button>
             <button mat-menu-item (click)="onAddMatrixTextClick()">Добавить текст</button>
-            <button mat-menu-item (click)="onClearMatrixClick()">Очистить всё</button>
+            <button mat-menu-item (click)="matrix.clearCommand()">Очистить всё</button>
             <!--
             <button mat-menu-item (click)="onAddMatrixDoor()">Добавить ссылку на канал</button>
             <button mat-menu-item (click)="openDialog()">Настройки канала</button>
@@ -24,11 +24,11 @@
         </div>
       </header>
 
-      <ng-container *ngIf="channelModel?.id === 12">
-        <ng-container *ngIf="channelModel?.matrix && channelModel?.matrix?.objects && channelModel?.matrix?.objects?.length">
-          <app-matrix [channel]="channelModel!" (changed)="onMatrixChanged()"></app-matrix>
-        </ng-container>
-      </ng-container>
+      <app-matrix #matrix 
+        [hidden]="channelModel?.id !== 12 || !(channelModel?.matrix && channelModel?.matrix?.objects && channelModel?.matrix?.objects?.length)" 
+        [channel]="channelModel!" 
+        (changed)="onMatrixChanged()">
+      </app-matrix>
 
       <div class="form">
         <app-message-form-2 class="form-content" [channelId]="channel.id_place" (onPost)="onNewMessageCreated()"></app-message-form-2>

@@ -10,7 +10,7 @@ import {ChannelService} from "../../services/channel.service";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {HttpService} from "../../services/http.service";
 import {MAT_DIALOG_DATA, MatDialog} from "@angular/material/dialog";
-import {IMatrixObject, MatrixObjectTypeEnum} from "../../model/matrix.model";
+import {IMatrixObject, MatrixObjectTypeEnum, matrixColsCount} from "../../model/matrix.model";
 import {UploadService} from "../../services/upload.service";
 import {Utils} from "../../utils/utils";
 import {Const} from "../../model/const";
@@ -261,16 +261,20 @@ export class ChannelPageComponent implements OnInit {
                 const o: IMatrixObject = {
                   type: MatrixObjectTypeEnum.image,
                   y: 0,
-                  x: 0,
-                  w: 2,
-                  h: 2,
-                  color: 'red',
+                  x: matrixColsCount - 4,
+                  w: 4,
+                  h: 4,
+                  color: 'black',
                   image: image,
                   id: this.channelModel.matrix.newObjectId++
                 };
                 this.channelModel.matrix.objects.push(o);
               }
-            })
+            });
+            
+            // <<<<<<<<<<<<<<<<<<<<<< здесь оповести компонент матрицы что она изменилась
+            // и заставь пересчитать размер
+
           }
         }
       }),
@@ -286,12 +290,8 @@ export class ChannelPageComponent implements OnInit {
 
   }
 
-  onClearMatrixClick(): void {
-    const objects = this.channelModel?.matrix?.objects;
-    if (objects && objects.length) {
-      objects.length = 0;
-    }
-    this.onMatrixChanged();
+  test(a: any): void {
+    
   }
 
 }
