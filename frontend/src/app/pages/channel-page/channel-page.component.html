@@ -23,7 +23,7 @@
       </header>
 
       <ng-container *ngIf="channelModel?.id === 12">
-        <ng-container *ngIf="channelModel?.matrix">
+        <ng-container *ngIf="channelModel?.matrix && channelModel?.matrix?.objects && channelModel?.matrix?.objects?.length">
           <app-matrix [channel]="channelModel!" (changed)="onMatrixChanged()"></app-matrix>
         </ng-container>
       </ng-container>

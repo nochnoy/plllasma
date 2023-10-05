@@ -292,7 +292,7 @@ export class ChannelPageComponent implements OnInit {
       objects.length = 0;
     }
     this.onMatrixChanged();
-  }  
+  }
 
 }
 
