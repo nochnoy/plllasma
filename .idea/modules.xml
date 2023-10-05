@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$USER_HOME$/YandexDisk/__NOTES/.idea/__NOTES.iml" filepath="$USER_HOME$/YandexDisk/__NOTES/.idea/__NOTES.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/plllasma.iml" filepath="$PROJECT_DIR$/.idea/plllasma.iml" />
     </modules>
   </component>

@@ -278,13 +278,21 @@ export class ChannelPageComponent implements OnInit {
     ).subscribe();
   }
 
-  onAddMatrixText(): void {
+  onAddMatrixTextClick(): void {
 
   }
 
   onAddMatrixDoor(): void {
 
   }
+
+  onClearMatrixClick(): void {
+    const objects = this.channelModel?.matrix?.objects;
+    if (objects && objects.length) {
+      objects.length = 0;
+    }
+    this.onMatrixChanged();
+  }  
 
 }
 
