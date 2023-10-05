@@ -555,4 +555,23 @@ export class MatrixComponent implements OnInit, OnDestroy {
   onFilesSelected(event: any): void {
     this.addAttachments(Array.from(event.target?.files) ?? []);
   }
+
+  // Слушаем клаву /////////////////////////////////////////////////////////////
+
+  @HostListener('document:keyup', ['$event'])
+  onKeyUp(event: KeyboardEvent) {
+    if (this.matrix.objects && this.selectedObject) {
+      if (event.key === 'Delete') {
+        if (document.activeElement?.nodeName === 'BODY') { // признак того что курсор не стоит в поле ввода ;\
+          if (window.confirm('Удалить выделенный объект?')) {
+            const deletedObject = this.selectedObject;
+            this.deselect();
+            this.matrix.objects = this.matrix.objects.filter((o) => o !== deletedObject);
+            this.updateMatrixHeight();
+            this.changed.emit();
+          }
+        }
+      }
+    }
+  }
 }

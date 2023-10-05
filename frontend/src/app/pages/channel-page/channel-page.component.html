@@ -7,8 +7,10 @@
       <header>
         <h1 [class.spinner]="channel.spinner">{{channel.name}}</h1>
         <div *ngIf="channelModel?.id === 12">
+          <!--
           <button mat-button>💼 О канале</button>
           <button mat-button>🔨 Настроить канал</button>
+          -->
           <button mat-button [matMenuTriggerFor]="menu">🎨 Дизайнить ▾</button>
           <mat-menu #menu="matMenu">
             <button mat-menu-item (click)="onAddMatrixImage()">Добавить картинку</button>
