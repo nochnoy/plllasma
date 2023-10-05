@@ -97,7 +97,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
     this.updateMouseXY(event);
     this.isMouseDown = true;
     this.isMouseDownAndMoving = false;
-    this.mouseDownPoint = new DOMPoint(event.clientX, event.clientY);
+    this.mouseDownPoint = new DOMPoint(event.pageX, event.pageY);
 
     const block: any = event?.target;
     const id = parseInt(block.id);
@@ -151,7 +151,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       if (this.isMouseDownAndMoving) {
         this.onDrag();
       } else {
-        if (Math.abs(event.clientX - this.mouseDownPoint.x) > matrixDragTreshold || Math.abs(event.clientY - this.mouseDownPoint.y) > matrixDragTreshold) {
+        if (Math.abs(event.pageX - this.mouseDownPoint.x) > matrixDragTreshold || Math.abs(event.pageY - this.mouseDownPoint.y) > matrixDragTreshold) {
 
           // Выделяем то что тащим
           if (this.mouseDownObject !== this.selectedObject) {
@@ -194,12 +194,15 @@ export class MatrixComponent implements OnInit, OnDestroy {
   // Мышь и границы ///////////////////////////////////////////////////////////
 
   updateMouseXY(event: PointerEvent | MouseEvent): void {
-    this.mouseX = event.clientX;
-    this.mouseY = event.clientY;
+    this.mouseX = event.pageX;
+    this.mouseY = event.pageY;
   }
 
   updateMatrixRect(): void {
     const rect = this.elementRef.nativeElement.getBoundingClientRect();
+    rect.x += window.scrollX;
+    rect.y += window.scrollY;
+
     const mr = this.matrixRect;
     if (!this.cellSize || rect.x !== mr.x || rect.y !== mr.y || rect.width !== mr.width || rect.height !== mr.height) {
       this.matrixRect = rect;
