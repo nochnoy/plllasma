@@ -582,13 +582,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
     if (this.matrix.objects && this.selectedObject) {
       if (event.key === 'Delete') {
         if (document.activeElement?.nodeName === 'BODY') { // признак того что курсор не стоит в поле ввода ;\
-          if (window.confirm('Удалить выделенный объект?')) {
-            const deletedObject = this.selectedObject;
-            this.deselect();
-            this.matrix.objects = this.matrix.objects.filter((o) => o !== deletedObject);
-            this.updateMatrixHeight();
-            this.changed.emit();
-          }
+          this.deleteCommand();
         }
       }
     }
@@ -677,11 +671,23 @@ export class MatrixComponent implements OnInit, OnDestroy {
     ).subscribe();
   }
 
-  clearCommand(): void {
-    if (this.matrix.objects) {
-      this.matrix.objects.length = 0;
+  deleteCommand(): void {
+    if (window.confirm('Удалить выделенный объект?')) {
+      const deletedObject = this.selectedObject;
+      this.deselect();
+      this.matrix.objects = this.matrix.objects.filter((o) => o !== deletedObject);
       this.updateMatrixHeight();
       this.changed.emit();
+    }
+  }
+
+  clearCommand(): void {
+    if (window.confirm('Удалить все текстовые и картиночные блоки?')) {
+      if (this.matrix.objects) {
+        this.matrix.objects.length = 0;
+        this.updateMatrixHeight();
+        this.changed.emit();
+      }
     }
   }
 }
