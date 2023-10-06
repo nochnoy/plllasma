@@ -13,8 +13,8 @@
           -->
           <button mat-button [matMenuTriggerFor]="menu">🎨 Дизайнить ▾</button>
           <mat-menu #menu="matMenu">
-            <button mat-menu-item (click)="onAddMatrixImage()">Добавить картинку</button>
-            <button mat-menu-item (click)="onAddMatrixTextClick()">Добавить текст</button>
+            <button mat-menu-item (click)="matrix.addImageCommand()">Добавить картинку</button>
+            <button mat-menu-item (click)="matrix.addImageCommand()">Добавить текст</button>
             <button mat-menu-item (click)="matrix.clearCommand()">Очистить всё</button>
             <!--
             <button mat-menu-item (click)="onAddMatrixDoor()">Добавить ссылку на канал</button>
@@ -24,9 +24,8 @@
         </div>
       </header>
 
-      <app-matrix #matrix 
-        [hidden]="channelModel?.id !== 12 || !(channelModel?.matrix && channelModel?.matrix?.objects && channelModel?.matrix?.objects?.length)" 
-        [channel]="channelModel!" 
+      <app-matrix #matrix
+        [channel]="channelModel!"
         (changed)="onMatrixChanged()">
       </app-matrix>
 

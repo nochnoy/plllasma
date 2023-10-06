@@ -30,7 +30,6 @@ export class ChannelPageComponent implements OnInit {
     public activatedRoute: ActivatedRoute,
     public channelService: ChannelService,
     public dialog: MatDialog,
-    public uploadService: UploadService,
   ) { }
 
   readonly defaultChannelId = 1;
@@ -198,100 +197,6 @@ export class ChannelPageComponent implements OnInit {
         animal: 'panda'
       }
     });
-  }
-
-  onAddMatrixImage(): void {
-    this.uploadService.upload().pipe(
-      switchMap((files) => { // Подготовим файлы
-        const result = new Subject<IUploadingAttachment[]>();
-        if (files.length) {
-
-          let newAttachments: IUploadingAttachment[] = files.map((file) => {
-            return {
-              file: file,
-              isImage: file?.type?.split('/')[0] === 'image',
-              isReady: false
-            } as IUploadingAttachment;
-          });
-          const checkAttachmentsReady = () => {
-            if (!newAttachments.some((attachment) => !attachment || !attachment.isReady)) {
-              newAttachments = newAttachments.filter((attachment) => attachment.isImage); // только картинки
-              const erroredAttachment = newAttachments.find((attachment) => attachment.error);
-              if (erroredAttachment) {
-                // Нашли аттач с ошибкой, очищаем все - ничего загружать не будем
-                alert(`${erroredAttachment.file.name} ${erroredAttachment.error}`);
-                newAttachments = [];
-              }
-              result.next(newAttachments);
-            }
-          }
-          newAttachments.forEach((attachment: IUploadingAttachment) => {
-            const reader = new FileReader();
-            if (Utils.bytesToMegabytes(attachment.file.size) > Const.maxFileUploadSizeMb) {
-              attachment.error = 'слишком большой';
-            }
-            if (attachment.isImage) {
-              reader.onload = (e: any) => {
-                attachment.bitmap = e.target.result;
-                attachment.isReady = true;
-                checkAttachmentsReady();
-              };
-            } else {
-              attachment.isReady = true;
-              checkAttachmentsReady();
-            }
-            reader.readAsDataURL(attachment.file);
-          })
-
-        }
-        return result;
-      }),
-      filter((attachments: IUploadingAttachment[]) => !!attachments?.length),
-      switchMap((attachments: IUploadingAttachment[]) => {
-        return this.appService.addMatrixImages$(this.channel.id_place, attachments);
-      }),
-      tap((result: IHttpAddMatrixImages) => {
-        if (result.error) {
-          console.error(result.error); // TODO: сделать вывод ошибок, с логированием
-        } else {
-          const images = result.images;
-          if (images) {
-            images.forEach((image) => {
-              if (this.channelModel?.matrix) {
-                const o: IMatrixObject = {
-                  type: MatrixObjectTypeEnum.image,
-                  y: 0,
-                  x: matrixColsCount - 4,
-                  w: 4,
-                  h: 4,
-                  color: 'black',
-                  image: image,
-                  id: this.channelModel.matrix.newObjectId++
-                };
-                this.channelModel.matrix.objects.push(o);
-              }
-            });
-            
-            // <<<<<<<<<<<<<<<<<<<<<< здесь оповести компонент матрицы что она изменилась
-            // и заставь пересчитать размер
-
-          }
-        }
-      }),
-      untilDestroyed(this)
-    ).subscribe();
-  }
-
-  onAddMatrixTextClick(): void {
-
-  }
-
-  onAddMatrixDoor(): void {
-
-  }
-
-  test(a: any): void {
-    
   }
 
 }

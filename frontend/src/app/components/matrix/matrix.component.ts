@@ -15,7 +15,14 @@ import {Channel} from "../../model/messages/channel.model";
 import {IUploadingAttachment} from "../../model/app-model";
 import {Utils} from "../../utils/utils";
 import {Const} from "../../model/const";
+import {filter, switchMap, tap} from "rxjs/operators";
+import {Subject} from "rxjs";
+import {IHttpAddMatrixImages} from "../../model/rest-model";
+import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
+import {UploadService} from "../../services/upload.service";
+import {AppService} from "../../services/app.service";
 
+@UntilDestroy()
 @Component({
   selector: 'app-matrix',
   templateUrl: './matrix.component.html',
@@ -24,7 +31,9 @@ import {Const} from "../../model/const";
 export class MatrixComponent implements OnInit, OnDestroy {
 
   constructor(
-    private elementRef: ElementRef,
+    public appService: AppService,
+    public uploadService: UploadService,
+    public elementRef: ElementRef,
   ) { }
 
   @Output('changed')
@@ -59,14 +68,23 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   attachments: IUploadingAttachment[] = [];
 
+  kostylInterval?: number;
+
   @Input('channel')
   set channel(channel: Channel | null) {
-    this.channelValue = channel;
-    if (channel?.matrix) {
-      this.matrix = channel.matrix;
-      this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));
-      this.updateMatrixHeight();
-    }
+    // TODO: Временный костыль для решения ситуации с getOrCreateChannel и его lazy-загрузкой
+    clearInterval(this.kostylInterval);
+    this.kostylInterval = setInterval(() => {
+      if (channel && !!channel.matrix) { // Дожидаемся когда channelService догрузит матрицу в канал
+        clearInterval(this.kostylInterval);
+        this.channelValue = channel;
+        if (channel?.matrix) {
+          this.matrix = channel.matrix;
+          this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));
+          this.updateMatrixHeight();
+        }
+      }
+    }, 100);
   };
   get channel(): Channel | null {
     return this.channelValue;
@@ -88,6 +106,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     clearInterval(this.matrixRectUpdateInterval);
+    clearInterval(this.kostylInterval);
   }
 
   // Слушаем мышь /////////////////////////////////////////////////////////////
@@ -577,9 +596,92 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   // Команды юзера /////////////////////////////////////////////////////////////
 
+  addImageCommand(): void {
+    this.uploadService.upload().pipe(
+      switchMap((files) => { // Подготовим файлы
+        const result = new Subject<IUploadingAttachment[]>();
+        if (files.length) {
+
+          let newAttachments: IUploadingAttachment[] = files.map((file) => {
+            return {
+              file: file,
+              isImage: file?.type?.split('/')[0] === 'image',
+              isReady: false
+            } as IUploadingAttachment;
+          });
+          const checkAttachmentsReady = () => {
+            if (!newAttachments.some((attachment) => !attachment || !attachment.isReady)) {
+              newAttachments = newAttachments.filter((attachment) => attachment.isImage); // только картинки
+              const erroredAttachment = newAttachments.find((attachment) => attachment.error);
+              if (erroredAttachment) {
+                // Нашли аттач с ошибкой, очищаем все - ничего загружать не будем
+                alert(`${erroredAttachment.file.name} ${erroredAttachment.error}`);
+                newAttachments = [];
+              }
+              result.next(newAttachments);
+            }
+          }
+          newAttachments.forEach((attachment: IUploadingAttachment) => {
+            const reader = new FileReader();
+            if (Utils.bytesToMegabytes(attachment.file.size) > Const.maxFileUploadSizeMb) {
+              attachment.error = 'слишком большой';
+            }
+            if (attachment.isImage) {
+              reader.onload = (e: any) => {
+                attachment.bitmap = e.target.result;
+                attachment.isReady = true;
+                checkAttachmentsReady();
+              };
+            } else {
+              attachment.isReady = true;
+              checkAttachmentsReady();
+            }
+            reader.readAsDataURL(attachment.file);
+          })
+
+        }
+        return result;
+      }),
+      filter((attachments: IUploadingAttachment[]) => !!attachments?.length),
+      switchMap((attachments: IUploadingAttachment[]) => {
+        return this.appService.addMatrixImages$(this.channel!.id, attachments);
+      }),
+      tap((result: IHttpAddMatrixImages) => {
+        if (result.error) {
+          console.error(result.error); // TODO: сделать вывод ошибок, с логированием
+        } else {
+          const images = result.images;
+          if (images && images.length) {
+            images.forEach((image) => {
+              if (this.channel?.matrix) {
+                const o: IMatrixObject = {
+                  type: MatrixObjectTypeEnum.image,
+                  y: 0,
+                  x: matrixColsCount - 4,
+                  w: 4,
+                  h: 4,
+                  color: 'black',
+                  image: image,
+                  id: this.matrix.newObjectId++
+                };
+                this.matrix.objects.push(o);
+              }
+            });
+
+            this.updateMatrixHeight();
+            this.changed.emit();
+          }
+        }
+      }),
+      untilDestroyed(this)
+    ).subscribe();
+  }
+
   clearCommand(): void {
     if (this.matrix.objects) {
       this.matrix.objects.length = 0;
+      this.updateMatrixHeight();
+      this.changed.emit();
     }
   }
 }

@@ -1,6 +1,5 @@
-<div class="matrix"
-     [style.height]="((matrixHeight * cellSizePlusGap) - gap) + 'px'">
-  <ng-container *ngIf="matrix">
+<ng-container *ngIf="matrix?.objects?.length">
+  <div class="matrix" [style.height]="((matrixHeight * cellSizePlusGap) - gap) + 'px'">
 
     <!-- Объекты -->
     <div class="grid">
@@ -52,5 +51,5 @@
                    [(rect)]="selectionRect">
     </app-selection>
 
-  </ng-container>
-</div>
+  </div>
+</ng-container>
