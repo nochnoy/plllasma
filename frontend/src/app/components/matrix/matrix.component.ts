@@ -601,39 +601,43 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   addTextCommand(): void {
     if (this.channel?.matrix) {
-      let w = 4;
-      let h = 2;
-      let x = matrixColsCount - w;
-      let y = 0;
+      const text = (window.prompt('Введите текст') ?? '').trim();
+      if (text) {
+        let w = 4;
+        let h = 1;
+        let x = matrixColsCount - w;
+        let y = 0;
 
-      const o: IMatrixObject = {
-        type: MatrixObjectTypeEnum.text,
-        y, x, w, h,
-        text: window.prompt('Введите текст') ?? '',
-        color: '#d3c6b8',
-        id: this.matrix.newObjectId++
-      };
-      this.matrix.objects.push(o);
-      this.select(o);
+        const o: IMatrixObject = {
+          type: MatrixObjectTypeEnum.text,
+          y, x, w, h, text,
+          color: '#d3c6b8',
+          id: this.matrix.newObjectId++
+        };
+        this.matrix.objects.push(o);
+        this.select(o);
+      }
     }
   }
 
   addTitleCommand(): void {
     if (this.channel?.matrix) {
-      let w = 4;
-      let h = 2;
-      let x = matrixColsCount - w;
-      let y = 0;
+      const text = (window.prompt('Введите текст') ?? '').trim();
+      if (text) {
+        let w = 4;
+        let h = 1;
+        let x = matrixColsCount - w;
+        let y = 0;
 
-      const o: IMatrixObject = {
-        type: MatrixObjectTypeEnum.title,
-        y, x, w, h,
-        text: window.prompt('Введите текст') ?? '',
-        color: '#d3c6b8',
-        id: this.matrix.newObjectId++
-      };
-      this.matrix.objects.push(o);
-      this.select(o);
+        const o: IMatrixObject = {
+          type: MatrixObjectTypeEnum.title,
+          y, x, w, h, text,
+          color: '#d3c6b8',
+          id: this.matrix.newObjectId++
+        };
+        this.matrix.objects.push(o);
+        this.select(o);
+      }
     }
   }
 
