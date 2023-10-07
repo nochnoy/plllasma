@@ -401,6 +401,15 @@ export class MatrixComponent implements OnInit, OnDestroy {
           window.open('/matrix' + '/' + this.channel?.id + '/' + this.selectedObject.image, '_blank');
           break;
 
+        case MatrixObjectTypeEnum.text:
+        case MatrixObjectTypeEnum.title:
+          const newText = window.prompt('Введите новый текст', this.selectedObject.text) ?? '';
+          if (newText && newText !== this.selectedObject.text) {
+            this.selectedObject.text = newText;
+            this.changed.emit();
+          }
+          break;
+
       }
     }
   }
@@ -590,6 +599,44 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   // Команды юзера /////////////////////////////////////////////////////////////
 
+  addTextCommand(): void {
+    if (this.channel?.matrix) {
+      let w = 4;
+      let h = 2;
+      let x = matrixColsCount - w;
+      let y = 0;
+
+      const o: IMatrixObject = {
+        type: MatrixObjectTypeEnum.text,
+        y, x, w, h,
+        text: window.prompt('Введите текст') ?? '',
+        color: '#d3c6b8',
+        id: this.matrix.newObjectId++
+      };
+      this.matrix.objects.push(o);
+      this.select(o);
+    }
+  }
+
+  addTitleCommand(): void {
+    if (this.channel?.matrix) {
+      let w = 4;
+      let h = 2;
+      let x = matrixColsCount - w;
+      let y = 0;
+
+      const o: IMatrixObject = {
+        type: MatrixObjectTypeEnum.title,
+        y, x, w, h,
+        text: window.prompt('Введите текст') ?? '',
+        color: '#d3c6b8',
+        id: this.matrix.newObjectId++
+      };
+      this.matrix.objects.push(o);
+      this.select(o);
+    }
+  }
+
   addImageCommand(): void {
     this.uploadService.upload().pipe(
       switchMap((files) => { // Подготовим файлы
@@ -648,10 +695,10 @@ export class MatrixComponent implements OnInit, OnDestroy {
           if (images && images.length) {
             images.forEach((image) => {
               if (this.channel?.matrix) {
-                let x = matrixColsCount - 4;
+                let w = 3;
+                let h = 3;
+                let x = matrixColsCount - w;
                 let y = 0;
-                let w = 4;
-                let h = 4;
 
                 // Юзер впервые добавляет картинку на свой канал. Сделаем наглядненько.
                 if (images.length === 1 && this.matrix.objects.length === 0) {

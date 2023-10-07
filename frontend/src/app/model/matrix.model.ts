@@ -21,7 +21,8 @@ export interface IMatrixRect {
 export enum MatrixObjectTypeEnum {
   text = 0,
   image = 1,
-  door = 2
+  door = 2,
+  title = 3,
 }
 
 export interface IMatrixObject extends IMatrixRect {
@@ -31,6 +32,7 @@ export interface IMatrixObject extends IMatrixRect {
   domRect?: DOMRect;
   type?: MatrixObjectTypeEnum
   image?: string;
+  text?: string;
 }
 
 export interface IMatrixObjectTransform {

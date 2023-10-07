@@ -56,6 +56,7 @@
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
+  background-color: var(--color-matrix-object-bg);
 
   &.selected {
     cursor: pointer;
@@ -71,6 +72,17 @@
         background-color: rgba(0, 0, 0, 0.3);
       }
     }
+  }
+
+  &-text {
+    font-size: 1rem;
+    padding-top: 0.4rem; // если блок высотой в 1 клетку и в нём одна строка текста - она по вертикали должна выровняться по центру
+  }
+
+  &-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding-top: 0.3rem; // если блок высотой в 1 клетку и в нём одна строка текста - она по вертикали должна выровняться по центру
   }
 
   .content {
