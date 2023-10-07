@@ -11,9 +11,9 @@
           <button mat-button>💼 О канале</button>
           <button mat-button>🔨 Настроить канал</button>
           -->
-          <button mat-button [matMenuTriggerFor]="menu">🎨 Дизайн ▾</button>
+          <button mat-button [matMenuTriggerFor]="menu">🎨 Дизайнить ▾</button>
           <mat-menu #menu="matMenu">
-            <button mat-menu-item (click)="matrix.addImageCommand()">Добавить картинку</button>
+            <button mat-menu-item (click)="matrix.addImageCommand()">Добавить картинки</button>
             <button mat-menu-item (click)="matrix.addImageCommand()">Добавить текст</button>
             <button mat-menu-item (click)="matrix.clearCommand()">Очистить</button>
             <!--

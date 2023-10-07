@@ -6,7 +6,7 @@ import {
   IMatrixRect,
   matrixCellSize,
   matrixColsCount,
-  matrixDragTreshold,
+  matrixDragThreshold,
   matrixFlexCol,
   matrixGap,
   MatrixObjectTypeEnum
@@ -170,7 +170,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       if (this.isMouseDownAndMoving) {
         this.onDrag();
       } else {
-        if (Math.abs(event.pageX - this.mouseDownPoint.x) > matrixDragTreshold || Math.abs(event.pageY - this.mouseDownPoint.y) > matrixDragTreshold) {
+        if (Math.abs(event.pageX - this.mouseDownPoint.x) > matrixDragThreshold || Math.abs(event.pageY - this.mouseDownPoint.y) > matrixDragThreshold) {
 
           // Выделяем то что тащим
           if (this.mouseDownObject !== this.selectedObject) {
@@ -648,17 +648,27 @@ export class MatrixComponent implements OnInit, OnDestroy {
           if (images && images.length) {
             images.forEach((image) => {
               if (this.channel?.matrix) {
+                let x = matrixColsCount - 4;
+                let y = 0;
+                let w = 4;
+                let h = 4;
+
+                // Юзер впервые добавляет картинку на свой канал. Сделаем наглядненько.
+                if (images.length === 1 && this.matrix.objects.length === 0) {
+                  x = 6;
+                  y = 3;
+                  w = 6;
+                }
+
                 const o: IMatrixObject = {
                   type: MatrixObjectTypeEnum.image,
-                  y: 0,
-                  x: matrixColsCount - 4,
-                  w: 4,
-                  h: 4,
+                  y, x, w, h,
                   color: 'black',
                   image: image,
                   id: this.matrix.newObjectId++
                 };
                 this.matrix.objects.push(o);
+                this.select(o);
               }
             });
 

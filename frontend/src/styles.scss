@@ -48,10 +48,10 @@
   --avatar-size: 16px;
   --avatar-margin: 0.2rem;
 
-  --matrix-cell-size: 2rem; // должна быть равна константе matrixCellSize
-  --matrix-gap: 0.5rem; // должна быть равна константе matrixGap
-  --matrix-cols-count: 19; // должна быть равна константе matrixColsCount
-  --matrix-flex-col: 14; // должна быть равна константе matrixFlexCol
+  --matrix-cell-size: 2rem; // ! должна быть равна константе matrixCellSize
+  --matrix-gap: 0.5rem;     // ! должна быть равна константе matrixGap
+  --matrix-cols-count: 19;  // ! должна быть равна константе matrixColsCount А ТАКЖЕ соответствовать css-гриду в matrix.component.css
+  --matrix-flex-col: 14;    // ! должна быть равна константе matrixFlexCol   А ТАКЖЕ соответствовать css-гриду в matrix.component.css
   --matrix-right-cols-count: calc(var(--matrix-cols-count) - var(--matrix-flex-col) - 1); // кол-во столбцов справа от резинового
 
   --selection-handle-size: 11px;
