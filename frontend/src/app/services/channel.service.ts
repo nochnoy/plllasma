@@ -56,7 +56,7 @@ export class ChannelService {
         this.channels.forEach((channel) => {
           const rawChannel = channel as any;
           channel.shortName = channel.name.substr(0, 14);
-          channel.canModerate = (rawChannel.role === 5);
+          channel.canModerate = this.userService.canModerate(channel.id_place);
         });
 
       }),

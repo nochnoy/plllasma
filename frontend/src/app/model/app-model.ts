@@ -5,6 +5,7 @@ export interface IHttpResult {
 export interface IUserData {
   nick: string;
   icon: string;
+  access: IAccess[];
 }
 
 export enum LoginStatus {
@@ -145,4 +146,19 @@ export interface IMailMessage {
   unread: boolean;
   message: string;
   time_created: string;
+}
+
+export enum RoleEnum {
+  reader = 0,
+  writer = 1,
+  moderator = 2,
+  admin = 3,
+  owner = 4,
+  god = 5,
+  nobody = 9
+}
+
+export interface IAccess {
+  id_place: number;
+  role: RoleEnum;
 }

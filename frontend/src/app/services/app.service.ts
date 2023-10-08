@@ -70,6 +70,7 @@ export class AppService {
         } else {
           this.userService.user.nick = result.nick;
           this.userService.user.icon = result.icon;
+          this.userService.user.access = result.access;
           return true;
         }
       }),

@@ -3,7 +3,10 @@
       <app-main-menu (itemClick)="onMenuItemClick(channel)"></app-main-menu>
   </aside>
   <main class="main">
-    <ng-container *ngIf="channel">
+    <div class="general-error" *ngIf="channel && !canAccess">
+      🔒 У вас нет сюда доступа
+    </div>
+    <ng-container *ngIf="channel && canAccess">
 
       <app-matrix #matrix
         [channel]="channelModel!"
@@ -17,19 +20,19 @@
           <!--
 
           -->
-          <div>Вы владелец канала</div>
-          <button mat-button [matMenuTriggerFor]="menu">🎨 Дизайнить супершапку ▾</button>
+          <div>Вы {{roleTitle}} канала</div>
+          <button mat-button [matMenuTriggerFor]="menu">🎨 Верхний дизайн ▾</button>
           <mat-menu #menu="matMenu">
-            <button mat-menu-item (click)="matrix.addImageCommand()">Добавить картинки</button>
-            <button mat-menu-item (click)="matrix.addTextCommand()">Добавить текст</button>
-            <button mat-menu-item (click)="matrix.addTitleCommand()">Добавить крупный текст</button>
-            <button mat-menu-item (click)="matrix.clearCommand()">Очистить</button>
+            <button mat-menu-item [disabled]="!canEditMatrix" (click)="matrix.addImageCommand()">Добавить картинки</button>
+            <button mat-menu-item [disabled]="!canEditMatrix" (click)="matrix.addTextCommand()">Добавить текст</button>
+            <button mat-menu-item [disabled]="!canEditMatrix" (click)="matrix.addTitleCommand()">Добавить крупный текст</button>
+            <button mat-menu-item [disabled]="!canEditMatrix" (click)="matrix.clearCommand()">Очистить</button>
             <!--
             <button mat-menu-item (click)="onAddMatrixDoor()">Добавить ссылку на канал</button>
             <button mat-menu-item (click)="openDialog()">Настройки канала</button>
             -->
           </mat-menu>
-          <button mat-button disabled>🔨 Настройки</button>
+          <button mat-button [disabled]="!canUseSettings">🔨 Настройки</button>
           <button mat-button>💼 О канале</button>
 
         </div>

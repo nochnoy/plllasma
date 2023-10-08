@@ -15,6 +15,7 @@ import {UploadService} from "../../services/upload.service";
 import {Utils} from "../../utils/utils";
 import {Const} from "../../model/const";
 import {IHttpAddMatrixImages} from "../../model/rest-model";
+import {UserService} from "../../services/user.service";
 
 @UntilDestroy()
 @Component({
@@ -30,6 +31,7 @@ export class ChannelPageComponent implements OnInit {
     public activatedRoute: ActivatedRoute,
     public channelService: ChannelService,
     public dialog: MatDialog,
+    public userService: UserService,
   ) { }
 
   readonly defaultChannelId = 1;
@@ -40,6 +42,11 @@ export class ChannelPageComponent implements OnInit {
   hereAndNowUsers: string[] = [];
   mailNotification: any = {};
   currentPage = 0;
+
+  roleTitle = '';
+  canAccess = false;
+  canEditMatrix = false;
+  canUseSettings = false;
 
   ngOnInit(): void {
     of({}).pipe(
@@ -60,6 +67,11 @@ export class ChannelPageComponent implements OnInit {
       tap(() => {
         if (this.channel !== EMPTY_CHANNEL) {
           this.channelModel = this.channelService.getChannel(this.channel.id_place, this.channel?.time_viewed ?? '', this.currentPage);
+
+          this.canAccess = this.userService.canAccess(this.channel.id_place);
+          this.roleTitle = this.userService.getRoleTitle(this.channel.id_place);
+          this.canEditMatrix = this.userService.canEditMatrix(this.channel.id_place);
+          this.canUseSettings = this.userService.canUseChannelSettings(this.channel.id_place);
         }
       }),
       untilDestroyed(this)
@@ -181,13 +193,15 @@ export class ChannelPageComponent implements OnInit {
   }
 
   onMatrixChanged(): void {
-    if (this.channelModel?.matrix) {
-      this.channel.spinner = true;
-      this.httpService.matrixWrite$(this.channel.id_place, this.channelModel.matrix).pipe(
-        tap((result) => {
-          this.channel.spinner = false;
-        }),
-      ).subscribe();
+    if (this.canEditMatrix) {
+      if (this.channelModel?.matrix) {
+        this.channel.spinner = true;
+        this.httpService.matrixWrite$(this.channel.id_place, this.channelModel.matrix).pipe(
+          tap((result) => {
+            this.channel.spinner = false;
+          }),
+        ).subscribe();
+      }
     }
   }
 
