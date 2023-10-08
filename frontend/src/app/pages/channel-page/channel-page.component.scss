@@ -6,7 +6,7 @@
   justify-content: stretch;
   &-content {
     flex-grow: 1;
-    max-width: calc((var(--matrix-cell-size) + var(--matrix-gap)) * var(--matrix-flex-col) - var(--matrix-gap));
+    max-width: calc((var(--matrix-cell-size) + var(--matrix-gap)) * 14 - var(--matrix-gap));
   }
 }
 

@@ -605,7 +605,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       if (text) {
         let w = 4;
         let h = 1;
-        let x = matrixColsCount - w;
+        let x = matrixColsCount - 1 - w;
         let y = 0;
 
         const o: IMatrixObject = {
@@ -626,7 +626,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       if (text) {
         let w = 4;
         let h = 1;
-        let x = matrixColsCount - w;
+        let x = matrixColsCount - 1 - w;
         let y = 0;
 
         const o: IMatrixObject = {
@@ -701,14 +701,15 @@ export class MatrixComponent implements OnInit, OnDestroy {
               if (this.channel?.matrix) {
                 let w = 3;
                 let h = 3;
-                let x = matrixColsCount - w;
+                let x = matrixColsCount - 1 - w;
                 let y = 0;
 
                 // Юзер впервые добавляет картинку на свой канал. Сделаем наглядненько.
                 if (images.length === 1 && this.matrix.objects.length === 0) {
-                  x = 6;
-                  y = 3;
-                  w = 6;
+                  x = 8;
+                  y = 2;
+                  w = 8;
+                  h = 5
                 }
 
                 const o: IMatrixObject = {

@@ -24,20 +24,15 @@
     :nth-child(2) {
       display: inline-block;
       background-image: url('~src/assets/img/matrix-flex-bg.png');
-      background-size: calc(100% - var(--matrix-gap)) calc(var(--matrix-cell-size) + var(--matrix-gap));
+      background-size: 100% calc(var(--matrix-cell-size) + var(--matrix-gap));
       background-repeat: repeat-y;
       flex-grow: 1;
-    }
-    :nth-child(3) {
-      display: inline-block;
-      background-image: url('~src/assets/img/matrix-bg.png');
-      min-width: calc(((var(--matrix-cell-size) + var(--matrix-gap)) * var(--matrix-right-cols-count)) - var(--matrix-gap));
     }
   }
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(14, var(--matrix-cell-size)) minmax(var(--matrix-cell-size), 1fr) repeat(4, var(--matrix-cell-size));
+    grid-template-columns: repeat(24, var(--matrix-cell-size)) minmax(var(--matrix-cell-size), 1fr);
     grid-auto-rows: var(--matrix-cell-size);
     gap: var(--matrix-gap);
     width: 100%;
