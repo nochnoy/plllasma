@@ -210,6 +210,13 @@ export class MatrixComponent implements OnInit, OnDestroy {
     }
   }
 
+  @HostListener('document:mouseleave', ['$event'])
+  onMouseOutWindow(event: PointerEvent) {
+    if (!this.selectedObject && this.softSelectedObject) {
+      this.deselect();
+    }
+  }
+
   // Мышь и границы ///////////////////////////////////////////////////////////
 
   updateMouseXY(event: PointerEvent | MouseEvent): void {
