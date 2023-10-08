@@ -361,6 +361,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
       this.transform.resultMatrixRect =  this.domRectToMatrixRect(this.transform.resultDomRect);
       this.shadowRect = this.matrixRectToDomRect(this.keepInBoundaries(this.transform.resultMatrixRect));
+      this.updateMatrixHeight();
     }
   }
 
@@ -456,6 +457,10 @@ export class MatrixComponent implements OnInit, OnDestroy {
     this.matrix.objects.forEach((o) => {
       h = Math.max(h, o.y + o.h);
     });
+
+    if (this.transform?.resultMatrixRect) {
+      h = Math.max(h, this.transform?.resultMatrixRect.y + this.transform?.resultMatrixRect.h);
+    }
     this.matrixHeight = h;
   }
 
