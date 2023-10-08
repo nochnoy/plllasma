@@ -1,20 +1,16 @@
 import {Component, HostListener, Inject, OnInit} from '@angular/core';
 import {AppService} from "../../services/app.service";
 import {ActivatedRoute} from "@angular/router";
-import {Observable, of, Subject} from "rxjs";
-import {switchMap, tap, filter} from "rxjs/operators";
-import {EMPTY_CHANNEL, IChannel, IHttpResult, IUploadingAttachment} from "../../model/app-model";
+import {Observable, of} from "rxjs";
+import {switchMap, tap} from "rxjs/operators";
+import {EMPTY_CHANNEL, IChannel} from "../../model/app-model";
 import {Channel} from "../../model/messages/channel.model";
 import {Thread} from "../../model/messages/thread.model";
 import {ChannelService} from "../../services/channel.service";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {HttpService} from "../../services/http.service";
 import {MAT_DIALOG_DATA, MatDialog} from "@angular/material/dialog";
-import {IMatrixObject, MatrixObjectTypeEnum, matrixColsCount} from "../../model/matrix.model";
-import {UploadService} from "../../services/upload.service";
-import {Utils} from "../../utils/utils";
-import {Const} from "../../model/const";
-import {IHttpAddMatrixImages} from "../../model/rest-model";
+import {IMatrix} from "../../model/matrix.model";
 import {UserService} from "../../services/user.service";
 
 @UntilDestroy()
@@ -192,11 +188,11 @@ export class ChannelPageComponent implements OnInit {
     window.scroll({ top: 0, left: 0 });
   }
 
-  onMatrixChanged(): void {
+  onMatrixChanged(matrix: IMatrix): void {
     if (this.canEditMatrix) {
       if (this.channelModel?.matrix) {
         this.channel.spinner = true;
-        this.httpService.matrixWrite$(this.channel.id_place, this.channelModel.matrix).pipe(
+        this.httpService.matrixWrite$(this.channel.id_place, matrix).pipe(
           tap((result) => {
             this.channel.spinner = false;
           }),

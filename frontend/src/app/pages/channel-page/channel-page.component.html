@@ -10,7 +10,7 @@
 
       <app-matrix #matrix
         [channel]="channelModel!"
-        (changed)="onMatrixChanged()">
+        (changed)="onMatrixChanged($event)">
       </app-matrix>
 
       <div class="form">

@@ -408,7 +408,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
           const newText = window.prompt('Введите новый текст', this.selectedObject.text) ?? '';
           if (newText && newText !== this.selectedObject.text) {
             this.selectedObject.text = newText;
-            this.changed.emit();
+            this.changed.emit(this.matrix);
           }
           break;
 
@@ -631,7 +631,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
         this.matrix.objects.push(o);
         this.select(o);
         this.updateMatrixHeight();
-        this.changed.emit();
+        this.changed.emit(this.matrix);
       }
     }
   }
@@ -653,7 +653,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
         this.matrix.objects.push(o);
         this.select(o);
         this.updateMatrixHeight();
-        this.changed.emit();
+        this.changed.emit(this.matrix);
       }
     }
   }
@@ -675,7 +675,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
         this.matrix.objects.push(o);
         this.select(o);
         this.updateMatrixHeight();
-        this.changed.emit();
+        this.changed.emit(this.matrix);
       }
     }
   }
@@ -756,7 +756,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
             });
 
             this.updateMatrixHeight();
-            this.changed.emit();
+            this.changed.emit(this.matrix);
           }
         }
       }),
@@ -770,7 +770,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       this.deselect();
       this.matrix.objects = this.matrix.objects.filter((o) => o !== deletedObject);
       this.updateMatrixHeight();
-      this.changed.emit();
+      this.changed.emit(this.matrix);
     }
   }
 
@@ -779,7 +779,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       if (this.matrix.objects) {
         this.matrix.objects.length = 0;
         this.updateMatrixHeight();
-        this.changed.emit();
+        this.changed.emit(this.matrix);
       }
     }
   }
