@@ -699,8 +699,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
           if (images && images.length) {
             images.forEach((image) => {
               if (this.channel?.matrix) {
-                let w = 3;
-                let h = 3;
+                let w = 4;
+                let h = 4;
                 let x = matrixColsCount - 1 - w;
                 let y = 0;
 
