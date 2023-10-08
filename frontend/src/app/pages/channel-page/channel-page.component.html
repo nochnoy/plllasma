@@ -4,14 +4,21 @@
   </aside>
   <main class="main">
     <ng-container *ngIf="channel">
-      <header>
-        <h1 [class.spinner]="channel.spinner">{{channel.name}}</h1>
-        <div *ngIf="channelModel?.id === 12">
+
+      <app-matrix #matrix
+        [channel]="channelModel!"
+        (changed)="onMatrixChanged()">
+      </app-matrix>
+
+      <div class="form">
+        <app-message-form-2 class="form-content" [channelId]="channel.id_place" (onPost)="onNewMessageCreated()"></app-message-form-2>
+        <div *ngIf="channel.spinner" class="loading" [class.spinner]="channel.spinner">Загружается</div>
+        <div *ngIf="!channel.spinner" class="form-tools">
           <!--
-          <button mat-button>💼 О канале</button>
-          <button mat-button>🔨 Настроить канал</button>
+
           -->
-          <button mat-button [matMenuTriggerFor]="menu">🎨 Дизайнить ▾</button>
+          <div>Вы владелец канала</div>
+          <button mat-button [matMenuTriggerFor]="menu">🎨 Дизайнить супершапку ▾</button>
           <mat-menu #menu="matMenu">
             <button mat-menu-item (click)="matrix.addImageCommand()">Добавить картинки</button>
             <button mat-menu-item (click)="matrix.addTextCommand()">Добавить текст</button>
@@ -22,16 +29,10 @@
             <button mat-menu-item (click)="openDialog()">Настройки канала</button>
             -->
           </mat-menu>
+          <button mat-button disabled>🔨 Настройки</button>
+          <button mat-button>💼 О канале</button>
+
         </div>
-      </header>
-
-      <app-matrix #matrix
-        [channel]="channelModel!"
-        (changed)="onMatrixChanged()">
-      </app-matrix>
-
-      <div class="form">
-        <app-message-form-2 class="form-content" [channelId]="channel.id_place" (onPost)="onNewMessageCreated()"></app-message-form-2>
       </div>
 
       <div *ngIf="!!channelModel" class="messages">

@@ -584,6 +584,15 @@ export class MatrixComponent implements OnInit, OnDestroy {
     this.addAttachments(Array.from(event.target?.files) ?? []);
   }
 
+  getFreeY(): number {
+    let y = 0;
+    this.matrix.objects.forEach((o) => {
+      const newY = o.y + o.h;
+      y = Math.max(y, newY);
+    });
+    return y;
+  }
+
   // Слушаем клаву /////////////////////////////////////////////////////////////
 
   @HostListener('document:keyup', ['$event'])
@@ -606,7 +615,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
         let w = 4;
         let h = 1;
         let x = matrixColsCount - 1 - w;
-        let y = 0;
+        let y = this.getFreeY();
 
         const o: IMatrixObject = {
           type: MatrixObjectTypeEnum.text,
@@ -616,6 +625,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
         };
         this.matrix.objects.push(o);
         this.select(o);
+        this.updateMatrixHeight();
+        this.changed.emit();
       }
     }
   }
@@ -627,7 +638,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
         let w = 4;
         let h = 1;
         let x = matrixColsCount - 1 - w;
-        let y = 0;
+        let y = this.getFreeY();
 
         const o: IMatrixObject = {
           type: MatrixObjectTypeEnum.title,
@@ -637,6 +648,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
         };
         this.matrix.objects.push(o);
         this.select(o);
+        this.updateMatrixHeight();
+        this.changed.emit();
       }
     }
   }
@@ -702,15 +715,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
                 let w = 4;
                 let h = 4;
                 let x = matrixColsCount - 1 - w;
-                let y = 0;
-
-                // Юзер впервые добавляет картинку на свой канал. Сделаем наглядненько.
-                if (images.length === 1 && this.matrix.objects.length === 0) {
-                  x = 8;
-                  y = 2;
-                  w = 8;
-                  h = 5
-                }
+                let y = this.getFreeY();
 
                 const o: IMatrixObject = {
                   type: MatrixObjectTypeEnum.image,

@@ -1,12 +1,39 @@
+.loading {
+  margin-left: 2rem;
+  margin-top: 1rem;
+}
+
 .form {
   margin: var(--margin-section) 0;
   min-height: 10rem;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: stretch;
   &-content {
     flex-grow: 1;
     max-width: calc((var(--matrix-cell-size) + var(--matrix-gap)) * 14 - var(--matrix-gap));
+  }
+  &-tools {
+    margin: var(--form-padding);
+    margin-left: 2rem;
+    display: flex;
+    flex-direction: column;
+
+    >* {
+      line-height: var(--form-tools-item-heigth);
+    }
+  }
+
+}
+
+:host {
+  ::ng-deep {
+    .mat-button {
+      padding: 0;
+      text-align: left;
+      line-height: var(--form-tools-item-heigth);
+      font-size: 1rem;
+    }
   }
 }
 
