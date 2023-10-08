@@ -34,7 +34,6 @@ for ($i = 0; $i < count($_FILES); $i++) {
 
 		if ($filesize / (1024 * 1024) > $maxMegabytes) {
 			die('{"error": "toobig", "filename: "'.$original_name.'"}');
-			continue;
 		}
 
 		switch ($extention){

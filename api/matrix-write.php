@@ -13,7 +13,7 @@ if (empty($placeId) || empty($matrix)) {
 	]));
 }
 
-if (!canWrite($placeId)) {
+if (!canEditMatrix($placeId)) {
 	die('{"error": "access"}');
 }
 
