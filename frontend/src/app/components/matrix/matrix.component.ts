@@ -3,7 +3,7 @@ import {
   IMatrix,
   IMatrixObject,
   IMatrixObjectTransform,
-  IMatrixRect,
+  IMatrixRect, matrixAddCol,
   matrixCellSize,
   matrixColsCount,
   matrixDragThreshold,
@@ -620,7 +620,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       if (text) {
         let w = 4;
         let h = 1;
-        let x = matrixColsCount - 1 - w;
+        let x = matrixAddCol;
         let y = this.getFreeY();
 
         const o: IMatrixObject = {
@@ -642,7 +642,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       if (text) {
         let w = 4;
         let h = 1;
-        let x = matrixColsCount - 1 - w;
+        let x = matrixAddCol;
         let y = this.getFreeY();
 
         const o: IMatrixObject = {
@@ -664,7 +664,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       if (text) {
         let w = 8;
         let h = 1;
-        let x = matrixColsCount - 1 - w;
+        let x = matrixAddCol;
         let y = this.getFreeY();
 
         const o: IMatrixObject = {
@@ -740,7 +740,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
               if (this.channel?.matrix) {
                 let w = 4;
                 let h = 4;
-                let x = matrixColsCount - 1 - w;
+                let x = matrixAddCol;
                 let y = this.getFreeY();
 
                 const o: IMatrixObject = {

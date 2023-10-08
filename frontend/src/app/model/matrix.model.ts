@@ -2,8 +2,9 @@ import {Const} from "./const";
 
 export const matrixCellSize = 2 * Const.remInPixels;             // ! должна быть равна css-переменной --matrix-cell-size
 export const matrixGap = Math.round(0.5 * Const.remInPixels); // ! должна быть равна css-переменной --matrix-gap
-export const matrixColsCount = 25; // ! должна быть равна css-переменной --matrix-cols-count А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
-export const matrixFlexCol = 24;   // ! должна быть равна css-переменной --matrix-flex-col А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
+export const matrixColsCount = 25;                               // ! должна быть равна css-переменной --matrix-cols-count А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
+export const matrixFlexCol = 24;                                 // ! должна быть равна css-переменной --matrix-flex-col А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
+export const matrixAddCol = 15; // На какой столбец добавляются блоки когда юзер их создаёт
 export const matrixDragThreshold = 4;
 
 export interface IMatrix {
