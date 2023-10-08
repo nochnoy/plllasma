@@ -9,6 +9,7 @@
              [class.selected]="selectedObject === object"
              [class.item-text]="object.type === 0"
              [class.item-title]="object.type === 3"
+             [class.item-channel-title]="object.type === 4"
              [style.grid-area]="(object.y + 1) + '/' + (object.x + 1) + '/' + (object.y + 1 + object.h) + '/' + (object.x + 1 + object.w)"
              [style.background-image]="'url(/matrix/' + this.channel?.id + '/' + object.image + ')'"
              [attr.id]="object.id">

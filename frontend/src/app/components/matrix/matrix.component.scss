@@ -80,6 +80,12 @@
     padding-top: 0.3rem; // если блок высотой в 1 клетку и в нём одна строка текста - она по вертикали должна выровняться по центру
   }
 
+  &-channel-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    background-color: var(--color-page-bg);
+  }
+
   .content {
     display:block;
     width: 100%;

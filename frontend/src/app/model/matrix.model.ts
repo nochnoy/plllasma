@@ -23,6 +23,7 @@ export enum MatrixObjectTypeEnum {
   image = 1,
   door = 2,
   title = 3,
+  channelTitle = 4,
 }
 
 export interface IMatrixObject extends IMatrixRect {

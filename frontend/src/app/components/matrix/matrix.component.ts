@@ -404,6 +404,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
         case MatrixObjectTypeEnum.text:
         case MatrixObjectTypeEnum.title:
+        case MatrixObjectTypeEnum.channelTitle:
           const newText = window.prompt('Введите новый текст', this.selectedObject.text) ?? '';
           if (newText && newText !== this.selectedObject.text) {
             this.selectedObject.text = newText;
@@ -625,7 +626,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
         const o: IMatrixObject = {
           type: MatrixObjectTypeEnum.text,
           y, x, w, h, text,
-          color: '#d3c6b8',
           id: this.matrix.newObjectId++
         };
         this.matrix.objects.push(o);
@@ -648,7 +648,28 @@ export class MatrixComponent implements OnInit, OnDestroy {
         const o: IMatrixObject = {
           type: MatrixObjectTypeEnum.title,
           y, x, w, h, text,
-          color: '#d3c6b8',
+          id: this.matrix.newObjectId++
+        };
+        this.matrix.objects.push(o);
+        this.select(o);
+        this.updateMatrixHeight();
+        this.changed.emit();
+      }
+    }
+  }
+
+  addChannelTitleCommand(): void {
+    if (this.channel?.matrix) {
+      const text = (window.prompt('Введите текст') ?? '').trim();
+      if (text) {
+        let w = 8;
+        let h = 1;
+        let x = matrixColsCount - 1 - w;
+        let y = this.getFreeY();
+
+        const o: IMatrixObject = {
+          type: MatrixObjectTypeEnum.channelTitle,
+          y, x, w, h, text,
           id: this.matrix.newObjectId++
         };
         this.matrix.objects.push(o);
