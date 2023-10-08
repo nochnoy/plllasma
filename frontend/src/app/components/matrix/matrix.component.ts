@@ -21,6 +21,7 @@ import {IHttpAddMatrixImages} from "../../model/rest-model";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {UploadService} from "../../services/upload.service";
 import {AppService} from "../../services/app.service";
+import {UserService} from "../../services/user.service";
 
 @UntilDestroy()
 @Component({
@@ -34,6 +35,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
     public appService: AppService,
     public uploadService: UploadService,
     public elementRef: ElementRef,
+    public userService: UserService,
   ) { }
 
   @Output('changed')
@@ -412,10 +414,13 @@ export class MatrixComponent implements OnInit, OnDestroy {
         case MatrixObjectTypeEnum.text:
         case MatrixObjectTypeEnum.title:
         case MatrixObjectTypeEnum.channelTitle:
-          const newText = window.prompt('Введите новый текст', this.selectedObject.text) ?? '';
-          if (newText && newText !== this.selectedObject.text) {
-            this.selectedObject.text = newText;
-            this.changed.emit(this.matrix);
+          const channelId = this.channel?.id ?? -1;
+          if (this.userService.canEditMatrix(channelId)) {
+            const newText = window.prompt('Введите новый текст', this.selectedObject.text) ?? '';
+            if (newText && newText !== this.selectedObject.text) {
+              this.selectedObject.text = newText;
+              this.changed.emit(this.matrix);
+            }
           }
           break;
 
