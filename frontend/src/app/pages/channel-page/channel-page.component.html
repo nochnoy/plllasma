@@ -20,7 +20,6 @@
           <!--
 
           -->
-          <div>Вы {{roleTitle}} канала</div>
           <button mat-button [matMenuTriggerFor]="menu">🎨 Дизайнить канал ▾</button>
           <mat-menu #menu="matMenu">
             <button mat-menu-item [disabled]="!canEditMatrix" (click)="matrix.addImageCommand()">Добавить картинки</button>
@@ -35,6 +34,7 @@
           </mat-menu>
           <button mat-button [disabled]="!canUseSettings">🔨 Настройки</button>
           <button mat-button>💼 О канале</button>
+          <div>Вы {{roleTitle}} канала</div>
 
         </div>
       </div>
@@ -74,6 +74,10 @@
       </a>
     </div>
 
+    <ng-container *ngIf="channel.id_place === 1">
+      <img class="banner" src="assets/img/halloween.png">
+    </ng-container>
+
     <div class="now-here" *ngIf="hereAndNowUsers.length">
       <div class="nowandhere-label">Здесь сейчас:</div>
       <a *ngFor="let user of hereAndNowUsers; let i = index;"
@@ -85,10 +89,6 @@
     </div>
 
     <div class="nothing" *ngIf="isNotificationsReady && !(mailNotification?.message || hereAndNowUsers.length)">никого нет</div>
-
-    <!--
-    <img class="banner" src="assets/img/newyear2024.png">
-    -->
 
   </div>
 </div>
