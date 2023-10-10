@@ -33,6 +33,7 @@
   --z-matrix-drag-item-placeholder: 9;
   --z-matrix-drag-item: 10;
   --z-selection: 11;
+  --z-banner: 12;
 
   --border-radius: 3px;
   --margin-standard: 0.4rem;
@@ -536,10 +537,12 @@ textarea {
 }
 
 .banner {
-  position: fixed;
-  bottom: 0;
+  position: absolute;
+  z-index: var(--z-banner);
+  top: 0;
   right: 0;
   margin: 0!important;
+  margin-top: -1rem;
   pointer-events: none;
 }
 
