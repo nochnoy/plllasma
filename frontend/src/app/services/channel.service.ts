@@ -54,7 +54,6 @@ export class ChannelService {
         this.cities = this.cities.sort((a, b) => a.channel.weight - b.channel.weight);
 
         this.channels.forEach((channel) => {
-          const rawChannel = channel as any;
           channel.shortName = channel.name.substr(0, 14);
           channel.canModerate = this.userService.canModerate(channel.id_place);
         });

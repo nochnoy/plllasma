@@ -1,20 +1,17 @@
 <?
 // Функции для работы со списком каналов
 
-function getChannels($placeId = NULL, $onlyAtMenu = true) {
+// Возвращает json с данными для бокового меню юзера - его подписки
+function getChannels() {
 	global $user;
 	global $mysqli;
 
- 	$where = '';
-	if ($placeId!==NULL) $where = ' AND p.id_place='.$placeId;
-	if ($onlyAtMenu) $where = ' AND l.at_menu="t"';
-	
+	// Внимание, мы не проверяем права. Юзер может быть подписан на канал, в который не сможет войти. Сможет видеть на нём звёздочку.
 	$sql =
-		'SELECT DISTINCT p.id_place, p.parent, p.first_parent, p.name, p.description, p.time_changed, p.path, p.typ, l.weight, a.role, l.time_viewed, l.at_menu'.
+		'SELECT DISTINCT p.id_place, p.parent, p.first_parent, p.name, p.description, p.time_changed, p.path, p.typ, l.weight, l.time_viewed'.
 		' FROM tbl_places p'.
-		' LEFT JOIN tbl_access a ON a.id_place=p.id_place AND a.id_user='.$user['id_user'].
-		' LEFT JOIN lnk_user_place l ON l.id_place=a.id_place AND l.id_user='.$user['id_user'].
-		' WHERE 1=1 '.$where.
+		' LEFT JOIN lnk_user_place l ON l.id_place = p.id_place AND l.id_user = '.$user['id_user'].
+		' WHERE l.at_menu="t"'.
 		' ORDER BY p.parent, p.weight'; // это нужно чтоб первыми создавались города а потом в них совались их дети
 	$result = mysqli_query($mysqli, $sql);
 
