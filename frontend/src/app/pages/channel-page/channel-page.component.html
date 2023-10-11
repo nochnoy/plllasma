@@ -64,7 +64,15 @@
 
     </ng-container>
   </main>
-  <div class="sidebar">
+  <div class="sidebar" [class.sidebar-halloween]="isHalloween">
+
+    <div class="halloween" *ngIf="isHalloween">
+      Кошмар ужас все умрут!<br>
+      Уже матрица уж тут!<br>
+      Каждый может вашу мать<br>
+      Собственный канал создать<br>
+      <img src="assets/img/halloween-pumpkin.png">
+    </div>
 
     <div class="mail-notification" *ngIf="mailNotification?.message">
       <a [routerLink]="'/members/' + mailNotification?.nick">
@@ -73,10 +81,6 @@
         <span>{{mailNotification?.message}}</span>
       </a>
     </div>
-
-    <ng-container *ngIf="channel.id_place === 1">
-      <img class="banner" src="assets/img/halloween.png">
-    </ng-container>
 
     <div class="now-here" *ngIf="hereAndNowUsers.length">
       <div class="nowandhere-label">Здесь сейчас:</div>

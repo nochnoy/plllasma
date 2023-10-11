@@ -164,18 +164,46 @@ textarea {
       max-width: 20rem;
       margin-bottom: 1rem;
     }
+
+    &-halloween {
+      background-color: black;
+      background-image: url('~src/assets/img/halloween.png');
+      background-repeat: no-repeat;
+      background-position: top center;
+      padding-top: 26rem;
+
+      .halloween {
+        line-height: 1.4rem;
+        text-align: center;
+        color: #e19633;
+
+        img {
+          margin: 0 1rem;
+        }
+      }
+    }
   }
 
   @media (min-width: 80rem) {
     .sidebar {
       min-width: 8rem;
       max-width: 8rem;
+
+      &-halloween {
+        min-width: 16rem;
+        max-width: 16rem;
+      }
     }
   }
   @media (min-width: 100rem) {
     .sidebar {
       min-width: 14rem;
       max-width: 14rem;
+
+      &-halloween {
+        min-width: 16rem;
+        max-width: 16rem;
+      }
     }
   }
   @media (min-width: 120rem) {

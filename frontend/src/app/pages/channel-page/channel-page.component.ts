@@ -44,6 +44,8 @@ export class ChannelPageComponent implements OnInit {
   canEditMatrix = false;
   canUseSettings = false;
 
+  isHalloween = false;
+
   ngOnInit(): void {
     of({}).pipe(
       switchMap(() => this.activatedRoute.url),
@@ -68,6 +70,8 @@ export class ChannelPageComponent implements OnInit {
           this.roleTitle = this.userService.getRoleTitle(this.channel.id_place);
           this.canEditMatrix = this.userService.canEditMatrix(this.channel.id_place);
           this.canUseSettings = this.userService.canUseChannelSettings(this.channel.id_place);
+
+          this.checkHalloween();
         }
       }),
       untilDestroyed(this)
@@ -207,6 +211,19 @@ export class ChannelPageComponent implements OnInit {
         animal: 'panda'
       }
     });
+  }
+
+  checkHalloween(): void {
+    if (this.channel.id_place === 1) {
+      console.log((new Date()).getMonth());
+      const year = (new Date()).getFullYear();
+      const now = new Date();
+      const from = new Date(year, 10 - 1, 11);
+      const to = new Date(year, 11 - 1, 6);
+      this.isHalloween = (now.getTime() >= from.getTime() && now.getTime() <= to.getTime());
+    } else {
+      this.isHalloween = false;
+    }
   }
 
 }
