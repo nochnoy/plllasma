@@ -169,7 +169,7 @@ textarea {
       background-color: black;
       background-image: url('~src/assets/img/halloween.png');
       background-repeat: no-repeat;
-      background-position: top center;
+      background-position: top right;
       padding-top: 26rem;
 
       .halloween {
@@ -191,8 +191,8 @@ textarea {
       max-width: 8rem;
 
       &-halloween {
-        min-width: 300px;
-        max-width: 300px;
+        min-width: 260px;
+        max-width: 260px;
       }
     }
   }
@@ -202,8 +202,8 @@ textarea {
       max-width: 14rem;
 
       &-halloween {
-        min-width: 300px;
-        max-width: 300px;
+        min-width: 260px;
+        max-width: 260px;
       }
     }
   }
