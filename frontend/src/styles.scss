@@ -176,6 +176,7 @@ textarea {
         line-height: 1.4rem;
         text-align: center;
         color: #e19633;
+        margin: 0 1.5rem 3rem 1.5rem;
 
         img {
           margin: 0 1rem;
@@ -190,8 +191,8 @@ textarea {
       max-width: 8rem;
 
       &-halloween {
-        min-width: 16rem;
-        max-width: 16rem;
+        min-width: 300px;
+        max-width: 300px;
       }
     }
   }
@@ -201,8 +202,8 @@ textarea {
       max-width: 14rem;
 
       &-halloween {
-        min-width: 16rem;
-        max-width: 16rem;
+        min-width: 300px;
+        max-width: 300px;
       }
     }
   }
