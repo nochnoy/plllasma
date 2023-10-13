@@ -166,17 +166,17 @@ textarea {
     }
 
     &-halloween {
+      padding-top: 24rem;
       background-color: black;
       background-image: url('~src/assets/img/halloween.png');
       background-repeat: no-repeat;
       background-position: top right;
-      padding-top: 26rem;
 
       .halloween {
         line-height: 1.4rem;
         text-align: center;
         color: #948977;
-        margin: 0 1rem 3rem 1rem;
+        margin: 0 1rem;
 
         img {
           margin: 0 1rem;
