@@ -1,6 +1,6 @@
 import {AfterContentInit, Component, ElementRef, OnInit, ViewChild, ViewChildren} from '@angular/core';
 import {Channel} from "../../model/messages/channel.model";
-import {EMPTY_CHANNEL, IChannel} from "../../model/app-model";
+import {EMPTY_CHANNEL, IMenuChannel} from "../../model/app-model";
 import {Thread} from "../../model/messages/thread.model";
 import {of} from "rxjs";
 import {switchMap, tap} from "rxjs/operators";
@@ -18,7 +18,7 @@ export class TestMessagesPageComponent implements OnInit {
     public appService: AppService
   ) { }
 
-  public channel: IChannel = {...EMPTY_CHANNEL};
+  public channel: IMenuChannel = {...EMPTY_CHANNEL};
   public channelModel: Channel = new Channel();
   public isModelError = false;
   public json = '';
@@ -49,7 +49,7 @@ export class TestMessagesPageComponent implements OnInit {
       parsed = null;
     }
     if (parsed) {
-      this.channelModel.deserialize(parsed);
+      this.channelModel.deserializeMessages(parsed);
     }
   }
 

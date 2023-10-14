@@ -1,6 +1,6 @@
 import {Injectable, isDevMode} from '@angular/core';
 import {Observable, of, Subject} from "rxjs";
-import {IChannel, IFocus, ILike, IUploadingAttachment, IUserData, LoginStatus} from "../model/app-model";
+import {IMenuChannel, IFocus, ILike, IUploadingAttachment, IUserData, LoginStatus} from "../model/app-model";
 import {map, switchMap, tap} from "rxjs/operators";
 import {HttpClient} from "@angular/common/http";
 import {UserService} from "./user.service";

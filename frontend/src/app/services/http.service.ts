@@ -28,14 +28,13 @@ export class HttpService {
     );
   }
 
-  getChannel$(channelId:number, lastVieved:string, page = 0, unseen = false): Observable<any> {
+  getChannel$(channelId:number, lastVieved:string, page = 0): Observable<any> {
     return this.httpClient.post(
       `${HttpService.apiPath}/channel.php`,
       {
         cid: channelId.toString(),
         lv: lastVieved,
-        page,
-        unseen
+        page
       },
       { observe: 'body', withCredentials: true }
     )

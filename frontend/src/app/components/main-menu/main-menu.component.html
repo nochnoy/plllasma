@@ -6,8 +6,8 @@
   <a routerLink="/members"><img src="assets/members.gif"></a>
   <a href (click)="logoffClick($event)"><img src="assets/logoff.gif"></a>
 </div>
-<div class="channels" *ngIf="channelService?.channels?.length">
-  <div *ngFor="let city of channelService.cities">
+<div class="channels" *ngIf="channelService?.menuChannels?.length">
+  <div *ngFor="let city of channelService.menuCities">
     <a *ngFor="let channel of city.children"
        (click)="onItemClick(channel)"
        [class.black-star]=""

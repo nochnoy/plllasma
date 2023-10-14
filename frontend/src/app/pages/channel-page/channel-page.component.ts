@@ -3,7 +3,7 @@ import {AppService} from "../../services/app.service";
 import {ActivatedRoute} from "@angular/router";
 import {Observable, of} from "rxjs";
 import {switchMap, tap} from "rxjs/operators";
-import {EMPTY_CHANNEL, IChannel} from "../../model/app-model";
+import {EMPTY_CHANNEL, IMenuChannel} from "../../model/app-model";
 import {Channel} from "../../model/messages/channel.model";
 import {Thread} from "../../model/messages/thread.model";
 import {ChannelService} from "../../services/channel.service";
@@ -31,55 +31,68 @@ export class ChannelPageComponent implements OnInit {
   ) { }
 
   readonly defaultChannelId = 1;
-  channel: IChannel = EMPTY_CHANNEL;
   channelModel?: Channel;
+  isSpinner = false;
   isExpanding?: Thread;
   isNotificationsReady = false;
   hereAndNowUsers: string[] = [];
   mailNotification: any = {};
   currentPage = 0;
 
+  channelId = 0;
+  timeViewed = '';
+
   roleTitle = '';
   canAccess = false;
+  canModerate = false;
   canEditMatrix = false;
   canUseSettings = false;
 
   isHalloween = false;
+  currentYear = 0;
 
   ngOnInit(): void {
     of({}).pipe(
       switchMap(() => this.activatedRoute.url),
-      tap((urlSegments) => {
+      switchMap((urlSegments) => {
         this.isNotificationsReady = false;
         this.currentPage = 0;
-        let channelId: number;
-        if (urlSegments.length) {
-          channelId = parseInt(urlSegments[0].path, 10) ?? this.defaultChannelId;
-        } else {
-          channelId = this.defaultChannelId;
-        }
-        const channel = this.channelService.channels.find((channel) => channel.id_place === channelId);
-        this.channel = channel ?? EMPTY_CHANNEL;
         this.channelService.deselectMessage();
-      }),
-      tap(() => {
-        if (this.channel !== EMPTY_CHANNEL) {
-          this.channelModel = this.channelService.getChannel(this.channel.id_place, this.channel?.time_viewed ?? '', this.currentPage);
 
-          this.canAccess = this.userService.canAccess(this.channel.id_place);
-          this.roleTitle = this.userService.getRoleTitle(this.channel.id_place);
-          this.canEditMatrix = this.userService.canEditMatrix(this.channel.id_place);
-          this.canUseSettings = this.userService.canUseChannelSettings(this.channel.id_place);
-
-          this.checkHalloween();
+        if (urlSegments.length) {
+          this.channelId = parseInt(urlSegments[0].path, 10) ?? this.defaultChannelId;
+        } else {
+          this.channelId = this.defaultChannelId;
         }
+
+        // Если в других каналах хранилась обновлённая time_changed - настало им её применить т.к. мы ушли с тех каналов
+        this.channelService.applyDeferredMenuTimes(this.channelId);
+
+        // Получаем канал
+        return this.channelService.getChannel(
+          this.channelId,
+          this.channelService.menuChannels.find((mc) => mc.id_place === this.channelId)?.time_viewed ?? '',
+          this.currentPage
+        );
+      }),
+      tap((channel: Channel) => {
+        this.channelModel = channel;
+        this.timeViewed = channel.timeViewed ?? '';
+
+        this.canAccess = this.userService.canAccess(this.channelId);
+        this.canModerate = this.userService.canAccess(this.channelId);
+        this.roleTitle = this.userService.getRoleTitle(this.channelId);
+        this.canEditMatrix = this.userService.canEditMatrix(this.channelId);
+        this.canUseSettings = this.userService.canUseChannelSettings(this.channelId);
+
+        this.checkHalloween();
       }),
       untilDestroyed(this)
     ).subscribe();
 
     this.channelService.channelInvalidSignal.pipe(
       tap((channelId) => {
-        if (this.channel && this.channel.id_place === channelId) {
+        if (this.channelModel?.id === channelId) {
           this.onChannelInvalidated();
         }
       }),
@@ -121,7 +134,7 @@ export class ChannelPageComponent implements OnInit {
       } else {
         this.isExpanding = thread;
         of({}).pipe(
-          switchMap(() => this.appService.getThread$(thread.rootMessageId, this.channel.time_viewed)),
+          switchMap(() => this.appService.getThread$(thread.rootMessageId, this.timeViewed)),
           tap((input: any) => {
             thread.addMessages(input.messages);
             thread.isExpanded = true;
@@ -134,11 +147,18 @@ export class ChannelPageComponent implements OnInit {
   }
 
   onNewMessageCreated(): void {
-    this.channelService.invalidateChannel(this.channel.id_place);
+    this.channelService.invalidateChannel(this.channelId);
   }
 
   onChannelInvalidated(): void {
-    this.channelModel = this.channelService.getChannel(this.channel.id_place, this.channel?.time_viewed ?? '', this.currentPage);
+    this.channelService.getChannel(
+      this.channelId,
+      this.channelService.menuChannels.find((mc) => mc.id_place === this.channelId)?.time_viewed ?? '',
+      this.currentPage
+    ).pipe(
+      tap((result) => this.channelModel = result),
+      untilDestroyed(this),
+    ).subscribe();
   }
 
   @HostListener('document:mousedown', ['$event'])
@@ -166,19 +186,13 @@ export class ChannelPageComponent implements OnInit {
     }
   }
 
-  onMenuItemClick(channel:IChannel): void {
-    // Сообщения канала обновим только если ткнули в ссылку самого канала
-    const refreshMessages = this.channel && channel.id_place === this.channel.id_place;
-    this.refreshEverything(refreshMessages);
-  }
-
-  // TODO: Потом выкинуть, когда сервер начнёт присылать инфу о том что нового появилось
-  refreshEverything(refreshMessages = false): void {
+  onMenuItemClick(channel: IMenuChannel): void {
+    const refreshMessages = channel.id_place === this.channelId;
     of({}).pipe(
       switchMap(() => this.channelService.loadChannels$()),
       switchMap(() => this.getHereAndNow$()),
       tap(() => {
-        if (refreshMessages) {
+        if (refreshMessages) { // Сообщения канала обновим только если ткнули в ссылку самого канала
           this.onChannelInvalidated();
         }
       }),
@@ -195,10 +209,10 @@ export class ChannelPageComponent implements OnInit {
   onMatrixChanged(matrix: IMatrix): void {
     if (this.canEditMatrix) {
       if (this.channelModel?.matrix) {
-        this.channel.spinner = true;
-        this.httpService.matrixWrite$(this.channel.id_place, matrix).pipe(
+        this.isSpinner = true;
+        this.httpService.matrixWrite$(this.channelId, matrix).pipe(
           tap((result) => {
-            this.channel.spinner = false;
+            this.isSpinner = false;
           }),
         ).subscribe();
       }
@@ -214,13 +228,13 @@ export class ChannelPageComponent implements OnInit {
   }
 
   checkHalloween(): void {
-    if (this.channel.id_place === 1) {
-      console.log((new Date()).getMonth());
+    if (this.channelId === 1) {
       const year = (new Date()).getFullYear();
       const now = new Date();
       const from = new Date(year, 10 - 1, 11);
       const to = new Date(year, 11 - 1, 6);
       this.isHalloween = (now.getTime() >= from.getTime() && now.getTime() <= to.getTime());
+      this.currentYear = year;
     } else {
       this.isHalloween = false;
     }

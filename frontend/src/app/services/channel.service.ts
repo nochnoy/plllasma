@@ -1,5 +1,5 @@
 import {EventEmitter, Injectable} from '@angular/core';
-import {EMPTY_CHANNEL, IChannel, ICity} from "../model/app-model";
+import {EMPTY_CHANNEL, IMenuChannel, IMenuCity} from "../model/app-model";
 import {Observable, of} from "rxjs";
 import {switchMap, tap} from "rxjs/operators";
 import {HttpService} from "./http.service";
@@ -18,9 +18,8 @@ export class ChannelService {
     public userService: UserService
   ) { }
 
-  channels: IChannel[] = [];
-  channelModels = new Map<number, Channel>();
-  cities: ICity[] = [];
+  menuChannels: IMenuChannel[] = [];
+  menuCities: IMenuCity[] = [];
   selectedMessage?: Message;
   channelInvalidSignal = new EventEmitter<number>();
 
@@ -28,32 +27,32 @@ export class ChannelService {
     return of({}).pipe(
       switchMap(() => this.httpService.loadChannels$()),
       tap((channels) => {
-        this.channels = channels as IChannel[];
+        this.menuChannels = channels as IMenuChannel[];
 
         // Вырежем канал "Мы"
-        this.channels = this.channels.filter((channel) => channel.id_place !== 46);
+        this.menuChannels = this.menuChannels.filter((channel) => channel.id_place !== 46);
 
         // TODO: по хорошему всё это выкинуть и при получении каналов выстроть их дерево. parent, children все дела.
-        this.cities = this.channels
+        this.menuCities = this.menuChannels
           .filter((channel) => !channel.parent)
           .map((channel) => ({
               channel: channel,
               children: []
             })
           );
-        this.channels
+        this.menuChannels
           .filter((channel) => channel.parent)
           .forEach((channel) => {
-            const city = this.cities.find((city) => city.channel.id_place === channel.parent);
+            const city = this.menuCities.find((city) => city.channel.id_place === channel.parent);
             city?.children.push(channel);
           });
-        this.cities.forEach((city) => {
+        this.menuCities.forEach((city) => {
           city.children = city.children.sort((a, b) => a.weight - b.weight);
           city.children.unshift(city.channel);
         });
-        this.cities = this.cities.sort((a, b) => a.channel.weight - b.channel.weight);
+        this.menuCities = this.menuCities.sort((a, b) => a.channel.weight - b.channel.weight);
 
-        this.channels.forEach((channel) => {
+        this.menuChannels.forEach((channel) => {
           channel.shortName = channel.name.substr(0, 14);
           channel.canModerate = this.userService.canModerate(channel.id_place);
         });
@@ -64,66 +63,48 @@ export class ChannelService {
 
   }
 
-  getChannel(channelId: number, time_viewed: string, page = 0): Channel {
-    const channelAtMenu: IChannel = this.channels.find((c) => c.id_place === channelId) || {...EMPTY_CHANNEL};
-    let channelModel = this.channelModels.get(channelId);
-
-    channelAtMenu.spinner = true;
-
-    if (!channelModel) {
-      channelModel = new Channel();
-      channelModel.id = channelId;
-      this.channelModels.set(channelId, channelModel);
-    }
-
-    of({}).pipe(
+  getChannel(channelId: number, time_viewed: string, page = 0): Observable<Channel> {
+    return of({}).pipe(
       switchMap(() => this.httpService.getChannel$(channelId, time_viewed, page)),
-      tap((input) => {
-        channelAtMenu.spinner = false;
-
+      switchMap((input: any) => {
         if (input.error) {
-          console.error(`Сервер вернул ошибку ${input.error}`);
-        } else {
+          throw (`Сервер вернул ошибку ${input.error}`);
+        }
 
-          channelModel!.deserialize(input);
+        // Канал на меню лишается звёздочки
+        const channelAtMenu = this.menuChannels.find((channel) => channel.id_place === channelId);
+        if (channelAtMenu) {
+          channelAtMenu.timeViewedDeferred = input.viewed;
+          channelAtMenu.time_changed = input.changed;
+        }
 
-          // Канал который был выбран до этого, актуализируют свою time_viewed и лишается звёздочки
-          this.channels
-            .filter((channel) => channel.id_place !== channelId)
-            .forEach((channel) => {
-              if (channel.time_viewed_deferred) {
-                channel.time_viewed = channel.time_viewed_deferred;
-                delete channel.time_viewed_deferred;
-              }
+        let channel = new Channel();
+        channel.id = channelId;
+        channel.name = input.name;
+        channel.atMenu = input.atMenu;
+
+        // Строим ветки
+        channel!.deserializeMessages(input);
+
+        // Добавим матрицу
+        if (channel) {
+          if (input.matrix) {
+            channel.matrix = input.matrix;
+          } else {
+            channel.matrix = newMatrix();
+            // Нарисуем дефолтную матрицу из одного блока - заголовка канала
+            channel.matrix?.objects.push({
+              type: MatrixObjectTypeEnum.channelTitle,
+              x: 0, y: 0, w: matrixColsCount, h: 1,
+              text: channel.name,
+              id: channel.matrix.newObjectId++,
             });
 
-          // Выбранный канал сохраняет time_viewed до момента когда мы с него уйдём
-          const channelAtMenu = this.channels.find((channel) => channel.id_place === channelId);
-          if (channelAtMenu) {
-            channelAtMenu.time_viewed_deferred = input.viewed;
-          }
-
-          // Добавим матрицу. Это делается здесь а не в deserialize т.к. она не имеет отношения к веткам
-          if (channelModel) {
-            if (input.matrix) {
-              channelModel.matrix = input.matrix;
-            } else {
-              channelModel.matrix = newMatrix();
-              // Нарисуем дефолтную матрицу из одного блока - заголовка канала
-              channelModel.matrix?.objects.push({
-                type: MatrixObjectTypeEnum.channelTitle,
-                x: 0, y: 0, w: matrixColsCount, h: 1,
-                text: channelAtMenu ? channelAtMenu.name : 'Неизвестный канал',
-                id: channelModel.matrix.newObjectId++,
-              });
-
-            }
           }
         }
+        return of(channel);
       })
-    ).subscribe();
-
-    return channelModel;
+    );
   }
 
   selectMessage(message: Message): void {
@@ -191,6 +172,19 @@ export class ChannelService {
 
   invalidateChannel(channelId: number): void {
     this.channelInvalidSignal.emit(channelId);
+  }
+
+  // Применяем отложенные даты в timeChanged
+  applyDeferredMenuTimes(excludeChannelId: number): void {
+    this.menuChannels
+      .filter((channel) => channel.id_place !== excludeChannelId)
+      .forEach((channel) => {
+        if (channel.timeViewedDeferred) {
+          channel.time_viewed = channel.timeViewedDeferred;
+          delete channel.timeViewedDeferred;
+        }
+      })
+    ;
   }
 
 }

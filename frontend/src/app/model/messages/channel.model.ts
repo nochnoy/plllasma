@@ -2,13 +2,18 @@ import {Thread} from './thread.model';
 import {IMatrix} from "../matrix.model";
 
 export class Channel {
-
   public id: number = 0;
+  public name: string = '';
+  public atMenu: boolean = false;
+  public timeChanged?: string;
+  public timeViewed?: string;
   public pagesCount: number = 0;
   public threads: Array<Thread> = [];
   public matrix?: IMatrix;
+  public parent?: number;
+  public first_parent?: number;
 
-  public deserialize(input: any) {
+  public deserializeMessages(input: any) {
     let i: number;
     let rawMessage: any;
     let t: Thread | undefined;

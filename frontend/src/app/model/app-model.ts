@@ -71,7 +71,7 @@ export interface IFileInfo {
 
 export type TFileType = 'unknown' | 'image' | 'file' | 'video';
 
-export interface IChannel {
+export interface IMenuChannel {
   id_place: number;
   parent: number;
   first_parent: number;
@@ -82,17 +82,17 @@ export interface IChannel {
   weight: number;
   canModerate: boolean;
   selected?: boolean;
-  time_viewed_deferred?: string;
   spinner?: boolean;
   shortName?: string;
+  timeViewedDeferred?: string; // Чисто клиентское поле. В него льётся фактическое time_viewed канала пока юзер с него не уйдёт.
 }
 
-export interface ICity {
-  channel: IChannel
-  children: IChannel[];
+export interface IMenuCity {
+  channel: IMenuChannel
+  children: IMenuChannel[];
 }
 
-export const EMPTY_CHANNEL: IChannel = {
+export const EMPTY_CHANNEL: IMenuChannel = {
   id_place: 0,
   parent: 0,
   first_parent: 0,

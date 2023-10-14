@@ -1,12 +1,12 @@
 <div class="three-column-page">
   <aside class="aside">
-      <app-main-menu (itemClick)="onMenuItemClick(channel)"></app-main-menu>
+      <app-main-menu (itemClick)="onMenuItemClick($event)"></app-main-menu>
   </aside>
   <main class="main">
-    <div class="general-error" *ngIf="channel && !canAccess">
+    <div class="general-error" *ngIf="channelModel && !canAccess">
       🔒 У вас нет сюда доступа
     </div>
-    <ng-container *ngIf="channel && canAccess">
+    <ng-container *ngIf="channelModel && canAccess">
 
       <app-matrix #matrix
         [channel]="channelModel!"
@@ -14,9 +14,9 @@
       </app-matrix>
 
       <div class="form">
-        <app-message-form-2 class="form-content" [channelId]="channel.id_place" (onPost)="onNewMessageCreated()"></app-message-form-2>
-        <div *ngIf="channel.spinner" class="loading" [class.spinner]="channel.spinner">Загружается</div>
-        <div *ngIf="!channel.spinner" class="form-tools">
+        <app-message-form-2 class="form-content" [channelId]="channelId" (onPost)="onNewMessageCreated()"></app-message-form-2>
+        <div *ngIf="isSpinner" class="loading" [class.spinner]="isSpinner">Загружается</div>
+        <div *ngIf="!isSpinner" class="form-tools">
           <!--
 
           -->
@@ -42,8 +42,8 @@
       <div *ngIf="!!channelModel" class="messages">
         <div class="thread" [class.thread-gray]="t.isGray" *ngFor="let t of channelModel.threads">
           <app-messages
-            [placeId]="channel.id_place"
-            [canModerate]="channel.canModerate"
+            [placeId]="channelId"
+            [canModerate]="canModerate"
             [messages]="[t.root]"
             [showChildren]="t.isGray || t.isExpanded">
           </app-messages>
@@ -67,11 +67,14 @@
   <div class="sidebar" [class.sidebar-halloween]="isHalloween">
 
     <div class="halloween" *ngIf="isHalloween">
-      Кошмар ужас все умрут!<br>
-      Уже матрица уж тут!<br>
-      Каждый может вашу мать<br>
-      Собственный канал создать<br>
-      <img src="assets/img/halloween-pumpkin.png">
+      <ng-container *ngIf="currentYear === 2023">
+        Конец близок! Каналы мутируют.
+        Скоро они начнут размножаться
+        и их станет столько, что мы все умрём!
+        И&nbsp;черви съедят наши глаза!
+
+      </ng-container>
+      <br><img src="assets/img/halloween-pumpkin.png">
     </div>
 
     <div class="mail-notification" *ngIf="mailNotification?.message">
