@@ -52,7 +52,7 @@ $row = mysqli_fetch_array($result);
 $name           = $row[0] ?? '';
 $changed        = $row[1] ?? '';
 $matrix         = $row[2] ?? '';
-$atMenu         = $row[3] ? true : false;
+$atMenu         = $row[3] == 't' ? true : false;
 $lastViewedLnk  = $row[4] ?? '';
 $lnkId          = $row[5];
 
