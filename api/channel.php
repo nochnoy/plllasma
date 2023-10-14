@@ -59,12 +59,7 @@ $lnkId          = $row[5];
 if (empty($lnkId)) {
     // Если не было связи юзер-канал - создадим её
     // и пометим канал как просмотренный
-    $sql = $mysqli->prepare('
-        INSERT INTO lnk_user_place (id_place, id_user, at_menu, time_viewed, weight)
-        VALUES (?, ?, "f", NOW(), 100)
-    ');
-    $sql->bind_param("ii", $placeId, $userId);
-    $sql->execute();
+    createUserChannelLink($placeId);
 
     // данные о только что созданной связи
     $atMenu = false;

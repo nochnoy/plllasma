@@ -240,6 +240,19 @@ export class ChannelPageComponent implements OnInit {
     }
   }
 
+
+  subscribeCommand(): void {
+    this.appService.subscribeChannel$(this.channelId).pipe(
+      untilDestroyed(this)
+    ).subscribe();
+  }
+
+  ubsubscribeCommand(): void {
+    this.appService.unsubscribeChannel$(this.channelId).pipe(
+      untilDestroyed(this)
+    ).subscribe();
+  }
+
 }
 
 export interface DialogData {

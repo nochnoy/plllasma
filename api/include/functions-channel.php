@@ -154,4 +154,25 @@ function buildMessagesJson($a, $lastViewed) {
 	return $s;
 }
 
+function createUserChannelLink($placeId) {
+	global $mysqli;
+	global $user;
+
+	$userId = $user['id_user'];
+
+	$sql = $mysqli->prepare('SELECT id FROM lnk_user_place WHERE id_place = ? AND id_user = ?');
+	$sql->bind_param("ii", $placeId, $userId);
+	$sql->execute();
+	$result = $sql->get_result();
+
+	if (mysqli_num_rows($result) == 0) {
+		$sql = $mysqli->prepare('
+			INSERT INTO lnk_user_place (id_place, id_user, at_menu, time_viewed, weight)
+			VALUES (?, ?, "f", NOW(), 100)
+		');
+		$sql->bind_param("ii", $placeId, $userId);
+		$sql->execute();
+	}
+}
+
 ?>

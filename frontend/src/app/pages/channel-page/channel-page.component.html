@@ -32,6 +32,8 @@
             <button mat-menu-item (click)="openDialog()">Настройки канала</button>
             -->
           </mat-menu>
+          <button mat-button (click)="subscribeCommand()">(+) Подписаться</button>
+          <button mat-button (click)="ubsubscribeCommand()">(-) Отписаться</button>
           <button mat-button [disabled]="!canUseSettings">🔨 Настройки</button>
           <button mat-button>💼 О канале</button>
           <div>Вы {{roleTitle}} канала</div>

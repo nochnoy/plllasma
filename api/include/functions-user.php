@@ -203,7 +203,10 @@ function canRead($channelId) {
 	} else {
 		foreach ($user['access'] as $o) {
 			if ($o['id_place'] == $channelId) {
-				return true; // Если в принципе есть запись значит читать может
+				$role = intval($o['role']);
+				if ($role != ROLE_NOBODY) {
+					return true;
+				}
 			}
 		}
 		return false;
@@ -217,7 +220,10 @@ function canWrite($channelId) {
 	} else {
 		foreach ($user['access'] as $o) {
 			if ($o['id_place'] == $channelId) {
-				return true; // Если в принципе есть запись значит писать может
+				$role = intval($o['role']);
+				if ($role != ROLE_NOBODY) {
+					return true;
+				}
 			}
 		}
 		return false;

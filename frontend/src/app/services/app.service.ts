@@ -185,6 +185,28 @@ export class AppService {
     return this.httpClient.post(
       `${this.apiPath}/matrix-images-add.php`,
       formData,
-      { observe: 'body', withCredentials: true })
+      { observe: 'body', withCredentials: true }
+    );
   }
+
+  subscribeChannel$(channelId: number): Observable<any> {
+    return this.httpClient.post(
+      `${this.apiPath}/channel-subscribe.php`,
+      {
+        channelId
+      },
+      { observe: 'body', withCredentials: true }
+    );
+  }
+
+  unsubscribeChannel$(channelId: number): Observable<any> {
+    return this.httpClient.post(
+      `${this.apiPath}/channel-unsubscribe.php`,
+      {
+        channelId
+      },
+      { observe: 'body', withCredentials: true }
+    );
+  }
+
 }
