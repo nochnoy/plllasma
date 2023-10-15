@@ -33,6 +33,12 @@
       text-align: left;
       line-height: var(--form-tools-item-heigth);
       font-size: 1rem;
+
+      i {
+        display: inline-block;
+        font-style: normal;
+        min-width: 1.5rem;
+      }
     }
   }
 }

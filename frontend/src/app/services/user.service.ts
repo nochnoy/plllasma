@@ -31,8 +31,8 @@ export class UserService {
       case RoleEnum.writer:     result = 'участник'; break;
       case RoleEnum.moderator:  result = 'модератор'; break;
       case RoleEnum.admin:      result = 'админ'; break;
-      case RoleEnum.owner:      result = 'владелец'; break;
-      case RoleEnum.god:        result = 'господин'; break;
+      case RoleEnum.owner:      result = 'хозяин'; break;
+      case RoleEnum.god:        result = 'God'; break;
     }
     return result;
   }

@@ -20,7 +20,7 @@
           <!--
 
           -->
-          <button mat-button [matMenuTriggerFor]="menu">🎨 Дизайнить ▾</button>
+          <button mat-button [matMenuTriggerFor]="menu"><i>🎨</i> Дизайнить ▾</button>
           <mat-menu #menu="matMenu">
             <button mat-menu-item [disabled]="!channel?.canEditMatrix" (click)="matrix.addImageCommand()">Добавить картинки</button>
             <button mat-menu-item [disabled]="!channel?.canEditMatrix" (click)="matrix.addTextCommand()">Добавить текст - обычнй</button>
@@ -33,11 +33,12 @@
             -->
           </mat-menu>
           <ng-container *ngIf="channel?.id !== 1">
-            <button mat-button (click)="subscribeCommand()" *ngIf="!channel?.atMenu">📪 Подписаться на канал</button>
-            <button mat-button (click)="ubsubscribeCommand()" *ngIf="channel?.atMenu">📫 Отписаться</button>
+            <button mat-button (click)="subscribeCommand()" *ngIf="!channel?.atMenu"><i>📪</i> Подписаться на канал</button>
+            <button mat-button (click)="ubsubscribeCommand()" *ngIf="channel?.atMenu"><i>📫</i> Отписаться</button>
           </ng-container>
+
           <!--
-          <button mat-button [disabled]="!channel?.canUseSettings">🔨 Настройки</button>
+          <button mat-button [disabled]="channel?.canUseSettings">🔨 Настройки</button>
           <button mat-button>💼 О канале</button>
           <div>Вы {{channel?.roleTitle}} канала</div>
           -->
