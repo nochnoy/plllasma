@@ -65,10 +65,12 @@ export class ChannelPageComponent implements OnInit {
           this.channelId = this.defaultChannelId;
         }
 
-        this.channelModel = this.createChannelStub();
-
-          // Если в других каналах хранилась обновлённая time_changed - настало им её применить т.к. мы ушли с тех каналов
+        // Если в других каналах хранилась обновлённая time_changed - настало им её применить т.к. мы ушли с тех каналов
         this.channelService.applyDeferredMenuTimes(this.channelId);
+
+        // Пока грузится настоящий канал, покажем юзеру заглушку
+        this.channelModel = this.createChannelStub();
+        this.canAccess = true;
 
         // Получаем канал
         return this.channelService.getChannel(
