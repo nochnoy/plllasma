@@ -6,6 +6,10 @@ loginBySessionOrToken();
 $userId     = $user['id_user'];
 $placeId    = $input['channelId']; // id канала
 
+if ($placeId == MAIN_CHANNEL_ID) {
+	die('{"error": "cantUnsubscribeMainChannel"}');
+}
+
 // Если не было связи юзер-канал - создадим её
 createUserChannelLink($placeId);
 

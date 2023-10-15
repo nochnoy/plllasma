@@ -247,13 +247,17 @@ export class ChannelPageComponent implements OnInit {
   }
 
   subscribeCommand(): void {
-    this.appService.subscribeChannel$(this.channelId).pipe(
+    of({}).pipe(
+      switchMap(() => this.appService.subscribeChannel$(this.channelId)),
+      switchMap(() => this.channelService.loadChannels$()),
       untilDestroyed(this)
     ).subscribe();
   }
 
   ubsubscribeCommand(): void {
-    this.appService.unsubscribeChannel$(this.channelId).pipe(
+    of({}).pipe(
+      switchMap(() => this.appService.unsubscribeChannel$(this.channelId)),
+      switchMap(() => this.channelService.loadChannels$()),
       untilDestroyed(this)
     ).subscribe();
   }

@@ -22,6 +22,7 @@ define("DB_PASSWORD", $passwordDB);
 define("DB_DB", "plllasma");
 define("COOKIE_KEY_CODE", "contortion_key");
 define("PATH_TO_STORAGE", "../../attachments/");
+define("MAIN_CHANNEL_ID", 1); // id Главного
 define("MAX_STARRED_THREADS", 20); // порог кол-ва новых сообщений после которого перестаём строить серые ветки
 define("PAGE_SIZE", 50);
 define("TRASH_PLACE", 5);
