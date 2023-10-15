@@ -8,7 +8,7 @@
     <ng-container *ngIf="!isLoading && member">
 
       <header>
-        <img class="avatar" [src]="member?.icon" />
+        <img class="avatar" [src]="member ? member.icon : ''" />
         <h1>
           {{member ? nick : 'Гражданин'}}
         </h1>

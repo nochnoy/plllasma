@@ -80,16 +80,17 @@ export interface IMenuChannel {
   time_changed: string;
   time_viewed: string;
   weight: number;
-  canModerate: boolean;
   selected?: boolean;
   spinner?: boolean;
   shortName?: string;
   timeViewedDeferred?: string; // Чисто клиентское поле. В него льётся фактическое time_viewed канала пока юзер с него не уйдёт.
+  isCapital?: boolean;
 }
 
 export interface IMenuCity {
-  channel: IMenuChannel
-  children: IMenuChannel[];
+  capital?: IMenuChannel;
+  cityId: number;
+  channels: IMenuChannel[];
 }
 
 export const EMPTY_CHANNEL: IMenuChannel = {
@@ -101,7 +102,7 @@ export const EMPTY_CHANNEL: IMenuChannel = {
   time_changed: '',
   time_viewed: '',
   weight: 0,
-  canModerate: false
+  isCapital: false,
 }
 
 export interface IAttachment {

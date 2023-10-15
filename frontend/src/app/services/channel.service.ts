@@ -7,6 +7,7 @@ import {Channel} from "../model/messages/channel.model";
 import {Message} from "../model/messages/message.model";
 import {UserService} from "./user.service";
 import {matrixColsCount, MatrixObjectTypeEnum, newDefaultMatrix, newMatrix} from "../model/matrix.model";
+import {Const} from "../model/const";
 
 @Injectable({
   providedIn: 'root'
@@ -33,30 +34,72 @@ export class ChannelService {
         // Вырежем канал "Мы"
         this.menuChannels = this.menuChannels.filter((channel) => channel.id_place !== 46);
 
-        // TODO: по хорошему всё это выкинуть и при получении каналов выстроть их дерево. parent, children все дела.
-        this.menuCities = this.menuChannels
-          .filter((channel) => !channel.parent)
-          .map((channel) => ({
-              channel: channel,
-              children: []
-            })
-          );
-        this.menuChannels
-          .filter((channel) => channel.parent)
-          .forEach((channel) => {
-            const city = this.menuCities.find((city) => city.channel.id_place === channel.parent);
-            city?.children.push(channel);
-          });
-        this.menuCities.forEach((city) => {
-          city.children = city.children.sort((a, b) => a.weight - b.weight);
-          city.children.unshift(city.channel);
-        });
-        this.menuCities = this.menuCities.sort((a, b) => a.channel.weight - b.channel.weight);
+        // Построим города
+
+        const citiesIndex: any = {};
+        const getOrCreateCity = (id: number):IMenuCity  => {
+          if (!citiesIndex[id]) {
+            citiesIndex[id] = {
+              cityId: id,
+              channels: [],
+              capital: undefined
+            } as IMenuCity;
+          }
+          return citiesIndex[id];
+        };
 
         this.menuChannels.forEach((channel) => {
+
           channel.shortName = channel.name.substr(0, 14);
-          channel.canModerate = this.userService.canModerate(channel.id_place);
+
+          let city: IMenuCity;
+          if (channel.parent) {
+            city = getOrCreateCity(channel.parent);
+            city.channels.push(channel);
+          } else {
+            city = getOrCreateCity(channel.id_place);
+            city.capital = channel;
+            channel.isCapital = true;
+            city.channels.push(channel);
+          }
         });
+
+        this.menuCities = Object.keys(citiesIndex).map((k) => citiesIndex[k]);
+        const cc = this.menuCities; // блять пока это не сделаешь дебаггер не будет видеть содержимое menuCities >:-E
+
+        this.menuCities.forEach((city) => {
+          city.channels = city.channels.sort((a, b) => {
+            if (a.isCapital && !b.isCapital)
+              return -1;
+            else if (!a.isCapital && b.isCapital)
+              return 1;
+            else {
+              return a.weight - b.weight;
+            }
+          });
+        });
+
+        this.menuCities = this.menuCities.sort((a, b) => {
+          if (a.cityId === Const.defaultChannelId && b.cityId !== Const.defaultChannelId) {
+            return -1;
+          } else if (a.cityId !== Const.defaultChannelId && b.cityId === Const.defaultChannelId) {
+            return 1;
+          } else {
+            const aCapitalWeight = a.capital?.weight ?? 0;
+            const bCapitalWeight = b.capital?.weight ?? 0;
+            return aCapitalWeight - bCapitalWeight;
+          }
+        });
+
+        // Находим города в которых всего по одному каналу, убиваем их и из их каналов складываем город который будет втрорым после Главного
+        const oneChannelCities = this.menuCities.filter((city) => city.channels.length === 1);
+        this.menuCities = this.menuCities.filter((city) => city.channels.length > 1);
+        const cityOfLostChildren: IMenuCity = { cityId: -1, channels: [] };
+        oneChannelCities.forEach((c) => cityOfLostChildren.channels = [...cityOfLostChildren.channels, ...c.channels]);
+        cityOfLostChildren.channels = cityOfLostChildren.channels.sort((a: IMenuChannel, b: IMenuChannel) => a.weight - b.weight);
+        if (cityOfLostChildren.channels.length > 0) {
+          this.menuCities.splice(1, 0, cityOfLostChildren);
+        }
 
       }),
       switchMap(() => of(true))

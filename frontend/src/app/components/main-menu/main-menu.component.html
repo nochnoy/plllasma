@@ -8,9 +8,8 @@
 </div>
 <div class="channels" *ngIf="channelService?.menuChannels?.length">
   <div *ngFor="let city of channelService.menuCities">
-    <a *ngFor="let channel of city.children"
+    <a *ngFor="let channel of city.channels"
        (click)="onItemClick(channel)"
-       [class.black-star]=""
        [class.star]="(channel.id_place !== 26) && (channel.id_place !== 5) && (channel.time_changed > channel.time_viewed)"
        [routerLink]="'/channel/' + channel.id_place">{{channel.shortName}}</a>
   </div>
