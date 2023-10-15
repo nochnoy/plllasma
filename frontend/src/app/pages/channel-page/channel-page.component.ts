@@ -60,8 +60,8 @@ export class ChannelPageComponent implements OnInit {
         // Если в других каналах хранилась обновлённая time_changed - настало им её применить т.к. мы ушли с тех каналов
         this.channelService.applyDeferredMenuTimes(this.channelId);
 
-        // Пока грузится настоящий канал, покажем юзеру заглушку
-        this.channel = this.channelService.channelsCache.find((c) => c.id === this.channelId) ?? this.createChannelStub();
+        // Пока грузится настоящий канал, покажем юзеру сохранённую копию или заглушку
+        this.channel = this.channelService.channelsCache.find((c) => c.id === this.channelId) ?? this.createChannelStub(this.channelId);
 
         // Получаем канал
         return this.channelService.getChannel(
@@ -237,9 +237,9 @@ export class ChannelPageComponent implements OnInit {
     }
   }
 
-  createChannelStub(): Channel {
+  createChannelStub(channelId: number): Channel {
     const channel = new Channel();
-    channel.id = this.channelId;
+    channel.id = channelId;
     channel.name = this.channelService.menuChannels.find((mc) => mc.id_place === this.channelId)?.name ?? 'xxx';
     channel.matrix = newDefaultMatrix(channel.name);
     channel.canAccess = true;
