@@ -50,6 +50,17 @@ export function newMatrix(): IMatrix {
   }
 }
 
+export function newDefaultMatrix(channelName: string): IMatrix {
+  const matrix = newMatrix();
+  matrix?.objects.push({
+    type: MatrixObjectTypeEnum.channelTitle,
+    x: 0, y: 0, w: matrixColsCount, h: 1,
+    text: channelName,
+    id: matrix.newObjectId++,
+  });
+  return matrix;
+}
+
 // Очищает чисто клиентские данные которые не должны сохраняться в БД
 export function serializeMatrix(matrix: IMatrix): any {
   const output: any = JSON.parse(JSON.stringify(matrix)); // deep clone

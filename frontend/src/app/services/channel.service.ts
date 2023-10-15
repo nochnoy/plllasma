@@ -6,7 +6,7 @@ import {HttpService} from "./http.service";
 import {Channel} from "../model/messages/channel.model";
 import {Message} from "../model/messages/message.model";
 import {UserService} from "./user.service";
-import {matrixColsCount, MatrixObjectTypeEnum, newMatrix} from "../model/matrix.model";
+import {matrixColsCount, MatrixObjectTypeEnum, newDefaultMatrix, newMatrix} from "../model/matrix.model";
 
 @Injectable({
   providedIn: 'root'
@@ -91,15 +91,7 @@ export class ChannelService {
           if (input.matrix) {
             channel.matrix = input.matrix;
           } else {
-            channel.matrix = newMatrix();
-            // Нарисуем дефолтную матрицу из одного блока - заголовка канала
-            channel.matrix?.objects.push({
-              type: MatrixObjectTypeEnum.channelTitle,
-              x: 0, y: 0, w: matrixColsCount, h: 1,
-              text: channel.name,
-              id: channel.matrix.newObjectId++,
-            });
-
+            channel.matrix = newDefaultMatrix(channel.name); // Нарисуем дефолтную матрицу из одного блока - заголовка канала
           }
         }
         return of(channel);

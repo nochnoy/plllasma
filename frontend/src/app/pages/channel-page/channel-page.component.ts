@@ -10,7 +10,7 @@ import {ChannelService} from "../../services/channel.service";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {HttpService} from "../../services/http.service";
 import {MAT_DIALOG_DATA, MatDialog} from "@angular/material/dialog";
-import {IMatrix} from "../../model/matrix.model";
+import {IMatrix, newDefaultMatrix} from "../../model/matrix.model";
 import {UserService} from "../../services/user.service";
 
 @UntilDestroy()
@@ -65,7 +65,9 @@ export class ChannelPageComponent implements OnInit {
           this.channelId = this.defaultChannelId;
         }
 
-        // Если в других каналах хранилась обновлённая time_changed - настало им её применить т.к. мы ушли с тех каналов
+        this.channelModel = this.createChannelStub();
+
+          // Если в других каналах хранилась обновлённая time_changed - настало им её применить т.к. мы ушли с тех каналов
         this.channelService.applyDeferredMenuTimes(this.channelId);
 
         // Получаем канал
@@ -240,6 +242,13 @@ export class ChannelPageComponent implements OnInit {
     }
   }
 
+  createChannelStub(): Channel {
+    const channel = new Channel();
+    channel.id = this.channelId;
+    channel.name = this.channelService.menuChannels.find((mc) => mc.id_place === this.channelId)?.name ?? 'xxx';
+    channel.matrix = newDefaultMatrix(channel.name);
+    return channel;
+  }
 
   subscribeCommand(): void {
     this.appService.subscribeChannel$(this.channelId).pipe(
