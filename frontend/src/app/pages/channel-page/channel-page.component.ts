@@ -69,7 +69,7 @@ export class ChannelPageComponent implements OnInit {
         this.channelService.applyDeferredMenuTimes(this.channelId);
 
         // Пока грузится настоящий канал, покажем юзеру заглушку
-        this.channelModel = this.createChannelStub();
+        this.channelModel = this.channelService.channelsCache.find((c) => c.id === this.channelId) ?? this.createChannelStub();
         this.canAccess = true;
 
         // Получаем канал
@@ -81,6 +81,9 @@ export class ChannelPageComponent implements OnInit {
       }),
       tap((channel: Channel) => {
         this.channelModel = channel;
+        this.channelService.channelsCache = this.channelService.channelsCache.filter((c) => c.id !== this.channelId);
+        this.channelService.channelsCache.push(this.channelModel);
+
         this.timeViewed = channel.timeViewed ?? '';
 
         this.canAccess = this.userService.canAccess(this.channelId);
