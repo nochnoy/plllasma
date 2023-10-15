@@ -3,13 +3,13 @@
       <app-main-menu (itemClick)="onMenuItemClick($event)"></app-main-menu>
   </aside>
   <main class="main">
-    <div class="general-error" *ngIf="channelModel && !canAccess">
+    <div class="general-error" *ngIf="channel && !channel?.canAccess">
       🔒 У вас нет сюда доступа
     </div>
-    <ng-container *ngIf="channelModel && canAccess">
+    <ng-container *ngIf="channel && channel?.canAccess">
 
       <app-matrix #matrix
-        [channel]="channelModel!"
+        [channel]="channel!"
         (changed)="onMatrixChanged($event)">
       </app-matrix>
 
@@ -22,11 +22,11 @@
           -->
           <button mat-button [matMenuTriggerFor]="menu">🎨 Дизайнить канал ▾</button>
           <mat-menu #menu="matMenu">
-            <button mat-menu-item [disabled]="!canEditMatrix" (click)="matrix.addImageCommand()">Добавить картинки</button>
-            <button mat-menu-item [disabled]="!canEditMatrix" (click)="matrix.addTextCommand()">Добавить текст - обычнй</button>
-            <button mat-menu-item [disabled]="!canEditMatrix" (click)="matrix.addTitleCommand()">Добавить текст - крупный</button>
-            <button mat-menu-item [disabled]="!canEditMatrix" (click)="matrix.addChannelTitleCommand()">Добавить текст - заголовок канала</button>
-            <button mat-menu-item [disabled]="!canEditMatrix" (click)="matrix.clearCommand()">Очистить дизайн</button>
+            <button mat-menu-item [disabled]="!channel?.canEditMatrix" (click)="matrix.addImageCommand()">Добавить картинки</button>
+            <button mat-menu-item [disabled]="!channel?.canEditMatrix" (click)="matrix.addTextCommand()">Добавить текст - обычнй</button>
+            <button mat-menu-item [disabled]="!channel?.canEditMatrix" (click)="matrix.addTitleCommand()">Добавить текст - крупный</button>
+            <button mat-menu-item [disabled]="!channel?.canEditMatrix" (click)="matrix.addChannelTitleCommand()">Добавить текст - заголовок канала</button>
+            <button mat-menu-item [disabled]="!channel?.canEditMatrix" (click)="matrix.clearCommand()">Очистить дизайн</button>
             <!--
             <button mat-menu-item (click)="onAddMatrixDoor()">Добавить ссылку на канал</button>
             <button mat-menu-item (click)="openDialog()">Настройки канала</button>
@@ -34,18 +34,18 @@
           </mat-menu>
           <button mat-button (click)="subscribeCommand()">(+) Подписаться</button>
           <button mat-button (click)="ubsubscribeCommand()">(-) Отписаться</button>
-          <button mat-button [disabled]="!canUseSettings">🔨 Настройки</button>
+          <button mat-button [disabled]="!channel?.canUseSettings">🔨 Настройки</button>
           <button mat-button>💼 О канале</button>
-          <div>Вы {{roleTitle}} канала</div>
+          <div>Вы {{channel?.roleTitle}} канала</div>
 
         </div>
       </div>
 
-      <div *ngIf="!!channelModel" class="messages">
-        <div class="thread" [class.thread-gray]="t.isGray" *ngFor="let t of channelModel.threads">
+      <div *ngIf="!!channel" class="messages">
+        <div class="thread" [class.thread-gray]="t.isGray" *ngFor="let t of channel.threads">
           <app-messages
             [placeId]="channelId"
-            [canModerate]="canModerate"
+            [canModerate]="channel?.canModerate ?? false"
             [messages]="[t.root]"
             [showChildren]="t.isGray || t.isExpanded">
           </app-messages>

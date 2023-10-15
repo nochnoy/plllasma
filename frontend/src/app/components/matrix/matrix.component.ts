@@ -74,19 +74,12 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   @Input('channel')
   set channel(channel: Channel | null) {
-    // TODO: Временный костыль для решения ситуации с getOrCreateChannel и его lazy-загрузкой
-    clearInterval(this.kostylInterval);
-    this.kostylInterval = setInterval(() => {
-      if (channel && !!channel.matrix) { // Дожидаемся когда channelService догрузит матрицу в канал
-        clearInterval(this.kostylInterval);
-        this.channelValue = channel;
-        if (channel?.matrix) {
-          this.matrix = channel.matrix;
-          this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));
-          this.updateMatrixHeight();
-        }
-      }
-    }, 100);
+    this.channelValue = channel;
+    if (channel?.matrix) {
+      this.matrix = channel.matrix;
+      this.matrix.objects.forEach((o) => o.domRect = this.matrixRectToDomRect(o));
+      this.updateMatrixHeight();
+    }
   };
   get channel(): Channel | null {
     return this.channelValue;

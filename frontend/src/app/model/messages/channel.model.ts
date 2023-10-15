@@ -13,6 +13,12 @@ export class Channel {
   public parent?: number;
   public first_parent?: number;
 
+  roleTitle: string = '';
+  canAccess = false;
+  canModerate = false;
+  canEditMatrix = false;
+  canUseSettings  = false;
+
   public deserializeMessages(input: any) {
     let i: number;
     let rawMessage: any;
