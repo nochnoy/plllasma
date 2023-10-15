@@ -60,8 +60,8 @@ export class ChannelPageComponent implements OnInit {
         // Если в других каналах хранилась обновлённая time_changed - настало им её применить т.к. мы ушли с тех каналов
         this.channelService.applyDeferredMenuTimes(this.channelId);
 
-        // Пока грузится настоящий канал, покажем юзеру сохранённую копию или заглушку
-        this.channel = this.channelService.channelsCache.find((c) => c.id === this.channelId) ?? this.createChannelStub(this.channelId);
+        // Пока грузится настоящий канал, покажем юзеру заглушку
+        this.channel = this.createChannelStub(this.channelId);
 
         // Получаем канал
         return this.channelService.getChannel(
@@ -77,10 +77,6 @@ export class ChannelPageComponent implements OnInit {
         this.channel.canModerate = this.userService.canAccess(this.channelId);
         this.channel.canEditMatrix = this.userService.canEditMatrix(this.channelId);
         this.channel.canUseSettings = this.userService.canUseChannelSettings(this.channelId);
-
-        // Сохраним канал в кеше чтоб быстро открывать
-        this.channelService.channelsCache = this.channelService.channelsCache.filter((c) => c.id !== this.channelId);
-        this.channelService.channelsCache.push(this.channel);
 
         this.checkHalloween();
       }),

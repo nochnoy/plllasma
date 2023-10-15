@@ -23,7 +23,6 @@ export class ChannelService {
   menuCities: IMenuCity[] = [];
   selectedMessage?: Message;
   channelInvalidSignal = new EventEmitter<number>();
-  channelsCache: Channel[] = [];
 
   loadChannels$(): Observable<any> {
     return of({}).pipe(
