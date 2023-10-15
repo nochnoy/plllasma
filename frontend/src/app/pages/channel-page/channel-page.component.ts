@@ -240,7 +240,7 @@ export class ChannelPageComponent implements OnInit {
   createChannelStub(channelId: number): Channel {
     const channel = new Channel();
     channel.id = channelId;
-    channel.name = this.channelService.menuChannels.find((mc) => mc.id_place === this.channelId)?.name ?? 'xxx';
+    channel.name = this.channelService.menuChannels.find((mc) => mc.id_place === this.channelId)?.name ?? '';
     channel.matrix = newDefaultMatrix(channel.name);
     channel.canAccess = true;
     return channel;
@@ -249,6 +249,11 @@ export class ChannelPageComponent implements OnInit {
   subscribeCommand(): void {
     of({}).pipe(
       switchMap(() => this.appService.subscribeChannel$(this.channelId)),
+      tap((result) => {
+        if (result.ok && this.channel) {
+          this.channel.atMenu = true;
+        }
+      }),
       switchMap(() => this.channelService.loadChannels$()),
       untilDestroyed(this)
     ).subscribe();
@@ -257,6 +262,11 @@ export class ChannelPageComponent implements OnInit {
   ubsubscribeCommand(): void {
     of({}).pipe(
       switchMap(() => this.appService.unsubscribeChannel$(this.channelId)),
+      tap((result) => {
+        if (result.ok && this.channel) {
+          this.channel.atMenu = false;
+        }
+      }),
       switchMap(() => this.channelService.loadChannels$()),
       untilDestroyed(this)
     ).subscribe();

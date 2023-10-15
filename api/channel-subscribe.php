@@ -18,7 +18,7 @@ $sql->bind_param("ii", $placeId, $userId);
 $sql->execute();
 
 exit(json_encode((object)[
-	'ok' => '1'
+	'ok' => true
 ]));
 
 ?>
