@@ -63,8 +63,13 @@
         &.all {
           color: rgb(161, 4, 4);
         }
+
       }
     }
   }
 
+}
+
+.active-link {
+  font-weight: bold;
 }
