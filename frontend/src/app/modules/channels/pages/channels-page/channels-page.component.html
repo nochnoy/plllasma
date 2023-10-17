@@ -53,9 +53,9 @@
 <ng-template #memberTemplate let-channel='channel'>
   <a
     class="name"
+    [class.noaccess]="!channel.role || channel.role === 9"
     [routerLink]="'/channel/' + channel.id_place">
       <i *ngIf="channel.id_place > 47">🎃</i>
       {{channel.name}}
-      <i *ngIf="!channel.role || channel.role === 9">✋</i>
     </a>
 </ng-template>

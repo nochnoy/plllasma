@@ -76,6 +76,11 @@ header {
     &:hover {
       text-decoration: underline;
     }
+
+    &.noaccess {
+      pointer-events: none;
+      opacity: 0.3;
+    }
   }
 }
 
