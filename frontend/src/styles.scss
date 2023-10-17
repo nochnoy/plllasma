@@ -190,6 +190,10 @@ textarea {
       min-width: 8rem;
       max-width: 8rem;
 
+      &-halloween {
+        min-width: 260px;
+        max-width: 260px;
+      }
     }
   }
   @media (min-width: 100rem) {
@@ -197,6 +201,11 @@ textarea {
       min-width: 14rem;
       max-width: 14rem;
     }
+
+    &-halloween {
+      min-width: 260px;
+      max-width: 260px;
+    }    
   }
   @media (min-width: 120rem) {
     .sidebar {
