@@ -1,0 +1,61 @@
+<div class="three-column-page">
+  <aside class="aside">
+    <app-main-menu></app-main-menu>
+  </aside>
+  <main class="main">
+    <header>
+      <div>
+        <h1 [class.spinner]="isLoading">Каналы</h1>
+        <div>🚧 не доделано</div>
+      </div>
+      <div>
+        <div class="search" *ngIf="!isLoading">
+          <input autofocus [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()" placeholder="Поиск">
+        </div>
+      </div>
+    </header>
+
+    <ng-container *ngIf="!isLoading">
+
+      <div class="info">
+        📬 Подписываясь на каналы вы добавляете их себе на боковое меню. А отписываясь - удаляете.
+      </div>
+
+      <ng-container *ngIf="!searchPhrase">
+        <div class="section">
+          <div class="channels">
+            <ng-container *ngFor="let channel of channelsAll">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+            </ng-container>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngIf="searchPhrase">
+        <div class="section">
+          <label>Поиск канала "{{searchPhrase}}"</label>
+          <a class="search-clear" href (click)="onSearchClearClick($event)">отменить</a>
+          <div class="channels" *ngIf="channelsSearching.length">
+            <ng-container *ngFor="let channel of channelsSearching">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+            </ng-container>
+          </div>
+        </div>
+        <div *ngIf="!channelsSearching.length">Не найдено</div>
+      </ng-container>
+
+    </ng-container>
+
+  </main>
+  <div class="sidebar"></div>
+</div>
+
+<ng-template #memberTemplate let-channel='channel'>
+  <a
+    class="name"
+    [routerLink]="'/channel/' + channel.id_place">
+      <i *ngIf="channel.id_place > 47">🎃</i>
+      {{channel.name}}
+      <i *ngIf="!channel.role || channel.role === 9">✋</i>
+    </a>
+</ng-template>

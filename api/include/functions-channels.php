@@ -6,7 +6,6 @@ function getChannels() {
 	global $user;
 	global $mysqli;
 
-	// Внимание, мы не проверяем права. Юзер может быть подписан на канал, в который не сможет войти. Сможет видеть на нём звёздочку.
 	$sql =
 		'SELECT DISTINCT p.id_place, p.parent, p.first_parent, p.name, p.description, p.time_changed, p.path, p.typ, l.weight, l.time_viewed'.
 		' FROM tbl_places p'.

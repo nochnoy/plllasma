@@ -60,6 +60,9 @@
         &:not(:last-child) {
           margin-bottom: 0.2rem;
         }
+        &.all {
+          color: rgb(161, 4, 4);
+        }
       }
     }
   }

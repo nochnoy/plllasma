@@ -28,6 +28,18 @@ export class HttpService {
     );
   }
 
+  getChannelsList$(): Observable<any> {
+    return of({}).pipe(
+      switchMap(() => {
+        return this.httpClient.post(
+          `${HttpService.apiPath}/channels-list.php`,
+          { },
+          { observe: 'body', withCredentials: true }
+        );
+      })
+    );
+  }
+
   getChannel$(channelId:number, lastVieved:string, page = 0): Observable<any> {
     return this.httpClient.post(
       `${HttpService.apiPath}/channel.php`,

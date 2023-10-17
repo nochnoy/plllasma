@@ -1,25 +1,22 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-import { MembersRoutingModule } from './members-routing.module';
-import { MemberPageComponent } from './pages/member-page/member-page.component';
-import { MembersPageComponent } from './pages/members-page/members-page.component';
+import { ChannelsPageComponent } from './pages/channels-page/channels-page.component';
+import { ChannelsRoutingModule } from './channels-routing.module';
 import {MainMenuComponent} from "../../components/main-menu/main-menu.component";
 import {SharedModule} from "../shared/shared.module";
 import {FormsModule} from "@angular/forms";
 
 @NgModule({
   declarations: [
-    MemberPageComponent,
-    MembersPageComponent,
+    ChannelsPageComponent
   ],
   imports: [
     CommonModule,
     FormsModule,
 
     SharedModule,
-    MembersRoutingModule,
-    MainMenuComponent
+    MainMenuComponent,
+    ChannelsRoutingModule,
   ]
 })
-export class MembersModule { }
+export class ChannelsModule { }
