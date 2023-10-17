@@ -72,13 +72,7 @@ export class ChannelPageComponent implements OnInit {
       }),
       tap((channel: Channel) => {
         this.channel = channel;
-        this.channel.roleTitle = this.userService.getRoleTitle(this.channelId);
-        this.channel.canAccess = this.userService.canAccess(this.channelId);
-        this.channel.canModerate = this.userService.canAccess(this.channelId);
-        this.channel.canEditMatrix = this.userService.canEditMatrix(this.channelId);
-        this.channel.canUseSettings = this.userService.canUseChannelSettings(this.channelId);
-
-        this.checkHalloween();
+        this.onChannelUpdated();
       }),
       untilDestroyed(this)
     ).subscribe();
@@ -93,6 +87,18 @@ export class ChannelPageComponent implements OnInit {
     ).subscribe();
 
     this.getHereAndNow$().subscribe();
+  }
+
+  onChannelUpdated(): void {
+    if (this.channel) {
+      this.channel.roleTitle = this.userService.getRoleTitle(this.channelId);
+      this.channel.canAccess = this.userService.canAccess(this.channelId);
+      this.channel.canModerate = this.userService.canAccess(this.channelId);
+      this.channel.canEditMatrix = this.userService.canEditMatrix(this.channelId);
+      this.channel.canUseSettings = this.userService.canUseChannelSettings(this.channelId);
+
+      this.checkHalloween();
+    }
   }
 
   get pagesToShow(): number[] {
@@ -149,7 +155,10 @@ export class ChannelPageComponent implements OnInit {
       this.channelService.menuChannels.find((mc) => mc.id_place === this.channelId)?.time_viewed ?? '',
       this.currentPage
     ).pipe(
-      tap((result) => this.channel = result),
+      tap((result) => {
+        this.channel = result;
+        this.onChannelUpdated();
+      }),
       untilDestroyed(this),
     ).subscribe();
   }
@@ -188,6 +197,7 @@ export class ChannelPageComponent implements OnInit {
         if (refreshMessages) { // Сообщения канала обновим только если ткнули в ссылку самого канала
           this.onChannelInvalidated();
         }
+        this.onChannelUpdated();
       }),
     ).subscribe();
   }
