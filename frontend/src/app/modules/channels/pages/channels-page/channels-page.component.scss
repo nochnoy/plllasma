@@ -16,16 +16,20 @@ main {
   section:nth-child(2) {
     width: 20%;
     padding: 0 1rem;
-    border-left: 3px solid #D2C5B6;
+    background-image: url('../../../../../assets/bg.gif');
+    background-repeat: repeat-y;
+    background-position-x: -179px;
 
     header {
-      justify-content: center;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
     }
     form {
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-top: 3rem;
+      margin-top: 2rem;
 
       >* {
         margin-bottom: 1rem;
@@ -80,7 +84,7 @@ main {
 .info {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: center;
   align-items: flex-start;
   margin: 2rem 0;
 }

@@ -28,6 +28,9 @@ export class ChannelsPageComponent implements OnInit {
   channelsSearching: IMenuChannel[] = [];
   channelsAll: IMenuChannel[] = [];
 
+  isHalloween = false;
+  currentYear = 0;    
+
   newChannelForm: FormGroup = new FormGroup({
     name: new FormControl('', [Validators.required]),
     disclaimer: new FormControl('', []),
@@ -35,6 +38,7 @@ export class ChannelsPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
+    this.checkHalloween();
   }
 
   load(): void {
@@ -103,6 +107,15 @@ export class ChannelsPageComponent implements OnInit {
 
   onGhostClick(): void {
 
+  }
+
+  checkHalloween(): void {
+    const year = (new Date()).getFullYear();
+    const now = new Date();
+    const from = new Date(year, 10 - 1, 11);
+    const to = new Date(year, 11 - 1, 6);
+    this.isHalloween = (now.getTime() >= from.getTime() && now.getTime() <= to.getTime());
+    this.currentYear = year;
   }
 
 }

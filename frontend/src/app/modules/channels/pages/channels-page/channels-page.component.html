@@ -9,7 +9,7 @@
       <header>
         <div>
           <h1 [class.spinner]="isLoading">Все каналы</h1>
-          <div>Страница ещё строится 🚧</div>
+          <div>🚧 В процессе. Потом тут будет развесистый древовидный каталог.</div>
         </div>
         <div>
 
@@ -17,15 +17,9 @@
       </header>
 
       <div class="info">
-        <div>
-          📬 Отписываясь от канала, вы его удаляете<br>
-          из&nbsp;бокового меню. Подписываясь - добавляете!
-        </div>
-        <!--
         <div class="search" *ngIf="!isLoading">
           <input autofocus [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()" placeholder="Поиск">
         </div>   
-        -->
       </div>
 
       <ng-container *ngIf="!searchPhrase">
@@ -51,11 +45,17 @@
         <div *ngIf="!channelsSearching.length">Не найдено</div>
       </ng-container>
 
+      <div class="info">
+        📬 Отписываясь от канала, вы его удаляете из&nbsp;бокового меню.<br>
+        А подписываясь - добавляете!
+      </div>      
+
     </section>
 
     <section>
       <header>
         <h1>Создать новый</h1>
+        <div>канал</div>
       </header> 
       <form [formGroup]="newChannelForm">
 
@@ -74,14 +74,26 @@
         <button class="button"
                 [disabled]="newChannelForm.invalid"
                 (click)="onNewChannelClick()">
-          Создать канал
+          Создать
         </button>
 
       </form>      
     </section>
 
   </main>
-  <div class="sidebar"></div>
+  <div class="sidebar" [class.sidebar-halloween]="isHalloween">
+
+    <div class="halloween" *ngIf="isHalloween">
+      <ng-container *ngIf="currentYear === 2023">
+        Конец близок! Каналы мутируют.
+        Скоро они начнут размножаться
+        и их станет столько, что мы все умрём!
+        И&nbsp;черви съедят наши глаза!<br>
+      </ng-container>
+      <img src="assets/img/halloween-pumpkin.png">
+    </div>
+
+  </div>
 </div>
 
 <ng-template #memberTemplate let-channel='channel'>
