@@ -3,26 +3,33 @@
     <app-main-menu></app-main-menu>
   </aside>
   <main class="main">
-    <header>
-      <div>
-        <h1 [class.spinner]="isLoading">Все каналы</h1>
-        <div>Страница ещё строится 🚧</div>
-      </div>
-      <div>
-        <div class="search" *ngIf="!isLoading">
-          <input autofocus [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()" placeholder="Поиск">
-        </div>
-      </div>
-    </header>
 
-    <ng-container *ngIf="!isLoading">
+    <section>
+
+      <header>
+        <div>
+          <h1 [class.spinner]="isLoading">Все каналы</h1>
+          <div>Страница ещё строится 🚧</div>
+        </div>
+        <div>
+
+        </div>
+      </header>
 
       <div class="info">
-        📬 Подписываясь на канал вы добавляете его себе на&nbsp;боковое меню. А отписываясь - удаляете.
+        <div>
+          📬 Отписываясь от канала, вы его удаляете<br>
+          из&nbsp;бокового меню. Подписываясь - добавляете!
+        </div>
+        <!--
+        <div class="search" *ngIf="!isLoading">
+          <input autofocus [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()" placeholder="Поиск">
+        </div>   
+        -->
       </div>
 
       <ng-container *ngIf="!searchPhrase">
-        <div class="section">
+        <div class="district">
           <div class="channels">
             <ng-container *ngFor="let channel of channelsAll">
               <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
@@ -32,7 +39,7 @@
       </ng-container>
 
       <ng-container *ngIf="searchPhrase">
-        <div class="section">
+        <div class="district">
           <label>Поиск канала "{{searchPhrase}}"</label>
           <a class="search-clear" href (click)="onSearchClearClick($event)">отменить</a>
           <div class="channels" *ngIf="channelsSearching.length">
@@ -44,7 +51,34 @@
         <div *ngIf="!channelsSearching.length">Не найдено</div>
       </ng-container>
 
-    </ng-container>
+    </section>
+
+    <section>
+      <header>
+        <h1>Создать новый</h1>
+      </header> 
+      <form [formGroup]="newChannelForm">
+
+        <input class="input" placeholder="Название канала" name="name" type="text" maxlength="14" formControlName="name" autofocus>
+        <textarea class="input" placeholder="Предупреждение, например про 18+" name="disclaimer" type="text" formControlName="disclaimer"></textarea>
+        <div class="user-line">
+          <div class="user" (click)="onGhostClick()">
+            <ng-container *ngIf="!isGhost">
+              <img class="avatar" [src]="'https://plllasma.com/i/' + userIcon" />{{userName}}▾
+            </ng-container>
+            <ng-container *ngIf="isGhost">
+              <div class="icon"></div>{{'Привидение'}}▴
+            </ng-container>
+          </div>
+        </div>        
+        <button class="button"
+                [disabled]="newChannelForm.invalid"
+                (click)="onNewChannelClick()">
+          Создать канал
+        </button>
+
+      </form>      
+    </section>
 
   </main>
   <div class="sidebar"></div>
@@ -55,6 +89,7 @@
     class="name"
     [class.noaccess]="!channel.role || channel.role === 9"
     [routerLink]="'/channel/' + channel.id_place">
+      <i *ngIf="channel.id_place <= 47"><img src="assets/img/channel-open.png"></i>
       <i *ngIf="channel.id_place > 47">🎃</i>
       {{channel.name}}
     </a>

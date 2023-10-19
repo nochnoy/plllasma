@@ -5,10 +5,90 @@ header {
   margin-bottom: 1rem;
 }
 
+main {
+  display: flex;
+  flex-direction: row;
+
+  section:nth-child(1) {
+    width: 80%;
+    padding-right: 1rem;
+  }
+  section:nth-child(2) {
+    width: 20%;
+    padding: 0 1rem;
+    border-left: 3px solid #D2C5B6;
+
+    header {
+      justify-content: center;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 3rem;
+
+      >* {
+        margin-bottom: 1rem;
+      }
+      input {
+        width: 90%;
+      }
+      textarea {
+        width: 90%;
+        height: 5rem;
+        padding: 8px;
+      }
+      .user-line {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 0.2rem;
+        .user {
+          display: flex;
+          flex-direction: row;          
+          flex-wrap: nowrap;
+          cursor: pointer;
+          font-weight: bold;
+
+          .icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-bottom: -1px;
+            margin-right: 0.2rem;
+            background-image: url('../../../../../assets/ghost.gif');
+          }          
+        }
+      }
+      button {
+        height: 2rem;
+        background-color: rgb(168, 134, 102);
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        &:hover {
+          background-color: rgb(31, 122, 158);
+        }
+      }            
+    }
+  }  
+}
+
+.info {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin: 2rem 0;
+}
+
 .search {
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: flex-end;
 
   input {
     width: 12rem;
@@ -47,7 +127,7 @@ header {
   }
 }
 
-.section {
+.district {
   label {
     display: inline-block;
     margin: 0.5rem 0;
@@ -58,11 +138,11 @@ header {
 
 .channels {
   column-width: 10rem;
-  margin-top: 1rem;
 
   .name {
     display: inline-block;
     margin-bottom: 1rem;
+    padding-right: 0.5rem;
     width: 10rem;
     white-space: nowrap;
     color: black;
@@ -84,7 +164,9 @@ header {
   }
 }
 
-.info {
-  margin: 2rem 0;
-  width: 30rem;
+.new-channel {
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
 }

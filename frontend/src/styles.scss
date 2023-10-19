@@ -108,10 +108,13 @@ input {
 }
 
 textarea {
-
   &:focus {
     outline: 0;
   }
+  &::placeholder {
+    color: #b2bdbd;
+    font-size: 0.9rem;
+  }  
 }
 
 .three-column-page {
@@ -481,14 +484,6 @@ textarea {
   font-size: 1rem;
   padding-left: 0.2rem;
 }
-
-.hallowin-star:after {
-  content: "●";
-  color: rgb(163, 153, 141);
-  font-size: 1rem;
-  padding-left: 0.2rem;
-}
-
 
 /* Иконки юзеров */
 

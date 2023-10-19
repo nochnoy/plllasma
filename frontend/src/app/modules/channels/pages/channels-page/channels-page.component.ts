@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from 'src/app/services/user.service';
 import {HttpService} from "../../../../services/http.service";
-import {IMenuChannel} from "../../../../model/app-model";
+import {IMenuChannel, RoleEnum} from "../../../../model/app-model";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {tap} from "rxjs/operators";
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 @UntilDestroy()
 @Component({
@@ -15,15 +16,28 @@ export class ChannelsPageComponent implements OnInit {
 
   constructor(
     public httpService: HttpService,
+    public userService: UserService,
   ) { }
 
   isLoading = false;
+  isGhost = true;
   searchPhrase = '';
+  userIcon = '';
+  userName = '';
 
   channelsSearching: IMenuChannel[] = [];
   channelsAll: IMenuChannel[] = [];
 
+  newChannelForm: FormGroup = new FormGroup({
+    name: new FormControl('', [Validators.required]),
+    disclaimer: new FormControl('', []),
+  });
+
   ngOnInit(): void {
+    this.load();
+  }
+
+  load(): void {
     this.isLoading = true;
     this.httpService.getChannelsList$().pipe(
       tap((result) => {
@@ -38,16 +52,16 @@ export class ChannelsPageComponent implements OnInit {
             return -1;
           } else {
             return 0;
-          }          
+          }
         });
 
-        this.updateMembersToShow();
+        this.updateChannelsToShow();
       }),
       untilDestroyed(this)
     ).subscribe();
   }
 
-  updateMembersToShow(): void {
+  updateChannelsToShow(): void {
     if (this.searchPhrase) {
       this.channelsSearching = this.channelsAll.filter((channel) => (channel.name ?? '').toUpperCase().indexOf(this.searchPhrase.toUpperCase()) > -1);
     } else {
@@ -56,12 +70,39 @@ export class ChannelsPageComponent implements OnInit {
   }
 
   onFilter(): void {
-    this.updateMembersToShow();
+    this.updateChannelsToShow();
   }
 
   onSearchClearClick(event: any): void {
     event.preventDefault();
     this.searchPhrase = '';
+  }
+
+  onNewChannelClick(): void {
+    if (window.confirm('Создаём новый канал?')) {
+      const name = this.newChannelForm.get('name')?.value ?? '';
+      const disclaimer = this.newChannelForm.get('disclaimer')?.value ?? '';
+      this.httpService.createChannel$(name, disclaimer).pipe(
+        tap((result) => {
+          if (result.ok) {
+
+            // Добавим юзеру право на этот канал
+            this.userService.user.access.push({
+              id_place: result.id, 
+              role:     RoleEnum.owner,
+            });
+
+            this.newChannelForm.reset();
+            this.load();
+            setTimeout(() => window.alert('Поздравляем! Вы владелец этого канала.'), 1000);
+          }
+        })
+      ).subscribe();
+    }
+  }
+
+  onGhostClick(): void {
+
   }
 
 }

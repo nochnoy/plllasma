@@ -20,13 +20,13 @@
           <!--
 
           -->
-          <button mat-button [matMenuTriggerFor]="menu"><i>🎨</i> Дизайнить ▾</button>
+          <button mat-button [matMenuTriggerFor]="menu" *ngIf="channel?.canEditMatrix"><i>🎨</i> Дизайнить ▾</button>
           <mat-menu #menu="matMenu">
-            <button mat-menu-item [disabled]="!channel?.canEditMatrix" (click)="matrix.addImageCommand()">Добавить картинки</button>
-            <button mat-menu-item [disabled]="!channel?.canEditMatrix" (click)="matrix.addTextCommand()">Добавить текст - обычнй</button>
-            <button mat-menu-item [disabled]="!channel?.canEditMatrix" (click)="matrix.addTitleCommand()">Добавить текст - крупный</button>
-            <button mat-menu-item [disabled]="!channel?.canEditMatrix" (click)="matrix.addChannelTitleCommand()">Добавить текст - заголовок канала</button>
-            <button mat-menu-item [disabled]="!channel?.canEditMatrix" (click)="matrix.clearCommand()">Очистить дизайн</button>
+            <button mat-menu-item (click)="matrix.addImageCommand()">Добавить картинки</button>
+            <button mat-menu-item (click)="matrix.addTextCommand()">Добавить текст - обычнй</button>
+            <button mat-menu-item (click)="matrix.addTitleCommand()">Добавить текст - крупный</button>
+            <button mat-menu-item (click)="matrix.addChannelTitleCommand()">Добавить текст - заголовок канала</button>
+            <button mat-menu-item (click)="matrix.clearCommand()">Очистить дизайн</button>
             <!--
             <button mat-menu-item (click)="onAddMatrixDoor()">Добавить ссылку на канал</button>
             <button mat-menu-item (click)="openDialog()">Настройки канала</button>

@@ -4,7 +4,7 @@ import { ChannelsPageComponent } from './pages/channels-page/channels-page.compo
 import { ChannelsRoutingModule } from './channels-routing.module';
 import {MainMenuComponent} from "../../components/main-menu/main-menu.component";
 import {SharedModule} from "../shared/shared.module";
-import {FormsModule} from "@angular/forms";
+import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 
 @NgModule({
   declarations: [
@@ -12,7 +12,8 @@ import {FormsModule} from "@angular/forms";
   ],
   imports: [
     CommonModule,
-    FormsModule,
+    FormsModule, 
+    ReactiveFormsModule,
 
     SharedModule,
     MainMenuComponent,
