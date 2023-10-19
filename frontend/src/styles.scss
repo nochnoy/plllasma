@@ -114,7 +114,7 @@ textarea {
   &::placeholder {
     color: #b2bdbd;
     font-size: 0.9rem;
-  }  
+  }
 }
 
 .three-column-page {
@@ -169,17 +169,16 @@ textarea {
     }
 
     &-halloween {
-      padding-top: 24rem;
+      padding-top: 21rem;
       background-color: black;
       background-image: url('~src/assets/img/halloween.png');
       background-repeat: no-repeat;
       background-position: top right;
 
       .halloween {
-        line-height: 1.4rem;
+        max-width: 200px;
         text-align: center;
         color: #948977;
-        margin: 0 1rem;
 
         img {
           margin: 0 1rem;
@@ -193,9 +192,10 @@ textarea {
       min-width: 8rem;
       max-width: 8rem;
 
-      &-halloween {
-        min-width: 260px;
-        max-width: 260px;
+      .halloween {
+        font-size: 0.9rem;
+        line-height: 1.1rem;
+        margin: 0;
       }
     }
   }
@@ -203,11 +203,12 @@ textarea {
     .sidebar {
       min-width: 14rem;
       max-width: 14rem;
-    }
 
-    &-halloween {
-      min-width: 260px;
-      max-width: 260px;
+      .halloween {
+        font-size: 1rem;
+        line-height: 1.4rem;
+        margin: 0 1rem;
+      }      
     }
   }
   @media (min-width: 120rem) {
@@ -215,6 +216,12 @@ textarea {
       min-width: 24rem;
       max-width: 24rem;
     }
+
+    .halloween {
+      font-size: 1rem;
+      line-height: 1.4rem;
+      margin: 0 1rem;
+    }        
   }
 }
 
