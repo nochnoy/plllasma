@@ -1,13 +1,14 @@
-header {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
 main {
   display: flex;
   flex-direction: row;
+
+  header {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    height: 4.5rem;
+  }  
 
   section:nth-child(1) {
     width: 80%;
@@ -20,16 +21,10 @@ main {
     background-repeat: repeat-y;
     background-position-x: -179px;
 
-    header {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-    }
     form {
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-top: 2rem;
 
       >* {
         margin-bottom: 1rem;

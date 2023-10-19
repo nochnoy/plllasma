@@ -9,18 +9,20 @@
       <header>
         <div>
           <h1 [class.spinner]="isLoading">Все каналы</h1>
-          <div>🚧 В процессе. Потом тут будет развесистый древовидный каталог.</div>
+          <div>🚧 Пока залипуха, но потом тут будет развесистый древовидный каталог</div>
         </div>
         <div>
 
         </div>
       </header>
 
+      <!--
       <div class="info">
         <div class="search" *ngIf="!isLoading">
           <input autofocus [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()" placeholder="Поиск">
         </div>   
       </div>
+      -->
 
       <ng-container *ngIf="!searchPhrase">
         <div class="district">
@@ -54,7 +56,7 @@
 
     <section>
       <header>
-        <h1>Создать новый</h1>
+        <h1>Создать свой</h1>
         <div>канал</div>
       </header> 
       <form [formGroup]="newChannelForm">
