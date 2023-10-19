@@ -100,11 +100,18 @@
 
 <ng-template #memberTemplate let-channel='channel'>
   <a
-    class="name"
-    [class.noaccess]="!channel.role || channel.role === 9"
+    *ngIf="!(channel.role && channel.role !== 9)"
+    class="name noaccess"
     [routerLink]="'/channel/' + channel.id_place">
-      <i *ngIf="channel.id_place <= 47"><img src="assets/img/channel-open.png"></i>
-      <i *ngIf="channel.id_place > 47">🎃</i>
+      <i *ngIf="channel.id_place <= 47">🔑</i>
       {{channel.name}}
     </a>
+    <a
+    *ngIf="(channel.role && channel.role !== 9)"
+    class="name"
+    [routerLink]="'/channel/' + channel.id_place">
+      <i *ngIf="channel.id_place <= 47">📜</i>
+      <i *ngIf="channel.id_place > 47">🎃</i>
+      {{channel.name}}
+    </a>    
 </ng-template>

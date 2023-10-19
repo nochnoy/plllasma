@@ -7,7 +7,11 @@ main {
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
-    height: 4.5rem;
+    height: 5rem;
+
+    h1 {
+      margin-bottom: 0.2rem;
+    }
   }  
 
   section:nth-child(1) {
@@ -158,14 +162,6 @@ main {
 
     &.noaccess {
       pointer-events: none;
-      opacity: 0.3;
     }
-  }
-}
-
-.new-channel {
-  h1 {
-    margin: 0;
-    font-size: 1.5rem;
   }
 }
