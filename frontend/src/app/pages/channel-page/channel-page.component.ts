@@ -231,16 +231,12 @@ export class ChannelPageComponent implements OnInit {
   }
 
   checkHalloween(): void {
-    if (this.channelId === 1) {
-      const year = (new Date()).getFullYear();
-      const now = new Date();
-      const from = new Date(year, 10 - 1, 11);
-      const to = new Date(year, 11 - 1, 6);
-      this.isHalloween = (now.getTime() >= from.getTime() && now.getTime() <= to.getTime());
-      this.currentYear = year;
-    } else {
-      this.isHalloween = false;
-    }
+    const year = (new Date()).getFullYear();
+    const now = new Date();
+    const from = new Date(year, 10 - 1, 11);
+    const to = new Date(year, 11 - 1, 6);
+    this.isHalloween = (now.getTime() >= from.getTime() && now.getTime() <= to.getTime());
+    this.currentYear = year;
   }
 
   createChannelStub(channelId: number): Channel {
