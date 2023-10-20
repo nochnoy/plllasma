@@ -6,7 +6,7 @@ import { LoginPageComponent } from "./pages/login-page/login-page.component";
 import { TestMessagesPageComponent } from "./pages/test-messages-page/test-messages-page.component";
 
 const routes: Routes = [
-  { path: '', component: ChannelPageComponent, canActivate: [AppGuard] },
+  { path: '', redirectTo: 'channel/1', pathMatch: 'full' },
   { path: 'login', component: LoginPageComponent },
   { path: 'test-messages', component: TestMessagesPageComponent },
   {
