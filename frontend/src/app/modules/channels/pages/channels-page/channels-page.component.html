@@ -9,7 +9,7 @@
       <header>
         <div>
           <h1 [class.spinner]="isLoading">Каналы</h1>
-          <div>🚧 Пока залипуха, но потом тут будет развесистый древовидный каталог</div>
+          <div>Здесь вы можете подписаться 📬 на понравившиеся вам каналы<br>и они появятся у вас в боковом меню.</div>
         </div>
         <div>
 
@@ -46,11 +46,6 @@
         </div>
         <div *ngIf="!channelsSearching.length">Не найдено</div>
       </ng-container>
-
-      <div class="info">
-        📬 Отписываясь от канала, вы его удаляете из&nbsp;бокового меню.<br>
-        А подписываясь - добавляете!
-      </div>      
 
     </section>
 
@@ -104,7 +99,7 @@
     class="channel noaccess"
     [routerLink]="'/channel/' + channel.id_place">
       <i *ngIf="channel.id_place <= 47">🔑</i>
-      {{channel.name}}
+      {{channel.shortName}}
     </a>
     <a
     *ngIf="(channel.role && channel.role !== 9)"
@@ -113,6 +108,6 @@
     [routerLink]="'/channel/' + channel.id_place">
       <i *ngIf="channel.id_place <= 47">📜</i>
       <i *ngIf="channel.id_place > 47">🎃</i>
-      {{channel.name}}
+      {{channel.shortName}}
     </a>    
 </ng-template>

@@ -8,4 +8,6 @@ export class Const {
   static maxFileUploadSizeMb = 50;
 
   static remInPixels: number = parseFloat(getComputedStyle(document.documentElement).fontSize); // 1rem В пикселях
+
+  static channelShornNameLength = 14;
 }

@@ -67,15 +67,19 @@
 
 }
 
-.active-link {
-  font-weight: bold;
+.catalog {
+  margin-bottom: 1rem!important;
+
+  .counter {
+    position: relative;
+    top: -1px;
+    font-weight: bolder;
+    color: var(--color-star);
+    font-size: 0.8rem;
+    letter-spacing: -0.1rem;
+  }
 }
 
-.unread-channels {
-  position: relative;
-  top: -1px;
+.active-link {
   font-weight: bold;
-  color: red;
-  font-size: 0.8rem;
-  letter-spacing: -0.1rem;
 }

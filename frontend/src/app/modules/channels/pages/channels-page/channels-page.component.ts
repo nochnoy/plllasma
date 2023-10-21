@@ -5,6 +5,7 @@ import {IMenuChannel, RoleEnum} from "../../../../model/app-model";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {tap} from "rxjs/operators";
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { Const } from 'src/app/model/const';
 
 @UntilDestroy()
 @Component({
@@ -29,7 +30,7 @@ export class ChannelsPageComponent implements OnInit {
   channelsAll: IMenuChannel[] = [];
 
   isHalloween = false;
-  currentYear = 0;    
+  currentYear = 0;
 
   newChannelForm: FormGroup = new FormGroup({
     name: new FormControl('', [Validators.required]),
@@ -46,6 +47,9 @@ export class ChannelsPageComponent implements OnInit {
     this.httpService.getChannelsList$().pipe(
       tap((result) => {
         this.isLoading = false;
+
+        // Сократим
+        (result || []).forEach((channel: any) => channel.shortName = channel.name.substr(0, Const.channelShornNameLength));
 
         // Вообще все
         this.channelsAll = result || [];
@@ -92,7 +96,7 @@ export class ChannelsPageComponent implements OnInit {
 
             // Добавим юзеру право на этот канал
             this.userService.user.access.push({
-              id_place: result.id, 
+              id_place: result.id,
               role:     RoleEnum.owner,
             });
 

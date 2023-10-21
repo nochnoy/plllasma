@@ -8,15 +8,19 @@
 </div>
 <div class="channels" *ngIf="channelService?.menuChannels?.length">
   <div *ngFor="let city of channelService.menuCities">
-    <a *ngIf="city?.capital?.id_place === 1" [routerLink]="'/channels'" routerLinkActive="active-link">
+    <a *ngIf="city?.capital?.id_place === 1"
+       class="catalog"
+       [routerLink]="'/channels'" 
+       routerLinkActive="active-link">
       Каналы 
-      <span *ngIf="userService.user.unreadChannels" class="unread-channels">{{userService.user.unreadChannels}}</span>
+      <span *ngIf="userService.user.unreadChannels" class="counter">{{userService.user.unreadChannels}}</span>
     </a>
     <a *ngFor="let channel of city.channels"
        (click)="onItemClick(channel)"
        [class.star]="(channel.id_place !== 26) && (channel.id_place !== 5) && (channel.time_changed > channel.time_viewed)"
        routerLinkActive="active-link"
-       [routerLink]="'/channel/' + channel.id_place">{{channel.shortName}}
+       [routerLink]="'/channel/' + channel.id_place">
+       {{channel.shortName}}
     </a>
   </div>
 

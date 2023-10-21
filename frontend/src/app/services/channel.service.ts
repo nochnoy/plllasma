@@ -49,7 +49,7 @@ export class ChannelService {
 
         this.menuChannels.forEach((channel) => {
 
-          channel.shortName = channel.name.substr(0, 14);
+          channel.shortName = channel.name.substr(0, Const.channelShornNameLength);
 
           let city: IMenuCity;
           if (channel.parent) {
