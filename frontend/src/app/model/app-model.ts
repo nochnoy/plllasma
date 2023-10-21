@@ -6,6 +6,7 @@ export interface IUserData {
   nick: string;
   icon: string;
   access: IAccess[];
+  unreadChannels?: number;
 }
 
 export enum LoginStatus {

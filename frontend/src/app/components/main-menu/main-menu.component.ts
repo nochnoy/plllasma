@@ -4,6 +4,7 @@ import {ChannelService} from "../../services/channel.service";
 import {IMenuChannel} from "../../model/app-model";
 import {RouterModule} from "@angular/router";
 import {CommonModule} from "@angular/common";
+import { UserService } from 'src/app/services/user.service';
 
 @Component({
   selector: 'app-main-menu',
@@ -17,6 +18,7 @@ export class MainMenuComponent implements OnInit {
   constructor(
     public appService: AppService,
     public channelService: ChannelService,
+    public userService: UserService
   ) { }
 
   @Output('itemClick') itemClick = new EventEmitter<IMenuChannel>();

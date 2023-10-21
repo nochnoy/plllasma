@@ -71,6 +71,7 @@ export class AppService {
           this.userService.user.nick = result.nick;
           this.userService.user.icon = result.icon;
           this.userService.user.access = result.access;
+          this.userService.user.unreadChannels = result.unreadChannels ?? 0;
           return true;
         }
       }),

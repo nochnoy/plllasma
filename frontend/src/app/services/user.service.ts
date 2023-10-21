@@ -12,7 +12,8 @@ export class UserService {
   readonly user: IUserData = {
     icon: '',
     nick: '',
-    access: []
+    access: [],
+    unreadChannels: 0
   }
 
   loginStatus$ = new BehaviorSubject<LoginStatus>(LoginStatus.unauthorised);

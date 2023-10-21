@@ -189,10 +189,11 @@ function buildUser($rec) {
 function getUserInfoForClient() {
 	global $user;
 	return (object)[
-		'userId' 	=> $user['id_user'],
-		'nick' 		=> $user['nick'],
-		'icon' 		=> $user['icon'],
-		'access'	=> @$user['access'],
+		'userId' 			=> $user['id_user'],
+		'nick' 				=> $user['nick'],
+		'icon' 				=> $user['icon'],
+		'access'			=> @$user['access'],
+		'unreadChannels'	=> @$user['unread_unsubscribed_channels']
 	];
 }
 

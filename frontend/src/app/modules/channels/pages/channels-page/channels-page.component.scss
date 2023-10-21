@@ -142,14 +142,15 @@ main {
 .channels {
   column-width: 10rem;
 
-  .name {
+  .channel {
     display: inline-block;
     margin-bottom: 1rem;
-    padding-right: 0.5rem;
     width: 10rem;
-    white-space: nowrap;
     color: black;
     text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
     i {
       font-style: normal;
