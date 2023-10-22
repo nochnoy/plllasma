@@ -110,8 +110,13 @@ export class ChannelService {
     return of({}).pipe(
       switchMap(() => this.httpService.getChannel$(channelId, time_viewed, page)),
       switchMap((input: any) => {
+
         if (input.error) {
-          throw (input.error);
+          console.error(`Сервер вернул ошибку ${input.error}`);
+          const channel = new Channel();
+          channel.id = channelId;
+          channel.canAccess = false;
+          return of(channel);
         }
 
         // Канал на меню лишается звёздочки

@@ -42,13 +42,11 @@ export class ChannelPageComponent implements OnInit {
 
   isHalloween = false;
   currentYear = 0;
-  noAccess = false;
 
   ngOnInit(): void {
     of({}).pipe(
       switchMap(() => this.activatedRoute.url),
       switchMap((urlSegments) => {
-        this.noAccess = false;
         this.isNotificationsReady = false;
         this.currentPage = 0;
         this.channelService.deselectMessage();
@@ -73,15 +71,8 @@ export class ChannelPageComponent implements OnInit {
         );
       }),
       tap((channel: Channel) => {
-
         this.channel = channel;
         this.onChannelUpdated();
-      }),
-      catchError((error: any) => {
-        if (error === 'access') {
-          this.noAccess = true;
-        }
-        return of({});
       }),
       untilDestroyed(this)
     ).subscribe();
@@ -102,7 +93,7 @@ export class ChannelPageComponent implements OnInit {
     if (this.channel) {
       this.channel.roleTitle = this.userService.getRoleTitle(this.channelId);
       this.channel.canAccess = this.userService.canAccess(this.channelId);
-      this.channel.canModerate = this.userService.canAccess(this.channelId);
+      this.channel.canModerate = this.userService.canModerate(this.channelId);
       this.channel.canEditMatrix = this.userService.canEditMatrix(this.channelId);
       this.channel.canUseSettings = this.userService.canUseChannelSettings(this.channelId);
 
