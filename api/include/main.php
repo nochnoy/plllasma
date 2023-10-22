@@ -45,7 +45,7 @@ $allowed_http_origins = [
     "https://localhost",
 ];
 
-session_set_cookie_params(0 , '/', DOMAIN);
+session_set_cookie_params(0, '/', DOMAIN);
 session_name(SESSION_NAME);
 session_start();
 

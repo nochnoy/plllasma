@@ -2,7 +2,7 @@ import {Component, HostListener, Inject, OnInit} from '@angular/core';
 import {AppService} from "../../services/app.service";
 import {ActivatedRoute} from "@angular/router";
 import {Observable, of} from "rxjs";
-import {switchMap, tap} from "rxjs/operators";
+import {catchError, switchMap, tap} from "rxjs/operators";
 import {EMPTY_CHANNEL, IMenuChannel} from "../../model/app-model";
 import {Channel} from "../../model/messages/channel.model";
 import {Thread} from "../../model/messages/thread.model";
@@ -42,11 +42,13 @@ export class ChannelPageComponent implements OnInit {
 
   isHalloween = false;
   currentYear = 0;
+  noAccess = false;
 
   ngOnInit(): void {
     of({}).pipe(
       switchMap(() => this.activatedRoute.url),
       switchMap((urlSegments) => {
+        this.noAccess = false;
         this.isNotificationsReady = false;
         this.currentPage = 0;
         this.channelService.deselectMessage();
@@ -71,8 +73,15 @@ export class ChannelPageComponent implements OnInit {
         );
       }),
       tap((channel: Channel) => {
+
         this.channel = channel;
         this.onChannelUpdated();
+      }),
+      catchError((error: any) => {
+        if (error === 'access') {
+          this.noAccess = true;
+        }
+        return of({});
       }),
       untilDestroyed(this)
     ).subscribe();

@@ -159,9 +159,5 @@ main {
     &:hover {
       text-decoration: underline;
     }
-
-    &.noaccess {
-      pointer-events: none;
-    }
   }
 }

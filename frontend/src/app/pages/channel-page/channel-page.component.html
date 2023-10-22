@@ -2,10 +2,12 @@
   <aside class="aside">
       <app-main-menu (itemClick)="onMenuItemClick($event)"></app-main-menu>
   </aside>
-  <main class="main">
-    <div class="general-error" *ngIf="channel && !channel?.canAccess">
-      🔒 У вас нет сюда доступа
+  <main class="main" *ngIf="noAccess">
+    <div class="general-error">
+      😎 У вас нет доступа на этот канал
     </div>
+  </main>
+  <main class="main" *ngIf="!noAccess">
     <ng-container *ngIf="channel && channel?.canAccess">
 
       <app-matrix #matrix

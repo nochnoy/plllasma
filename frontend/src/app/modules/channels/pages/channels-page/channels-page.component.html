@@ -20,7 +20,7 @@
       <div class="info">
         <div class="search" *ngIf="!isLoading">
           <input autofocus [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()" placeholder="Поиск">
-        </div>   
+        </div>
       </div>
       -->
 
@@ -53,7 +53,7 @@
       <header>
         <h1>Создать свой</h1>
         <div>канал</div>
-      </header> 
+      </header>
       <form [formGroup]="newChannelForm">
 
         <input class="input" placeholder="Название канала" name="name" type="text" maxlength="14" formControlName="name" autofocus>
@@ -67,14 +67,14 @@
               <div class="icon"></div>{{'Привидение'}}▴
             </ng-container>
           </div>
-        </div>        
+        </div>
         <button class="button"
                 [disabled]="newChannelForm.invalid"
                 (click)="onNewChannelClick()">
           Создать
         </button>
 
-      </form>      
+      </form>
     </section>
 
   </main>
@@ -109,5 +109,5 @@
       <i *ngIf="channel.id_place <= 47">📜</i>
       <i *ngIf="channel.id_place > 47">🎃</i>
       {{channel.shortName}}
-    </a>    
+    </a>
 </ng-template>

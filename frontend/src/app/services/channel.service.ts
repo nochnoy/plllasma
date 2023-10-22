@@ -111,7 +111,7 @@ export class ChannelService {
       switchMap(() => this.httpService.getChannel$(channelId, time_viewed, page)),
       switchMap((input: any) => {
         if (input.error) {
-          throw (`Сервер вернул ошибку ${input.error}`);
+          throw (input.error);
         }
 
         // Канал на меню лишается звёздочки
