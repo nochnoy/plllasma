@@ -1,0 +1,7 @@
+Добавляешь два задания в IspManager/Cron:
+
+Каждый час (обновляет звёздочку на ссылке "каналы"):
+wget -O - -q https://plllasma.ru/api/cron-update-unread-unsubscribed-channels.php
+
+Каждый день в 5 утра (обновляет статы юзеров):
+wget -O - -q https://plllasma.ru/api/cron-user-stats.php

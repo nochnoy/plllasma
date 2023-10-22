@@ -2,7 +2,6 @@
 // REST обновляем всякое про юзеров - тяжёлые рассчёты
 
 include("include/main.php");
-loginBySessionOrToken();
 
 // обнуляем всё у юзера
 mysqli_query($mysqli, 'update tbl_users set msgcount=0');
