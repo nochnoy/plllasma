@@ -40,6 +40,7 @@ export class ChannelsPageComponent implements OnInit {
   ngOnInit(): void {
     this.load();
     this.checkHalloween();
+    this.userService.user.unreadChannels = 0; // TODO: Потом сделаю умную систему уменьшения этого числа
   }
 
   load(): void {
