@@ -94,20 +94,20 @@
 </div>
 
 <ng-template #memberTemplate let-channel='channel'>
-  <a
-    *ngIf="!(channel.role && channel.role !== 9)"
-    class="channel noaccess"
-    [routerLink]="'/channel/' + channel.id_place">
-      <i *ngIf="channel.id_place <= 47">🔑</i>
-      {{channel.shortName}}
-    </a>
-    <a
-    *ngIf="(channel.role && channel.role !== 9)"
-    class="channel"
-    [class.star]="channel.time_viewed < channel.time_changed"
-    [routerLink]="'/channel/' + channel.id_place">
-      <i *ngIf="channel.id_place <= 47">📜</i>
-      <i *ngIf="channel.id_place > 47">🎃</i>
-      {{channel.shortName}}
+  <a *ngIf="!(channel.role && channel.role !== 9)"
+     class="channel noaccess"
+     (click)="onChannelClick(channel)"
+     [routerLink]="'/channel/' + channel.id_place">
+       <i *ngIf="channel.id_place <= 47">🔑</i>
+       {{channel.shortName}}
+  </a>
+    <a *ngIf="(channel.role && channel.role !== 9)"
+       class="channel"
+       (click)="onChannelClick(channel)"
+       [class.star]="channel.time_viewed < channel.time_changed"
+       [routerLink]="'/channel/' + channel.id_place">
+         <i *ngIf="channel.id_place <= 47">📜</i>
+         <i *ngIf="channel.id_place > 47">🎃</i>
+         {{channel.shortName}}
     </a>
 </ng-template>

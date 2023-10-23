@@ -13,7 +13,7 @@ export class UserService {
     icon: '',
     nick: '',
     access: [],
-    unreadChannels: 0
+    superstar: 0
   }
 
   loginStatus$ = new BehaviorSubject<LoginStatus>(LoginStatus.unauthorised);

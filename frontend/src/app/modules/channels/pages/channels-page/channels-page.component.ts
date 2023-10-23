@@ -40,7 +40,6 @@ export class ChannelsPageComponent implements OnInit {
   ngOnInit(): void {
     this.load();
     this.checkHalloween();
-    this.userService.user.unreadChannels = 0; // TODO: Потом сделаю умную систему уменьшения этого числа
   }
 
   load(): void {
@@ -65,6 +64,7 @@ export class ChannelsPageComponent implements OnInit {
         });
 
         this.updateChannelsToShow();
+        this.updateSuperstar(result || []);
       }),
       untilDestroyed(this)
     ).subscribe();
@@ -75,6 +75,25 @@ export class ChannelsPageComponent implements OnInit {
       this.channelsSearching = this.channelsAll.filter((channel) => (channel.name ?? '').toUpperCase().indexOf(this.searchPhrase.toUpperCase()) > -1);
     } else {
       this.channelsSearching = [];
+    }
+  }
+
+  isChannelAffectingSuperstar(channel: IMenuChannel): boolean {
+    return channel.time_changed > channel.time_viewed && channel.at_menu !== 't' && (!!channel.role && channel.role !== RoleEnum.nobody);
+  }
+
+  updateSuperstar(channels: IMenuChannel[]): void {
+    let newSuperstar = 0;
+    channels.forEach((channel) => {
+      if (this.isChannelAffectingSuperstar(channel)) {
+        newSuperstar++;
+      }
+    });
+    if (this.userService.user.superstar !== newSuperstar) {
+      this.userService.user.superstar = newSuperstar;
+      this.httpService.setSuperstar$(newSuperstar).pipe(
+        untilDestroyed(this)
+      ).subscribe();
     }
   }
 
@@ -123,4 +142,21 @@ export class ChannelsPageComponent implements OnInit {
     this.currentYear = year;
   }
 
+  onChannelClick(channel: IMenuChannel): void {
+    if (this.isChannelAffectingSuperstar(channel)) {
+      let newSuperstar = this.userService.user.superstar || 0;
+      newSuperstar--;
+      if (newSuperstar < 0) {
+        newSuperstar = 0;
+      }
+      if (this.userService.user.superstar !== newSuperstar) {
+        this.userService.user.superstar = newSuperstar;
+
+        // Без untilDestroyed т.к. должен отработать после того как мы уйдём со страницы!
+        this.httpService.setSuperstar$(newSuperstar).subscribe();
+      }
+    }
+  }
 }
+
+

@@ -178,4 +178,14 @@ export class HttpService {
     );
   }
 
+  setSuperstar$(value: number): Observable<any> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/superstar-set.php`,
+      {
+        value
+      },
+      { observe: 'body', withCredentials: true }
+    );
+  }
+
 }

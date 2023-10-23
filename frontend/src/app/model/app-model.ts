@@ -6,7 +6,7 @@ export interface IUserData {
   nick: string;
   icon: string;
   access: IAccess[];
-  unreadChannels?: number;
+  superstar?: number; // значение "цифровой звёздочки" на ссылке "каналы" - сколько есть непрочитанных неподписанных каналов на которые у юзера есть права
 }
 
 export enum LoginStatus {
@@ -86,6 +86,8 @@ export interface IMenuChannel {
   shortName?: string;
   timeViewedDeferred?: string; // Чисто клиентское поле. В него льётся фактическое time_viewed канала пока юзер с него не уйдёт.
   isCapital?: boolean;
+  at_menu?: 't' | 'f';
+  role?: RoleEnum;
 }
 
 export interface IMenuCity {

@@ -10,10 +10,10 @@
   <div *ngFor="let city of channelService.menuCities">
     <a *ngIf="city?.capital?.id_place === 1"
        class="catalog"
-       [routerLink]="'/channels'" 
+       [routerLink]="'/channels'"
        routerLinkActive="active-link">
-      Каналы 
-      <span *ngIf="userService.user.unreadChannels" class="counter">{{userService.user.unreadChannels}}</span>
+      Каналы
+      <span *ngIf="userService.user.superstar" class="superstar">{{userService.user.superstar}}</span>
     </a>
     <a *ngFor="let channel of city.channels"
        (click)="onItemClick(channel)"
