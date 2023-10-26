@@ -5,8 +5,8 @@ export class Channel {
   public id: number = 0;
   public name: string = '';
   public atMenu: boolean = false;
-  public timeChanged?: string;
-  public timeViewed?: string;
+  public changed?: string;
+  public viewed?: string;
   public pagesCount: number = 0;
   public threads: Array<Thread> = [];
   public matrix?: IMatrix;

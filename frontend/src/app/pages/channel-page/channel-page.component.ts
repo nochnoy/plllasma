@@ -39,6 +39,7 @@ export class ChannelPageComponent implements OnInit {
   hereAndNowUsers: string[] = [];
   mailNotification: any = {};
   currentPage = 0;
+  lv: string = '';
 
   isHalloween = false;
   currentYear = 0;
@@ -51,7 +52,7 @@ export class ChannelPageComponent implements OnInit {
         this.currentPage = 0;
         this.channelService.deselectMessage();
 
-        if (urlSegments.length) {
+        if (urlSegments[0]) {
           this.channelId = parseInt(urlSegments[0].path, 10) ?? Const.defaultChannelId;
         } else {
           this.channelId = Const.defaultChannelId;
@@ -66,12 +67,13 @@ export class ChannelPageComponent implements OnInit {
         // Получаем канал
         return this.channelService.getChannel(
           this.channelId,
-          this.channelService.menuChannels.find((mc) => mc.id_place === this.channelId)?.time_viewed ?? '',
+          '',
           this.currentPage
         );
       }),
       tap((channel: Channel) => {
         this.channel = channel;
+        this.lv = channel.viewed ?? '';
         this.onChannelUpdated();
       }),
       untilDestroyed(this)
@@ -133,7 +135,7 @@ export class ChannelPageComponent implements OnInit {
       } else {
         this.isExpanding = thread;
         of({}).pipe(
-          switchMap(() => this.appService.getThread$(thread.rootMessageId, this.channel?.timeViewed ?? '')),
+          switchMap(() => this.appService.getThread$(thread.rootMessageId, this.lv)),
           tap((input: any) => {
             thread.addMessages(input.messages);
             thread.isExpanded = true;
@@ -152,7 +154,7 @@ export class ChannelPageComponent implements OnInit {
   onChannelInvalidated(): void {
     this.channelService.getChannel(
       this.channelId,
-      this.channelService.menuChannels.find((mc) => mc.id_place === this.channelId)?.time_viewed ?? '',
+      this.lv,
       this.currentPage
     ).pipe(
       tap((result) => {

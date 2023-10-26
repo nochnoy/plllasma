@@ -130,6 +130,8 @@ export class ChannelService {
         channel.id = channelId;
         channel.name = input.name;
         channel.atMenu = input.atMenu;
+        channel.viewed = input.viewed;
+        channel.changed = input.changed;
 
         // Строим ветки
         channel!.deserializeMessages(input);
