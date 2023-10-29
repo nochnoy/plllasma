@@ -33,7 +33,6 @@ export class ChannelPageComponent implements OnInit {
 
   channelId = 0;
   channel?: Channel;
-  isSpinner = false;
   isExpanding?: Thread;
   isNotificationsReady = false;
   hereAndNowUsers: string[] = [];
@@ -63,6 +62,7 @@ export class ChannelPageComponent implements OnInit {
 
         // Пока грузится настоящий канал, покажем юзеру заглушку
         this.channel = this.createChannelStub(this.channelId);
+        this.channel.isLoading = true;
 
         // Получаем канал
         return this.channelService.getChannel(
@@ -73,6 +73,7 @@ export class ChannelPageComponent implements OnInit {
       }),
       tap((channel: Channel) => {
         this.channel = channel;
+        this.channel.isLoading = false;
         this.lv = channel.viewed ?? '';
         this.onChannelUpdated();
       }),
@@ -152,6 +153,9 @@ export class ChannelPageComponent implements OnInit {
   }
 
   onChannelInvalidated(): void {
+    if (this.channel) {
+      this.channel.isLoading = true;
+    }
     this.channelService.getChannel(
       this.channelId,
       this.lv,
@@ -159,6 +163,7 @@ export class ChannelPageComponent implements OnInit {
     ).pipe(
       tap((result) => {
         this.channel = result;
+        this.channel.isLoading = false;
         this.onChannelUpdated();
       }),
       untilDestroyed(this),
@@ -212,14 +217,18 @@ export class ChannelPageComponent implements OnInit {
   }
 
   onMatrixChanged(matrix: IMatrix): void {
-    if (this.channel?.canEditMatrix) {
-      if (this.channel?.matrix) {
-        this.isSpinner = true;
-        this.httpService.matrixWrite$(this.channelId, matrix).pipe(
-          tap((result) => {
-            this.isSpinner = false;
-          }),
-        ).subscribe();
+    if (this.channel) {
+      if (this.channel.canEditMatrix) {
+        if (this.channel.matrix) {
+          this.channel.isLoading = true;
+          this.httpService.matrixWrite$(this.channelId, matrix).pipe(
+            tap(() => {
+              if (this.channel) {
+                this.channel.isLoading = false;
+              }
+            }),
+          ).subscribe();
+        }
       }
     }
   }

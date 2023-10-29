@@ -83,7 +83,6 @@ export class MessageForm2Component implements OnInit{
 
   onSendClick(): void {
     this.messageText = this.messageText.trim();
-
     if (this.messageText || this.attachments.length) {
       this.isSending = true;
       this.appService.addMessage$(this.channelId, this.messageText, this.parentMessage?.id || 0, this.isGhost, this.attachments)

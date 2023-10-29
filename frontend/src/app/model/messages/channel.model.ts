@@ -12,6 +12,7 @@ export class Channel {
   public matrix?: IMatrix;
   public parent?: number;
   public first_parent?: number;
+  public isLoading: boolean = false;
 
   roleTitle: string = '';
   canAccess = false;

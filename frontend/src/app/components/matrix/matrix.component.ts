@@ -3,7 +3,8 @@ import {
   IMatrix,
   IMatrixObject,
   IMatrixObjectTransform,
-  IMatrixRect, matrixAddCol,
+  IMatrixRect,
+  matrixAddCol,
   matrixCellSize,
   matrixColsCount,
   matrixDragThreshold,
@@ -37,6 +38,11 @@ export class MatrixComponent implements OnInit, OnDestroy {
     public elementRef: ElementRef,
     public userService: UserService,
   ) { }
+
+  readonly objectTypeText = MatrixObjectTypeEnum.text;
+  readonly objectTypeImage = MatrixObjectTypeEnum.image;
+  readonly objectTypeTitle = MatrixObjectTypeEnum.title;
+  readonly objectTypeChannelTitle = MatrixObjectTypeEnum.channelTitle;
 
   @Output('changed')
   changed = new EventEmitter<IMatrix>();
@@ -406,7 +412,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
         case MatrixObjectTypeEnum.text:
         case MatrixObjectTypeEnum.title:
-        case MatrixObjectTypeEnum.channelTitle:
           const channelId = this.channel?.id ?? -1;
           if (this.userService.canEditMatrix(channelId)) {
             const newText = window.prompt('Введите новый текст', this.selectedObject.text) ?? '';
@@ -415,6 +420,9 @@ export class MatrixComponent implements OnInit, OnDestroy {
               this.changed.emit(this.matrix);
             }
           }
+          break;
+
+        case MatrixObjectTypeEnum.channelTitle:
           break;
 
       }
@@ -770,6 +778,11 @@ export class MatrixComponent implements OnInit, OnDestroy {
   }
 
   deleteCommand(): void {
+    if (this.selectedObject?.type === MatrixObjectTypeEnum.channelTitle) {
+      window.alert('Это название канала, его нельзя удалять');
+      return;
+    }
+
     if (window.confirm('Удалить выделенный объект?')) {
       const deletedObject = this.selectedObject;
       this.deselect();

@@ -17,11 +17,8 @@
 
       <div class="form">
         <app-message-form-2 class="form-content" [channelId]="channelId" (onPost)="onNewMessageCreated()"></app-message-form-2>
-        <div *ngIf="isSpinner" class="loading" [class.spinner]="isSpinner">Загружается</div>
-        <div *ngIf="!isSpinner" class="form-tools">
-          <!--
+        <div class="form-tools" *ngIf="!channel?.isLoading">
 
-          -->
           <button mat-button [matMenuTriggerFor]="menu" *ngIf="channel?.canEditMatrix"><i>🎨</i> Дизайнить ▾</button>
           <mat-menu #menu="matMenu">
             <button mat-menu-item (click)="matrix.addImageCommand()">Добавить картинки</button>
