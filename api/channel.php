@@ -121,11 +121,12 @@ exit(json_encode((object)[
     'page' =>       $page,
 	'messages' =>   $messagesDecoded,
 	'matrix' =>     $matrixDecoded,
-	'viewed' =>     $now, // Отправляем время фактического просмотра канала. Клиент не должен сразу отображать его в модели а отложить до переключения каналов.
+	'viewed' =>     $lastViewedLnk,
     'changed' =>    $changed,
     'name' =>       $name,
     'matrix' =>     $matrixDecoded,
-    'atMenu' =>     $atMenu
+    'atMenu' =>     $atMenu,
+    'now' =>        $now
 ]));
 
 ?>

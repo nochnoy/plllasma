@@ -68,6 +68,7 @@
        [class.item-text]="object.type === objectTypeText"
        [class.item-title]="object.type === objectTypeTitle"
        [class.item-channel-title]="object.type === objectTypeChannelTitle"
+       [class.matrix-star]="object.type === objectTypeImage && object.changed > (channel?.viewed ?? '')"
        [style.grid-area]="(object.y + 1) + '/' + (object.x + 1) + '/' + (object.y + 1 + object.h) + '/' + (object.x + 1 + object.w)"
        [style.background-image]="'url(/matrix/' + this.channel?.id + '/' + object.image + ')'"
        [attr.id]="object.id">

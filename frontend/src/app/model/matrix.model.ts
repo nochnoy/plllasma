@@ -35,6 +35,7 @@ export interface IMatrixObject extends IMatrixRect {
   type?: MatrixObjectTypeEnum
   image?: string;
   text?: string;
+  changed: string;
 }
 
 export interface IMatrixObjectTransform {
@@ -57,6 +58,7 @@ export function newDefaultMatrix(channelName: string): IMatrix {
     x: 0, y: 0, w: matrixColsCount, h: 1,
     text: channelName,
     id: matrix.newObjectId++,
+    changed: '',
   });
   return matrix;
 }

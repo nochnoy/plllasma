@@ -17,12 +17,13 @@ import {IUploadingAttachment} from "../../model/app-model";
 import {Utils} from "../../utils/utils";
 import {Const} from "../../model/const";
 import {filter, switchMap, tap} from "rxjs/operators";
-import {Subject} from "rxjs";
+import {of, Subject} from "rxjs";
 import {IHttpAddMatrixImages} from "../../model/rest-model";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {UploadService} from "../../services/upload.service";
 import {AppService} from "../../services/app.service";
 import {UserService} from "../../services/user.service";
+import {HttpService} from "../../services/http.service";
 
 @UntilDestroy()
 @Component({
@@ -37,6 +38,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
     public uploadService: UploadService,
     public elementRef: ElementRef,
     public userService: UserService,
+    public httpService: HttpService,
   ) { }
 
   readonly objectTypeText = MatrixObjectTypeEnum.text;
@@ -44,8 +46,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
   readonly objectTypeTitle = MatrixObjectTypeEnum.title;
   readonly objectTypeChannelTitle = MatrixObjectTypeEnum.channelTitle;
 
-  @Output('changed')
-  changed = new EventEmitter<IMatrix>();
+  @Output('change')
+  change = new EventEmitter<IMatrix>();
 
   matrix = {} as IMatrix;
   matrixHeight = 1;
@@ -331,7 +333,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       this.destroyTransform();
       this.updateSelectionRect();
       this.updateMatrixHeight();
-      this.changed.emit(this.matrix);
+      this.change.emit(this.matrix);
     }
     this.deselect();
   }
@@ -384,7 +386,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       this.destroyTransform();
       this.updateSelectionRect();
       this.updateMatrixHeight();
-      this.changed.emit(this.matrix);
+      this.change.emit(this.matrix);
     }
     this.deselect();
   }
@@ -417,7 +419,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
             const newText = window.prompt('Введите новый текст', this.selectedObject.text) ?? '';
             if (newText && newText !== this.selectedObject.text) {
               this.selectedObject.text = newText;
-              this.changed.emit(this.matrix);
+              this.change.emit(this.matrix);
             }
           }
           break;
@@ -639,12 +641,14 @@ export class MatrixComponent implements OnInit, OnDestroy {
         const o: IMatrixObject = {
           type: MatrixObjectTypeEnum.text,
           y, x, w, h, text,
-          id: this.matrix.newObjectId++
+          id: this.matrix.newObjectId++,
+          changed: this.now(),
         };
         this.matrix.objects.push(o);
         this.select(o);
         this.updateMatrixHeight();
-        this.changed.emit(this.matrix);
+        this.change.emit(this.matrix);
+        this.channel.viewed = this.now(); // Чтобы на объекте не появилась звёздочка
       }
     }
   }
@@ -661,12 +665,14 @@ export class MatrixComponent implements OnInit, OnDestroy {
         const o: IMatrixObject = {
           type: MatrixObjectTypeEnum.title,
           y, x, w, h, text,
-          id: this.matrix.newObjectId++
+          id: this.matrix.newObjectId++,
+          changed: this.now(),
         };
         this.matrix.objects.push(o);
         this.select(o);
         this.updateMatrixHeight();
-        this.changed.emit(this.matrix);
+        this.change.emit(this.matrix);
+        this.channel.viewed = this.now(); // Чтобы на объекте не появилась звёздочка
       }
     }
   }
@@ -683,12 +689,14 @@ export class MatrixComponent implements OnInit, OnDestroy {
         const o: IMatrixObject = {
           type: MatrixObjectTypeEnum.channelTitle,
           y, x, w, h, text,
-          id: this.matrix.newObjectId++
+          id: this.matrix.newObjectId++,
+          changed: this.now(),
         };
         this.matrix.objects.push(o);
         this.select(o);
         this.updateMatrixHeight();
-        this.changed.emit(this.matrix);
+        this.change.emit(this.matrix);
+        this.channel.viewed = this.now(); // Чтобы на объекте не появилась звёздочка
       }
     }
   }
@@ -743,7 +751,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
       switchMap((attachments: IUploadingAttachment[]) => {
         return this.appService.addMatrixImages$(this.channel!.id, attachments);
       }),
-      tap((result: IHttpAddMatrixImages) => {
+      switchMap((result: IHttpAddMatrixImages) => {
+        let imagesSaved = false;
         if (result.error) {
           console.error(result.error); // TODO: сделать вывод ошибок, с логированием
         } else {
@@ -761,7 +770,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
                   y, x, w, h,
                   color: 'black',
                   image: image,
-                  id: this.matrix.newObjectId++
+                  id: this.matrix.newObjectId++,
+                  changed: this.now(),
                 };
                 this.matrix.objects.push(o);
                 this.select(o);
@@ -769,8 +779,20 @@ export class MatrixComponent implements OnInit, OnDestroy {
             });
 
             this.updateMatrixHeight();
-            this.changed.emit(this.matrix);
+            this.change.emit(this.matrix);
+            if (this.channel) {
+              this.channel.viewed = this.now(); // Чтобы на объекте не появилась звёздочка
+            }
+            imagesSaved = true;
           }
+        }
+        return of(imagesSaved);
+      }),
+      switchMap((imagesSaved: boolean) => {
+        if (imagesSaved && this.channel) {
+          return this.httpService.updateChannelChangedTime$(this.channel?.id);
+        } else {
+          return of({});
         }
       }),
       untilDestroyed(this)
@@ -788,7 +810,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       this.deselect();
       this.matrix.objects = this.matrix.objects.filter((o) => o !== deletedObject);
       this.updateMatrixHeight();
-      this.changed.emit(this.matrix);
+      this.change.emit(this.matrix);
     }
   }
 
@@ -797,8 +819,12 @@ export class MatrixComponent implements OnInit, OnDestroy {
       if (this.matrix.objects) {
         this.matrix.objects.length = 0;
         this.updateMatrixHeight();
-        this.changed.emit(this.matrix);
+        this.change.emit(this.matrix);
       }
     }
+  }
+
+  now(): string {
+    return Utils.dateToTimestamp(new Date());
   }
 }

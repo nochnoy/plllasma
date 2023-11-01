@@ -93,3 +93,26 @@
   display: none;
 }
 
+.matrix-star {
+  /*filter: grayscale(80%) blur(6px);*/
+  &:before {
+    display: inline-block;
+    position: relative;
+    z-index: 100;
+    top: 2px;
+    left: 3px;
+    width: var(--matrix-star-size);
+    height: var(--matrix-star-size);
+    border-radius: calc(var(--matrix-star-size) / 2);
+    background-color: var(--color-star);
+    content: " ";
+    box-sizing: border-box;
+    animation: 3s linear infinite blink;
+
+    &:nth-child(2n) { animation-delay: -10s }
+    &:nth-child(2n+1) { animation-delay: -30s }
+    &:nth-child(3n) { animation-delay: -20s; }
+    &:nth-child(5n) { animation-delay: -40s }
+    &:nth-child(7n) { animation-delay: -15s }
+  }
+}

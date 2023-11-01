@@ -63,6 +63,16 @@ export class HttpService {
     )
   }
 
+  updateChannelChangedTime$(placeId: number): Observable<any> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/channel-set-time-changed.php`,
+      {
+        placeId
+      },
+      {observe: 'body', withCredentials: true}
+    );
+  }
+
   getHereAndNow$(): Observable<string[]> {
     return this.httpClient.post(
       `${HttpService.apiPath}/hereandnow.php`,
