@@ -1,0 +1,54 @@
+<div class="three-column-page">
+  <aside class="aside">
+    <app-main-menu></app-main-menu>
+  </aside>
+  <main class="main">
+    <section>
+      <header>
+        <h1>Создание канала</h1>
+      </header>
+      <form [formGroup]="newChannelForm">
+
+        <input class="input" placeholder="Название канала" name="name" type="text" maxlength="14" formControlName="name" autofocus>
+        <textarea class="input" placeholder="Предупреждение, например про 18+" name="disclaimer" type="text" formControlName="disclaimer"></textarea>
+        <div class="user-line">
+          <div class="user" (click)="onGhostClick()">
+            <ng-container *ngIf="!isGhost">
+              <img class="avatar" [src]="'https://plllasma.com/i/' + userIcon" />{{userName}}▾
+            </ng-container>
+            <ng-container *ngIf="isGhost">
+              <div class="icon"></div>{{'Привидение'}}▴
+            </ng-container>
+          </div>
+        </div>
+        <button class="button"
+                [disabled]="newChannelForm.invalid"
+                (click)="onNewChannelClick()">
+          Создать
+        </button>
+
+      </form>
+    </section>
+
+  </main>
+  <div class="sidebar"></div>
+</div>
+
+<ng-template #memberTemplate let-channel='channel'>
+  <a *ngIf="!(channel.role && channel.role !== 9)"
+     class="channel noaccess"
+     (click)="onChannelClick(channel)"
+     [routerLink]="'/channel/' + channel.id_place">
+    <i *ngIf="channel.id_place <= 47">🔑</i>
+    {{channel.shortName}}
+  </a>
+  <a *ngIf="(channel.role && channel.role !== 9)"
+     class="channel"
+     (click)="onChannelClick(channel)"
+     [class.star]="channel.time_viewed < channel.time_changed"
+     [routerLink]="'/channel/' + channel.id_place">
+    <i *ngIf="channel.id_place <= 47">📜</i>
+    <i *ngIf="channel.id_place > 47">🎃</i>
+    {{channel.shortName}}
+  </a>
+</ng-template>

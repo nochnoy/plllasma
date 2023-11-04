@@ -1,25 +1,23 @@
 import { Component, OnInit } from '@angular/core';
-import { UserService } from 'src/app/services/user.service';
 import {HttpService} from "../../../../services/http.service";
+import {UserService} from "../../../../services/user.service";
 import {IMenuChannel, RoleEnum} from "../../../../model/app-model";
-import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
+import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {tap} from "rxjs/operators";
-import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { Const } from 'src/app/model/const';
-import {Router} from "@angular/router";
+import {Const} from "../../../../model/const";
+import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 
 @UntilDestroy()
 @Component({
-  selector: 'app-channels-page',
-  templateUrl: './channels-page.component.html',
-  styleUrls: ['./channels-page.component.scss']
+  selector: 'app-channel-creation-page',
+  templateUrl: './channel-creation-page.component.html',
+  styleUrls: ['./channel-creation-page.component.scss']
 })
-export class ChannelsPageComponent implements OnInit {
+export class ChannelCreationPageComponent implements OnInit {
 
   constructor(
     public httpService: HttpService,
     public userService: UserService,
-    public router: Router,
   ) { }
 
   isLoading = false;
@@ -31,7 +29,6 @@ export class ChannelsPageComponent implements OnInit {
   channelsSearching: IMenuChannel[] = [];
   channelsAll: IMenuChannel[] = [];
 
-  isHalloween = false;
   currentYear = 0;
 
   newChannelForm: FormGroup = new FormGroup({
@@ -41,7 +38,6 @@ export class ChannelsPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.load();
-    this.checkHalloween();
   }
 
   load(): void {
@@ -135,15 +131,6 @@ export class ChannelsPageComponent implements OnInit {
 
   }
 
-  checkHalloween(): void {
-    const year = (new Date()).getFullYear();
-    const now = new Date();
-    const from = new Date(year, 10 - 1, 11);
-    const to = new Date(year, 11 - 1, 6);
-    this.isHalloween = (now.getTime() >= from.getTime() && now.getTime() <= to.getTime());
-    this.currentYear = year;
-  }
-
   onChannelClick(channel: IMenuChannel): void {
     if (this.isChannelAffectingSuperstar(channel)) {
       let newSuperstar = this.userService.user.superstar || 0;
@@ -159,6 +146,5 @@ export class ChannelsPageComponent implements OnInit {
       }
     }
   }
+
 }
-
-

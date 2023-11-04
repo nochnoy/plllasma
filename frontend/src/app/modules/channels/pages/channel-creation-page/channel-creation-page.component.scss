@@ -1,0 +1,73 @@
+main {
+  display: flex;
+  flex-direction: row;
+
+  header {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    height: 5rem;
+
+    h1 {
+      margin-bottom: 0.2rem;
+    }
+  }
+
+  section {
+    padding: 0 1rem;
+
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      >* {
+        margin-bottom: 1rem;
+      }
+      input {
+        width: 90%;
+      }
+      textarea {
+        width: 90%;
+        height: 5rem;
+        padding: 8px;
+      }
+      .user-line {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 0.2rem;
+        .user {
+          display: flex;
+          flex-direction: row;
+          flex-wrap: nowrap;
+          cursor: pointer;
+          font-weight: bold;
+
+          .icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-bottom: -1px;
+            margin-right: 0.2rem;
+            background-image: url('../../../../../assets/ghost.gif');
+          }
+        }
+      }
+      button {
+        height: 2rem;
+        background-color: rgb(168, 134, 102);
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        &:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        &:hover {
+          background-color: rgb(31, 122, 158);
+        }
+      }
+    }
+  }
+}

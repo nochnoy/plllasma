@@ -16,13 +16,11 @@
         </div>
       </header>
 
-      <!--
       <div class="info">
         <div class="search" *ngIf="!isLoading">
           <input autofocus [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()" placeholder="Поиск">
         </div>
       </div>
-      -->
 
       <ng-container *ngIf="!searchPhrase">
         <div class="district">
@@ -36,8 +34,6 @@
 
       <ng-container *ngIf="searchPhrase">
         <div class="district">
-          <label>Поиск канала "{{searchPhrase}}"</label>
-          <a class="search-clear" href (click)="onSearchClearClick($event)">отменить</a>
           <div class="channels" *ngIf="channelsSearching.length">
             <ng-container *ngFor="let channel of channelsSearching">
               <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
@@ -50,31 +46,16 @@
     </section>
 
     <section>
-      <header>
-        <h1>Создать свой</h1>
-        <div>канал</div>
-      </header>
-      <form [formGroup]="newChannelForm">
-
-        <input class="input" placeholder="Название канала" name="name" type="text" maxlength="14" formControlName="name" autofocus>
-        <textarea class="input" placeholder="Предупреждение, например про 18+" name="disclaimer" type="text" formControlName="disclaimer"></textarea>
-        <div class="user-line">
-          <div class="user" (click)="onGhostClick()">
-            <ng-container *ngIf="!isGhost">
-              <img class="avatar" [src]="'https://plllasma.com/i/' + userIcon" />{{userName}}▾
-            </ng-container>
-            <ng-container *ngIf="isGhost">
-              <div class="icon"></div>{{'Привидение'}}▴
-            </ng-container>
-          </div>
-        </div>
-        <button class="button"
-                [disabled]="newChannelForm.invalid"
-                (click)="onNewChannelClick()">
-          Создать
-        </button>
-
-      </form>
+      <a routerLink="/channels/new" class="garland">Создать канал</a>
+      <div class="rules">
+        <p>Правила игры:</p>
+        <p>1. Все могут создавать свои каналы.</p>
+        <p>2. Канал попадает в боковое меню только к гражданам, которые сами на него подпишутся.</p>
+        <p>2. Если создать канал от имени <img src="./assets/ghost.gif"> Привидения то его создатель останется неизвестным.</p>
+        <p>3. Создатель является владельцем канала и устанавливает на нём свои правила.</p>
+        <p>4. Канал можно сделать открытым для всех или только для указанных граждан. Или для всех кроме указанных.</p>
+        <p>5. Хозяин решает, кто может писать сообщения. Канал может быть read-only.</p>
+      </div>
     </section>
 
   </main>
