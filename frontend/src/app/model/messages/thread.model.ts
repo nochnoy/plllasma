@@ -15,6 +15,7 @@ export class Thread {
   public root: Message = BLANK_MESSAGE;
   public starred = new Array<Message>();
   public starredMaxId = 0;
+  public isStarredMessagesExists = false;
   public isGray = false;
   public isExpanded = false;
   public commentsCount: number = 0;
@@ -40,6 +41,11 @@ export class Thread {
   public addMessage(rawMessage: any): Message {
     let m = this.getOrCreateMessage(rawMessage.id);
     m.deserialize(rawMessage, this.rootMessageId);
+
+    if (rawMessage.star) {
+      // в starred не попадают звёзды верхнего уровня, поэтому сделал новый флажок
+      this.isStarredMessagesExists = true;
+    }
 
     if (m.parentId) {
       let parent = this.getOrCreateMessage(m.parentId);

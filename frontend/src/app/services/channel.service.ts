@@ -1,12 +1,12 @@
 import {EventEmitter, Injectable} from '@angular/core';
-import {EMPTY_CHANNEL, IMenuChannel, IMenuCity} from "../model/app-model";
+import {IMenuChannel, IMenuCity} from "../model/app-model";
 import {Observable, of} from "rxjs";
 import {switchMap, tap} from "rxjs/operators";
 import {HttpService} from "./http.service";
 import {Channel} from "../model/messages/channel.model";
 import {Message} from "../model/messages/message.model";
 import {UserService} from "./user.service";
-import {matrixColsCount, MatrixObjectTypeEnum, newDefaultMatrix, newMatrix} from "../model/matrix.model";
+import {IMatrixObject, matrixCollapsedHeightCells, MatrixObjectTypeEnum, newDefaultMatrix} from "../model/matrix.model";
 import {Const} from "../model/const";
 
 @Injectable({
@@ -140,10 +140,37 @@ export class ChannelService {
         if (channel) {
           if (input.matrix) {
             channel.matrix = input.matrix;
+            // Найдём высоту матрицы
+            if (channel.matrix) {
+              let matrixHeight = 0;
+              let title: IMatrixObject | undefined;
+              channel.matrix.objects.forEach((o) => {
+                matrixHeight = Math.max(matrixHeight, o.y + o.h);
+                if (o.type === MatrixObjectTypeEnum.channelTitle) {
+                  title = o;
+                }
+              });
+              channel.matrix.height = matrixHeight;
+            }
           } else {
             channel.matrix = newDefaultMatrix(channel.name); // Нарисуем дефолтную матрицу из одного блока - заголовка канала
           }
         }
+
+        // Матрицу схлопнем?
+        if (channel && channel.matrix) {
+          channel.isStarredMessages = channel.starredMessagesExists();
+          channel.isStarredMatrix = channel.matrix?.objects.some((object) => {
+            return object.type === MatrixObjectTypeEnum.image
+              && object.changed > (channel.viewed ?? '');
+          }) ?? false;
+          channel.matrix.collapsed =
+            channel.isStarredMessages &&
+            !channel.isStarredMatrix &&
+            (channel.matrix.height ?? 0) > matrixCollapsedHeightCells // иначе нет смысла схлопывать
+          ;
+        }
+
         return of(channel);
       })
     );

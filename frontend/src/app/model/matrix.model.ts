@@ -6,10 +6,13 @@ export const matrixColsCount = 22;                               // ! должн
 export const matrixFlexCol = 21;                                 // ! должна быть равна css-переменной --matrix-flex-col А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
 export const matrixAddCol = 15; // На какой столбец добавляются блоки когда юзер их создаёт
 export const matrixDragThreshold = 4;
+export const matrixCollapsedHeightCells = 4;                     // ! должна быть равна css-переменной --matrix-collapsed-height-cells
 
 export interface IMatrix {
   newObjectId: number;
   objects: IMatrixObject[];
+  height: number;
+  collapsed: boolean;
 }
 
 export interface IMatrixRect {
@@ -47,7 +50,9 @@ export interface IMatrixObjectTransform {
 export function newMatrix(): IMatrix {
   return {
     newObjectId: 0,
-    objects: []
+    objects: [],
+    height: 0,
+    collapsed: false,
   }
 }
 
@@ -60,6 +65,7 @@ export function newDefaultMatrix(channelName: string): IMatrix {
     id: matrix.newObjectId++,
     changed: '',
   });
+  matrix.height = 1;
   return matrix;
 }
 

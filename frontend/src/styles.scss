@@ -27,6 +27,7 @@
   --color-date: #aba196;
   --color-pagination: #4b4b4b;
   --color-selection-frame: #4b4b4b;
+  --color-logo-red: #9C1B0C;
 
   --z-matrix-bg: -1;
   --z-matrix-items: 1;
@@ -56,6 +57,8 @@
   --matrix-flex-col: 21;    // ! должна быть равна константе matrixFlexCol   А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
   --matrix-right-cols-count: calc(var(--matrix-cols-count) - var(--matrix-flex-col) - 1); // кол-во столбцов справа от резинового
   --matrix-star-size: 0.8rem;
+  --matrix-collapsed-height-cells: 4; // ! должна быть равна константе matrixCollapsedHeightCells
+  --matrix-collapsed-height: calc((var(--matrix-cell-size) + var(--matrix-gap)) * var(--matrix-collapsed-height-cells) + var(--matrix-gap));
 
   --selection-handle-size: 11px;
 

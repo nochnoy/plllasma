@@ -78,7 +78,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   attachments: IUploadingAttachment[] = [];
 
-  kostylInterval?: number;
+  @Input('collapsed')
+  collapsed = false;
 
   @Input('channel')
   set channel(channel: Channel | null) {
@@ -109,7 +110,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     clearInterval(this.matrixRectUpdateInterval);
-    clearInterval(this.kostylInterval);
   }
 
   // Слушаем мышь /////////////////////////////////////////////////////////////

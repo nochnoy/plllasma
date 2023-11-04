@@ -2,23 +2,27 @@ import {Thread} from './thread.model';
 import {IMatrix} from "../matrix.model";
 
 export class Channel {
-  public id: number = 0;
-  public name: string = '';
-  public atMenu: boolean = false;
-  public changed?: string;
-  public viewed?: string;
-  public pagesCount: number = 0;
-  public threads: Array<Thread> = [];
-  public matrix?: IMatrix;
-  public parent?: number;
-  public first_parent?: number;
-  public isLoading: boolean = false;
+  id: number = 0;
+  name: string = '';
+  atMenu: boolean = false;
+  changed?: string;
+
+  viewed?: string;
+  pagesCount: number = 0;
+  threads: Array<Thread> = [];
+  matrix?: IMatrix;
+  parent?: number;
+  first_parent?: number;
 
   roleTitle: string = '';
   canAccess = false;
   canModerate = false;
   canEditMatrix = false;
   canUseSettings  = false;
+
+  isLoading = false;
+  isStarredMessages = false;
+  isStarredMatrix = false;
 
   public deserializeMessages(input: any) {
     let i: number;
@@ -104,5 +108,9 @@ export class Channel {
       }
     })
 
+  }
+
+  starredMessagesExists(): boolean {
+    return this.threads.some((thread) => thread.isStarredMessagesExists);
   }
 }

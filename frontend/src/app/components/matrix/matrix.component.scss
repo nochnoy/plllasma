@@ -1,3 +1,68 @@
+.matrix-container {
+  &.collapsed {
+    max-height: var(--matrix-collapsed-height);
+    overflow-y: hidden;
+    display: flex;
+    flex-direction: column;
+    .matrix {
+      pointer-events: none;
+    }
+    .matrix-expander {
+      position: relative;
+      z-index: 1;
+      top: 0;
+      width: 0;
+      height: 0;
+
+      &-blocker {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        height: var(--matrix-collapsed-height);
+        background: linear-gradient(180deg, rgba(215,202,187,0) 0, rgba(215,202,187,1) 100%);
+        cursor: pointer;
+
+        .expand-butt {
+          display: flex;
+          flex-direction: row;
+          justify-content: center;
+          align-items: center;
+          background-color: var(--color-page-bg);
+          height: 1.5rem;
+          border-radius: var(--border-radius);
+          padding: 0 1rem;
+          &>:not(:last-child) {
+            margin-right: 0.8rem;
+          }
+          b {
+            display: block;
+            color: var(--color-gray);
+          }
+          div {
+            display: inline-block;
+            height: 1px;
+            width: 9rem;
+            border-bottom: 1px solid var(--color-gray);
+          }
+        }
+
+        &:hover {
+          background: none;
+          .expand-butt {
+            b {
+              color: var(--color-black);
+            }
+            div {
+              border-bottom-color: var(--color-black);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 .matrix {
   display: block;
   width: 100%;
