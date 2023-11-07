@@ -4,7 +4,6 @@ import {HttpService} from "../../../../services/http.service";
 import {IMenuChannel, RoleEnum} from "../../../../model/app-model";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {tap} from "rxjs/operators";
-import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Const } from 'src/app/model/const';
 import {Router} from "@angular/router";
 
@@ -23,21 +22,11 @@ export class ChannelsPageComponent implements OnInit {
   ) { }
 
   isLoading = false;
-  isGhost = true;
   searchPhrase = '';
-  userIcon = '';
-  userName = '';
-
   channelsSearching: IMenuChannel[] = [];
   channelsAll: IMenuChannel[] = [];
-
   isHalloween = false;
   currentYear = 0;
-
-  newChannelForm: FormGroup = new FormGroup({
-    name: new FormControl('', [Validators.required]),
-    disclaimer: new FormControl('', []),
-  });
 
   ngOnInit(): void {
     this.load();
@@ -101,38 +90,6 @@ export class ChannelsPageComponent implements OnInit {
 
   onFilter(): void {
     this.updateChannelsToShow();
-  }
-
-  onSearchClearClick(event: any): void {
-    event.preventDefault();
-    this.searchPhrase = '';
-  }
-
-  onNewChannelClick(): void {
-    if (window.confirm('Создаём новый канал?')) {
-      const name = this.newChannelForm.get('name')?.value ?? '';
-      const disclaimer = this.newChannelForm.get('disclaimer')?.value ?? '';
-      this.httpService.createChannel$(name, disclaimer).pipe(
-        tap((result) => {
-          if (result.ok) {
-
-            // Добавим юзеру право на этот канал
-            this.userService.user.access.push({
-              id_place: result.id,
-              role:     RoleEnum.owner,
-            });
-
-            this.newChannelForm.reset();
-            this.load();
-            setTimeout(() => window.alert('Поздравляем! Вы владелец этого канала.'), 1000);
-          }
-        })
-      ).subscribe();
-    }
-  }
-
-  onGhostClick(): void {
-
   }
 
   checkHalloween(): void {

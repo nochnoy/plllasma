@@ -3,52 +3,48 @@
     <app-main-menu></app-main-menu>
   </aside>
   <main class="main">
-    <section>
-      <header>
-        <h1>Создание канала</h1>
-      </header>
-      <form [formGroup]="newChannelForm">
 
-        <input class="input" placeholder="Название канала" name="name" type="text" maxlength="14" formControlName="name" autofocus>
-        <textarea class="input" placeholder="Предупреждение, например про 18+" name="disclaimer" type="text" formControlName="disclaimer"></textarea>
-        <div class="user-line">
-          <div class="user" (click)="onGhostClick()">
-            <ng-container *ngIf="!isGhost">
-              <img class="avatar" [src]="'https://plllasma.com/i/' + userIcon" />{{userName}}▾
-            </ng-container>
-            <ng-container *ngIf="isGhost">
-              <div class="icon"></div>{{'Привидение'}}▴
-            </ng-container>
-          </div>
-        </div>
+    <header>
+      <h1>Создание канала</h1>
+    </header>
+
+    <form [formGroup]="newChannelForm">
+
+      <label>Название канала</label>
+      <input class="input" name="name" type="text" maxlength="14" formControlName="name" autofocus>
+
+      <label>Канал создаёт</label>
+      <div class="user-input" (click)="isGhost = !isGhost" [class.user-input-ghost]="isGhost">
+        <img class="avatar" [src]="isGhost ? '../../../../../assets/ghost.gif' : 'https://plllasma.com/i/' + userService.user.icon + '.gif'" />
+        <div>{{isGhost ? 'Привидение' : userService.user.nick}}</div>
+        <div>{{isGhost ? '▴' : '▾'}}</div>
+      </div>
+
+      <!--
+      <label>В разделе <b>(ещё не готово)</b></label>
+      <select formControlName="section">
+        <option>Всякое</option>
+      </select>
+      -->
+
+      <label>Предупреждение при входе</label>
+      <textarea class="input" placeholder="Например про 18+" name="disclaimer" type="text" formControlName="disclaimer"></textarea>
+
+      <!--
+      <label>Правила <b>(ещё не готово)</b></label>
+      <textarea class="input" name="disclaimer" type="text" formControlName="roles"></textarea>
+      -->
+
+      <div class="buttons">
         <button class="button"
                 [disabled]="newChannelForm.invalid"
                 (click)="onNewChannelClick()">
           Создать
         </button>
+      </div>
 
-      </form>
-    </section>
+    </form>
 
   </main>
   <div class="sidebar"></div>
 </div>
-
-<ng-template #memberTemplate let-channel='channel'>
-  <a *ngIf="!(channel.role && channel.role !== 9)"
-     class="channel noaccess"
-     (click)="onChannelClick(channel)"
-     [routerLink]="'/channel/' + channel.id_place">
-    <i *ngIf="channel.id_place <= 47">🔑</i>
-    {{channel.shortName}}
-  </a>
-  <a *ngIf="(channel.role && channel.role !== 9)"
-     class="channel"
-     (click)="onChannelClick(channel)"
-     [class.star]="channel.time_viewed < channel.time_changed"
-     [routerLink]="'/channel/' + channel.id_place">
-    <i *ngIf="channel.id_place <= 47">📜</i>
-    <i *ngIf="channel.id_place > 47">🎃</i>
-    {{channel.shortName}}
-  </a>
-</ng-template>

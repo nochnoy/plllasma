@@ -8,7 +8,7 @@
      [class.form--reply]="replyMode"
      [class.form--drop]="isDragging">
 
-  <div class="user-line" (click)="onUserLineClick()">
+  <div class="user-input" (click)="onUserLineClick()">
     <div class="user" (click)="onGhostClick()">
       <ng-container *ngIf="!isGhost">
         <img class="avatar" [src]="'https://plllasma.com/i/' + userIcon" />{{userName}}▾

@@ -52,12 +52,13 @@ export class HttpService {
     )
   }
 
-  createChannel$(name: string, disclaimer: string): Observable<any> {
+  createChannel$(name: string, disclaimer: string, ghost: boolean): Observable<any> {
     return this.httpClient.post(
       `${HttpService.apiPath}/channel-create.php`,
       {
         name,
-        disclaimer
+        disclaimer,
+        ghost
       },
       { observe: 'body', withCredentials: true }
     )

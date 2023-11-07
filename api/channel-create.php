@@ -6,11 +6,12 @@ loginBySessionOrToken();
 $userId 		= $user['id_user'];
 $name 			= $input['name'];
 $disclaimer     = $input['disclaimer'];
+$ghost     		= $input['ghost'] ? 1 : 0;
 $roleWriter 	= ROLE_WRITER;
 $roleOwner 		= ROLE_OWNER;
 
-$sql = $mysqli->prepare('INSERT INTO tbl_places SET name = ?, disclaimer = ?, time_changed = NOW(), id_user = ?, anonim = 1');
-$sql->bind_param("ssi", $name, $disclaimer, $userId);
+$sql = $mysqli->prepare('INSERT INTO tbl_places SET name = ?, disclaimer = ?, time_changed = NOW(), id_user = ?, anonim = ?');
+$sql->bind_param("ssii", $name, $disclaimer, $userId, $ghost);
 $sql->execute();
 $placeId = mysqli_insert_id($mysqli);
 

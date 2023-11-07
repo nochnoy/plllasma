@@ -4,12 +4,14 @@ main {
 
   header {
     display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
     align-items: flex-start;
+    margin-bottom: 2rem;
 
-    h1 {
-      margin-bottom: 0.2rem;
+    div {
+      display: inline-block;
+      width: 33%;
     }
   }
 
