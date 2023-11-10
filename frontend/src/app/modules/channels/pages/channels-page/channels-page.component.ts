@@ -70,8 +70,10 @@ export class ChannelsPageComponent implements OnInit {
   }
 
   isChannelAffectingSuperstar(channel: IMenuChannel): boolean {
-    // сверхвёздочка - это число каналов, в которые ты ещё не входил, т.е. у тебя пустой lnk_user_plcae для этих каналов
-    return !channel.time_viewed && (!!channel.role && channel.role !== RoleEnum.nobody);
+    return channel.time_changed > channel.time_viewed
+      && channel.ignoring === 0
+      && channel.at_menu !== 't'
+      && (!!channel.role && channel.role !== RoleEnum.nobody);
   }
 
   updateSuperstar(channels: IMenuChannel[]): void {

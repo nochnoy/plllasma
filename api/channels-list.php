@@ -6,7 +6,7 @@ include("include/main.php");
 loginBySessionOrToken();
 
 $sql =
-    'SELECT DISTINCT p.id_place, p.parent, p.first_parent, p.name, p.description, p.time_changed, p.path, p.typ, l.weight, l.time_viewed, l.at_menu, a.role'.
+    'SELECT DISTINCT p.id_place, p.parent, p.first_parent, p.name, p.description, p.time_changed, p.path, p.typ, l.weight, l.time_viewed, l.at_menu, a.role, l.ignoring'.
     ' FROM tbl_places p'.
     ' LEFT JOIN tbl_access a ON a.id_place = p.id_place AND a.id_user = '.$user['id_user'].    
     ' LEFT JOIN lnk_user_place l ON l.id_place = p.id_place AND l.id_user = '.$user['id_user']

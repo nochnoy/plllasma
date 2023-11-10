@@ -78,7 +78,7 @@
   <a *ngIf="(channel.role && channel.role !== 9)"
      class="channel"
      (click)="onChannelClick(channel)"
-     [class.star]="!channel.time_viewed || channel.time_viewed < channel.time_changed"
+     [class.star]="channel.ignoring !== 1 && (!channel.time_viewed || channel.time_viewed < channel.time_changed)"
      [routerLink]="'/channel/' + channel.id_place">
        <i *ngIf="channel.id_place <= 47">📜</i>
        <i *ngIf="channel.id_place > 47">🎃</i>

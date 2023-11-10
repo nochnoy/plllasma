@@ -36,7 +36,8 @@ $sql = $mysqli->prepare('
         p.matrix,
         l.at_menu,
         l.time_viewed,
-        l.id as id_lnk_user_place
+        l.id as id_lnk_user_place,
+        l.ignoring
     FROM tbl_places p
     LEFT JOIN lnk_user_place l ON l.id_place = p.id_place AND l.id_user = ?
     WHERE p.id_place = ?
@@ -55,6 +56,7 @@ $matrix         = $row[2] ?? '';
 $atMenu         = $row[3] == 't' ? true : false;
 $lastViewedLnk  = $row[4] ?? '';
 $lnkId          = $row[5];
+$ignoring       = $row[6];
 
 if (empty($lnkId)) {
     // Если не было связи юзер-канал - создадим её
@@ -113,6 +115,17 @@ try {
     $matrixDecoded = (object)[
         'error' => 'Matrix JSON is broken'
     ];
+}
+
+// Ура, юзер больше не игнорирует канал!
+if ($ignoring) {
+    $sql = $mysqli->prepare('UPDATE lnk_user_place SET ignoring = 0 WHERE id_user = ? AND id_place = ?');
+    $sql->bind_param(
+        "ii",
+        $userId,
+        $placeId,
+    );
+    $sql->execute(); 
 }
 
 exit(json_encode((object)[

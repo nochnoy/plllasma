@@ -17,7 +17,7 @@
     </a>
     <a *ngFor="let channel of city.channels"
        (click)="onItemClick(channel)"
-       [class.star]="(channel.id_place !== 26) && (channel.id_place !== 5) && (channel.time_changed > channel.time_viewed)"
+       [class.star]="channel.ignoring !== 1 && (channel.id_place !== 26) && (channel.id_place !== 5) && (channel.time_changed > channel.time_viewed)"
        routerLinkActive="active-link"
        [routerLink]="'/channel/' + channel.id_place">
        {{channel.shortName}}

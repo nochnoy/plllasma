@@ -3,7 +3,10 @@
 
 include("include/main.php");
 
-// обнуляем всё у юзера
+$roleNobody = ROLE_NOBODY;
+$mainChannelId = 1; // id Главного канала, на который попадаешь при входе
+
+// обнуляем всё у юзеров
 mysqli_query($mysqli, 'update tbl_users set msgcount=0');
 mysqli_query($mysqli, 'update tbl_users set sps=0');
 
@@ -49,6 +52,30 @@ while($row = mysqli_fetch_assoc($result)){
 		' where id_user = '.$row['id_user']
 	);
 }
+
+// Снимаем игноры с каналов...
+$stmt = $mysqli->prepare('UPDATE lnk_user_place SET ignoring = 0');
+$stmt->execute();
+// ...и ставим игноры на каналы, на которые люди не заходят больше месяца, хотя у них есть доступ и каналы обновились
+$stmt = $mysqli->prepare('
+UPDATE lnk_user_place ll LEFT JOIN
+(
+	SELECT l.id_user, l.id_place
+	FROM tbl_users u
+	LEFT JOIN tbl_access a ON a.id_user = u.id_user AND a.role IS NOT NULL AND a.role <> ?
+	LEFT JOIN tbl_places p ON p.id_place = a.id_place
+	LEFT JOIN lnk_user_place l ON l.id_user = a.id_user AND l.id_place = p.id_place
+	WHERE 
+	DATEDIFF(p.time_changed, l.time_viewed) > 30 
+	AND p.id_place IS NOT NULL
+	AND p.id_place <> ?
+) cc
+ON ll.id_user = cc.id_user AND ll.id_place = cc.id_place
+SET ll.ignoring = 1
+WHERE cc.id_place IS NOT NULL
+');
+$stmt->bind_param("ii", $roleNobody, $mainChannelId);
+$stmt->execute();
 
 exit(json_encode((object)[
 	'ok' => true

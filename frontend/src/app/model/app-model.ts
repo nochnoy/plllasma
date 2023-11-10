@@ -88,6 +88,7 @@ export interface IMenuChannel {
   isCapital?: boolean;
   at_menu?: 't' | 'f';
   role?: RoleEnum;
+  ignoring?: 1 | 0;
 }
 
 export interface IMenuCity {
