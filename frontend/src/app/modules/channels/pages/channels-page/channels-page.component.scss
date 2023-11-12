@@ -96,7 +96,8 @@ main {
   column-width: 10rem;
 
   .channel {
-    display: inline-block;
+    display: flex;
+    flex-direction: row;
     margin-bottom: 1rem;
     width: 10rem;
     color: black;
@@ -104,13 +105,43 @@ main {
     white-space: nowrap;
     text-overflow: ellipsis;
 
-    i {
-      font-style: normal;
-      font-size: 0.9rem;
-    }
-
     &:hover {
       text-decoration: underline;
+    }
+
+    &:before {
+      display: block;
+      content: ' ';
+      width: 14px; min-width: 14px;
+      height: 18px;
+      background-image: url('~src/assets/img/channel.png');
+      margin-right: 0.15rem;
+    }
+
+    &-ignored {
+      &:before { background-image: url('~src/assets/img/channel-ignored.png'); }
+    }
+    &.channel-subscribed {
+      &:before { background-image: url('~src/assets/img/channel-subscribed.png'); }
+    }
+    &.channel-ignored {
+      &:before { background-image: url('~src/assets/img/channel-ignored.png') }
+    }
+    &.channel-closed {
+      &:before { background-image: url('~src/assets/img/channel-closed.png'); }
+    }
+
+    &-new {
+      &:before { background-image: url('~src/assets/img/channel-new.png'); }
+      &.channel-subscribed {
+        &:before { background-image: url('~src/assets/img/channel-new-subscribed.png'); }
+      }
+      &.channel-ignored {
+        &:before { background-image: url('~src/assets/img/channel-new-ignored.png') }
+      }
+      &.channel-closed {
+        &:before { background-image: url('~src/assets/img/channel-new-closed.png'); }
+      }
     }
   }
 }
