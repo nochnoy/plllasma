@@ -75,7 +75,7 @@
      [class.channel-subscribed]="channel.at_menu === 't'"
      [class.channel-ignored]="channel.ignoring === 1"
      (click)="onChannelClick(channel)"
-     [class.star]="!(!channel.role || channel.role === 9) && channel.ignoring !== 1 && (!channel.time_viewed || channel.time_viewed < channel.time_changed)"
+     [class.star]="!(!channel.role || channel.role === 9) && channel.ignoring !== 1 && channel.at_menu !== 't' && (!channel.time_viewed || channel.time_viewed < channel.time_changed)"
      [routerLink]="'/channel/' + channel.id_place">
        {{channel.shortName}}
   </a>
