@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from 'src/app/services/user.service';
 import {HttpService} from "../../../../services/http.service";
-import {IMenuChannel, RoleEnum} from "../../../../model/app-model";
+import {IChannelLink, RoleEnum} from "../../../../model/app-model";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {tap} from "rxjs/operators";
 import { Const } from 'src/app/model/const';
@@ -23,10 +23,18 @@ export class ChannelsPageComponent implements OnInit {
 
   isLoading = false;
   searchPhrase = '';
-  channelsSearching: IMenuChannel[] = [];
-  channelsAll: IMenuChannel[] = [];
   isHalloween = false;
   currentYear = 0;
+
+  channelsAll: IChannelLink[] = [];
+  channelsSearching: IChannelLink[] = [];
+  channelsFlex: IChannelLink[] = [];
+  channelsFlexDark: IChannelLink[] = [];
+  channelsFlexPerformers: IChannelLink[] = [];
+  channelsOther: IChannelLink[] = [];
+  channelsMen: IChannelLink[] = [];
+  channelsAmazonia: IChannelLink[] = [];
+  channelsAdmin: IChannelLink[] = [];
 
   ngOnInit(): void {
     this.load();
@@ -54,6 +62,14 @@ export class ChannelsPageComponent implements OnInit {
           }
         });
 
+        this.channelsOther = this.channelsAll.filter((c) => c.id_section === Const.channelSectionOther);
+        this.channelsFlex = this.channelsAll.filter((c) => c.id_section === Const.channelSectionFlex);
+        this.channelsFlexDark = this.channelsAll.filter((c) => c.id_section === Const.channelSectionFlexDark);
+        this.channelsFlexPerformers = this.channelsAll.filter((c) => c.id_section === Const.channelSectionPerformers);
+        this.channelsMen = this.channelsAll.filter((c) => c.id_section === Const.channelSectionMen);
+        this.channelsAmazonia = this.channelsAll.filter((c) => c.id_section === Const.channelSectionAmazonia);
+        this.channelsAdmin = this.channelsAll.filter((c) => c.id_section === Const.channelSectionAdmin);
+
         this.updateChannelsToShow();
         this.updateSuperstar(result || []);
       }),
@@ -69,14 +85,14 @@ export class ChannelsPageComponent implements OnInit {
     }
   }
 
-  isChannelAffectingSuperstar(channel: IMenuChannel): boolean {
+  isChannelAffectingSuperstar(channel: IChannelLink): boolean {
     return channel.time_changed > channel.time_viewed
       && channel.ignoring === 0
       && channel.at_menu !== 't'
       && (!!channel.role && channel.role !== RoleEnum.nobody);
   }
 
-  updateSuperstar(channels: IMenuChannel[]): void {
+  updateSuperstar(channels: IChannelLink[]): void {
     let newSuperstar = 0;
     channels.forEach((channel) => {
       if (this.isChannelAffectingSuperstar(channel)) {
@@ -104,7 +120,7 @@ export class ChannelsPageComponent implements OnInit {
     this.currentYear = year;
   }
 
-  onChannelClick(channel: IMenuChannel): void {
+  onChannelClick(channel: IChannelLink): void {
     if (this.isChannelAffectingSuperstar(channel)) {
       let newSuperstar = this.userService.user.superstar || 0;
       newSuperstar--;

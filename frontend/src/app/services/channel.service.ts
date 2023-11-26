@@ -1,5 +1,5 @@
 import {EventEmitter, Injectable} from '@angular/core';
-import {IMenuChannel, IMenuCity} from "../model/app-model";
+import {IChannelLink, IMenuCity} from "../model/app-model";
 import {Observable, of} from "rxjs";
 import {switchMap, tap} from "rxjs/operators";
 import {HttpService} from "./http.service";
@@ -19,7 +19,7 @@ export class ChannelService {
     public userService: UserService
   ) { }
 
-  menuChannels: IMenuChannel[] = [];
+  menuChannels: IChannelLink[] = [];
   menuCities: IMenuCity[] = [];
   selectedMessage?: Message;
   channelInvalidSignal = new EventEmitter<number>();
@@ -28,7 +28,7 @@ export class ChannelService {
     return of({}).pipe(
       switchMap(() => this.httpService.loadChannels$()),
       tap((channels) => {
-        this.menuChannels = channels as IMenuChannel[];
+        this.menuChannels = channels as IChannelLink[];
 
         // Вырежем канал "Мы"
         this.menuChannels = this.menuChannels.filter((channel) => channel.id_place !== 46);
@@ -95,7 +95,7 @@ export class ChannelService {
         this.menuCities = this.menuCities.filter((city) => city.channels.length > 1);
         const cityOfLostChildren: IMenuCity = { cityId: -1, channels: [] };
         oneChannelCities.forEach((c) => cityOfLostChildren.channels = [...cityOfLostChildren.channels, ...c.channels]);
-        cityOfLostChildren.channels = cityOfLostChildren.channels.sort((a: IMenuChannel, b: IMenuChannel) => a.weight - b.weight);
+        cityOfLostChildren.channels = cityOfLostChildren.channels.sort((a: IChannelLink, b: IChannelLink) => a.weight - b.weight);
         if (cityOfLostChildren.channels.length > 0) {
           this.menuCities.splice(1, 0, cityOfLostChildren);
         }

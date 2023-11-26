@@ -1,7 +1,7 @@
 import {Component, EventEmitter, OnInit, Output} from '@angular/core';
 import {AppService} from "../../services/app.service";
 import {ChannelService} from "../../services/channel.service";
-import {IMenuChannel} from "../../model/app-model";
+import {IChannelLink} from "../../model/app-model";
 import {RouterModule} from "@angular/router";
 import {CommonModule} from "@angular/common";
 import { UserService } from 'src/app/services/user.service';
@@ -21,7 +21,7 @@ export class MainMenuComponent implements OnInit {
     public userService: UserService
   ) { }
 
-  @Output('itemClick') itemClick = new EventEmitter<IMenuChannel>();
+  @Output('itemClick') itemClick = new EventEmitter<IChannelLink>();
 
   ngOnInit(): void {
   }
@@ -31,7 +31,7 @@ export class MainMenuComponent implements OnInit {
     this.appService.logoff$().subscribe();
   }
 
-  onItemClick(channel: IMenuChannel): void {
+  onItemClick(channel: IChannelLink): void {
     this.itemClick.emit(channel);
   }
 

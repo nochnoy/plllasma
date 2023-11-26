@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Nov 08, 2023 at 10:19 PM
+-- Generation Time: Nov 26, 2023 at 11:51 AM
 -- Server version: 8.0.28-0ubuntu0.20.04.3
 -- PHP Version: 7.4.3
 
@@ -21,8 +21,6 @@ SET time_zone = "+00:00";
 --
 -- Database: `plllasma`
 --
-CREATE DATABASE IF NOT EXISTS `plllasma` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-USE `plllasma`;
 
 -- --------------------------------------------------------
 
@@ -30,7 +28,6 @@ USE `plllasma`;
 -- Table structure for table `lnk_cty_fce`
 --
 
-DROP TABLE IF EXISTS `lnk_cty_fce`;
 CREATE TABLE `lnk_cty_fce` (
   `id` bigint NOT NULL,
   `id_place` bigint NOT NULL DEFAULT '0',
@@ -43,7 +40,6 @@ CREATE TABLE `lnk_cty_fce` (
 -- Table structure for table `lnk_user_face`
 --
 
-DROP TABLE IF EXISTS `lnk_user_face`;
 CREATE TABLE `lnk_user_face` (
   `id` bigint NOT NULL,
   `id_user` bigint NOT NULL DEFAULT '0',
@@ -58,7 +54,6 @@ CREATE TABLE `lnk_user_face` (
 -- Table structure for table `lnk_user_ignor`
 --
 
-DROP TABLE IF EXISTS `lnk_user_ignor`;
 CREATE TABLE `lnk_user_ignor` (
   `id` int NOT NULL,
   `id_user` int NOT NULL,
@@ -72,14 +67,14 @@ CREATE TABLE `lnk_user_ignor` (
 -- Table structure for table `lnk_user_place`
 --
 
-DROP TABLE IF EXISTS `lnk_user_place`;
 CREATE TABLE `lnk_user_place` (
   `id` bigint NOT NULL,
   `id_user` bigint NOT NULL DEFAULT '0',
   `id_place` bigint NOT NULL DEFAULT '0',
   `at_menu` enum('f','t') NOT NULL DEFAULT 'f',
   `time_viewed` datetime NOT NULL DEFAULT '0000-00-00 00:00:00',
-  `weight` smallint NOT NULL DEFAULT '100'
+  `weight` smallint NOT NULL DEFAULT '100',
+  `ignoring` tinyint NOT NULL DEFAULT '0'
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -88,7 +83,6 @@ CREATE TABLE `lnk_user_place` (
 -- Table structure for table `lnk_user_profile`
 --
 
-DROP TABLE IF EXISTS `lnk_user_profile`;
 CREATE TABLE `lnk_user_profile` (
   `id_user` bigint NOT NULL,
   `id_viewed_user` bigint NOT NULL,
@@ -101,7 +95,6 @@ CREATE TABLE `lnk_user_profile` (
 -- Table structure for table `tbl_access`
 --
 
-DROP TABLE IF EXISTS `tbl_access`;
 CREATE TABLE `tbl_access` (
   `id` bigint NOT NULL,
   `id_user` bigint DEFAULT NULL,
@@ -116,7 +109,6 @@ CREATE TABLE `tbl_access` (
 -- Table structure for table `tbl_boards`
 --
 
-DROP TABLE IF EXISTS `tbl_boards`;
 CREATE TABLE `tbl_boards` (
   `id_Board` bigint NOT NULL,
   `brdMode` char(3) NOT NULL DEFAULT ''
@@ -128,7 +120,6 @@ CREATE TABLE `tbl_boards` (
 -- Table structure for table `tbl_files`
 --
 
-DROP TABLE IF EXISTS `tbl_files`;
 CREATE TABLE `tbl_files` (
   `id_file` bigint NOT NULL,
   `id_user` bigint NOT NULL DEFAULT '0',
@@ -157,7 +148,6 @@ CREATE TABLE `tbl_files` (
 -- Table structure for table `tbl_focus`
 --
 
-DROP TABLE IF EXISTS `tbl_focus`;
 CREATE TABLE `tbl_focus` (
   `id_focus` bigint NOT NULL,
   `ghost` tinyint NOT NULL DEFAULT '0',
@@ -183,7 +173,6 @@ CREATE TABLE `tbl_focus` (
 -- Table structure for table `tbl_galleries`
 --
 
-DROP TABLE IF EXISTS `tbl_galleries`;
 CREATE TABLE `tbl_galleries` (
   `id_gallery` bigint NOT NULL,
   `id_place` bigint NOT NULL DEFAULT '0',
@@ -196,7 +185,6 @@ CREATE TABLE `tbl_galleries` (
 -- Table structure for table `tbl_kpp`
 --
 
-DROP TABLE IF EXISTS `tbl_kpp`;
 CREATE TABLE `tbl_kpp` (
   `id` bigint NOT NULL,
   `id_user` bigint NOT NULL DEFAULT '0',
@@ -215,7 +203,6 @@ CREATE TABLE `tbl_kpp` (
 -- Table structure for table `tbl_log`
 --
 
-DROP TABLE IF EXISTS `tbl_log`;
 CREATE TABLE `tbl_log` (
   `id` bigint NOT NULL,
   `action` text NOT NULL,
@@ -232,7 +219,6 @@ CREATE TABLE `tbl_log` (
 -- Table structure for table `tbl_mail`
 --
 
-DROP TABLE IF EXISTS `tbl_mail`;
 CREATE TABLE `tbl_mail` (
   `id_mail` bigint NOT NULL,
   `id_user` bigint NOT NULL DEFAULT '0',
@@ -250,7 +236,6 @@ CREATE TABLE `tbl_mail` (
 -- Table structure for table `tbl_messages`
 --
 
-DROP TABLE IF EXISTS `tbl_messages`;
 CREATE TABLE `tbl_messages` (
   `id_message` bigint NOT NULL,
   `id_face` bigint NOT NULL DEFAULT '0',
@@ -289,26 +274,37 @@ CREATE TABLE `tbl_messages` (
 -- Table structure for table `tbl_places`
 --
 
-DROP TABLE IF EXISTS `tbl_places`;
 CREATE TABLE `tbl_places` (
   `id_place` bigint NOT NULL,
   `parent` bigint NOT NULL DEFAULT '0',
-  `name` text NOT NULL,
-  `matrix` text NOT NULL,
-  `description` text,
-  `disclaimer` text NOT NULL,
+  `id_section` tinyint NOT NULL DEFAULT '0',
+  `name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `matrix` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
+  `disclaimer` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `time_changed` datetime DEFAULT NULL,
   `id_user` int NOT NULL,
   `anonim` tinyint NOT NULL DEFAULT '1',
-  `path` text NOT NULL,
-  `typ` enum('board','album','page','site') NOT NULL DEFAULT 'board',
-  `script` mediumtext NOT NULL,
+  `path` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `typ` enum('board','album','page','site') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'board',
+  `script` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `first_parent` bigint DEFAULT NULL,
   `weight` smallint DEFAULT '100',
   `at_menu` enum('t','f') DEFAULT 'f',
-  `dont_clean` tinyint(1) NOT NULL DEFAULT '0',
-  `id_icon` int NOT NULL DEFAULT '0' COMMENT 'id иконки в левом вертикальном баре. 0 если канал не представлен иконкой'
+  `dont_clean` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tbl_place_sections`
+--
+
+CREATE TABLE `tbl_place_sections` (
+  `id_section` tinyint NOT NULL,
+  `title` varchar(128) NOT NULL,
+  `description` text NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -316,7 +312,6 @@ CREATE TABLE `tbl_places` (
 -- Table structure for table `tbl_polls`
 --
 
-DROP TABLE IF EXISTS `tbl_polls`;
 CREATE TABLE `tbl_polls` (
   `id_poll` int NOT NULL,
   `question` longtext,
@@ -331,7 +326,6 @@ CREATE TABLE `tbl_polls` (
 -- Table structure for table `tbl_poll_ansvers`
 --
 
-DROP TABLE IF EXISTS `tbl_poll_ansvers`;
 CREATE TABLE `tbl_poll_ansvers` (
   `id_user` bigint DEFAULT NULL,
   `id_poll` bigint DEFAULT NULL,
@@ -345,7 +339,6 @@ CREATE TABLE `tbl_poll_ansvers` (
 -- Table structure for table `tbl_poll_variants`
 --
 
-DROP TABLE IF EXISTS `tbl_poll_variants`;
 CREATE TABLE `tbl_poll_variants` (
   `id_variant` int NOT NULL,
   `id_poll` int DEFAULT NULL,
@@ -358,7 +351,6 @@ CREATE TABLE `tbl_poll_variants` (
 -- Table structure for table `tbl_steps`
 --
 
-DROP TABLE IF EXISTS `tbl_steps`;
 CREATE TABLE `tbl_steps` (
   `id_step` int NOT NULL,
   `id_place` int NOT NULL DEFAULT '0',
@@ -376,7 +368,6 @@ CREATE TABLE `tbl_steps` (
 -- Table structure for table `tbl_storages`
 --
 
-DROP TABLE IF EXISTS `tbl_storages`;
 CREATE TABLE `tbl_storages` (
   `id_storage` bigint NOT NULL,
   `url` text NOT NULL,
@@ -389,7 +380,6 @@ CREATE TABLE `tbl_storages` (
 -- Table structure for table `tbl_test`
 --
 
-DROP TABLE IF EXISTS `tbl_test`;
 CREATE TABLE `tbl_test` (
   `id` int NOT NULL,
   `number` int NOT NULL DEFAULT '0'
@@ -401,7 +391,6 @@ CREATE TABLE `tbl_test` (
 -- Table structure for table `tbl_unread`
 --
 
-DROP TABLE IF EXISTS `tbl_unread`;
 CREATE TABLE `tbl_unread` (
   `id` bigint NOT NULL,
   `id_user` bigint NOT NULL DEFAULT '0',
@@ -414,7 +403,6 @@ CREATE TABLE `tbl_unread` (
 -- Table structure for table `tbl_users`
 --
 
-DROP TABLE IF EXISTS `tbl_users`;
 CREATE TABLE `tbl_users` (
   `id_user` int NOT NULL,
   `login` varchar(80) DEFAULT NULL,
@@ -458,7 +446,6 @@ CREATE TABLE `tbl_users` (
 -- Table structure for table `tbl_viewed`
 --
 
-DROP TABLE IF EXISTS `tbl_viewed`;
 CREATE TABLE `tbl_viewed` (
   `id_view` bigint NOT NULL,
   `id_user` bigint NOT NULL DEFAULT '0',
@@ -472,7 +459,6 @@ CREATE TABLE `tbl_viewed` (
 -- Table structure for table `tbl_viewed_sub`
 --
 
-DROP TABLE IF EXISTS `tbl_viewed_sub`;
 CREATE TABLE `tbl_viewed_sub` (
   `id` bigint NOT NULL,
   `id_place` int DEFAULT NULL,
@@ -590,6 +576,12 @@ ALTER TABLE `tbl_messages`
 --
 ALTER TABLE `tbl_places`
   ADD PRIMARY KEY (`id_place`);
+
+--
+-- Indexes for table `tbl_place_sections`
+--
+ALTER TABLE `tbl_place_sections`
+  ADD PRIMARY KEY (`id_section`);
 
 --
 -- Indexes for table `tbl_polls`
@@ -733,6 +725,12 @@ ALTER TABLE `tbl_messages`
 --
 ALTER TABLE `tbl_places`
   MODIFY `id_place` bigint NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `tbl_place_sections`
+--
+ALTER TABLE `tbl_place_sections`
+  MODIFY `id_section` tinyint NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `tbl_polls`

@@ -72,9 +72,10 @@ export interface IFileInfo {
 
 export type TFileType = 'unknown' | 'image' | 'file' | 'video';
 
-export interface IMenuChannel {
+export interface IChannelLink {
   id_place: number;
   parent: number;
+  id_section: number;
   first_parent: number;
   name: string;
   description: string;
@@ -92,14 +93,15 @@ export interface IMenuChannel {
 }
 
 export interface IMenuCity {
-  capital?: IMenuChannel;
+  capital?: IChannelLink;
   cityId: number;
-  channels: IMenuChannel[];
+  channels: IChannelLink[];
 }
 
-export const EMPTY_CHANNEL: IMenuChannel = {
+export const EMPTY_CHANNEL: IChannelLink = {
   id_place: 0,
   parent: 0,
+  id_section: 0,
   first_parent: 0,
   name: '',
   description: '',

@@ -8,8 +8,8 @@
     <ng-container *ngIf="!isLoading && member">
 
       <header>
-        <img class="avatar" [src]="member ? member.icon : ''" />
         <h1>
+          <img class="avatar" [src]="member ? member.icon : ''" />
           {{member ? nick : 'Гражданин'}}
         </h1>
         <div class="snami">

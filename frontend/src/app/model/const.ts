@@ -10,4 +10,13 @@ export class Const {
   static remInPixels: number = parseFloat(getComputedStyle(document.documentElement).fontSize); // 1rem В пикселях
 
   static channelShornNameLength = 14;
+
+  static channelSectionOther = 0;
+  static channelSectionFlex = 1;
+  static channelSectionFlexDark = 2;
+  static channelSectionPerformers = 3;
+  static channelSectionMen = 5;
+  static channelSectionAmazonia = 6;
+  static channelSectionAdmin = 7;
+
 }

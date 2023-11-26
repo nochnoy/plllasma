@@ -10,10 +10,6 @@
 }
 
 header {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-
   .avatar {
     margin-right: 0.3rem!important;
     image-rendering: pixelated;
@@ -23,7 +19,9 @@ header {
   }
 
   h1 {
+    white-space: nowrap;
     font-size: 2rem;
+    vertical-align: bottom;
   }
 
   .snami {

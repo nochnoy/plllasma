@@ -3,7 +3,7 @@ import {AppService} from "../../services/app.service";
 import {ActivatedRoute} from "@angular/router";
 import {Observable, of} from "rxjs";
 import {catchError, switchMap, tap} from "rxjs/operators";
-import {EMPTY_CHANNEL, IMenuChannel} from "../../model/app-model";
+import {EMPTY_CHANNEL, IChannelLink} from "../../model/app-model";
 import {Channel} from "../../model/messages/channel.model";
 import {Thread} from "../../model/messages/thread.model";
 import {ChannelService} from "../../services/channel.service";
@@ -195,7 +195,7 @@ export class ChannelPageComponent implements OnInit {
     }
   }
 
-  onMenuItemClick(channel: IMenuChannel): void {
+  onMenuItemClick(channel: IChannelLink): void {
     const refreshMessages = channel.id_place === this.channelId;
     of({}).pipe(
       switchMap(() => this.channelService.loadChannels$()),

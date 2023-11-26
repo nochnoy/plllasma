@@ -16,14 +16,90 @@
         <div></div>
       </header>
 
+      <!--
+        this.channelsOther = this.channelsAll.filter((c) => c.id_section === Const.channelSectionOther);
+        this.channelsFlex = this.channelsAll.filter((c) => c.id_section === Const.channelSectionFlex);
+        this.channelsFlexDark = this.channelsAll.filter((c) => c.id_section === Const.channelSectionFlexDark);
+        this.channelsFlexPerformers = this.channelsAll.filter((c) => c.id_section === Const.channelSectionPerformers);
+        this.channelsMen = this.channelsAll.filter((c) => c.id_section === Const.channelSectionMen);
+        this.channelsAmazonia = this.channelsAll.filter((c) => c.id_section === Const.channelSectionAmazonia);
+        this.channelsKabina = this.channelsAll.filter((c) => c.id_section === Const.channelSectionAdmin);
+      -->
+
       <ng-container *ngIf="!searchPhrase">
+
         <div class="district">
+          По дате обновления
           <div class="channels">
-            <ng-container *ngFor="let channel of channelsAll">
+            <ng-container *ngFor="let channel of channelsFlex">
               <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
             </ng-container>
           </div>
         </div>
+
+        <div class="district">
+          Главные
+          <div class="channels">
+            <ng-container *ngFor="let channel of channelsFlex">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+            </ng-container>
+          </div>
+        </div>
+
+        <div class="district">
+          Имена
+          <div class="channels">
+            <ng-container *ngFor="let channel of channelsFlexPerformers">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+            </ng-container>
+          </div>
+        </div>
+
+        <div class="district">
+          18+
+          <div class="channels">
+            <ng-container *ngFor="let channel of channelsFlexDark">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+            </ng-container>
+          </div>
+        </div>
+
+        <div class="district">
+          Всякое
+          <div class="channels">
+            <ng-container *ngFor="let channel of channelsOther">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+            </ng-container>
+          </div>
+        </div>
+
+        <div class="district">
+          Мужская конторсия
+          <div class="channels">
+            <ng-container *ngFor="let channel of channelsMen">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+            </ng-container>
+          </div>
+        </div>
+
+        <div class="district">
+          Амазония
+          <div class="channels">
+            <ng-container *ngFor="let channel of channelsAmazonia">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+            </ng-container>
+          </div>
+        </div>
+
+        <div class="district">
+          Тех. помещения
+          <div class="channels">
+            <ng-container *ngFor="let channel of channelsAdmin">
+              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+            </ng-container>
+          </div>
+        </div>
+
       </ng-container>
 
       <ng-container *ngIf="searchPhrase">
