@@ -3,9 +3,11 @@ import { UserService } from 'src/app/services/user.service';
 import {HttpService} from "../../../../services/http.service";
 import {IChannelLink, RoleEnum} from "../../../../model/app-model";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
-import {tap} from "rxjs/operators";
+import {switchMap, tap} from "rxjs/operators";
 import { Const } from 'src/app/model/const';
 import {Router} from "@angular/router";
+import {of} from "rxjs";
+import {ChannelService} from "../../../../services/channel.service";
 
 @UntilDestroy()
 @Component({
@@ -19,6 +21,7 @@ export class ChannelsPageComponent implements OnInit {
     public httpService: HttpService,
     public userService: UserService,
     public router: Router,
+    public channelService: ChannelService,
   ) { }
 
   isLoading = false;
@@ -145,6 +148,8 @@ export class ChannelsPageComponent implements OnInit {
 
         // Без untilDestroyed т.к. должен отработать после того как мы уйдём со страницы!
         this.httpService.setSuperstar$(newSuperstar).subscribe();
+        // Без untilDestroyed т.к. должен отработать после того как мы уйдём со страницы!
+        //this.channelService.loadChannels$().subscribe();
       }
     }
   }
