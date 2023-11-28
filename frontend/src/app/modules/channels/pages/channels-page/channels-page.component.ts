@@ -27,6 +27,7 @@ export class ChannelsPageComponent implements OnInit {
   currentYear = 0;
 
   channelsAll: IChannelLink[] = [];
+  channelsActivity: IChannelLink[] = [];
   channelsSearching: IChannelLink[] = [];
   channelsFlex: IChannelLink[] = [];
   channelsFlexDark: IChannelLink[] = [];
@@ -53,6 +54,17 @@ export class ChannelsPageComponent implements OnInit {
         // Вообще все
         this.channelsAll = result || [];
         this.channelsAll = this.channelsAll.sort((a, b) => {
+          if (a.name > b.name) {
+            return 1;
+          } else if (a.name < b.name) {
+            return -1;
+          } else {
+            return 0;
+          }
+        });
+
+        // Активность
+        this.channelsActivity = [...this.channelsAll].sort((a, b) => {
           if (a.time_changed < b.time_changed) {
             return 1;
           } else if (a.time_changed > b.time_changed) {
@@ -60,8 +72,9 @@ export class ChannelsPageComponent implements OnInit {
           } else {
             return 0;
           }
-        });
+        }).slice(0, 5);
 
+        // Остальные
         this.channelsOther = this.channelsAll.filter((c) => c.id_section === Const.channelSectionOther);
         this.channelsFlex = this.channelsAll.filter((c) => c.id_section === Const.channelSectionFlex);
         this.channelsFlexDark = this.channelsAll.filter((c) => c.id_section === Const.channelSectionFlexDark);

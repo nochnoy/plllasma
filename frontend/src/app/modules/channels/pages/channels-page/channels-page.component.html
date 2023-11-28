@@ -16,114 +16,100 @@
         <div></div>
       </header>
 
-      <!--
-        this.channelsOther = this.channelsAll.filter((c) => c.id_section === Const.channelSectionOther);
-        this.channelsFlex = this.channelsAll.filter((c) => c.id_section === Const.channelSectionFlex);
-        this.channelsFlexDark = this.channelsAll.filter((c) => c.id_section === Const.channelSectionFlexDark);
-        this.channelsFlexPerformers = this.channelsAll.filter((c) => c.id_section === Const.channelSectionPerformers);
-        this.channelsMen = this.channelsAll.filter((c) => c.id_section === Const.channelSectionMen);
-        this.channelsAmazonia = this.channelsAll.filter((c) => c.id_section === Const.channelSectionAmazonia);
-        this.channelsKabina = this.channelsAll.filter((c) => c.id_section === Const.channelSectionAdmin);
-      -->
+      <ng-container *ngIf="!isLoading">
 
-      <ng-container *ngIf="!searchPhrase">
+        <ng-container *ngIf="!searchPhrase">
 
-        <div class="district">
-          По дате обновления
-          <div class="channels">
-            <ng-container *ngFor="let channel of channelsFlex">
-              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-            </ng-container>
+          <div class="district">
+            <div class="channels">
+              <ng-container *ngFor="let channel of channelsFlex">
+                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+              </ng-container>
+            </div>
           </div>
-        </div>
 
-        <div class="district">
-          Главные
-          <div class="channels">
-            <ng-container *ngFor="let channel of channelsFlex">
-              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-            </ng-container>
+          <div class="district">
+            <label>Имена</label>
+            <div class="channels">
+              <ng-container *ngFor="let channel of channelsFlexPerformers">
+                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+              </ng-container>
+            </div>
           </div>
-        </div>
 
-        <div class="district">
-          Имена
-          <div class="channels">
-            <ng-container *ngFor="let channel of channelsFlexPerformers">
-              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-            </ng-container>
+          <div class="district">
+            <label>18+</label>
+            <div class="channels">
+              <ng-container *ngFor="let channel of channelsFlexDark">
+                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+              </ng-container>
+            </div>
           </div>
-        </div>
 
-        <div class="district">
-          18+
-          <div class="channels">
-            <ng-container *ngFor="let channel of channelsFlexDark">
-              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-            </ng-container>
+          <div class="district">
+            <label>Всякое</label>
+            <div class="channels">
+              <ng-container *ngFor="let channel of channelsOther">
+                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+              </ng-container>
+            </div>
           </div>
-        </div>
 
-        <div class="district">
-          Всякое
-          <div class="channels">
-            <ng-container *ngFor="let channel of channelsOther">
-              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-            </ng-container>
+          <div class="district">
+            <label>МК</label>
+            <div class="channels">
+              <ng-container *ngFor="let channel of channelsMen">
+                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+              </ng-container>
+            </div>
           </div>
-        </div>
 
-        <div class="district">
-          Мужская конторсия
-          <div class="channels">
-            <ng-container *ngFor="let channel of channelsMen">
-              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-            </ng-container>
+          <div class="district">
+            <label>Амазония</label>
+            <div class="channels">
+              <ng-container *ngFor="let channel of channelsAmazonia">
+                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+              </ng-container>
+            </div>
           </div>
-        </div>
 
-        <div class="district">
-          Амазония
-          <div class="channels">
-            <ng-container *ngFor="let channel of channelsAmazonia">
-              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-            </ng-container>
+          <div class="district">
+            <label>Техническое</label>
+            <div class="channels">
+              <ng-container *ngFor="let channel of channelsAdmin">
+                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+              </ng-container>
+            </div>
           </div>
-        </div>
 
-        <div class="district">
-          Тех. помещения
-          <div class="channels">
-            <ng-container *ngFor="let channel of channelsAdmin">
-              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-            </ng-container>
+        </ng-container>
+
+        <ng-container *ngIf="searchPhrase">
+          <div class="district">
+            <div class="channels" *ngIf="channelsSearching.length">
+              <ng-container *ngFor="let channel of channelsSearching">
+                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+              </ng-container>
+            </div>
           </div>
-        </div>
+          <div *ngIf="!channelsSearching.length">Не найдено</div>
+        </ng-container>
 
-      </ng-container>
-
-      <ng-container *ngIf="searchPhrase">
-        <div class="district">
-          <div class="channels" *ngIf="channelsSearching.length">
-            <ng-container *ngFor="let channel of channelsSearching">
-              <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-            </ng-container>
-          </div>
-        </div>
-        <div *ngIf="!channelsSearching.length">Не найдено</div>
       </ng-container>
 
     </section>
 
     <section>
-      <a routerLink="/channels/new" class="garland">Создать канал</a>
+      <a routerLink="/channels/new" class="new-channel">
+        <div class="new-channel-icon"></div>
+        <div class="new-channel-text">Создать канал</div>
+      </a>
       <div class="rules">
-        <p>Правила игры:</p>
-        <p>1. Все могут создавать свои каналы.</p>
-        <p>2. Канал попадает в боковое меню только к тем людям, кто сам на него подпишется.</p>
-        <p>3. Если создать канал от имени <img src="./assets/ghost.gif"> Привидения то его создатель останется неизвестным.</p>
-        <p>4. Создатель является владельцем канала и устанавливает на нём свои правила.</p>
-        <p>5. Канал можно сделать открытым для всех или (ещё не доделано) только для указанных граждан</p>
+        <p>Все могут создавать свои каналы.</p>
+        <p>Канал попадает в боковое меню только к тем людям, кто сам на него подпишется.</p>
+        <p>Если создать канал от имени <img src="./assets/ghost.gif"> Привидения то его создатель останется неизвестным.</p>
+        <p>Создатель является владельцем канала и устанавливает на нём свои правила.</p>
+        <p>Канал можно сделать открытым для всех или (ещё не доделано) только для указанных граждан</p>
       </div>
     </section>
 
@@ -144,8 +130,7 @@
 </div>
 
 <ng-template #memberTemplate let-channel='channel'>
-  <a
-     class="channel"
+  <a class="channel"
      [class.channel-new]="channel.id_place > 47"
      [class.channel-closed]="!channel.role || channel.role === 9"
      [class.channel-subscribed]="channel.at_menu === 't'"

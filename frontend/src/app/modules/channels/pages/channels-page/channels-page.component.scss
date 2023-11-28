@@ -7,11 +7,30 @@ main {
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 2rem;
+    height: 4rem;
 
     div {
       display: inline-block;
       width: 33%;
+    }
+
+    .search {
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
+
+      input {
+        width: 12rem;
+        background-image: url('~src/assets/img/search-inline.png');
+        background-repeat: no-repeat;
+        background-position-y: center;
+        background-position-x: calc(100% - 4px);
+      }
+
+      &-clear {
+        padding-left: 0.5rem;
+        font-size: 1.3rem;
+      }
     }
   }
 
@@ -23,7 +42,6 @@ main {
     margin-right: -1rem; // Компенсируем отступ от края страницы который прописан в three-column-page
     width: 12rem; min-width: 12rem;
     padding: 0 1rem;
-    background-image: url('../../../../../assets/bg.gif');
     background-repeat: repeat-y;
     background-position-x: -179px;
     display: flex;
@@ -33,74 +51,28 @@ main {
   }
 }
 
-.info {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: flex-start;
-  margin: 1.5rem 0;
-}
-
-.search {
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-
-  input {
-    width: 12rem;
-    background-image: url('~src/assets/img/search-inline.png');
-    background-repeat: no-repeat;
-    background-position-y: center;
-    background-position-x: calc(100% - 4px);
-  }
-
-  &-clear {
-    padding-left: 0.5rem;
-    font-size: 1.3rem;
-  }
-}
-
-.filters {
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: flex-start;
-  flex-wrap: wrap;
+.district {
   margin-bottom: 1rem;
 
-  a {
-    display: block;
-    margin: 0.2rem;
-    padding: 0.2rem 0.4rem;
-    border-radius: 0.5rem;
-    text-decoration: none;
-    color: var(--color-pagination);
-
-    &.selected {
-      background-color: gray;
-      color: var(--color-page-bg);
-    }
-  }
-}
-
-.district {
   label {
-    display: inline-block;
-    margin: 0.5rem 0;
-    font-size: 1.3rem;
-    color: maroon;
+    display: block;
+    margin-bottom: 1rem;
+    color: #71867c;
   }
 }
 
 .channels {
-  column-width: 10rem;
+  --channel-line-height: 1.8rem;
+  --channel-icon-size: 32px;
+
+  columns: 10rem auto;
 
   .channel {
     display: flex;
     flex-direction: row;
-    margin-bottom: 1rem;
+    align-items: center;
     width: 10rem;
-    height: 1rem;
+    height: var(--channel-line-height);
     color: black;
     text-decoration: none;
     white-space: nowrap;
@@ -111,17 +83,20 @@ main {
     }
 
     &:before {
+      width: var(--channel-icon-size);
+      height: var(--channel-icon-size);
+      min-width: var(--channel-icon-size);
+      min-height: var(--channel-icon-size);
+      content: ' ';
       position: relative;
       z-index: 1;
+      break-inside: avoid; // Лечение проблемы срезания контента в колумнах
       display: block;
-      content: ' ';
-      width: 32px; height: 32px;
-      left: 6px; top: -6px;
       background-image: url('~src/assets/img/channels/domik.png');
       background-repeat: no-repeat;
       background-position: 0 0;
-      margin-right: 0.3rem;
-      margin-top: -1px;
+      margin-left: -12px;
+      margin-right: -2px;
     }
 
     /*&-ignored {
@@ -152,64 +127,34 @@ main {
   }
 }
 
+.new-channel {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  font-size: 1.1rem;
+  height: 4rem;
+
+  &-icon {
+    display: inline-block;
+    background-image: url('~src/assets/img/new-channel.png');
+    min-width: 34px;
+    min-height: 46px;
+    margin-right: 0.6rem;
+    margin-top: -6px;
+  }
+  &-text {
+    height: var(--input-height);
+    line-height: var(--input-height);
+  }
+}
+
 .rules {
-  margin-top: 1rem;
   p {
     margin: 0 0 0.8rem 0;
-    font-size: 0.9rem;
     color: #423a36;
     img {
       width: 12px;
       height: 12px;
     }
-  }
-}
-
-.garland {
-  position: relative;
-  padding: 1rem 2rem;
-  font-size: 1rem;
-  text-align: center;
-  background: #000000;
-  border-radius: var(--border-radius);
-  box-sizing: content-box;
-  text-decoration: none;
-  color: #948977;
-  transition: all 1s;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: -3px;
-    left: -3px;
-    right: -3px;
-    bottom: -3px;
-    background: linear-gradient(45deg, #ffd800, #ff5520, #750cf2, #0cbcf2, #750cf2, #ff5520);
-    z-index: -1;
-    border-radius: var(--border-radius);
-  }
-}
-.garland:hover {
-  color: white;
-  &::after {
-    animation:slidebg 2s linear infinite;
-  }
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, #ffd800, #ff5520, #750cf2, #0cbcf2, #750cf2, #ff5520);
-    z-index: -2;
-    filter: blur(40px);
-    border-radius: var(--border-radius);
-    animation:slidebg 2s linear infinite;
-  }
-}
-@keyframes slidebg {
-  to {
-    background-position:20vw;
   }
 }
