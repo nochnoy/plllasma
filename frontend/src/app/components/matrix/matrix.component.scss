@@ -20,7 +20,7 @@
         justify-content: flex-end;
         align-items: center;
         height: var(--matrix-collapsed-height);
-        background: linear-gradient(180deg, rgba(215,202,187,0) 0, rgba(215,202,187,1) 100%);
+        background: linear-gradient(180deg, rgba(215,202,187,0) 60%, rgba(215,202,187,1) 100%);
         cursor: pointer;
 
         .expand-butt {
@@ -28,33 +28,34 @@
           flex-direction: row;
           justify-content: center;
           align-items: center;
-          background-color: var(--color-page-bg);
           height: 1.5rem;
           border-radius: var(--border-radius);
-          padding: 0 1rem;
+          padding: 0;
+          margin-bottom: -0.5rem;
           &>:not(:last-child) {
             margin-right: 0.8rem;
           }
           b {
             display: block;
-            color: var(--color-gray);
+            color: var(--color-black);
+            font-size: 0.7rem;
           }
           div {
             display: inline-block;
             height: 1px;
-            width: 9rem;
-            border-bottom: 1px solid var(--color-gray);
+            width: 5rem;
+            border-bottom: 1px solid var(--color-black);
           }
         }
 
         &:hover {
-          background: none;
+          background: linear-gradient(180deg, rgba(215,202,187,0) 80%, rgba(215,202,187,1) 100%);
           .expand-butt {
-            b {
-              color: var(--color-black);
+            &>:not(:last-child) {
+              margin-right: 0.9rem;
             }
-            div {
-              border-bottom-color: var(--color-black);
+            b {
+              font-size: 0.9rem;
             }
           }
         }

@@ -33,7 +33,7 @@ for ($i = 0; $i < count($_FILES); $i++) {
 		$extention = strtolower(substr($original_name, strrpos($original_name, ".") + 1));
 
 		if ($filesize / (1024 * 1024) > $maxMegabytes) {
-			die('{"error": "toobig", "filename: "'.$original_name.'"}');
+			die('{"error": "toobig", "errorMessage": "Файл '.$original_name.' превышает допустимый размер в '.$maxMegabytes.' MB"}');
 		}
 
 		switch ($extention){

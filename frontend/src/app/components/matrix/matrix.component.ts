@@ -702,7 +702,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
   }
 
   addImageCommand(): void {
-    this.uploadService.upload().pipe(
+    of({}).pipe(
+      switchMap(() => this.uploadService.upload()),
       switchMap((files) => { // Подготовим файлы
         const result = new Subject<IUploadingAttachment[]>();
         if (files.length) {
@@ -754,6 +755,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
       switchMap((result: IHttpAddMatrixImages) => {
         let imagesSaved = false;
         if (result.error) {
+          alert(result.errorMessage);
           console.error(result.error); // TODO: сделать вывод ошибок, с логированием
         } else {
           const images = result.images;
