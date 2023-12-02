@@ -38,7 +38,7 @@
         </div>
 
         <div *ngIf="mail.length || isGoingToWrite" class="mail-form" >
-          <textarea #textarea autofocus [(ngModel)]="mailMessage"></textarea>
+          <textarea #textarea [(ngModel)]="mailMessage"></textarea>
           <div class="mail-form-tools">
             <button [disabled]="isSending"
                     (click)="onSendMessageClick()">

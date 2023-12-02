@@ -41,7 +41,11 @@ export class MessageForm2Component implements OnInit{
   ngOnInit() {
     this.userName = this.userService.user.nick ?? '';
     this.userIcon = this.userService.user.icon + '.gif';
-    setTimeout(() => this.textarea?.nativeElement?.focus(), 500);
+    setTimeout(() => {
+      if (this.replyMode) {
+      this.textarea?.nativeElement?.focus()
+      }
+    }, 500);
   }
 
   addAttachments(files: File[]) {

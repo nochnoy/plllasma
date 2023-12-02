@@ -1,0 +1,52 @@
+:host {
+  display: block;
+  width: 100%;
+
+  .zerocontainer {
+    position: relative;
+    width: 100%;
+    height: 0;
+
+    &.z1 {
+      z-index: 1;
+    }
+    &.z2 {
+      z-index: 2;
+    }
+  }
+
+  .yolka {
+    width: 100%;
+    height: 150px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
+  }
+
+  .dark {
+    position: relative;
+    display: inline-block;
+    background-color: black;
+    width: 100%;
+    height: 300px;
+
+    animation: color-me-in 5s;
+    animation-fill-mode: forwards; // По завершении анимации объект сохранит состояние конца анимации
+    animation-iteration-count: infinite;
+  }
+
+
+}
+
+@keyframes color-me-in {
+  from {
+    background: var(--color-page-bg-shade);
+  }
+  50% {
+    background: var(--color-page-bg-shade);
+  }
+  to {
+    background: black;
+  }
+}

@@ -11,7 +11,7 @@
           <h1 [class.spinner]="isLoading">Каналы</h1>
         </div>
         <div class="search" *ngIf="!isLoading">
-          <input autofocus [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()" placeholder="Поиск">
+          <input [(ngModel)]="searchPhrase" (ngModelChange)="onFilter()" placeholder="Поиск">
         </div>
         <div></div>
       </header>

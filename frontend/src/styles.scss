@@ -39,6 +39,7 @@
   --border-radius: 3px;
   --margin-standard: 0.4rem;
   --margin-section: 0.7rem; // расстояние между крупными блоками - например формой и заголовком сканала
+  --sidebar-padding: 0.7rem;
   --message-level-size: 1.2rem;
   --message-padding: 0.4rem;
   --max-text-size: 50rem;
@@ -155,8 +156,6 @@ textarea {
   }
   .sidebar {
     margin-left: 1rem;
-    padding: var(--margin-section);
-    padding-top: 1.1rem;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -164,9 +163,13 @@ textarea {
     background-color: var(--color-page-bg-shade);
     color: #4f4f4f;
 
-    &>* {
-      max-width: 20rem;
-      margin-bottom: 1rem;
+    .content {
+      margin-top: 1rem;
+
+      &>* {
+        max-width: 20rem;
+        margin-bottom: 1rem;
+      }
     }
 
     &-halloween {

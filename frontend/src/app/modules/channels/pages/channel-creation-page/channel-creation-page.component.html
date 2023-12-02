@@ -11,7 +11,7 @@
     <form [formGroup]="newChannelForm">
 
       <label>Название канала (не пошлое, не неприятное)</label>
-      <input class="input" name="name" type="text" maxlength="14" formControlName="name" autofocus>
+      <input class="input" name="name" type="text" maxlength="14" formControlName="name">
 
       <label>Канал создаёт</label>
       <div class="user-input" (click)="isGhost = !isGhost" [class.user-input-ghost]="isGhost">

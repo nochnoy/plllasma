@@ -71,35 +71,37 @@
   </main>
   <div class="sidebar" [class.sidebar-halloween]="isHalloween">
 
+    <app-newyear *ngIf="isNewYear"></app-newyear>
+
     <div class="halloween" *ngIf="isHalloween">
-      <ng-container *ngIf="currentYear === 2023">
-        Конец близок! Каналы мутируют.
-        Скоро они начнут размножаться
-        и их станет столько, что мы все умрём!
-        И&nbsp;черви съедят наши глаза!<br>
-      </ng-container>
       <img src="assets/img/halloween-pumpkin.png">
     </div>
 
-    <div class="mail-notification" *ngIf="mailNotification?.message">
-      <a [routerLink]="'/members/' + mailNotification?.nick">
-        <div class="newmail-icon"></div>
-        <b>{{mailNotification?.nick}}</b>
-        <span>{{mailNotification?.message}}</span>
-      </a>
-    </div>
+    <div class="content">
 
-    <div class="now-here" *ngIf="hereAndNowUsers.length">
-      <div class="nowandhere-label">Здесь сейчас:</div>
-      <a *ngFor="let user of hereAndNowUsers; let i = index;"
-         [routerLink]="'/members/' + user"
-         target="_blank"
-         class="nowandhere-user">
-        {{user}}
-      </a>
-    </div>
+      <div class="mail-notification" *ngIf="mailNotification?.message">
+        <a [routerLink]="'/members/' + mailNotification?.nick">
+          <div class="newmail-icon"></div>
+          <b>{{mailNotification?.nick}}</b>
+          <span>{{mailNotification?.message}}</span>
+        </a>
+      </div>
 
-    <div class="nothing" *ngIf="isNotificationsReady && !(mailNotification?.message || hereAndNowUsers.length)">никого нет</div>
+      <div class="now-here" *ngIf="hereAndNowUsers.length">
+        <div class="nowandhere-label">Здесь сейчас:</div>
+        <a *ngFor="let user of hereAndNowUsers; let i = index;"
+           [routerLink]="'/members/' + user"
+           target="_blank"
+           class="nowandhere-user">
+          {{user}}
+        </a>
+      </div>
+
+      <div *ngIf="isNotificationsReady && !(mailNotification?.message || hereAndNowUsers.length)">
+        никого нет
+      </div>
+
+    </div>
 
   </div>
 </div>

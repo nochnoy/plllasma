@@ -23,6 +23,7 @@ import {MatMenuModule} from "@angular/material/menu";
 import {MatButtonModule} from "@angular/material/button";
 import {NoopAnimationsModule} from "@angular/platform-browser/animations";
 import {MatDialogModule} from "@angular/material/dialog";
+import { NewyearComponent } from './components/newyear/newyear.component';
 
 @NgModule({
   imports: [
@@ -52,7 +53,8 @@ import {MatDialogModule} from "@angular/material/dialog";
       TestMessagesPageComponent,
       MatrixComponent,
       SelectionComponent,
-      DialogDataExampleDialog
+      DialogDataExampleDialog,
+      NewyearComponent
     ],
     providers: [
       AppGuard,

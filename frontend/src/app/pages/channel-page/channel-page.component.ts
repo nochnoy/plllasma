@@ -41,10 +41,13 @@ export class ChannelPageComponent implements OnInit {
   lv: string = '';
 
   isHalloween = false;
-  currentYear = 0;
+  isNewYear = false;
 
   ngOnInit(): void {
     of({}).pipe(
+      tap(() => {
+        this.checkHollydays();
+      }),
       switchMap(() => this.activatedRoute.url),
       switchMap((urlSegments) => {
         this.isNotificationsReady = false;
@@ -99,8 +102,6 @@ export class ChannelPageComponent implements OnInit {
       this.channel.canModerate = this.userService.canModerate(this.channelId);
       this.channel.canEditMatrix = this.userService.canEditMatrix(this.channelId);
       this.channel.canUseSettings = this.userService.canUseChannelSettings(this.channelId);
-
-      this.checkHalloween();
     }
   }
 
@@ -241,13 +242,12 @@ export class ChannelPageComponent implements OnInit {
     });
   }
 
-  checkHalloween(): void {
-    const year = (new Date()).getFullYear();
+  checkHollydays(): void {
     const now = new Date();
-    const from = new Date(year, 10 - 1, 11);
-    const to = new Date(year, 11 - 1, 6);
-    this.isHalloween = (now.getTime() >= from.getTime() && now.getTime() <= to.getTime());
-    this.currentYear = year;
+    const nowMonth = now.getMonth() + 1;
+    const nowDate = now.getDate();
+    this.isHalloween = (nowMonth === 10 && nowDate >= 15) || (nowMonth === 11 && nowDate <= 6);
+    this.isNewYear = (nowMonth === 12 && nowDate >= 2 /* <<<<<<<<<<<<<<<<<<< */) || (nowMonth === 1 && nowDate <= 10);
   }
 
   createChannelStub(channelId: number): Channel {
