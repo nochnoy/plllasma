@@ -1,4 +1,4 @@
-@import "normalize.scss";
+@import "css/normalize";
 @import url('https://fonts.googleapis.com/css?family=Roboto:700');
 @import url('https://fonts.googleapis.com/css?family=Roboto');
 
@@ -165,6 +165,7 @@ textarea {
 
     .content {
       margin-top: 1rem;
+      padding-left: 0.5rem; // чтоб не прижались к краю минимально широкой боковой панели
 
       &>* {
         max-width: 20rem;

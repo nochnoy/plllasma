@@ -1,52 +1,261 @@
+@import "../../../css/animation-timeline";
+
 :host {
   display: block;
   width: 100%;
+  pointer-events: none;
 
   .zerocontainer {
     position: relative;
     width: 100%;
     height: 0;
 
-    &.z1 {
-      z-index: 1;
-    }
-    &.z2 {
-      z-index: 2;
-    }
+    &.z1 { z-index: 1; }
+    &.z2 { z-index: 2; }
+    &.z3 { z-index: 3; }
+    &.z4 { z-index: 4; }
+    &.z5 { z-index: 5; }
+    &.z6 { z-index: 6; }
+    &.z7 { z-index: 7; }
+  }
+
+  .vader {
+    width: 100%;
+    height: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    opacity: 0;
+  }
+
+  .vaderyolka {
+    width: 100%;
+    height: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
   }
 
   .yolka {
     width: 100%;
-    height: 150px;
+    height: 160px;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-
   }
 
   .dark {
-    position: relative;
     display: inline-block;
     background-color: black;
     width: 100%;
-    height: 300px;
-
-    animation: color-me-in 5s;
-    animation-fill-mode: forwards; // По завершении анимации объект сохранит состояние конца анимации
-    animation-iteration-count: infinite;
+    height: 2000px;
+    opacity: 0;
   }
 
+  .corner {
+    display: inline-block;
+    background: radial-gradient(ellipse at 100% 0%, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 70%);
+    width: 100%;
+    height: 500px;
+  }
 
+  .wall {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    width: 100%;
+    height: 160px;
+
+    .lift {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      width: 100px;
+      height: 100%;
+      overflow-x: clip;
+
+      .door {
+        width: 0px;
+        height: 145px;
+        margin-top: 4px;
+        margin-right: -35px;
+        background-color: black;
+      }
+    }
+  }
 }
 
-@keyframes color-me-in {
-  from {
-    background: var(--color-page-bg-shade);
+.derezhor {
+
+  --ny-bg-bright: 0;
+  --ny-bg-dim: 20%;
+  --ny-bg-dark: 40%;
+
+  // 0й акт - нет никаких следов нового года
+  &.act-0 {
+    .vader {
+      opacity: 0;
+    }
+    .vaderyolka {
+      opacity: 0;
+    }
+    .yolka {
+      opacity: 0;
+    }
+    .corner {
+      opacity: 0;
+    }
+    .dark {
+      opacity: 0;
+    }
   }
-  50% {
-    background: var(--color-page-bg-shade);
+
+  // 1й акт - боковая панель мигает, появляется тень в углу
+  &.act-1 {
+    .vader {
+      opacity: 0;
+    }
+    .vaderyolka {
+      opacity: 0;
+    }
+    .yolka {
+      opacity: 0;
+    }
+    .corner {
+      opacity: 0;
+
+      @include animation-timeline {
+        animation-fill-mode: forwards;
+        animation-iteration-count: 1;
+        @include tween(5.51s, (opacity: 0));
+        @include tween(0.05s, (opacity: 1));
+      }
+    }
+    .dark {
+      opacity: 0;
+
+      @include animation-timeline {
+        animation-fill-mode: forwards;
+        animation-iteration-count: 1;
+
+        // 2 морга
+        @include tween(0.05s, (opacity: var(--ny-bg-dark)));
+        @include tween(0.1s, (opacity: var(--ny-bg-bright)));
+        @include tween(0.05s, (opacity: var(--ny-bg-dark)));
+        @include tween(0.1s, (opacity: var(--ny-bg-bright)));
+        // пауза
+        @include tween(0.6s, (opacity: var(--ny-bg-bright)));
+        // длинное затмение
+        @include tween(1.7s, (opacity: var(--ny-bg-dim)));
+        @include tween(1.2s, (opacity: var(--ny-bg-bright)));
+        // короткая пауза
+        @include tween(0.9s, (opacity: var(--ny-bg-bright)));
+        // 1 морг
+        @include tween(0.03s, (opacity: var(--ny-bg-dark)));
+        @include tween(0.1s, (opacity: var(--ny-bg-bright)));
+        // пауза
+        @include tween(0.3s, (opacity: var(--ny-bg-bright)));
+        // 3 морга
+        @include tween(0.03s, (opacity: var(--ny-bg-dark)));
+        @include tween(0.1s, (opacity: var(--ny-bg-bright)));
+        @include tween(0.03s, (opacity: var(--ny-bg-dark)));
+        @include tween(0.1s, (opacity: var(--ny-bg-bright)));
+      }
+    }
   }
-  to {
-    background: black;
+
+  // 2й акт - появился Вейдер
+  &.act-2 {
+    .vader {
+      opacity: 0;
+      @include animation-timeline {
+        animation-fill-mode: forwards;
+        animation-iteration-count: 1;
+
+        @include tween(1s, (opacity: 0));
+        @include tween(2s, (opacity: 100%));
+      }
+    }
+    .vaderyolka {
+      opacity: 0;
+    }
+    .yolka {
+      opacity: 0;
+    }
+    .door {
+      width: 0px;
+      @include animation-timeline {
+        animation-fill-mode: forwards;
+        animation-iteration-count: 1;
+
+        @include tween(0.01s, (width: 0));
+        @include tween(2s, (width: 100px));
+        @include tween(2s, (width: 100px));
+        @include tween(2s, (width: 0));
+      }
+    }
+    .corner {
+      opacity: 1;
+      @include animation-timeline {
+        animation-fill-mode: forwards;
+        animation-iteration-count: 1;
+
+        @include tween(0.01s, (opacity: 1));
+        @include tween(2s, (opacity: 100%));
+      }
+    }
+    .dark {
+      opacity: 0;
+    }
   }
+
+  // 3й акт - Вейдер превращается в ёлочку
+  &.act-3 {
+    .vader {
+      opacity: 1;
+      @include animation-timeline {
+        animation-fill-mode: forwards;
+        animation-iteration-count: 1;
+
+        @include tween(2s, (opacity: 0));
+      }
+    }
+    .vaderyolka {
+      opacity: 0;
+      @include animation-timeline {
+        animation-fill-mode: forwards;
+        animation-iteration-count: 1;
+
+        @include tween(1s, (opacity: 1));
+        @include tween(1s, (opacity: 0));
+      }
+    }
+    .yolka {
+      opacity: 0;
+
+      @include animation-timeline {
+        animation-fill-mode: forwards;
+        animation-iteration-count: 1;
+
+        @include tween(1s, (opacity: 0));
+        @include tween(1s, (opacity: 1));
+      }
+    }
+    .door {
+      width: 0;
+    }
+    .corner {
+      opacity: 100%;
+
+      @include animation-timeline {
+        animation-fill-mode: forwards;
+        animation-iteration-count: 1;
+        @include tween(2s, (opacity: 50%));
+      }
+    }
+    .dark {
+      opacity: 0;
+    }
+  }
+
 }

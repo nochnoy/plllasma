@@ -1,0 +1,61 @@
+//  global context flags using wierd ☠️ names to minimize
+//  chance of naming conflicts with other scss variables
+$☠️--animation-timeline-duration: null;
+$☠️--animation-timeline-tweens  : null;
+
+//  mixin to create an animation context for nested tweens
+//  used to calculate the total duration of the animation
+//  converting each tween delay into percentages
+@mixin animation-timeline($name: unique-id()) {
+
+//  global context flag to sum up duration
+  $☠️--animation-timeline-duration: 0s !global;
+
+//  global context map to hold animation tweens
+  $☠️--animation-timeline-tweens  : () !global;
+
+//  mixin content (the included tweens)
+  @content;
+
+//  animation name and duration
+//  note! if no name is provided a unique id will be used
+//  this allows you to create one-time-use animations without
+//  having to deal with animation naming conflicts :-)
+  animation-name:     $name;
+  animation-duration: $☠️--animation-timeline-duration;
+
+//  create keyframes
+  @keyframes #{$name} {
+//  loop through the included tweens
+  @each $time, $props in $☠️--animation-timeline-tweens {
+  //  calculate percentage based on total duration
+  #{percentage($time/$☠️--animation-timeline-duration)}{
+  //  print out the tween properties
+    @each $prop, $value in $props {
+      #{$prop}:$value;
+    }
+  }
+}
+}
+
+//  reset global context flags
+  $☠️--animation-timeline-duration: null !global;
+$☠️--animation-timeline-tweens  : null !global;
+}
+
+
+//  mixin to create tweens based on a delay and a map
+//  containing the the tween properties*
+//
+//  * using a map is not optimal – but for now you are not
+//  able to save @content to variables :(
+//
+@mixin tween($delay: 0s, $props: null){
+//  only do stuff if we are in a animation-timeline context
+  @if $☠️--animation-timeline-tweens {
+  //  increment the total animation by the the tween delay
+  $☠️--animation-timeline-duration: $☠️--animation-timeline-duration + $delay !global;
+  //  save current duration and tween props to the global tween map
+  $☠️--animation-timeline-tweens: map-merge($☠️--animation-timeline-tweens,  ($☠️--animation-timeline-duration: $props)) !global;
+  }
+}
