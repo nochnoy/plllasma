@@ -250,7 +250,39 @@
       @include animation-timeline {
         animation-fill-mode: forwards;
         animation-iteration-count: 1;
-        @include tween(2s, (opacity: 50%));
+
+        @include tween(1s, (opacity: 100%));
+        @include tween(1s, (opacity: 0%));
+      }
+    }
+    .dark {
+      opacity: 0;
+    }
+  }
+
+  // 4й акт - Ёлочка мигает
+  &.act-4 {
+    .vader {
+      opacity: 0;
+    }
+    .vaderyolka {
+      opacity: 0;
+    }
+    .yolka {
+      opacity: 1;
+    }
+    .door {
+      width: 0;
+    }
+    .corner {
+      opacity: 0;
+
+      @include animation-timeline {
+        animation-fill-mode: forwards;
+        animation-iteration-count: 1;
+
+        @include tween(1s, (opacity: 0%));
+        @include tween(1s, (opacity: 50%));
       }
     }
     .dark {
