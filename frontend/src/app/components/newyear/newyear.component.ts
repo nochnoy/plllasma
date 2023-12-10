@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import {of} from "rxjs";
+import {delay, tap} from "rxjs/operators";
 
 @Component({
   selector: 'app-newyear',
@@ -12,10 +14,12 @@ export class NewyearComponent implements OnInit {
   act = 0;
 
   ngOnInit(): void {
-    setTimeout(() => this.act = 1, 1 * 1000);
-    setTimeout(() => this.act = 2, 8 * 1000);
-    setTimeout(() => this.act = 3, 14 * 1000);
-    setTimeout(() => this.act = 4, 16 * 1000);
+    of({}).pipe(
+      delay(1000 * 3),  tap(() => this.act = 1), // боковая панель мигает
+      delay(1000 * 2.1),  tap(() => this.act = 2), // открывается дверь, появляется Вейдер
+      delay(1000 * 4),  tap(() => this.act = 3), // Вейдер превращается в ёлку
+      delay(1000 * 3),  tap(() => this.act = 4),
+    ).subscribe();
   }
 
 }
