@@ -13,7 +13,7 @@
       <label>Название канала (не пошлое, не неприятное)</label>
       <input class="input" name="name" type="text" maxlength="14" formControlName="name">
 
-      <label>Канал создаёт</label>
+      <label>Создатель канала</label>
       <div class="user-input" (click)="isGhost = !isGhost" [class.user-input-ghost]="isGhost">
         <img class="avatar" [src]="isGhost ? '../../../../../assets/ghost.gif' : 'https://plllasma.com/i/' + userService.user.icon + '.gif'" />
         <div>{{isGhost ? 'Привидение' : userService.user.nick}}</div>

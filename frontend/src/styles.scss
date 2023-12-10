@@ -171,6 +171,25 @@ textarea {
         max-width: 20rem;
         margin-bottom: 1rem;
       }
+
+      .now-here {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: wrap;
+        min-width: 8rem;
+        font-size: 0.9rem;
+        font-weight: bold;
+
+        a {
+          font-weight: normal;
+          color: var(--color-link);
+          text-decoration: none;
+          &:hover {
+            color: var(--color-link-hover);
+          }
+        }
+
+      }
     }
 
     &-halloween {
@@ -187,6 +206,25 @@ textarea {
 
         img {
           margin: 0 1rem;
+        }
+      }
+    }
+
+    &-newyear {
+      .content {
+        a {
+          color: #b91010!important;
+          font-weight: bolder!important;
+        }
+        b {
+          font-weight: bolder;
+          color: black;
+        }
+        .now-here {
+          .nowandhere-label {
+            color: black;
+            font-weight: bolder;
+          }
         }
       }
     }

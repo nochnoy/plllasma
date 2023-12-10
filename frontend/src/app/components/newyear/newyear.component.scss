@@ -2,7 +2,7 @@
 
 :host {
 
-  --perspective: 0.9;
+  --perspective: 0.8;
 
   display: block;
   width: 100%;
@@ -249,7 +249,7 @@
         animation-fill-mode: forwards;
         animation-iteration-count: 1;
 
-        @include tween(0.8s, (opacity: 1));
+        @include tween(0.7s, (opacity: 1));
         @include tween(1s, (opacity: 0.5));
       }
     }

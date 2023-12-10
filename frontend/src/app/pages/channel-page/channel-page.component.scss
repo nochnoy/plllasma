@@ -38,25 +38,6 @@
   }
 }
 
-.now-here {
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-  min-width: 8rem;
-  font-size: 0.9rem;
-  font-weight: bold;
-
-  a {
-    font-weight: normal;
-    color: var(--color-link);
-    text-decoration: none;
-    &:hover {
-      color: var(--color-link-hover);
-    }
-  }
-
-}
-
 .general-error {
   margin: 1rem;
 }
