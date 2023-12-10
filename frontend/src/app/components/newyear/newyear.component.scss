@@ -3,6 +3,7 @@
 :host {
 
   --perspective: 0.8;
+  --glow-size: 0.5rem;
 
   display: block;
   width: 100%;
@@ -56,57 +57,73 @@
     opacity: 0;
   }
 
-  --glow-size: 1rem;
-
   .glows {
     width: 100%;
     opacity: 0;
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
+
     .glow {
       position: relative;
       display: inline-block;
       width: var(--glow-size);
-      top: 5rem;
       height: var(--glow-size);
       border-radius: calc(var(--glow-size) / 2);
-      transition: opacity 0.5s;
+      transition: opacity 0.7s;
       opacity: 0;
 
-      &.on {
-        opacity: 40%;
+      &-0 {
+        top: 3rem;
+        left: -0.5rem;
       }
-
-      &-color-red {
-        top: 6rem;
-        left: 0;
-        background-color: #ff5f5f;
-        box-shadow: 0 1px 2rem 2rem #ff5f5f;
+      &-1 {
+        left: -2rem;
+        top: 7rem;
       }
-      &-color-green {
-        left: 2rem;
-        top: 2rem;
-        background-color: #82fc60;
-        box-shadow: 0 1px 2rem 2rem #82fc60;
-      }
-      &-color-blue {
-        top: 4rem;
+      &-2 {
         left: 1rem;
-        background-color: #f260fc;
-        box-shadow: 0 1px 2rem 2rem #f260fc;
+        top: 1rem;
       }
-      &-color-gold {
-        left: 4rem;
-        top: 5rem;
-        background-color: #8965ff;
-        box-shadow: 0 1px 2rem 2rem #8965ff;
+      &-3 {
+        top: 6rem;
+        left: 1rem;
       }
-      &-color-crown {
+      &-crown {
+        opacity: 30%;
         top: -1rem;
         left: -1rem;
         background-color: #fde592;
         box-shadow: 0 1px 2rem 2rem #fde592;
+      }
+
+      &-color-0 {
+        opacity: 0;
+      }
+      &-color-1 {
+        opacity: 50%;
+        background-color: #ff5f5f;
+        box-shadow: 0 1px 2rem 2rem #ff5f5f;
+      }
+      &-color-2 {
+        opacity: 50%;
+        background-color: #5fa6fa;
+        box-shadow: 0 1px 2rem 2rem #5fa6fa;
+      }
+      &-color-3 {
+        opacity: 50%;
+        background-color: #f260fc;
+        box-shadow: 0 1px 2rem 2rem #f260fc;
+      }
+      &-color-4 {
+        opacity: 50%;
+        background-color: #ffe565;
+        box-shadow: 0 1px 2rem 2rem #ffe565;
+      }
+      &-color-5 {
+        opacity: 50%;
+        background-color: #5cff63;
+        box-shadow: 0 1px 2rem 2rem #5cff63;
       }
     }
   }
