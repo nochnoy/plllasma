@@ -80,7 +80,7 @@
 
       &-color-red {
         top: 6rem;
-        left: -1rem;
+        left: 0;
         background-color: #ff5f5f;
         box-shadow: 0 1px 2rem 2rem #ff5f5f;
       }
@@ -91,16 +91,16 @@
         box-shadow: 0 1px 2rem 2rem #82fc60;
       }
       &-color-blue {
-        left: 3rem;
-        top: 5rem;
+        top: 4rem;
+        left: 1rem;
         background-color: #f260fc;
         box-shadow: 0 1px 2rem 2rem #f260fc;
       }
       &-color-gold {
+        left: 4rem;
         top: 5rem;
-        left: -2em;
-        background-color: #8e55ff;
-        box-shadow: 0 1px 2rem 2rem #8e55ff;
+        background-color: #8965ff;
+        box-shadow: 0 1px 2rem 2rem #8965ff;
       }
       &-color-crown {
         top: -1rem;
@@ -305,7 +305,7 @@
         animation-iteration-count: 1;
 
         @include tween(0.7s, (opacity: 1));
-        @include tween(1s, (opacity: 0.5));
+        @include tween(1s, (opacity: 0.3));
       }
     }
     .bg {
@@ -316,7 +316,7 @@
         animation-iteration-count: 1;
 
         @include tween(2.1s, (opacity: 1));
-        @include tween(0.3s, (opacity: 0));
+        @include tween(0.5s, (opacity: 0));
       }
     }
   }
