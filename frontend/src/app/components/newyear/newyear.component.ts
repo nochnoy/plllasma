@@ -35,7 +35,7 @@ export class NewyearComponent implements OnInit {
             delay(1000 * 2.1), tap(() => this.act = 2), // открывается дверь, появляется Вейдер
             delay(1000 * 2.2), tap(() => this.act = 3), // Вейдер превращается в ёлку
             tap(() => {
-              this.cookieService.set('newyear', year); // Посмотрел. Больше не покажем.
+              this.cookieService.set('newyear--', year); // Посмотрел. Больше не покажем.
             }),
             delay(1000 * 3)
           );
