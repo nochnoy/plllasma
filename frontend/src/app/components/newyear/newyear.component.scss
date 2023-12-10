@@ -70,7 +70,7 @@
       width: var(--glow-size);
       height: var(--glow-size);
       border-radius: calc(var(--glow-size) / 2);
-      transition: opacity 0.7s;
+      transition: opacity 1s;
       opacity: 0;
 
       &-0 {
@@ -90,7 +90,7 @@
         left: 1rem;
       }
       &-crown {
-        opacity: 30%;
+        opacity: 40%;
         top: -1rem;
         left: -1rem;
         background-color: #fde592;
