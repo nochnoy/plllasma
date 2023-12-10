@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import {of} from "rxjs";
-import {delay, switchMap, tap} from "rxjs/operators";
+import {delay, repeat, switchMap, tap} from "rxjs/operators";
 import {CookieService} from "ngx-cookie-service";
+import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 
+@UntilDestroy()
 @Component({
   selector: 'app-newyear',
   templateUrl: './newyear.component.html',
@@ -15,6 +17,10 @@ export class NewyearComponent implements OnInit {
   ) { }
 
   act = 0;
+  isRedOn = false;
+  isBlueOn = false;
+  isGreenOn = false;
+  isGoldOn = false;
 
   ngOnInit(): void {
     const year = (new Date()).getFullYear() + '';
@@ -36,6 +42,31 @@ export class NewyearComponent implements OnInit {
         }
       }),
       tap(() => this.act = 4), // Гирлянды
+      switchMap(() => {
+        return of({}).pipe(
+          delay(1000 * 2),
+          tap(() => {
+            let count = 2;
+            let lights: number[] = [];
+            if (Math.random() > 0.6) {
+              count = 3;
+            }
+            while(lights.length < count) {
+              const l = Math.floor(Math.random() * 4 + 1);
+              if (!lights.includes(l)) {
+                lights.push(l);
+              }
+            }
+            this.isRedOn = lights.includes(1);
+            this.isBlueOn = lights.includes(2);
+            this.isGreenOn = lights.includes(3);
+            this.isGoldOn = lights.includes(4);
+          }),
+          repeat(),
+        );
+      }),
+
+      untilDestroyed(this)
     ).subscribe();
   }
 

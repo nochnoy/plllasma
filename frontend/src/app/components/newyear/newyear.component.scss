@@ -56,6 +56,61 @@
     opacity: 0;
   }
 
+  --glow-size: 1rem;
+
+  .glows {
+    width: 100%;
+    opacity: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    .glow {
+      position: relative;
+      display: inline-block;
+      width: var(--glow-size);
+      top: 5rem;
+      height: var(--glow-size);
+      border-radius: calc(var(--glow-size) / 2);
+      transition: opacity 0.5s;
+      opacity: 0;
+
+      &.on {
+        opacity: 40%;
+      }
+
+      &-color-red {
+        top: 6rem;
+        left: -1rem;
+        background-color: #ff5f5f;
+        box-shadow: 0 1px 2rem 2rem #ff5f5f;
+      }
+      &-color-green {
+        left: 2rem;
+        top: 2rem;
+        background-color: #82fc60;
+        box-shadow: 0 1px 2rem 2rem #82fc60;
+      }
+      &-color-blue {
+        left: 3rem;
+        top: 5rem;
+        background-color: #f260fc;
+        box-shadow: 0 1px 2rem 2rem #f260fc;
+      }
+      &-color-gold {
+        top: 5rem;
+        left: -2em;
+        background-color: #55beff;
+        box-shadow: 0 1px 2rem 2rem #55beff;
+      }
+      &-color-crown {
+        top: -1rem;
+        left: -1rem;
+        background-color: #fde592;
+        box-shadow: 0 1px 2rem 2rem #fde592;
+      }
+    }
+  }
+
   .corner {
     display: inline-block;
     background: linear-gradient(180deg, #594c48, var(--color-page-bg-shade)) 50%;
@@ -268,6 +323,15 @@
 
   // 4й акт - Ёлочка мигает
   &.act-4 {
+    .bg {
+      opacity: 0;
+    }
+    .corner {
+      opacity: 0.5;
+    }
+    .glows {
+      opacity: 1;
+    }
     .vader {
       opacity: 0;
     }
@@ -281,12 +345,8 @@
     .door {
       width: 0;
     }
-    .corner {
-      opacity: 0.5;
-    }
-    .bg {
-      opacity: 0;
-    }
+
+
   }
 
 }
