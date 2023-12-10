@@ -212,7 +212,8 @@
         animation-fill-mode: forwards;
         animation-iteration-count: 1;
 
-        @include tween(2s, (opacity: 0));
+        @include tween(0.4s, (opacity: 1));
+        @include tween(1.5s, (opacity: 0));
       }
     }
     .vaderyolka {
@@ -222,7 +223,7 @@
         animation-fill-mode: forwards;
         animation-iteration-count: 1;
 
-        @include tween(1s, (opacity: 1));
+        @include tween(0.8s, (opacity: 1));
         @include tween(1s, (opacity: 0, transform: scaleX(1) scaleY(1)));
       }
     }
