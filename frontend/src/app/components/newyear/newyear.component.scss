@@ -4,6 +4,7 @@
 
   --perspective: 0.8;
   --glow-size: 0.5rem;
+  --yolka-width: 120px;
 
   display: block;
   width: 100%;
@@ -22,6 +23,7 @@
     &.z5 { z-index: 5; }
     &.z6 { z-index: 6; }
     &.z7 { z-index: 7; }
+    &.z8 { z-index: 8; }
   }
 
   .vader {
@@ -31,6 +33,10 @@
     flex-direction: column;
     align-items: center;
     opacity: 0;
+
+    img {
+      width: var(--yolka-width);
+    }
   }
 
   .vaderyolka {
@@ -39,6 +45,10 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+
+    img {
+      width: var(--yolka-width);
+    }
   }
 
   .yolka {
@@ -47,6 +57,10 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+
+    img {
+      width: var(--yolka-width);
+    }
   }
 
   .bg {
@@ -64,38 +78,30 @@
     flex-direction: row;
     justify-content: flex-end;
 
+    .glows-canvas {
+      width: var(--yolka-width);
+    }
+
     .glow {
       position: relative;
       display: inline-block;
       width: var(--glow-size);
       height: var(--glow-size);
       border-radius: calc(var(--glow-size) / 2);
-      transition: opacity 1s;
+      transition: opacity 1.5s;
       opacity: 0;
 
-      &-0 {
-        top: 3rem;
-        left: -0.5rem;
-      }
-      &-1 {
-        left: -2rem;
-        top: 7rem;
-      }
-      &-2 {
-        left: 1rem;
-        top: 1rem;
-      }
-      &-3 {
-        top: 6rem;
-        left: 1rem;
-      }
       &-crown {
         opacity: 40%;
         top: -1rem;
-        left: -1rem;
+        left: 6rem;
         background-color: #fde592;
         box-shadow: 0 1px 2rem 2rem #fde592;
       }
+      &-0 { left: 3.5rem; top: 3rem; }
+      &-1 { left: 2rem; top: 7rem; }
+      &-2 { left: 4.5rem; top: 1rem; }
+      &-3 { left: 4.5rem; top: 6rem; }
 
       &-color-0 {
         opacity: 0;
@@ -116,7 +122,7 @@
         box-shadow: 0 1px 2rem 2rem #f260fc;
       }
       &-color-4 {
-        opacity: 50%;
+        opacity: 40%;
         background-color: #ffe565;
         box-shadow: 0 1px 2rem 2rem #ffe565;
       }
@@ -128,9 +134,59 @@
     }
   }
 
+  .lamps {
+    opacity: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+
+    .lamps-canvas {
+      width: var(--yolka-width);
+    }
+
+    .lamp {
+      position: relative;
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: white;
+      transition: opacity 1s;
+      opacity: 0;
+      box-sizing: content-box;
+
+      &.on {
+        opacity: 1;
+      }
+
+      &-0 { left: 72px; top: 28px; } // red
+      &-1 { left: 85px; top: 24px; } // purple
+      &-2 { left: 70px; top: 40px; } // blue
+      &-3 { left: 75px; top: 36px; } // gold
+      &-4 { left: 64px; top: 56px; } // gold
+      &-5 { left: 53px; top: 63px; } // purple
+      &-6 { left: 62px; top: 64px; } // blue
+      &-7 { left: 69px; top: 67px; } // red
+      &-8 { left: 27px; top: 65px; } // red
+      &-9 { left: 55px; top: 47px; } // blue
+      &-10 { left: 64px; top: 79px; } // blue
+      &-11 { left: 10px; top: 98px; } // purple
+      &-12 { left: 15px; top: 94px; } // gold
+      &-13 { left: 24px; top: 100px; } // blue
+      &-14 { left: 35px; top: 97px; } // red
+      &-15 { left: 39px; top: 90px; } // purple
+      &-16 { left: 38px; top: 106px; } // gold
+
+      &-color-1 { box-shadow: 0 1px 1.5px 1.5px #ff557d } // красный
+      &-color-2 { box-shadow: 0 1px 1.5px 1.5px #44abf8 } // синий
+      &-color-3 { box-shadow: 0 1px 1.5px 1.5px #ff29ff } // сереневый
+      &-color-4 { box-shadow: 0 1px 1.5px 1.5px #ffe077 } // жёлтый
+    }
+  }
+
   .corner {
     display: inline-block;
-    background: linear-gradient(180deg, #594c48, var(--color-page-bg-shade)) 50%;
+    background: linear-gradient(180deg, #59413b, var(--color-page-bg-shade)) 50%;
     width: 100%;
     height: 500px;
   }
@@ -147,7 +203,7 @@
       display: flex;
       flex-direction: row;
       justify-content: center;
-      width: 120px;
+      width: var(--yolka-width);
       height: 100%;
       overflow-x: clip;
 
@@ -349,6 +405,9 @@
     .glows {
       opacity: 1;
     }
+    .lamps {
+      opacity: 1;
+    }
     .vader {
       opacity: 0;
     }
@@ -357,7 +416,8 @@
     }
     .yolka {
       opacity: 1;
-      transform: translateX(33%);
+      transform: translateX(22px);
+      align-items: flex-end;
     }
     .door {
       width: 0;

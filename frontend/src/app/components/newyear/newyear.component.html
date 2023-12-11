@@ -7,11 +7,10 @@
   </div>
   <div class="zerocontainer z3">
     <div class="glows">
-      <div [ngClass]="getGlowClass(0)"></div>
-      <div [ngClass]="getGlowClass(1)"></div>
-      <div [ngClass]="getGlowClass(2)"></div>
-      <div [ngClass]="getGlowClass(3)"></div>
-      <div class="glow glow-crown"></div>
+      <div class="glows-canvas">
+        <div class="glow glow-crown"></div>
+        <div *ngFor="let i of [0, 1, 2, 3]" [ngClass]="getGlowClass(i)"></div>
+      </div>
     </div>
   </div>
   <div class="zerocontainer z4">
@@ -30,6 +29,13 @@
   <div class="zerocontainer z7">
     <div class="yolka">
       <img src="./assets/img/yolka.png">
+    </div>
+  </div>
+  <div class="zerocontainer z8">
+    <div class="lamps">
+      <div class="lamps-canvas">
+        <div *ngFor="let i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]" [ngClass]="getLampClass(i)"></div>
+      </div>
     </div>
   </div>
 </div>

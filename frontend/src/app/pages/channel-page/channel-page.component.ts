@@ -247,7 +247,7 @@ export class ChannelPageComponent implements OnInit {
     const nowMonth = now.getMonth() + 1;
     const nowDate = now.getDate();
     this.isHalloween = (nowMonth === 10 && nowDate >= 15) || (nowMonth === 11 && nowDate <= 6);
-    this.isNewYear = (nowMonth === 12 && nowDate >= 2 /* <<<<<<<<<<<<<<<<<<< */) || (nowMonth === 1 && nowDate <= 10);
+    this.isNewYear = (nowMonth === 12 && nowDate >= 15) || (nowMonth === 1 && nowDate <= 10);
   }
 
   createChannelStub(channelId: number): Channel {

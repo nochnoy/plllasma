@@ -18,21 +18,29 @@ export class NewyearComponent implements OnInit {
 
   // Массив кадров, в каждом кадре - номер цвета для каждого из 4х пятен. Цвет 0 = не горит.
   // Позиции в кадре: верх-лево, низ-лево, вехр-право, низ-право
-  // Числа в кадре: 0-темнота, 1-красный, 2-синий, 3-сереневый, 4-жёлтый
+  // Числа в кадре: 0-темнота, 1-красный, 2-синий, 3-сереневый, 4-жёлтый, 5-зелёный
   readonly glowTune = [
     [4, 0, 0, 5],
     [0, 3, 1, 1],
-    [3, 2, 0, 0],
+    [3, 3, 0, 2],
     [0, 1, 4, 4],
     [0, 2, 1, 4],
-    [0, 3, 0, 1],
-    [0, 4, 0, 4],
-    [1, 0, 3, 0],
+    [5, 0, 2, 4],
+    [0, 5, 0, 4],
+    [1, 0, 3, 3],
+  ];
+
+  // 4 массива лампочек по цветам
+  readonly lampsByColor = [
+    [], // 0 - темнота
+    [0, 7, 8, 14], // 1 - красный
+    [2, 6, 9, 10, 13], // 2 - синий
+    [1, 5, 11, 15], // 3 - сереневый
+    [3, 4, 12, 16], // 4 - жёлтый
   ];
 
   act = 0;
-  glowColors: number[] = [];
-  glowFast = true;
+  glowingColors: number[] = [];
 
   ngOnInit(): void {
     const year = (new Date()).getFullYear() + '';
@@ -47,7 +55,7 @@ export class NewyearComponent implements OnInit {
             delay(1000 * 2.1), tap(() => this.act = 2), // открывается дверь, появляется Вейдер
             delay(1000 * 2.2), tap(() => this.act = 3), // Вейдер превращается в ёлку
             tap(() => {
-              this.cookieService.set('newyear--', year); // Посмотрел. Больше не покажем.
+              this.cookieService.set('newyear', year); // Посмотрел. Больше не покажем.
             }),
             delay(1000 * 3)
           );
@@ -56,13 +64,10 @@ export class NewyearComponent implements OnInit {
       tap(() => this.act = 4), // Играют гирлянды
       switchMap(() => {
         return of({}).pipe(
-          tap(() => {
-            this.glowFast = !this.glowFast;
-          }),
-          switchMap(() => from(this.glowTune).pipe(concatMap(x => of(x).pipe(delay(this.glowFast ? 1000 * 0.3 : 1000 * 2.5))))),
+          switchMap(() => from(this.glowTune).pipe(concatMap(x => of(x).pipe(delay(1000 * 4))))),
           tap((rec) => {
             rec.forEach((color, id) => {
-              this.glowColors[id] = color;
+              this.glowingColors[id] = color;
             })
           }),
           repeat(),
@@ -73,7 +78,14 @@ export class NewyearComponent implements OnInit {
   }
 
   getGlowClass(id: number): string {
-    return `glow glow-${id} glow-color-${(this.glowColors[id] ?? 0)}`;
+    return `glow glow-${id} glow-color-${(this.glowingColors[id] ?? 0)}`;
+  }
+
+  getLampClass(id: number): string {
+    const glowingLamps = this.lampsByColor.filter((lamps, color) => this.glowingColors.includes(color));
+    const isOn = glowingLamps.some((lamps) => lamps.includes(id));
+    const color = this.lampsByColor.findIndex((lamps) =>lamps.find((lamp) => lamp === id));
+    return `lamp lamp-${id} lamp-color-${color} ${isOn ? 'on' : ''}`;
   }
 
 }

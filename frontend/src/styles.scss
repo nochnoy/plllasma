@@ -213,17 +213,17 @@ textarea {
     &-newyear {
       .content {
         a {
-          color: #730a0a !important;
-          font-weight: bolder!important;
+          color: rgba(50, 11, 73, 0.6) !important;
+          font-weight: normal!important;
         }
         b {
-          font-weight: bolder;
-          color: black;
+          font-weight: normal;
+          color: rgba(50, 11, 73, 0.6);
         }
         .now-here {
           .nowandhere-label {
-            color: black;
-            font-weight: bolder;
+            color: rgba(50, 11, 73, 0.6);
+            font-weight: normal;
           }
         }
       }
