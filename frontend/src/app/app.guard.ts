@@ -1,4 +1,4 @@
-﻿import {CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router, UrlTree} from '@angular/router';
+﻿import { ActivatedRouteSnapshot, RouterStateSnapshot, Router, UrlTree } from '@angular/router';
 import {Injectable} from '@angular/core';
 import {Observable, of} from "rxjs";
 import {UserService} from "./services/user.service";
@@ -8,7 +8,7 @@ import { LoginStatus } from './model/app-model';
 @Injectable({
   providedIn: 'root'
 })
-export class AppGuard implements CanActivate {
+export class AppGuard  {
 
   constructor(
     private userService: UserService,
