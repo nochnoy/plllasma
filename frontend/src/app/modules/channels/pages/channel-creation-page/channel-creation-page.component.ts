@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import {HttpService} from "../../../../services/http.service";
 import {UserService} from "../../../../services/user.service";
-import {RoleEnum} from "../../../../model/app-model";
+import {IChannelSection, RoleEnum} from "../../../../model/app-model";
 import {FormControl, FormGroup, Validators} from "@angular/forms";
 import {filter, switchMap, tap} from "rxjs/operators";
-import {UntilDestroy} from "@ngneat/until-destroy";
+import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {Router} from "@angular/router";
 import {AppService} from "../../../../services/app.service";
 import {ChannelService} from "../../../../services/channel.service";
+import {Const} from "../../../../model/const";
 
 @UntilDestroy()
 @Component({
@@ -27,6 +28,8 @@ export class ChannelCreationPageComponent implements OnInit {
 
   isLoading = false;
   isGhost = false;
+  channelSections = Const.channelSections;
+  channelSection?: IChannelSection;
 
   newChannelForm: FormGroup = new FormGroup({
     name: new FormControl('', [Validators.required]),
@@ -36,8 +39,23 @@ export class ChannelCreationPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.newChannelForm.get('section')?.disable();
     this.newChannelForm.get('roles')?.disable();
+
+    this.channelSection = Const.channelSections.find((section) => section.default);
+    if (this.channelSection) {
+      this.newChannelForm.get('section')?.setValue(this.channelSection.id + '');
+    }
+
+    const sectionField = this.newChannelForm.get('section');
+    if (sectionField) {
+      sectionField.valueChanges.pipe(
+        tap((value) => {
+          const section = Const.channelSections.find((section) => section.id === parseInt(value, 10));
+          this.channelSection = section ?? undefined;
+        }),
+        untilDestroyed(this)
+      ).subscribe();
+    }
   }
 
   onNewChannelClick(): void {

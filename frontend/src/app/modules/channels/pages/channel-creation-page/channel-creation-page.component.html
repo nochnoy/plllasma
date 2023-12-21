@@ -10,31 +10,34 @@
 
     <form [formGroup]="newChannelForm">
 
-      <label>Название канала (не пошлое, не неприятное)</label>
+      <label>Название</label>
       <input class="input" name="name" type="text" maxlength="14" formControlName="name">
+      <label>Приятное, не пошлое</label>
 
-      <label>Создатель канала</label>
+      <label>Создатель</label>
       <div class="user-input" (click)="isGhost = !isGhost" [class.user-input-ghost]="isGhost">
         <img class="avatar" [src]="isGhost ? '../../../../../assets/ghost.gif' : 'https://plllasma.com/i/' + userService.user.icon + '.gif'" />
         <div>{{isGhost ? 'Привидение' : userService.user.nick}}</div>
         <div>{{isGhost ? '▴' : '▾'}}</div>
       </div>
+      <label>Будет в информации о канале</label>
 
-      <!--
-      <label>В разделе <b>(ещё не готово)</b></label>
+      <label>Секция</label>
       <select formControlName="section">
-        <option>Всякое</option>
+        <option *ngFor="let section of channelSections" [value]="section.id">{{section.label}}</option>
       </select>
-      -->
+      <label>{{(channelSection ? 'Секция "' + channelSection.label + '" - ' + channelSection.description : '')}}</label>
 
       <label>Предупреждение при входе</label>
       <textarea class="input" placeholder="Например про 18+" name="disclaimer" type="text" formControlName="disclaimer"></textarea>
+      <label>Если указано то будет выводиться гражданам, впервые входящим на канал</label>
 
       <!--
       <label>Правила <b>(ещё не готово)</b></label>
       <textarea class="input" name="disclaimer" type="text" formControlName="roles"></textarea>
       -->
 
+      <div></div>
       <div class="buttons">
         <button class="button"
                 [disabled]="newChannelForm.invalid"

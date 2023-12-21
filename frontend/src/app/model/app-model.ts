@@ -169,3 +169,10 @@ export interface IAccess {
   id_place: number;
   role: RoleEnum;
 }
+
+export interface IChannelSection {
+  id: number;
+  label: string;
+  description: string;
+  default?: boolean;
+}
