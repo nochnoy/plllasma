@@ -26,6 +26,7 @@ define("MAIN_CHANNEL_ID", 1); // id Главного
 define("MAX_STARRED_THREADS", 20); // порог кол-ва новых сообщений после которого перестаём строить серые ветки
 define("PAGE_SIZE", 50);
 define("TRASH_PLACE", 5);
+define("KITCHEN_PLACE", 2);
 define("ROLE_READER", 0);
 define("ROLE_WRITER", 1);
 define("ROLE_MODERATOR", 2);

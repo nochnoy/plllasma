@@ -84,6 +84,17 @@ export class MessagesComponent {
     }
   }
 
+  onKitchenClick(event: any, message: Message): void {
+    event.preventDefault();
+    if (window.confirm('Переместить сообщение и подсообщения в Кухню?')) {
+      this.httpService.kitchenMessage(message.id).pipe(
+        tap(() => {
+          this.channelService.invalidateChannel(this.placeId);
+        })
+      ).subscribe();
+    }
+  }
+
   onReplyClick(event: any): void {
     event.preventDefault();
     this.channelService.startMessageReply();
