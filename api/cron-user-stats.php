@@ -54,7 +54,7 @@ while($row = mysqli_fetch_assoc($result)){
 }
 
 // Снимаем игноры с каналов...
-$stmt = $mysqli->prepare('UPDATE lnk_user_place SET ignoring = 0');
+/*$stmt = $mysqli->prepare('UPDATE lnk_user_place SET ignoring = 0');
 $stmt->execute();
 // ...и ставим игноры на каналы, на которые люди не заходят больше месяца, хотя у них есть доступ и каналы обновились
 $stmt = $mysqli->prepare('
@@ -79,6 +79,6 @@ $stmt->execute();
 
 exit(json_encode((object)[
 	'ok' => true
-]));
+]));*/
 
 ?>
