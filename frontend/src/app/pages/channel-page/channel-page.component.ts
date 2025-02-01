@@ -267,12 +267,18 @@ export class ChannelPageComponent implements OnInit {
           this.channel.atMenu = true;
         }
       }),
+      switchMap(() => {
+        if (this.channel) {
+          this.channel.isIgnoring = false;
+        }
+        return this.appService.unignoreChannel$(this.channelId);
+      }),
       switchMap(() => this.channelService.loadChannels$()),
       untilDestroyed(this)
     ).subscribe();
   }
 
-  ubsubscribeCommand(): void {
+  unsubscribeCommand(): void {
     of({}).pipe(
       switchMap(() => this.appService.unsubscribeChannel$(this.channelId)),
       tap((result) => {
@@ -281,6 +287,30 @@ export class ChannelPageComponent implements OnInit {
         }
       }),
       switchMap(() => this.channelService.loadChannels$()),
+      untilDestroyed(this)
+    ).subscribe();
+  }
+
+  ignoreCommand(): void {
+    of({}).pipe(
+      switchMap(() => this.appService.ignoreChannel$(this.channelId)),
+      tap((result) => {
+        if (result.ok && this.channel) {
+          this.channel.isIgnoring = true;
+        }
+      }),
+      untilDestroyed(this)
+    ).subscribe();
+  }
+
+  unignoreCommand(): void {
+    of({}).pipe(
+      switchMap(() => this.appService.unignoreChannel$(this.channelId)),
+      tap((result) => {
+        if (result.ok && this.channel) {
+          this.channel.isIgnoring = false;
+        }
+      }),
       untilDestroyed(this)
     ).subscribe();
   }

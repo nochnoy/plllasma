@@ -132,6 +132,11 @@ export class ChannelService {
         channel.atMenu = input.atMenu;
         channel.viewed = input.viewed;
         channel.changed = input.changed;
+        channel.isIgnoring = !!input.ignoring;
+        channel.statSubscribers = input.statSubscribers ?? 0;
+        channel.statVisitorsDay = input.statVisitorsDay ?? 0;
+        channel.statVisitorsWeek = input.statVisitorsWeek ?? 0;
+        channel.statVisitorsMonth = input.statVisitorsMonth ?? 0;
 
         // Строим ветки
         channel!.deserializeMessages(input);

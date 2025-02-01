@@ -210,4 +210,24 @@ export class AppService {
     );
   }
 
+  ignoreChannel$(channelId: number): Observable<any> {
+    return this.httpClient.post(
+      `${this.apiPath}/channel-ignore.php`,
+      {
+        channelId
+      },
+      { observe: 'body', withCredentials: true }
+    );
+  }
+
+  unignoreChannel$(channelId: number): Observable<any> {
+    return this.httpClient.post(
+      `${this.apiPath}/channel-unignore.php`,
+      {
+        channelId
+      },
+      { observe: 'body', withCredentials: true }
+    );
+  }
+
 }

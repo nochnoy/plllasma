@@ -22,13 +22,13 @@ export class Const {
   static channelSectionAdmin = 7;
 
   static channelSections: IChannelSection[] = [
-    { id: Const.channelSectionFlex,         label: 'Основная',          description: 'для каналов, посвящённых гибкости', default: true },
+    { id: Const.channelSectionFlex,         label: 'Основной',          description: 'для каналов, посвящённых гибкости', default: true },
     { id: Const.channelSectionPerformers,   label: 'Имена',             description: 'для каналов, появящённых отдельным исполнителям, тренерам, и т.д.' },
     { id: Const.channelSectionFlexDark,     label: '18+',               description: 'для каналов, посвящённых гибкости с элементами обнажёнки' },
     { id: Const.channelSectionOther,        label: 'Всякое',            description: 'для каналов на всякие другие темы' },
-    { id: Const.channelSectionMen,          label: 'Мужская конторсия', description: 'для каналов о гибкости в исполнении мужчин' },
+    { id: Const.channelSectionMen,          label: 'Мужская конторсия', description: 'для каналов про мужскую гибкость' },
     { id: Const.channelSectionAmazonia,     label: 'Амазония',          description: 'каналы только для женщин' },
-    { id: Const.channelSectionAdmin,        label: 'Техническое',       description: 'для технических каналов' },
+    { id: Const.channelSectionAdmin,        label: 'Техническое',       description: 'для админских каналов' },
   ];
 
 }

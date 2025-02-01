@@ -19,6 +19,15 @@
     }
   }
 
+  .left-align-button {
+    text-align: left;
+    justify-content: flex-start; /* Выравнивание содержимого по левому краю */
+    width: 100%; /* Чтобы кнопка занимала всю доступную ширину */
+  }
+
+  .subs {
+    margin-left: 0.5rem;
+  }
 }
 
 :host {
@@ -40,4 +49,20 @@
 
 .general-error {
   margin: 1rem;
+}
+
+.ignoring {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 0.5rem;
+  background-color: var(--color-page-bg-dark);
+
+  div {
+    margin-left: 1.8rem;
+    margin-bottom: 0.1rem;
+    &:first-child {
+      position: absolute;
+      margin-left: 0;
+    }
+  }
 }

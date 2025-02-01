@@ -24,6 +24,12 @@ export class Channel {
   isStarredMessages = false;
   isStarredMatrix = false;
 
+  isIgnoring: boolean = false;
+  statSubscribers = 0;
+  statVisitorsDay = 0;
+  statVisitorsMonth = 0;
+  statVisitorsWeek = 0;
+
   public deserializeMessages(input: any) {
     let i: number;
     let rawMessage: any;

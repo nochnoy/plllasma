@@ -22,11 +22,11 @@
       </div>
       <label>Будет в информации о канале</label>
 
-      <label>Секция</label>
+      <label>В каком разделе создадим</label>
       <select formControlName="section">
         <option *ngFor="let section of channelSections" [value]="section.id">{{section.label}}</option>
       </select>
-      <label>{{(channelSection ? 'Секция "' + channelSection.label + '" - ' + channelSection.description : '')}}</label>
+      <label>{{(channelSection ? 'Раздел "' + channelSection.label + '" - ' + channelSection.description : '')}}</label>
 
       <label>Предупреждение при входе</label>
       <textarea class="input" placeholder="Например про 18+" name="disclaimer" type="text" formControlName="disclaimer"></textarea>

@@ -37,7 +37,11 @@ $sql = $mysqli->prepare('
         l.at_menu,
         l.time_viewed,
         l.id as id_lnk_user_place,
-        l.ignoring
+        l.ignoring,
+        p.stat_subscribers,
+        p.stat_visitors_day,
+        p.stat_visitors_week,
+        p.stat_visitors_month
     FROM tbl_places p
     LEFT JOIN lnk_user_place l ON l.id_place = p.id_place AND l.id_user = ?
     WHERE p.id_place = ?
@@ -50,13 +54,17 @@ $sql->bind_param(
 $sql->execute();
 $result = $sql->get_result();
 $row = mysqli_fetch_array($result);
-$name           = $row[0] ?? '';
-$changed        = $row[1] ?? '';
-$matrix         = $row[2] ?? '';
-$atMenu         = $row[3] == 't' ? true : false;
-$lastViewedLnk  = $row[4] ?? '';
-$lnkId          = $row[5];
-$ignoring       = $row[6];
+$name               = $row[0] ?? '';
+$changed            = $row[1] ?? '';
+$matrix             = $row[2] ?? '';
+$atMenu             = $row[3] == 't' ? true : false;
+$lastViewedLnk      = $row[4] ?? '';
+$lnkId              = $row[5] ?? '';
+$ignoring           = $row[6] ?? '';
+$statSubscribers    = $row[7] ?? '';
+$statVisitorsDay    = $row[8] ?? '';
+$statVisitorsWeek   = $row[9] ?? '';
+$statVisitorsMonth  = $row[10] ?? '';
 
 if (empty($lnkId)) {
     // Если не было связи юзер-канал - создадим её
@@ -117,17 +125,6 @@ try {
     ];
 }
 
-// Ура, юзер больше не игнорирует канал!
-if ($ignoring) {
-    $sql = $mysqli->prepare('UPDATE lnk_user_place SET ignoring = 0 WHERE id_user = ? AND id_place = ?');
-    $sql->bind_param(
-        "ii",
-        $userId,
-        $placeId,
-    );
-    $sql->execute(); 
-}
-
 exit(json_encode((object)[
 	'id' =>         $placeId,
 	'pages' =>      $pagesCount,
@@ -139,7 +136,12 @@ exit(json_encode((object)[
     'name' =>       $name,
     'matrix' =>     $matrixDecoded,
     'atMenu' =>     $atMenu,
-    'now' =>        $now
+    'now' =>        $now,
+    'ignoring' =>   $ignoring,
+    'statSubscribers'   => $statSubscribers,
+    'statVisitorsDay'   => $statVisitorsDay,
+    'statVisitorsWeek'  => $statVisitorsWeek,
+    'statVisitorsMonth' => $statVisitorsMonth
 ]));
 
 ?>

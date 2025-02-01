@@ -99,10 +99,10 @@ main {
       margin-right: -2px;
     }
 
-    /*&-ignored {
-      &:before { background-image: url('~src/assets/img/channel-ignored.png'); }
+    &-ignored {
+      &:before { background-image: url('~src/assets/img/channels/ignored.png'); }
     }
-    &.channel-subscribed {
+    /*&.channel-subscribed {
       &:before { background-image: url('~src/assets/img/channel-subscribed.png'); }
     }
     &.channel-ignored {
@@ -145,6 +145,8 @@ main {
   &-text {
     height: var(--input-height);
     line-height: var(--input-height);
+    color: var(--color-logo-red);
+    font-weight: bold;
   }
 }
 
