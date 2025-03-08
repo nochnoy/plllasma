@@ -378,6 +378,9 @@ export class MatrixComponent implements OnInit, OnDestroy {
   endDrag(): void {
     this.isDragging = false;
     if (this.transform) {
+      this.transform.resultMatrixRect.w = Math.max(1, this.transform.resultMatrixRect.w);
+      this.transform.resultMatrixRect.h = Math.max(1, this.transform.resultMatrixRect.h);
+      
       this.transform.object.x = this.transform.resultMatrixRect.x;
       this.transform.object.y = this.transform.resultMatrixRect.y;
       this.transform.object.w = this.transform.resultMatrixRect.w;
@@ -433,18 +436,21 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   // 13й гибкий столбец ///////////////////////////////////////////////////////
 
-  skukojWidth(domRect: DOMRect, x: number, w: number): number {
+    skukojWidth(domRect: DOMRect, x: number, w: number): number {
     // Определяем ширину куска оказавшегося над 13м столбцом, сокращаем её до 1
     // и соответственно меняем ширину объекта чтобы он не выглядел увеличенным
     if (x <= matrixFlexCol && matrixFlexCol <= x + w - 1) {
       const xVisual = Math.round(domRect.left / this.cellSizePlusGap); // x если бы все столбцы были одинаковые
       const xShift = xVisual - x; // на сколько смещён x внутри 13го стоблца
       const flexColCapacity = Math.floor(this.flexColWidthPlusGap / this.cellSizePlusGap); // ширина 13го в клетках
-      const leftSide = Math.max(0, w - Math.max(0, x + w - matrixFlexCol)) // часть блока слева от 13го столбца
+      const leftSide = Math.max(0, w - Math.max(0, x + w - matrixFlexCol)); // часть блока слева от 13го столбца
       const inAndRightSide = Math.max(0, w - leftSide); // внутренняя плюс правая часть
+      
       const shrinkSize = flexColCapacity - xShift;
-      const inAndRightSideShrinked = Math.max(1, inAndRightSide - shrinkSize);
+      const inAndRightSideShrinked = Math.max(1, inAndRightSide - Math.min(shrinkSize, inAndRightSide - 1));
+      
       w = leftSide + inAndRightSideShrinked;
+      w = Math.max(1, w);
     }
     return w;
   }
