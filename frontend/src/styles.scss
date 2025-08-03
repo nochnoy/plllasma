@@ -422,6 +422,27 @@ textarea {
       opacity: 1;
     }
   }
+  .video-preview {
+    min-width: 160px;
+    min-height: 120px;
+    max-width: 160px;
+    max-height: 120px;
+    opacity: 0.6;
+    background-color: #000;
+    &:hover {
+      opacity: 1;
+    }
+  }
+  .video-url {
+    line-height: 0.5rem;
+    font-size: 0.5rem;
+    margin-bottom: 0.2rem;
+    color: black;
+    opacity: 0.2;
+    &:hover {
+      text-decoration: none;
+    }
+  }
 
   .likes {
     margin-left: calc(var(--avatar-size) + var(--avatar-margin));

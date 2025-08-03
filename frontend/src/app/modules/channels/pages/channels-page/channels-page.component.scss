@@ -129,34 +129,26 @@ main {
 
 .new-channel {
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  font-size: 1.1rem;
-  height: 4rem;
+  flex-direction: column;
+  align-items: stretch;
 
-  &-icon {
+  .tower {
     display: inline-block;
-    background-image: url('~src/assets/img/new-channel.png');
-    min-width: 34px;
-    min-height: 46px;
-    margin-right: 0.6rem;
-    margin-top: -6px;
+    background: url('~src/assets/img/new-channel.png') no-repeat center top;
+    min-width: 40px;
+    min-height: 52px;
   }
-  &-text {
-    height: var(--input-height);
-    line-height: var(--input-height);
-    color: var(--color-logo-red);
-    font-weight: bold;
-  }
-}
-
-.rules {
-  p {
-    margin: 0 0 0.8rem 0;
+  .rules {
     color: #423a36;
     img {
       width: 12px;
       height: 12px;
     }
   }
+  .create {
+    color: var(--color-black);
+    font-weight: bold;
+  }
 }
+
+

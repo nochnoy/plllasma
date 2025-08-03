@@ -99,11 +99,8 @@
 
     </section>
 
-    <section>
-      <a routerLink="/channels/new" class="new-channel">
-        <div class="new-channel-icon"></div>
-        <div class="new-channel-text">Создать канал</div>
-      </a>
+    <section class="new-channel">
+      <div class="tower"></div>
       <div class="rules">
         <p>Правила игры:</p>
         <p>1. Все могут создавать свои каналы.</p>
@@ -112,20 +109,13 @@
         <p>4. Создатель является владельцем канала и устанавливает на нём свои правила.</p>
         <p>5. Канал можно сделать открытым для всех или (ещё не доделано) только для указанных граждан</p>
       </div>
+      <a routerLink="/channels/new" class="create">
+        Создать канал
+      </a>
     </section>
 
   </main>
   <div class="sidebar" [class.sidebar-halloween]="isHalloween">
-
-    <div class="halloween" *ngIf="isHalloween">
-      <ng-container *ngIf="currentYear === 2023">
-        Конец близок! Каналы мутируют.
-        Скоро они начнут размножаться
-        и их станет столько, что мы все умрём!
-        И&nbsp;черви съедят наши глаза!<br>
-      </ng-container>
-      <img src="assets/img/halloween-pumpkin.png">
-    </div>
 
   </div>
 </div>
