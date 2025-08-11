@@ -27,7 +27,7 @@ export class LinkyPipe implements PipeTransform {
               const youTubeCode = this.getYouTubeCode(url);
               if (youTubeCode) {
                 // Если код видео найден, возвращаем нашу кастомную HTML-разметку
-                return `<a class="youtube-link" href="${url}" target="_blank" rel="noopener noreferrer"><img class="video-preview" src="https://img.youtube.com/vi/${youTubeCode}/0.jpg" loading="lazy" alt=""><div class="video-url">${url}</div></a>`;
+                return `<a class="youtube-link" href="${url}" target="_blank" rel="noopener noreferrer"><img class="video-preview" src="https://img.youtube.com/vi/${youTubeCode}/0.jpg" loading="lazy" alt=""></a>`;
               }
             }
             // Для всех остальных URL или если код YouTube не найден,

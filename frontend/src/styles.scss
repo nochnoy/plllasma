@@ -433,16 +433,6 @@ textarea {
       opacity: 1;
     }
   }
-  .video-url {
-    line-height: 0.5rem;
-    font-size: 0.5rem;
-    margin-bottom: 0.2rem;
-    color: black;
-    opacity: 0.2;
-    &:hover {
-      text-decoration: none;
-    }
-  }
 
   .likes {
     margin-left: calc(var(--avatar-size) + var(--avatar-margin));
