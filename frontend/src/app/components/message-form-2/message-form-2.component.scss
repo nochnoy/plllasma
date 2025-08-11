@@ -46,16 +46,23 @@
       }
     }
 
-    .editableDiv {
+    .message-textarea {
       flex-grow: 1;
       background: none;
       border: none;
       border-radius: var(--border-radius);
       min-height: 2rem;
       max-height: var(--max-input-height);
-      overflow-y: auto;
+      resize: none;
+      overflow-y: hidden;
+
       &:focus {
         outline: none;
+      }
+
+      &::placeholder {
+        color: #999;
+        font-style: italic;
       }
     }
 
