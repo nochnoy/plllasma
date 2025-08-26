@@ -2,10 +2,10 @@
 -- version 4.9.5deb2
 -- https://www.phpmyadmin.net/
 --
--- Host: localhost
--- Generation Time: Nov 26, 2023 at 11:51 AM
--- Server version: 8.0.28-0ubuntu0.20.04.3
--- PHP Version: 7.4.3
+-- Хост: localhost
+-- Время создания: Авг 26 2025 г., 16:56
+-- Версия сервера: 8.0.28-0ubuntu0.20.04.3
+-- Версия PHP: 7.4.3
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET AUTOCOMMIT = 0;
@@ -19,13 +19,13 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `plllasma`
+-- База данных: `plllasma`
 --
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `lnk_cty_fce`
+-- Структура таблицы `lnk_cty_fce`
 --
 
 CREATE TABLE `lnk_cty_fce` (
@@ -37,7 +37,7 @@ CREATE TABLE `lnk_cty_fce` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `lnk_user_face`
+-- Структура таблицы `lnk_user_face`
 --
 
 CREATE TABLE `lnk_user_face` (
@@ -51,7 +51,7 @@ CREATE TABLE `lnk_user_face` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `lnk_user_ignor`
+-- Структура таблицы `lnk_user_ignor`
 --
 
 CREATE TABLE `lnk_user_ignor` (
@@ -64,7 +64,7 @@ CREATE TABLE `lnk_user_ignor` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `lnk_user_place`
+-- Структура таблицы `lnk_user_place`
 --
 
 CREATE TABLE `lnk_user_place` (
@@ -80,7 +80,7 @@ CREATE TABLE `lnk_user_place` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `lnk_user_profile`
+-- Структура таблицы `lnk_user_profile`
 --
 
 CREATE TABLE `lnk_user_profile` (
@@ -92,7 +92,7 @@ CREATE TABLE `lnk_user_profile` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_access`
+-- Структура таблицы `tbl_access`
 --
 
 CREATE TABLE `tbl_access` (
@@ -106,7 +106,7 @@ CREATE TABLE `tbl_access` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_boards`
+-- Структура таблицы `tbl_boards`
 --
 
 CREATE TABLE `tbl_boards` (
@@ -117,7 +117,7 @@ CREATE TABLE `tbl_boards` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_files`
+-- Структура таблицы `tbl_files`
 --
 
 CREATE TABLE `tbl_files` (
@@ -145,7 +145,7 @@ CREATE TABLE `tbl_files` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_focus`
+-- Структура таблицы `tbl_focus`
 --
 
 CREATE TABLE `tbl_focus` (
@@ -170,7 +170,7 @@ CREATE TABLE `tbl_focus` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_galleries`
+-- Структура таблицы `tbl_galleries`
 --
 
 CREATE TABLE `tbl_galleries` (
@@ -182,7 +182,7 @@ CREATE TABLE `tbl_galleries` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_kpp`
+-- Структура таблицы `tbl_kpp`
 --
 
 CREATE TABLE `tbl_kpp` (
@@ -200,7 +200,7 @@ CREATE TABLE `tbl_kpp` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_log`
+-- Структура таблицы `tbl_log`
 --
 
 CREATE TABLE `tbl_log` (
@@ -216,7 +216,7 @@ CREATE TABLE `tbl_log` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_mail`
+-- Структура таблицы `tbl_mail`
 --
 
 CREATE TABLE `tbl_mail` (
@@ -233,7 +233,7 @@ CREATE TABLE `tbl_mail` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_messages`
+-- Структура таблицы `tbl_messages`
 --
 
 CREATE TABLE `tbl_messages` (
@@ -271,7 +271,7 @@ CREATE TABLE `tbl_messages` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_places`
+-- Структура таблицы `tbl_places`
 --
 
 CREATE TABLE `tbl_places` (
@@ -291,13 +291,17 @@ CREATE TABLE `tbl_places` (
   `first_parent` bigint DEFAULT NULL,
   `weight` smallint DEFAULT '100',
   `at_menu` enum('t','f') DEFAULT 'f',
-  `dont_clean` tinyint(1) NOT NULL DEFAULT '0'
+  `dont_clean` tinyint(1) NOT NULL DEFAULT '0',
+  `stat_subscribers` int NOT NULL DEFAULT '0',
+  `stat_visitors_day` int NOT NULL DEFAULT '0',
+  `stat_visitors_week` int NOT NULL DEFAULT '0',
+  `stat_visitors_month` int NOT NULL DEFAULT '0'
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_place_sections`
+-- Структура таблицы `tbl_place_sections`
 --
 
 CREATE TABLE `tbl_place_sections` (
@@ -309,7 +313,7 @@ CREATE TABLE `tbl_place_sections` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_polls`
+-- Структура таблицы `tbl_polls`
 --
 
 CREATE TABLE `tbl_polls` (
@@ -323,7 +327,7 @@ CREATE TABLE `tbl_polls` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_poll_ansvers`
+-- Структура таблицы `tbl_poll_ansvers`
 --
 
 CREATE TABLE `tbl_poll_ansvers` (
@@ -336,7 +340,7 @@ CREATE TABLE `tbl_poll_ansvers` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_poll_variants`
+-- Структура таблицы `tbl_poll_variants`
 --
 
 CREATE TABLE `tbl_poll_variants` (
@@ -348,7 +352,7 @@ CREATE TABLE `tbl_poll_variants` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_steps`
+-- Структура таблицы `tbl_steps`
 --
 
 CREATE TABLE `tbl_steps` (
@@ -365,7 +369,7 @@ CREATE TABLE `tbl_steps` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_storages`
+-- Структура таблицы `tbl_storages`
 --
 
 CREATE TABLE `tbl_storages` (
@@ -377,7 +381,7 @@ CREATE TABLE `tbl_storages` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_test`
+-- Структура таблицы `tbl_test`
 --
 
 CREATE TABLE `tbl_test` (
@@ -388,7 +392,7 @@ CREATE TABLE `tbl_test` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_unread`
+-- Структура таблицы `tbl_unread`
 --
 
 CREATE TABLE `tbl_unread` (
@@ -400,7 +404,7 @@ CREATE TABLE `tbl_unread` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_users`
+-- Структура таблицы `tbl_users`
 --
 
 CREATE TABLE `tbl_users` (
@@ -443,7 +447,7 @@ CREATE TABLE `tbl_users` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_viewed`
+-- Структура таблицы `tbl_viewed`
 --
 
 CREATE TABLE `tbl_viewed` (
@@ -456,7 +460,7 @@ CREATE TABLE `tbl_viewed` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `tbl_viewed_sub`
+-- Структура таблицы `tbl_viewed_sub`
 --
 
 CREATE TABLE `tbl_viewed_sub` (
@@ -468,23 +472,23 @@ CREATE TABLE `tbl_viewed_sub` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
--- Indexes for dumped tables
+-- Индексы сохранённых таблиц
 --
 
 --
--- Indexes for table `lnk_cty_fce`
+-- Индексы таблицы `lnk_cty_fce`
 --
 ALTER TABLE `lnk_cty_fce`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `lnk_user_face`
+-- Индексы таблицы `lnk_user_face`
 --
 ALTER TABLE `lnk_user_face`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `lnk_user_ignor`
+-- Индексы таблицы `lnk_user_ignor`
 --
 ALTER TABLE `lnk_user_ignor`
   ADD PRIMARY KEY (`id`),
@@ -492,7 +496,7 @@ ALTER TABLE `lnk_user_ignor`
   ADD KEY `id_user_2` (`id_user`) USING BTREE;
 
 --
--- Indexes for table `lnk_user_place`
+-- Индексы таблицы `lnk_user_place`
 --
 ALTER TABLE `lnk_user_place`
   ADD PRIMARY KEY (`id`),
@@ -501,13 +505,13 @@ ALTER TABLE `lnk_user_place`
   ADD KEY `id_place` (`id_place`);
 
 --
--- Indexes for table `lnk_user_profile`
+-- Индексы таблицы `lnk_user_profile`
 --
 ALTER TABLE `lnk_user_profile`
   ADD UNIQUE KEY `id_user` (`id_user`,`id_viewed_user`);
 
 --
--- Indexes for table `tbl_access`
+-- Индексы таблицы `tbl_access`
 --
 ALTER TABLE `tbl_access`
   ADD PRIMARY KEY (`id`),
@@ -516,7 +520,7 @@ ALTER TABLE `tbl_access`
   ADD KEY `id_place` (`id_place`);
 
 --
--- Indexes for table `tbl_boards`
+-- Индексы таблицы `tbl_boards`
 --
 ALTER TABLE `tbl_boards`
   ADD PRIMARY KEY (`id_Board`),
@@ -524,45 +528,45 @@ ALTER TABLE `tbl_boards`
   ADD KEY `id_Board_2` (`id_Board`);
 
 --
--- Indexes for table `tbl_files`
+-- Индексы таблицы `tbl_files`
 --
 ALTER TABLE `tbl_files`
   ADD PRIMARY KEY (`id_file`);
 
 --
--- Indexes for table `tbl_focus`
+-- Индексы таблицы `tbl_focus`
 --
 ALTER TABLE `tbl_focus`
   ADD PRIMARY KEY (`id_focus`),
   ADD KEY `place-message-attachment` (`id_place`,`id_message`,`id_attachment`);
 
 --
--- Indexes for table `tbl_galleries`
+-- Индексы таблицы `tbl_galleries`
 --
 ALTER TABLE `tbl_galleries`
   ADD PRIMARY KEY (`id_gallery`);
 
 --
--- Indexes for table `tbl_kpp`
+-- Индексы таблицы `tbl_kpp`
 --
 ALTER TABLE `tbl_kpp`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `tbl_log`
+-- Индексы таблицы `tbl_log`
 --
 ALTER TABLE `tbl_log`
   ADD PRIMARY KEY (`id`),
   ADD KEY `tim` (`time_created`);
 
 --
--- Indexes for table `tbl_mail`
+-- Индексы таблицы `tbl_mail`
 --
 ALTER TABLE `tbl_mail`
   ADD PRIMARY KEY (`id_mail`);
 
 --
--- Indexes for table `tbl_messages`
+-- Индексы таблицы `tbl_messages`
 --
 ALTER TABLE `tbl_messages`
   ADD PRIMARY KEY (`id_message`),
@@ -572,216 +576,216 @@ ALTER TABLE `tbl_messages`
   ADD KEY `time_created` (`time_created`);
 
 --
--- Indexes for table `tbl_places`
+-- Индексы таблицы `tbl_places`
 --
 ALTER TABLE `tbl_places`
   ADD PRIMARY KEY (`id_place`);
 
 --
--- Indexes for table `tbl_place_sections`
+-- Индексы таблицы `tbl_place_sections`
 --
 ALTER TABLE `tbl_place_sections`
   ADD PRIMARY KEY (`id_section`);
 
 --
--- Indexes for table `tbl_polls`
+-- Индексы таблицы `tbl_polls`
 --
 ALTER TABLE `tbl_polls`
   ADD PRIMARY KEY (`id_poll`);
 
 --
--- Indexes for table `tbl_poll_variants`
+-- Индексы таблицы `tbl_poll_variants`
 --
 ALTER TABLE `tbl_poll_variants`
   ADD PRIMARY KEY (`id_variant`);
 
 --
--- Indexes for table `tbl_steps`
+-- Индексы таблицы `tbl_steps`
 --
 ALTER TABLE `tbl_steps`
   ADD PRIMARY KEY (`id_step`);
 
 --
--- Indexes for table `tbl_storages`
+-- Индексы таблицы `tbl_storages`
 --
 ALTER TABLE `tbl_storages`
   ADD PRIMARY KEY (`id_storage`);
 
 --
--- Indexes for table `tbl_test`
+-- Индексы таблицы `tbl_test`
 --
 ALTER TABLE `tbl_test`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexes for table `tbl_unread`
+-- Индексы таблицы `tbl_unread`
 --
 ALTER TABLE `tbl_unread`
   ADD PRIMARY KEY (`id`),
   ADD KEY `id_user` (`id_user`,`id_message`);
 
 --
--- Indexes for table `tbl_users`
+-- Индексы таблицы `tbl_users`
 --
 ALTER TABLE `tbl_users`
   ADD PRIMARY KEY (`id_user`);
 
 --
--- Indexes for table `tbl_viewed`
+-- Индексы таблицы `tbl_viewed`
 --
 ALTER TABLE `tbl_viewed`
   ADD PRIMARY KEY (`id_view`);
 
 --
--- Indexes for table `tbl_viewed_sub`
+-- Индексы таблицы `tbl_viewed_sub`
 --
 ALTER TABLE `tbl_viewed_sub`
   ADD PRIMARY KEY (`id`);
 
 --
--- AUTO_INCREMENT for dumped tables
+-- AUTO_INCREMENT для сохранённых таблиц
 --
 
 --
--- AUTO_INCREMENT for table `lnk_cty_fce`
+-- AUTO_INCREMENT для таблицы `lnk_cty_fce`
 --
 ALTER TABLE `lnk_cty_fce`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `lnk_user_face`
+-- AUTO_INCREMENT для таблицы `lnk_user_face`
 --
 ALTER TABLE `lnk_user_face`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `lnk_user_ignor`
+-- AUTO_INCREMENT для таблицы `lnk_user_ignor`
 --
 ALTER TABLE `lnk_user_ignor`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `lnk_user_place`
+-- AUTO_INCREMENT для таблицы `lnk_user_place`
 --
 ALTER TABLE `lnk_user_place`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_access`
+-- AUTO_INCREMENT для таблицы `tbl_access`
 --
 ALTER TABLE `tbl_access`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_boards`
+-- AUTO_INCREMENT для таблицы `tbl_boards`
 --
 ALTER TABLE `tbl_boards`
   MODIFY `id_Board` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_files`
+-- AUTO_INCREMENT для таблицы `tbl_files`
 --
 ALTER TABLE `tbl_files`
   MODIFY `id_file` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_focus`
+-- AUTO_INCREMENT для таблицы `tbl_focus`
 --
 ALTER TABLE `tbl_focus`
   MODIFY `id_focus` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_galleries`
+-- AUTO_INCREMENT для таблицы `tbl_galleries`
 --
 ALTER TABLE `tbl_galleries`
   MODIFY `id_gallery` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_kpp`
+-- AUTO_INCREMENT для таблицы `tbl_kpp`
 --
 ALTER TABLE `tbl_kpp`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_log`
+-- AUTO_INCREMENT для таблицы `tbl_log`
 --
 ALTER TABLE `tbl_log`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_mail`
+-- AUTO_INCREMENT для таблицы `tbl_mail`
 --
 ALTER TABLE `tbl_mail`
   MODIFY `id_mail` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_messages`
+-- AUTO_INCREMENT для таблицы `tbl_messages`
 --
 ALTER TABLE `tbl_messages`
   MODIFY `id_message` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_places`
+-- AUTO_INCREMENT для таблицы `tbl_places`
 --
 ALTER TABLE `tbl_places`
   MODIFY `id_place` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_place_sections`
+-- AUTO_INCREMENT для таблицы `tbl_place_sections`
 --
 ALTER TABLE `tbl_place_sections`
   MODIFY `id_section` tinyint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_polls`
+-- AUTO_INCREMENT для таблицы `tbl_polls`
 --
 ALTER TABLE `tbl_polls`
   MODIFY `id_poll` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_poll_variants`
+-- AUTO_INCREMENT для таблицы `tbl_poll_variants`
 --
 ALTER TABLE `tbl_poll_variants`
   MODIFY `id_variant` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_steps`
+-- AUTO_INCREMENT для таблицы `tbl_steps`
 --
 ALTER TABLE `tbl_steps`
   MODIFY `id_step` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_storages`
+-- AUTO_INCREMENT для таблицы `tbl_storages`
 --
 ALTER TABLE `tbl_storages`
   MODIFY `id_storage` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_test`
+-- AUTO_INCREMENT для таблицы `tbl_test`
 --
 ALTER TABLE `tbl_test`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_unread`
+-- AUTO_INCREMENT для таблицы `tbl_unread`
 --
 ALTER TABLE `tbl_unread`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_users`
+-- AUTO_INCREMENT для таблицы `tbl_users`
 --
 ALTER TABLE `tbl_users`
   MODIFY `id_user` int NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_viewed`
+-- AUTO_INCREMENT для таблицы `tbl_viewed`
 --
 ALTER TABLE `tbl_viewed`
   MODIFY `id_view` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `tbl_viewed_sub`
+-- AUTO_INCREMENT для таблицы `tbl_viewed_sub`
 --
 ALTER TABLE `tbl_viewed_sub`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
