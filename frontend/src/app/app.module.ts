@@ -18,7 +18,7 @@ import {MainMenuComponent} from "./components/main-menu/main-menu.component";
 import {SharedModule} from "./modules/shared/shared.module";
 import { MatrixComponent } from './components/matrix/matrix.component';
 import { SelectionComponent } from './components/selection/selection.component';
-import {MessageForm2Component} from "./components/message-form-2/message-form-2.component";
+import {MessageFormComponent} from "./components/message-form-2/message-form.component";
 import {MatMenuModule} from "@angular/material/menu";
 import {MatButtonModule} from "@angular/material/button";
 import {NoopAnimationsModule} from "@angular/platform-browser/animations";
@@ -49,7 +49,7 @@ import { NewyearComponent } from './components/newyear/newyear.component';
       LoginPageComponent,
       ChannelPageComponent,
       MessagesComponent,
-      MessageForm2Component,
+      MessageFormComponent,
       TestMessagesPageComponent,
       MatrixComponent,
       SelectionComponent,

@@ -6,7 +6,13 @@ import {HttpService} from "./http.service";
 import {Channel} from "../model/messages/channel.model";
 import {Message} from "../model/messages/message.model";
 import {UserService} from "./user.service";
-import {IMatrixObject, matrixCollapsedHeightCells, MatrixObjectTypeEnum, newDefaultMatrix} from "../model/matrix.model";
+import {
+  IMatrix,
+  IMatrixObject,
+  matrixCollapsedHeightCells, matrixColsCount,
+  MatrixObjectTypeEnum,
+  newDefaultMatrix
+} from "../model/matrix.model";
 import {Const} from "../model/const";
 
 @Injectable({
@@ -145,15 +151,13 @@ export class ChannelService {
         if (channel) {
           if (input.matrix) {
             channel.matrix = input.matrix;
-            // Найдём высоту матрицы
+            // Исправим объекты, выходящие за границы матрицы
             if (channel.matrix) {
+              channel.matrix = this.fixMatrixBoundaries(channel.matrix);
+              // Найдём высоту матрицы
               let matrixHeight = 0;
-              let title: IMatrixObject | undefined;
               channel.matrix.objects.forEach((o) => {
                 matrixHeight = Math.max(matrixHeight, o.y + o.h);
-                if (o.type === MatrixObjectTypeEnum.channelTitle) {
-                  title = o;
-                }
               });
               channel.matrix.height = matrixHeight;
             }
@@ -259,6 +263,80 @@ export class ChannelService {
         }
       })
     ;
+  }
+
+  fixMatrixBoundaries(matrix: IMatrix): IMatrix {
+    if (!matrix.objects || matrix.objects.length === 0) {
+      return matrix;
+    }
+
+    const fixedMatrix = { ...matrix };
+    const objectsToMove: IMatrixObject[] = [];
+    const objectsInBounds: IMatrixObject[] = [];
+
+    // Разделяем объекты на те, что в границах и те, что нужно переместить
+    fixedMatrix.objects.forEach(obj => {
+      // Вырезаем объекты неизвестного типа
+      if (obj.type === undefined || obj.type < 0 || obj.type > 3) {
+        console.log(`Вырезаем объект неизвестного типа: ${obj.type}, id: ${obj.id}`);
+        return;
+      }
+
+      const isOutOfBounds = obj.x < 0 ||
+        obj.x + obj.w > matrixColsCount ||
+        obj.w > matrixColsCount;
+
+      if (isOutOfBounds) {
+        // Обрезаем ширину объекта если он слишком широкий
+        const fixedObj = { ...obj };
+        if (fixedObj.w > matrixColsCount) {
+          fixedObj.w = matrixColsCount;
+        }
+        objectsToMove.push(fixedObj);
+      } else {
+        objectsInBounds.push(obj);
+      }
+    });
+
+    // Если нет объектов для перемещения, возвращаем исходную матрицу
+    if (objectsToMove.length === 0) {
+      return matrix;
+    }
+
+    // Логируем информацию об исправлении
+    console.log(`Исправляем матрицу: найдено ${objectsToMove.length} объектов, выходящих за границы (${matrixColsCount} столбцов)`);
+    objectsToMove.forEach((obj, index) => {
+      console.log(`  Объект ${index + 1}: x=${obj.x}, y=${obj.y}, w=${obj.w}, h=${obj.h} -> будет перемещен`);
+    });
+
+    // Находим Y-координату первой свободной строки
+    let maxY = 0;
+    objectsInBounds.forEach(obj => {
+      maxY = Math.max(maxY, obj.y + obj.h);
+    });
+
+    // Перемещаем объекты на первую свободную строку, начиная с первого столбца
+    objectsToMove.forEach((obj, index) => {
+      const oldX = obj.x;
+      const oldY = obj.y;
+      obj.x = 0; // Первый столбец
+      obj.y = maxY + index; // Каждый следующий объект на новой строке
+      console.log(`  Объект ${index + 1}: перемещен с (${oldX},${oldY}) на (${obj.x},${obj.y})`);
+    });
+
+    // Объединяем объекты обратно
+    fixedMatrix.objects = [...objectsInBounds, ...objectsToMove];
+
+    // Обновляем высоту матрицы
+    let newHeight = 0;
+    fixedMatrix.objects.forEach(obj => {
+      newHeight = Math.max(newHeight, obj.y + obj.h);
+    });
+    fixedMatrix.height = newHeight;
+
+    console.log(`Матрица исправлена: новая высота = ${newHeight}`);
+
+    return fixedMatrix;
   }
 
 }

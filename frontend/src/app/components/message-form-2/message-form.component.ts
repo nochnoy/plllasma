@@ -12,11 +12,11 @@ import {UploadService} from "../../services/upload.service";
 
 @UntilDestroy()
 @Component({
-  selector: 'app-message-form-2',
-  templateUrl: './message-form-2.component.html',
-  styleUrls: ['./message-form-2.component.scss']
+  selector: 'app-message-form',
+  templateUrl: './message-form.component.html',
+  styleUrls: ['./message-form.component.scss']
 })
-export class MessageForm2Component implements OnInit, AfterViewInit{
+export class MessageFormComponent implements OnInit, AfterViewInit{
 
   constructor(
     public appService: AppService,

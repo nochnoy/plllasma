@@ -74,11 +74,11 @@
         </ng-container>
 
         <div class="reply" *ngIf="message === channelService.selectedMessage && message.isReplyMode">
-          <app-message-form-2 [channelId]="placeId"
+          <app-message-form [channelId]="placeId"
                               [parentMessage]="message"
                               [replyMode]="true"
                               (onPost)="onNewMessageCreated()">
-          </app-message-form-2>
+          </app-message-form>
         </div>
 
         <!-- Инструменты отправки исправленного сообщения -->

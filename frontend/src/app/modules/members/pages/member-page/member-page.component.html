@@ -51,7 +51,7 @@
           <div class="mail-message" *ngFor="let message of mail">
             <div>
               <img *ngIf="message.nick === userService.user.nick" class="avatar" [src]="'https://plllasma.com/i/' + userService.user.icon + '.gif'" />
-              <img *ngIf="message.nick !== userService.user.nick" class="avatar" [src]=member?.icon />
+              <img *ngIf="message.nick !== userService.user.nick" class="avatar" [src]="member.icon" />
               <b [class.star]="message.unread">{{message.nick}}</b>
             </div>
             <span [innerHTML]="message.message | linky | newline"></span>

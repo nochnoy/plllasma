@@ -47,7 +47,6 @@
   --max-input-height: 30rem;
   --max-input-width: 40rem;
   --form-padding: 0.6rem;
-  --form-tools-item-heigth: 2.1rem;
 
   --attachment-icon-size: 160px;
   --avatar-size: 16px;
@@ -55,8 +54,8 @@
 
   --matrix-cell-size: 2rem; // ! должна быть равна константе matrixCellSize
   --matrix-gap: 0.5rem;     // ! должна быть равна константе matrixGap
-  --matrix-cols-count: 22;  // ! должна быть равна константе matrixColsCount А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
-  --matrix-flex-col: 21;    // ! должна быть равна константе matrixFlexCol   А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
+  --matrix-cols-count: 18;  // ! должна быть равна константе matrixColsCount А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
+  --matrix-flex-col: 17;    // ! должна быть равна константе matrixFlexCol   А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
   --matrix-right-cols-count: calc(var(--matrix-cols-count) - var(--matrix-flex-col) - 1); // кол-во столбцов справа от резинового
   --matrix-star-size: 0.8rem;
   --matrix-collapsed-height-cells: 10; // ! должна быть равна константе matrixCollapsedHeightCells
@@ -246,7 +245,7 @@ textarea {
       }
     }
   }
-  @media (min-width: 85rem) {
+  @media (min-width: 75rem) {
     .sidebar {
       min-width: 14rem;
       max-width: 14rem;
@@ -258,7 +257,7 @@ textarea {
       }
     }
   }
-  @media (min-width: 120rem) {
+  @media (min-width: 110rem) {
     .sidebar {
       min-width: 24rem;
       max-width: 24rem;
@@ -587,7 +586,7 @@ textarea {
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
-  margin: 1rem 1rem;
+  margin: 1rem 0 ;
 
   a {
     display: inline-block;
@@ -698,4 +697,18 @@ textarea {
 
 #fileUpload {
   display: none;
+}
+
+.pseudo-link {
+  cursor: pointer;
+}
+
+.up-down {
+  margin-left: -0.3rem;
+  width: 0.8rem;
+  display: inline-block;
+  font-size: 1.2rem;
+  line-height: 1rem;
+  position: relative;
+  top: 0.1rem;
 }

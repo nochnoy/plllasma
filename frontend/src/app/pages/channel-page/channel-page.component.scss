@@ -4,29 +4,48 @@
   display: flex;
   flex-direction: row;
   justify-content: stretch;
+
   &-content {
     flex-grow: 1;
-    max-width: calc((var(--matrix-cell-size) + var(--matrix-gap)) * 14 - var(--matrix-gap));
+    min-width: calc(((var(--matrix-cell-size) + var(--matrix-gap)) * 14) - var(--matrix-gap) + 2px);
+    max-width: calc(((var(--matrix-cell-size) + var(--matrix-gap)) * 14) - var(--matrix-gap) + 2px);
   }
+
   &-tools {
-    margin: var(--form-padding);
-    margin-left: 2rem;
+    font-size: 0.9rem;
+    margin-top: 0.3rem;
+    margin-left: calc(var(--form-padding));
     display: flex;
     flex-direction: column;
 
     >* {
-      line-height: var(--form-tools-item-heigth);
+      overflow: hidden;
+      line-height: 1.8rem;
     }
   }
+}
 
-  .left-align-button {
-    text-align: left;
-    justify-content: flex-start; /* Выравнивание содержимого по левому краю */
-    width: 100%; /* Чтобы кнопка занимала всю доступную ширину */
+.channel-top-bar {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  border-bottom: 2px solid var(--color-border);
+
+  .channel-title {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    flex-grow: 1;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--color-text);
   }
 
-  .subs {
-    margin-left: 0.5rem;
+  .channel-stats {
+    font-size: 0.9rem;
+    margin-left: 1.5rem;
+    cursor: crosshair;
   }
 }
 
@@ -35,7 +54,6 @@
     .mat-button {
       padding: 0;
       text-align: left;
-      line-height: var(--form-tools-item-heigth);
       font-size: 1rem;
 
       i {

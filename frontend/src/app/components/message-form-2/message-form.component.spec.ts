@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { MessageFormComponent } from './message-form-2.component';
+import { MessageFormComponent } from './message-form.component';
 
 describe('MessageFormComponent', () => {
   let component: MessageFormComponent;

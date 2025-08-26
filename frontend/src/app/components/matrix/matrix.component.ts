@@ -44,7 +44,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
   readonly objectTypeText = MatrixObjectTypeEnum.text;
   readonly objectTypeImage = MatrixObjectTypeEnum.image;
   readonly objectTypeTitle = MatrixObjectTypeEnum.title;
-  readonly objectTypeChannelTitle = MatrixObjectTypeEnum.channelTitle;
 
   @Output('change')
   change = new EventEmitter<IMatrix>();
@@ -380,7 +379,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
     if (this.transform) {
       this.transform.resultMatrixRect.w = Math.max(1, this.transform.resultMatrixRect.w);
       this.transform.resultMatrixRect.h = Math.max(1, this.transform.resultMatrixRect.h);
-      
+
       this.transform.object.x = this.transform.resultMatrixRect.x;
       this.transform.object.y = this.transform.resultMatrixRect.y;
       this.transform.object.w = this.transform.resultMatrixRect.w;
@@ -427,8 +426,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
           }
           break;
 
-        case MatrixObjectTypeEnum.channelTitle:
-          break;
+
 
       }
     }
@@ -445,10 +443,10 @@ export class MatrixComponent implements OnInit, OnDestroy {
       const flexColCapacity = Math.floor(this.flexColWidthPlusGap / this.cellSizePlusGap); // ширина 13го в клетках
       const leftSide = Math.max(0, w - Math.max(0, x + w - matrixFlexCol)); // часть блока слева от 13го столбца
       const inAndRightSide = Math.max(0, w - leftSide); // внутренняя плюс правая часть
-      
+
       const shrinkSize = flexColCapacity - xShift;
       const inAndRightSideShrinked = Math.max(1, inAndRightSide - Math.min(shrinkSize, inAndRightSide - 1));
-      
+
       w = leftSide + inAndRightSideShrinked;
       w = Math.max(1, w);
     }
@@ -683,30 +681,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
     }
   }
 
-  addChannelTitleCommand(): void {
-    if (this.channel?.matrix) {
-      const text = (window.prompt('Введите текст') ?? '').trim();
-      if (text) {
-        let w = 8;
-        let h = 1;
-        let x = matrixAddCol;
-        let y = this.getFreeY();
-
-        const o: IMatrixObject = {
-          type: MatrixObjectTypeEnum.channelTitle,
-          y, x, w, h, text,
-          id: this.matrix.newObjectId++,
-          changed: this.now(),
-        };
-        this.matrix.objects.push(o);
-        this.select(o);
-        this.updateMatrixHeight();
-        this.change.emit(this.matrix);
-        this.channel.viewed = this.now(); // Чтобы на объекте не появилась звёздочка
-      }
-    }
-  }
-
   addImageCommand(): void {
     of({}).pipe(
       switchMap(() => this.uploadService.upload()),
@@ -808,11 +782,6 @@ export class MatrixComponent implements OnInit, OnDestroy {
   }
 
   deleteCommand(): void {
-    if (this.selectedObject?.type === MatrixObjectTypeEnum.channelTitle) {
-      window.alert('Это название канала, его нельзя удалять');
-      return;
-    }
-
     if (window.confirm('Удалить выделенный объект?')) {
       const deletedObject = this.selectedObject;
       this.deselect();

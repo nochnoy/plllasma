@@ -32,13 +32,13 @@
     <div *ngIf="transform"
          class="item dragging"
          [class.item-text]="transform.object.type === objectTypeText"
-         [class.item-title]="transform.object.type === objectTypeTitle || transform.object.type === objectTypeChannelTitle"
+         [class.item-title]="transform.object.type === objectTypeTitle"
          [style.left]="(matrixRect.left + transform.resultDomRect.left) + 'px'"
          [style.top]="(matrixRect.top + transform.resultDomRect.top) + 'px'"
          [style.background-image]="'url(/matrix/' + this.channel?.id + '/' + transform.object.image + ')'"
          [style.width]="transform.resultDomRect.width + 'px'"
          [style.height]="transform.resultDomRect.height + 'px'">
-      {{(transform.object.type === objectTypeChannelTitle ? channel?.name : transform.object.text) ?? ''}}
+      {{transform.object.text ?? ''}}
     </div>
 
     <!-- Тень под таскаемой копией объекта -->
@@ -67,15 +67,12 @@
        [class.selected]="selectedObject === object"
        [class.item-text]="object.type === objectTypeText"
        [class.item-title]="object.type === objectTypeTitle"
-       [class.item-channel-title]="object.type === objectTypeChannelTitle"
+
        [class.matrix-star]="object.type === objectTypeImage && object.changed > (channel?.viewed ?? '')"
        [style.grid-area]="(object.y + 1) + '/' + (object.x + 1) + '/' + (object.y + 1 + object.h) + '/' + (object.x + 1 + object.w)"
        [style.background-image]="'url(/matrix/' + this.channel?.id + '/' + object.image + ')'"
        [attr.id]="object.id">
     <ng-container *ngIf="object.type === objectTypeText">{{object.text}}</ng-container>
     <ng-container *ngIf="object.type === objectTypeTitle">{{object.text}}</ng-container>
-    <span *ngIf="object.type === objectTypeChannelTitle" class="content" [class.spinner]="channel?.isLoading ?? true">
-      {{(object.type === objectTypeChannelTitle ? channel?.name : object.text) ?? ''}}
-    </span>
   </div>
 </ng-template>
