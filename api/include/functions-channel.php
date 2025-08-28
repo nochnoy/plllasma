@@ -12,7 +12,7 @@ function getChannelJson($channelId, $lastViewed, $page = 0) {
 	// Получаем из БД страницу из 50 сообщений верхнего уровня
 
 	$sql  = 'SELECT';
-	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo ';
+	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo, json ';
 	$sql .= ' FROM tbl_messages';
 	$sql .= ' WHERE id_place='.$channelId.' AND id_parent=0';
 	$sql .= ' ORDER BY time_created DESC';
@@ -30,7 +30,7 @@ function getChannelJson($channelId, $lastViewed, $page = 0) {
 	if ($row[0] > 0 && $row[0] < MAX_STARRED_THREADS) { // Если звезданутых больше 20ти значит юзер не был здесь слишком долго и дайджестов не получит.
 
 		$sql  = 'SELECT';
-		$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, -1, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo'; 
+		$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, -1, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo, json'; 
 		$sql .= ' FROM tbl_messages';
 		$sql .= ' WHERE';
 		$sql .= ' (id_first_parent<>0 && id_first_parent IN (SELECT id_first_parent FROM tbl_messages WHERE id_place='.$channelId.' AND time_created >= "'.$lastViewed.'"))';
@@ -57,7 +57,7 @@ function getChannelUpdateJson($channelId, $lastViewed, $after) {
 	// Получаем из БД страницу из 50 сообщений верхнего уровня
 
 	$sql  = 'SELECT';
-	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo';
+	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo, json';
 	$sql .= ' FROM tbl_messages';
 	$sql .= ' WHERE id_place='.$channelId.' AND time_created>'.$after;
 	$sql .= ' ORDER BY time_created DESC';
@@ -82,7 +82,7 @@ function getThreadJson($threadId, $lastViewed) {
 	// Получаем из БД страницу из 50 сообщений верхнего уровня
 
 	$sql  = 'SELECT';
-	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo';
+	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo, json';
 	$sql .= ' FROM tbl_messages';
 	$sql .= ' WHERE id_first_parent='.$threadId;
 	$sql .= ' ORDER BY time_created DESC';
@@ -125,6 +125,24 @@ function buildMessagesJson($a, $lastViewed) {
 		$s .= ',"he":'	. ($row[13] ? $row[13] : 0).'';		// he
 		$s .= ',"nep":'	. ($row[14] ? $row[14] : 0).'';		// nep
 		$s .= ',"ogo":'	. ($row[15] ? $row[15] : 0).'';		// ogo
+		
+		// Новые аттачменты из JSON поля
+		if (!empty($row[16])) {
+			$jsonData = safeJsonDecode($row[16]);
+			if ($jsonData && isset($jsonData['attachments']) && !empty($jsonData['attachments'])) {
+				// Получаем полную информацию об аттачментах
+				$attachmentsData = array();
+				foreach ($jsonData['attachments'] as $attachmentId) {
+					$attachment = getAttachmentById($attachmentId);
+					if ($attachment) {
+						$attachmentsData[] = json_encode($attachment, JSON_UNESCAPED_UNICODE);
+					}
+				}
+				if (!empty($attachmentsData)) {
+					$s .= ',"newAttachments":[' . implode(',', $attachmentsData) . ']';
+				}
+			}
+		}
 
 		// иконка
 		if ($row[9] == 1) { 

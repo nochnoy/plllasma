@@ -22,14 +22,8 @@ export class LinkyPipe implements PipeTransform {
               return false; // false означает, что Autolinker создаст обычную ссылку
             }
 
-            // Проверяем, является ли ссылка YouTube-ссылкой (любого типа)
-            if (url.includes('youtu.be') || url.includes('youtube.com')) {
-              const youTubeCode = this.getYouTubeCode(url);
-              if (youTubeCode) {
-                // Если код видео найден, возвращаем нашу кастомную HTML-разметку
-                return `<a class="youtube-link" href="${url}" target="_blank" rel="noopener noreferrer"><img class="video-preview" src="https://img.youtube.com/vi/${youTubeCode}/0.jpg" loading="lazy" alt=""></a>`;
-              }
-            }
+            // YouTube ссылки теперь обрабатываются как обычные ссылки
+            // (аттачменты создаются на бэкенде)
             // Для всех остальных URL или если код YouTube не найден,
             // Autolinker создаст обычную ссылку
             return true;

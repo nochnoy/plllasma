@@ -80,6 +80,10 @@ mysqli_query($mysqli,
 );
 $messageId = mysqli_insert_id($mysqli);
 
+// Обрабатываем аттачменты для YouTube ссылок
+$attachments = processMessageAttachments($messageId, $message);
+updateMessageJson($messageId, $attachments);
+
 // Принимаем файлы, если они были
 
 // Если папки не было, создадим и зададим права

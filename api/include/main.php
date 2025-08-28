@@ -8,6 +8,7 @@ require("include/functions-messages.php");
 require("include/functions-channels.php");
 require("include/functions-channel.php");
 require("include/functions-files.php");
+require("include/functions-attachments.php");
 
 include "../../plllasma-passwords.php";
 if (empty($passwordDB)) {

@@ -24,6 +24,8 @@ import {MatButtonModule} from "@angular/material/button";
 import {NoopAnimationsModule} from "@angular/platform-browser/animations";
 import {MatDialogModule} from "@angular/material/dialog";
 import { NewyearComponent } from './components/newyear/newyear.component';
+import { AttachmentPageComponent } from './pages/attachment-page/attachment-page.component';
+import { AttachmentItemComponent } from './components/attachment-item/attachment-item.component';
 
 @NgModule({
   imports: [
@@ -54,7 +56,9 @@ import { NewyearComponent } from './components/newyear/newyear.component';
       MatrixComponent,
       SelectionComponent,
       DialogDataExampleDialog,
-      NewyearComponent
+          NewyearComponent,
+    AttachmentPageComponent,
+    AttachmentItemComponent
     ],
     providers: [
       AppGuard,

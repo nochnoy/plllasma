@@ -4,11 +4,13 @@ import { AppGuard } from './app.guard';
 import { ChannelPageComponent } from './pages/channel-page/channel-page.component';
 import { LoginPageComponent } from "./pages/login-page/login-page.component";
 import { TestMessagesPageComponent } from "./pages/test-messages-page/test-messages-page.component";
+import { AttachmentPageComponent } from "./pages/attachment-page/attachment-page.component";
 
 const routes: Routes = [
   { path: '', redirectTo: 'channel/1', pathMatch: 'full' },
   { path: 'login', component: LoginPageComponent },
   { path: 'test-messages', component: TestMessagesPageComponent },
+  { path: 'attachment/:id', component: AttachmentPageComponent, canActivate: [AppGuard] },
   {
     path: 'channel',
     children: [

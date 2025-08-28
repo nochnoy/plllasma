@@ -77,6 +77,10 @@ if ($row = mysqli_fetch_assoc($result)) {
 	$sql->bind_param("si", $htmlMessage, $messageId);
 	$sql->execute();
 
+	// Обрабатываем аттачменты для YouTube ссылок
+	$attachments = processMessageAttachments($messageId, $message);
+	updateMessageJson($messageId, $attachments);
+
 	exit(json_encode((object)[
 		'success' => true,
 		'message' => $message

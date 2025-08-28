@@ -1,5 +1,5 @@
 import {BLANK_THREAD, Thread} from "./thread.model";
-import {IAttachment} from "../app-model";
+import {IAttachment, INewAttachment} from "../app-model";
 
 export const BLANK_MESSAGE = <Message>{text: 'BLANK'};
 
@@ -10,6 +10,7 @@ export class Message {
   rootId: number = 0;
   thread: Thread = BLANK_THREAD;
   attachments: IAttachment[] = [];
+  newAttachments: INewAttachment[] = []; // Полные данные новых аттачментов
   nick = '';
   icon = '';
   text = '';
@@ -141,6 +142,9 @@ export class Message {
         messageId: this.id
       });
     }
+
+    // Новые аттачменты
+    this.newAttachments = raw.newAttachments || [];
 
     if (raw.hasOwnProperty('cm')) {
       this.commentsCount = raw.cm;

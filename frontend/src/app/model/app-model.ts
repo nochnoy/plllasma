@@ -98,6 +98,17 @@ export interface IMenuCity {
   channels: IChannelLink[];
 }
 
+export interface INewAttachment {
+  id: string;
+  type: 'file' | 'image' | 'video' | 'youtube';
+  created: string;
+  icon?: string;
+  preview?: string;
+  file?: string;
+  source?: string;
+  status: 'unavailable' | 'pending' | 'ready';
+}
+
 export const EMPTY_CHANNEL: IChannelLink = {
   id_place: 0,
   parent: 0,
