@@ -70,6 +70,11 @@ function createAttachment($messageId, $type, $source = null, $videoId = null) {
 function downloadYouTubeAssets($attachmentId, $videoId) {
     // Создаем пути для файлов
     $folderPath = createAttachmentFolder($attachmentId);
+    if (!$folderPath) {
+        error_log("YouTube attachment $attachmentId: Failed to create folder");
+        return false;
+    }
+    
     $previewPath = $folderPath . $attachmentId . '-p.jpg';
     $iconPath = $folderPath . $attachmentId . '-i.jpg';
     
@@ -367,11 +372,27 @@ function createAttachmentFolder($attachmentId) {
     $nextTwo = substr($attachmentId, 2, 2);
     
     // Определяем корневую папку проекта (папка, содержащая api/)
-    $rootPath = dirname(__DIR__); // Поднимаемся на 1 уровень от api/include/ до api/, затем еще на 1 до корня
+    $rootPath = dirname(dirname(__DIR__)); // Поднимаемся на 2 уровня от api/include/ до корня проекта
     $folderPath = $rootPath . "/attachments-new/$firstTwo/$nextTwo/";
     
     if (!is_dir($folderPath)) {
-        mkdir($folderPath, 0777, true);
+        // Пробуем создать папку с разными правами
+        $permissions = [0755, 0777, 0775];
+        $created = false;
+        
+        foreach ($permissions as $perm) {
+            if (mkdir($folderPath, $perm, true)) {
+                $created = true;
+                error_log("Directory created successfully: $folderPath with permissions " . decoct($perm));
+                break;
+            }
+        }
+        
+        if (!$created) {
+            $error = error_get_last();
+            error_log("Failed to create directory: $folderPath. Error: " . ($error ? $error['message'] : 'Unknown error'));
+            return false;
+        }
     }
     
     return $folderPath;
