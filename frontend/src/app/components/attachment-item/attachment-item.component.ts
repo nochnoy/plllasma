@@ -39,9 +39,18 @@ export class AttachmentItemComponent implements OnInit {
   getAttachmentIcon(): string {
     if (!this.attachment) return '';
     
-    // Если есть иконка в attachment.icon, используем её
+    // Если есть иконка, составляем путь к файлу иконки
     if (this.attachment.icon) {
-      return this.attachment.icon;
+      const xx = this.attachment.id.substring(0, 2);
+      const yy = this.attachment.id.substring(2, 4);
+      return `attachments-new/${xx}/${yy}/${this.attachment.id}-i.jpg`;
+    }
+    
+    // Если есть превьюшка, составляем путь к файлу превьюшки
+    if (this.attachment.preview) {
+      const xx = this.attachment.id.substring(0, 2);
+      const yy = this.attachment.id.substring(2, 4);
+      return `attachments-new/${xx}/${yy}/${this.attachment.id}-p.jpg`;
     }
     
     // Иначе возвращаем путь к черному прямоугольнику
@@ -73,6 +82,8 @@ export class AttachmentItemComponent implements OnInit {
         return 'Обрабатывается...';
       case 'unavailable':
         return 'Недоступно';
+      case 'rejected':
+        return 'Ошибка обработки';
       case 'ready':
         return '';
       default:

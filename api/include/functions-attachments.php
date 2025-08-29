@@ -215,6 +215,23 @@ function updateAttachmentPaths($attachmentId, $icon = null, $preview = null, $fi
     return $sql->execute();
 }
 
+// Обновляет флаги наличия файлов аттачмента (для воркера)
+function updateAttachmentFlags($attachmentId, $hasIcon = false, $hasPreview = false) {
+    global $mysqli;
+    
+    $iconValue = $hasIcon ? 1 : 0;
+    $previewValue = $hasPreview ? 1 : 0;
+    
+    $sql = $mysqli->prepare('
+        UPDATE tbl_attachments 
+        SET icon = ?, preview = ? 
+        WHERE id = ?
+    ');
+    $sql->bind_param("iis", $iconValue, $previewValue, $attachmentId);
+    
+    return $sql->execute();
+}
+
 // Создает папку для аттачмента
 function createAttachmentFolder($attachmentId) {
     $firstTwo = substr($attachmentId, 0, 2);

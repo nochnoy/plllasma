@@ -33,7 +33,7 @@ export class AttachmentPageComponent implements OnInit {
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          this.attachment = data.attachment;
+          this.attachment = this.transformAttachment(data.attachment);
           this.handleAttachmentStatus();
         } else {
           this.error = 'Аттачмент не найден';
@@ -60,6 +60,9 @@ export class AttachmentPageComponent implements OnInit {
       case 'ready':
         // Показываем контент
         break;
+      case 'rejected':
+        // Показываем сообщение об ошибке обработки
+        break;
       case 'unavailable':
         // Показываем сообщение о недоступности
         break;
@@ -70,13 +73,32 @@ export class AttachmentPageComponent implements OnInit {
     this.router.navigate(['/']);
   }
 
+  private transformAttachment(rawAttachment: any): INewAttachment {
+    return {
+      ...rawAttachment,
+      icon: Boolean(rawAttachment.icon),
+      preview: Boolean(rawAttachment.preview)
+    };
+  }
+
   getAttachmentIcon(): string {
     if (!this.attachment) return '';
     
+    // Если есть иконка, составляем путь к файлу иконки
     if (this.attachment.icon) {
-      return this.attachment.icon;
+      const xx = this.attachment.id.substring(0, 2);
+      const yy = this.attachment.id.substring(2, 4);
+      return `attachments-new/${xx}/${yy}/${this.attachment.id}-i.jpg`;
     }
     
+    // Если есть превьюшка, составляем путь к файлу превьюшки
+    if (this.attachment.preview) {
+      const xx = this.attachment.id.substring(0, 2);
+      const yy = this.attachment.id.substring(2, 4);
+      return `attachments-new/${xx}/${yy}/${this.attachment.id}-p.jpg`;
+    }
+    
+    // Иначе возвращаем стандартные иконки по типу
     switch (this.attachment.type) {
       case 'youtube':
         return '/api/images/attachment-icons/video.png';

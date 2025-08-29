@@ -144,7 +144,11 @@ export class Message {
     }
 
     // Новые аттачменты
-    this.newAttachments = raw.newAttachments || [];
+    this.newAttachments = (raw.newAttachments || []).map((attachment: any) => ({
+      ...attachment,
+      icon: Boolean(attachment.icon),
+      preview: Boolean(attachment.preview)
+    }));
 
     if (raw.hasOwnProperty('cm')) {
       this.commentsCount = raw.cm;

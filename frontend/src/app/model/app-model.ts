@@ -102,11 +102,11 @@ export interface INewAttachment {
   id: string;
   type: 'file' | 'image' | 'video' | 'youtube';
   created: string;
-  icon?: string;
-  preview?: string;
+  icon?: boolean;
+  preview?: boolean;
   file?: string;
   source?: string;
-  status: 'unavailable' | 'pending' | 'ready';
+  status: 'unavailable' | 'pending' | 'ready' | 'rejected';
 }
 
 export const EMPTY_CHANNEL: IChannelLink = {
