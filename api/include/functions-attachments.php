@@ -56,10 +56,139 @@ function createAttachment($messageId, $type, $source = null, $videoId = null) {
     $sql->bind_param("sissss", $id, $messageId, $type, $created, $source, $status);
     
     if ($sql->execute()) {
+        // Если это YouTube аттачмент, сразу скачиваем превью и иконку
+        if ($type === 'youtube' && $videoId) {
+            downloadYouTubeAssets($id, $videoId);
+        }
         return $id;
     }
     
     return null;
+}
+
+// Скачивает превью и иконку для YouTube видео
+function downloadYouTubeAssets($attachmentId, $videoId) {
+    // Создаем пути для файлов
+    $folderPath = createAttachmentFolder($attachmentId);
+    $previewPath = $folderPath . $attachmentId . '-p.jpg';
+    $iconPath = $folderPath . $attachmentId . '-i.jpg';
+    
+    // Скачиваем превью
+    $previewUrl = "http://194.135.33.47:5000/api/preview/" . $videoId;
+    $previewSuccess = downloadFile($previewUrl, $previewPath);
+    
+    // Дополнительная проверка: файл действительно существует и не пустой
+    if ($previewSuccess && (!file_exists($previewPath) || filesize($previewPath) < 1024)) {
+        $previewSuccess = false;
+        error_log("YouTube attachment $attachmentId: Preview file not created or too small");
+    }
+    
+    // Скачиваем иконку (то же превью, но создаем иконку 160x160)
+    $iconSuccess = false;
+    if ($previewSuccess && file_exists($previewPath)) {
+        $iconSuccess = createIconFromPreview($previewPath, $iconPath);
+        
+        // Дополнительная проверка иконки
+        if ($iconSuccess && (!file_exists($iconPath) || filesize($iconPath) < 1024)) {
+            $iconSuccess = false;
+            error_log("YouTube attachment $attachmentId: Icon file not created or too small");
+        }
+    }
+    
+    // Обновляем запись в БД
+    $iconFlag = $iconSuccess ? '1' : '0';
+    $previewFlag = $previewSuccess ? '1' : '0';
+    updateAttachmentFlags($attachmentId, $iconFlag, $previewFlag);
+    
+    // Обновляем статус
+    $status = ($previewSuccess || $iconSuccess) ? 'ready' : 'unavailable';
+    updateAttachmentStatus($attachmentId, $status);
+    
+    // Логируем результат
+    error_log("YouTube attachment $attachmentId: preview=$previewSuccess, icon=$iconSuccess, status=$status");
+    
+    return $previewSuccess || $iconSuccess;
+}
+
+// Скачивает файл по URL
+function downloadFile($url, $path) {
+    $context = stream_context_create([
+        'http' => [
+            'timeout' => 10,
+            'user_agent' => 'Mozilla/5.0 (compatible; Plasma/1.0)'
+        ]
+    ]);
+    
+    $content = @file_get_contents($url, false, $context);
+    if ($content === false) {
+        error_log("Failed to download from URL: $url");
+        return false;
+    }
+    
+    // Проверяем что контент не пустой и это изображение
+    if (strlen($content) < 1024) {
+        error_log("Downloaded content too small: " . strlen($content) . " bytes from $url");
+        return false;
+    }
+    
+    // Проверяем что это JPEG (начинается с FF D8 FF)
+    if (substr($content, 0, 3) !== "\xFF\xD8\xFF") {
+        error_log("Downloaded content is not a valid JPEG from $url");
+        return false;
+    }
+    
+    $result = file_put_contents($path, $content);
+    if ($result === false) {
+        error_log("Failed to write file to: $path");
+        return false;
+    }
+    
+    return true;
+}
+
+// Создает иконку 160x160 из превью (crop to fit)
+function createIconFromPreview($previewPath, $iconPath) {
+    if (!file_exists($previewPath)) {
+        return false;
+    }
+    
+    // Загружаем изображение
+    $image = @imagecreatefromjpeg($previewPath);
+    if (!$image) {
+        return false;
+    }
+    
+    // Получаем размеры
+    $width = imagesx($image);
+    $height = imagesy($image);
+    
+    // Создаем новое изображение 160x160
+    $icon = imagecreatetruecolor(160, 160);
+    
+    // Вычисляем масштаб для заполнения всего пространства
+    $scaleX = 160 / $width;
+    $scaleY = 160 / $height;
+    $scale = max($scaleX, $scaleY); // Берем больший масштаб
+    
+    // Вычисляем новые размеры после масштабирования
+    $newWidth = $width * $scale;
+    $newHeight = $height * $scale;
+    
+    // Вычисляем координаты для обрезки (центрируем)
+    $srcX = ($newWidth - 160) / 2 / $scale;
+    $srcY = ($newHeight - 160) / 2 / $scale;
+    
+    // Копируем и масштабируем с обрезкой
+    imagecopyresampled($icon, $image, 0, 0, $srcX, $srcY, 160, 160, 160 / $scale, 160 / $scale);
+    
+    // Сохраняем
+    $result = imagejpeg($icon, $iconPath, 90);
+    
+    // Освобождаем память
+    imagedestroy($image);
+    imagedestroy($icon);
+    
+    return $result;
 }
 
 // Получает аттачменты для сообщения
@@ -236,7 +365,10 @@ function updateAttachmentFlags($attachmentId, $hasIcon = false, $hasPreview = fa
 function createAttachmentFolder($attachmentId) {
     $firstTwo = substr($attachmentId, 0, 2);
     $nextTwo = substr($attachmentId, 2, 2);
-    $folderPath = PATH_TO_STORAGE . "new/$firstTwo/$nextTwo/$attachmentId/";
+    
+    // Определяем корневую папку проекта (папка, содержащая api/)
+    $rootPath = dirname(__DIR__); // Поднимаемся на 1 уровень от api/include/ до api/, затем еще на 1 до корня
+    $folderPath = $rootPath . "/attachments-new/$firstTwo/$nextTwo/";
     
     if (!is_dir($folderPath)) {
         mkdir($folderPath, 0777, true);
