@@ -24,6 +24,7 @@
 
         <!-- Оригинал сообщения юзер НЕ видит когда выделит своё собственное сообщение -->
         <ng-container *ngIf="!(message === channelService.selectedMessage && channelService.selectedMessage.isEditMode)">
+          <br *ngIf="!message.parent">
           <p *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></p>
         </ng-container>
         <!-- Юзер выделил своё собственное сообщение. Покажем его в режиме редактирования. -->
@@ -113,6 +114,7 @@
            [routerLink]="'/members/' + message.nick"
            target="_blank"
            [class.star]="message.isStarred">{{message.nick}}</a>
+        <br *ngIf="!message.parent">
         <p *ngIf="!!message.text" [innerHTML]="message.text | linky: true | linksToStubs | shorten"></p>
 
         <div *ngIf="message.attachments || (message.newAttachments && message.newAttachments.length > 0)">
