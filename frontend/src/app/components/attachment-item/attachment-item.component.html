@@ -1,15 +1,9 @@
 <div class="attachment-item"
      *ngIf="attachment"
-     (click)="onAttachmentClick()"
-     [title]="getAttachmentTitle()">
-  
+     (click)="onAttachmentClick()">
+
   <img [src]="getAttachmentIcon()"
-       [alt]="getAttachmentTitle()"
        class="attachment-icon"
        loading="lazy"
        (error)="onImageError($event)" />
-  
-  <div class="attachment-info" *ngIf="getStatusText()">
-    <span class="attachment-status">{{ getStatusText() }}</span>
-  </div>
 </div>

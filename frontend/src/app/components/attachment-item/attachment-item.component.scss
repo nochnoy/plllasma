@@ -1,24 +1,13 @@
 .attachment-item {
   display: inline-block;
-  margin: 2px;
-  padding: 4px;
-  border: 1px solid #ddd;
   border-radius: 4px;
-  background: #f9f9f9;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
-  min-width: 60px;
-  min-height: 60px;
+  width: 160px;
+  height: 160px;
   text-align: center;
-  vertical-align: top;
-
-  &:hover {
-    background: #f0f0f0;
-    border-color: #ccc;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
+  vertical-align: center;
 
   &.loading {
     opacity: 0.7;
@@ -26,30 +15,8 @@
   }
 
   .attachment-icon {
-    width: 48px;
-    height: 48px;
-    object-fit: cover;
-    border-radius: 2px;
-    display: block;
-    margin: 0 auto;
-    
-    // Стили для черного прямоугольника (fallback)
-    &[src*="data:image/svg+xml"] {
-      background: #000;
-      border: 1px solid #333;
-    }
-  }
-
-  .attachment-info {
-    margin-top: 2px;
-    
-    .attachment-status {
-      font-size: 10px;
-      color: #666;
-      display: block;
-      text-align: center;
-      line-height: 1.2;
-    }
+    width: 160px;
+    height: 160px;
   }
 
   .attachment-loading,
