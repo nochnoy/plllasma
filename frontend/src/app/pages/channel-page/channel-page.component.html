@@ -16,7 +16,7 @@
           <div *ngIf="channel?.isLoading" class="spinner"></div>
         </div>
         <div
-          *ngIf="!channel?.isLoading"
+          *ngIf="!channel?.isLoading && channel?.id !== 1"
           class="channel-stats"
           title="Количество людей, добавивших этот канал в своё боковое меню"
         >
