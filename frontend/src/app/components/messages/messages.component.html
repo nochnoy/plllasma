@@ -31,14 +31,15 @@
         <p *ngIf="message === channelService.selectedMessage && channelService.selectedMessage.isEditMode"
            class="editable" tabindex="1" autofocus contenteditable="true" [(ngModel)]="message.text"></p>
 
-        <div *ngIf="message.attachments || (message.newAttachments && message.newAttachments.length > 0)">
+        <div *ngIf="message.attachments || (message.newAttachments && message.newAttachments.length > 0)" class="attachments">
+
           <!-- Старые аттачменты -->
           <a *ngFor="let attachment of message.attachments"
              class="attachment" target="_blank"
              [href]="'../api/file.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id">
             <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
           </a>
-          
+
           <!-- Новые аттачменты -->
           <app-attachment-item
             *ngFor="let attachment of message.newAttachments"
@@ -124,7 +125,7 @@
              [href]="'../api/file.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id">
             <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
           </a>
-          
+
           <!-- Новые аттачменты -->
           <app-attachment-item
             *ngFor="let attachment of message.newAttachments"

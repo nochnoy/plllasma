@@ -403,14 +403,17 @@ textarea {
     }
   }
 
-  .attachment {
-    margin-right: 0.3rem;
-    img {
-      width: var(--attachment-icon-size);
-      height: var(--attachment-icon-size);
-      opacity: 0.7;
-      &:hover {
-        opacity: 1;
+  .attachments {
+    & > * {
+      margin-right: 0.3rem;
+      img {
+        width: var(--attachment-icon-size);
+        height: var(--attachment-icon-size);
+        opacity: 0.7;
+
+        &:hover {
+          opacity: 1;
+        }
       }
     }
   }
@@ -452,10 +455,11 @@ textarea {
     &.expand:before {
       opacity: 0.4;
     }
-    .attachment {
+    .attachments {
       img {
         opacity: 0.3;
         filter: grayscale(100%);
+        margin-right: 0.3rem;
       }
     }
   }
