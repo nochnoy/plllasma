@@ -1,53 +1,47 @@
 <div class="attachment-page">
-  <div class="header">
-    <button class="back-button" (click)="onBackClick()">← Назад</button>
-    <h1>{{ getAttachmentTitle() }}</h1>
-  </div>
-
-  <div class="content" *ngIf="!loading && !error">
-    <div class="attachment-info">
-      <img [src]="getAttachmentIcon()" [alt]="getAttachmentTitle()" class="attachment-icon" />
-      <div class="info">
-        <h2>{{ getAttachmentTitle() }}</h2>
-        <p>Создан: {{ attachment?.created | date:'medium' }}</p>
-        <p>Статус: {{ attachment?.status }}</p>
-      </div>
-    </div>
-
-    <!-- Недоступный контент -->
-    <div class="unavailable-content" *ngIf="attachment?.status === 'unavailable'">
-      <div class="unavailable-message">
-        <img [src]="attachment?.preview || getAttachmentIcon()" 
-             [alt]="getAttachmentTitle()" 
-             class="preview-image" />
-        <div class="message-overlay">
-          <p>Этот контент больше недоступен</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Готовый контент -->
-    <div class="ready-content" *ngIf="attachment?.status === 'ready'">
-      <div class="video-player-placeholder" *ngIf="attachment?.type === 'youtube'">
-        <p>Здесь будет видеоплеер</p>
-        <p>Пока что можно перейти на YouTube:</p>
-        <a [href]="attachment?.source" target="_blank" class="youtube-link">
-          Открыть на YouTube
-        </a>
-      </div>
-      
-      <img [src]="attachment?.file" 
-           [alt]="getAttachmentTitle()" 
-           *ngIf="attachment?.type === 'image'"
-           class="content-image" />
-    </div>
-  </div>
-
+  <!-- Загрузка -->
   <div class="loading" *ngIf="loading">
     <p>Загрузка...</p>
   </div>
 
+  <!-- Ошибка -->
   <div class="error" *ngIf="error">
     <p>{{ error }}</p>
+  </div>
+
+  <!-- Контент -->
+  <div class="content" *ngIf="!loading && !error && attachment">
+    
+    <!-- Картинка -->
+    <div class="image-content" *ngIf="attachment.type === 'image'">
+      <img [src]="getAttachmentImageUrl()" 
+           [alt]="attachment.filename || 'Изображение'" 
+           class="content-image" />
+    </div>
+    
+    <!-- Видео -->
+    <div class="video-content" *ngIf="attachment.type === 'video'">
+      <video [src]="getAttachmentImageUrl()" 
+             controls 
+             class="content-video"
+             [attr.poster]="getVideoPosterUrl()">
+        Ваш браузер не поддерживает воспроизведение видео.
+      </video>
+      <div class="file-info">
+        <h2 class="file-name">{{ attachment.filename || 'Видео' }}</h2>
+        <button class="download-button" (click)="downloadFile()">Скачать</button>
+        <p class="file-size">{{ getFileSize() }}</p>
+      </div>
+    </div>
+    
+    <!-- Файл -->
+    <div class="file-content" *ngIf="attachment.type === 'file'">
+      <div class="file-info">
+        <h2 class="file-name">{{ attachment.filename || 'Файл' }}</h2>
+        <button class="download-button" (click)="downloadFile()">Скачать</button>
+        <p class="file-size">{{ getFileSize() }}</p>
+      </div>
+    </div>
+    
   </div>
 </div>

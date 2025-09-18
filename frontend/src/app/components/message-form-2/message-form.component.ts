@@ -1,6 +1,8 @@
 import {Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, ViewChild, AfterViewInit} from '@angular/core';
 import {AppService} from "../../services/app.service";
-import {tap} from "rxjs/operators";
+import {tap, switchMap, map} from "rxjs/operators";
+import {of, Observable} from "rxjs";
+import {HttpClient} from "@angular/common/http";
 import {IUploadingAttachment} from "../../model/app-model";
 import {Utils} from "../../utils/utils";
 import {Const} from "../../model/const";
@@ -23,6 +25,7 @@ export class MessageFormComponent implements OnInit, AfterViewInit{
     public userService: UserService,
     public channelService: ChannelService,
     public uploadService: UploadService,
+    private httpClient: HttpClient,
   ) { }
 
   @ViewChild('textarea') textarea?: ElementRef;
@@ -94,8 +97,22 @@ export class MessageFormComponent implements OnInit, AfterViewInit{
     const cleanedText = this.cleanMessageText(this.messageText);
     if (cleanedText || this.attachments.length) {
       this.isSending = true;
-      this.appService.addMessage$(this.channelId, cleanedText, this.parentMessage?.id || 0, this.isGhost, this.attachments)
+      
+      // Сначала создаем сообщение без аттачментов
+      this.appService.addMessage$(this.channelId, cleanedText, this.parentMessage?.id || 0, this.isGhost, [])
         .pipe(
+          switchMap((result: any) => {
+            const messageId = result.messageId;
+            
+            // Если есть аттачменты, загружаем их в новую систему
+            if (this.attachments.length > 0) {
+              return this.uploadAttachments(messageId).pipe(
+                map(() => result)
+              );
+            }
+            
+            return of(result);
+          }),
           tap((result: any) => {
             this.isSending = false;
             this.attachments.length = 0;
@@ -113,6 +130,22 @@ export class MessageFormComponent implements OnInit, AfterViewInit{
           untilDestroyed(this)
         ).subscribe();
     }
+  }
+
+  private uploadAttachments(messageId: number): Observable<any> {
+    const formData = new FormData();
+    formData.append('placeId', this.channelId.toString());
+    formData.append('messageId', messageId.toString());
+    
+    // Добавляем файлы
+    const validAttachments = this.attachments.filter(a => !a.error);
+    validAttachments.forEach((attachment, index) => {
+      formData.append(`file${index}`, attachment.file);
+    });
+    
+    return this.httpClient.post('/api/attachment-upload.php', formData, {
+      withCredentials: true
+    });
   }
 
   private cleanMessageText(text: string): string {

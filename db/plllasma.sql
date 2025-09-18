@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: localhost
--- Время создания: Авг 26 2025 г., 16:56
+-- Время создания: Сен 17 2025 г., 20:50
 -- Версия сервера: 8.0.28-0ubuntu0.20.04.3
 -- Версия PHP: 7.4.3
 
@@ -102,6 +102,29 @@ CREATE TABLE `tbl_access` (
   `role` tinyint DEFAULT NULL,
   `addedbyscript` tinyint DEFAULT '0'
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Структура таблицы `tbl_attachments`
+--
+
+CREATE TABLE `tbl_attachments` (
+  `id` varchar(36) NOT NULL COMMENT 'GUID аттачмента',
+  `id_message` bigint NOT NULL COMMENT 'ID сообщения',
+  `type` enum('file','image','video','youtube') NOT NULL COMMENT 'Тип аттачмента',
+  `created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Дата создания',
+  `icon` tinyint NOT NULL DEFAULT 0 COMMENT 'Версия иконки (0 - нет, >0 - есть с версией)',
+  `preview` tinyint NOT NULL DEFAULT 0 COMMENT 'Версия превью (0 - нет, >0 - есть с версией)',
+  `file` tinyint NOT NULL DEFAULT 0 COMMENT 'Версия файла (0 - нет, >0 - есть с версией)',
+  `filename` text DEFAULT NULL COMMENT 'Оригинальное имя загруженного файла',
+  `source` varchar(500) DEFAULT NULL COMMENT 'Исходный URL (для YouTube)',
+  `status` enum('unavailable','pending','ready','rejected','processing_failed') NOT NULL DEFAULT 'pending' COMMENT 'Статус обработки',
+  `views` int NOT NULL DEFAULT '0' COMMENT 'Количество просмотров',
+  `downloads` int NOT NULL DEFAULT '0' COMMENT 'Количество скачиваний',
+  `size` bigint DEFAULT NULL COMMENT 'Размер файла в байтах',
+  `processing_started` timestamp NULL DEFAULT NULL COMMENT 'Время начала обработки воркером'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Новая система аттачментов к сообщениям';
 
 -- --------------------------------------------------------
 
@@ -248,6 +271,7 @@ CREATE TABLE `tbl_messages` (
   `nick` text,
   `subject` text,
   `message` mediumtext,
+  `json` json DEFAULT NULL,
   `time_created` datetime DEFAULT NULL,
   `mail_anchor` bigint DEFAULT NULL,
   `reply_to_message_id` bigint NOT NULL DEFAULT '0',
@@ -518,6 +542,20 @@ ALTER TABLE `tbl_access`
   ADD KEY `user_place` (`id_user`,`id_place`),
   ADD KEY `id_user` (`id_user`),
   ADD KEY `id_place` (`id_place`);
+
+--
+-- Индексы таблицы `tbl_attachments`
+--
+ALTER TABLE `tbl_attachments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_message` (`id_message`),
+  ADD KEY `idx_type` (`type`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_created` (`created`),
+  ADD KEY `idx_views` (`views`),
+  ADD KEY `idx_downloads` (`downloads`),
+  ADD KEY `idx_processing` (`processing_started`),
+  ADD KEY `idx_size` (`size`);
 
 --
 -- Индексы таблицы `tbl_boards`

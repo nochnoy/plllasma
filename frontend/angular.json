@@ -74,7 +74,8 @@
           "options": {
             "ssl": true,
             "sslKey": "ssl/pllasma.pkey",
-            "sslCert": "ssl/pllasma.crt"
+            "sslCert": "ssl/pllasma.crt",
+            "proxyConfig": "proxy.conf.js"
           },
           "configurations": {
             "production": {

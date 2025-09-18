@@ -21,6 +21,7 @@ export class AttachmentPageComponent implements OnInit {
   ngOnInit(): void {
     this.route.params.subscribe(params => {
       this.attachmentId = params['id'];
+      console.log('AttachmentPageComponent: Loading attachment with ID:', this.attachmentId);
       this.loadAttachment();
     });
   }
@@ -29,103 +30,203 @@ export class AttachmentPageComponent implements OnInit {
     this.loading = true;
     this.error = '';
 
+    console.log('AttachmentPageComponent: Fetching attachment from API...');
     fetch(`/api/attachment-get.php?id=${this.attachmentId}`)
-      .then(response => response.json())
+      .then(response => {
+        console.log('AttachmentPageComponent: API response status:', response.status);
+        return response.json();
+      })
       .then(data => {
+        console.log('AttachmentPageComponent: API response data:', data);
         if (data.success) {
           this.attachment = this.transformAttachment(data.attachment);
           this.handleAttachmentStatus();
+          // Инкрементируем счётчик просмотров
+          this.incrementViews();
         } else {
-          this.error = 'Аттачмент не найден';
+          console.error('AttachmentPageComponent: API returned error:', data.error);
+          switch (data.error) {
+            case 'access_denied':
+              this.error = 'Нет доступа к этому аттачменту. Возможно, вы не авторизованы или не имеете прав на просмотр канала.';
+              break;
+            case 'attachment_not_found':
+              this.error = 'Аттачмент не найден.';
+              break;
+            case 'message_not_found':
+              this.error = 'Сообщение с этим аттачментом не найдено.';
+              break;
+            default:
+              this.error = `Ошибка: ${data.error || 'Неизвестная ошибка'}`;
+          }
         }
         this.loading = false;
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error('AttachmentPageComponent: API error:', error);
         this.error = 'Ошибка загрузки аттачмента';
         this.loading = false;
       });
   }
 
+  private incrementViews(): void {
+    if (!this.attachmentId) return;
+
+    // Отправляем запрос на инкремент просмотров (не ждём ответа)
+    fetch(`/api/attachment-views-increment.php?id=${this.attachmentId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    }).catch(() => {
+      // Игнорируем ошибки инкремента просмотров
+    });
+  }
+
   private handleAttachmentStatus(): void {
     if (!this.attachment) return;
 
-    switch (this.attachment.status) {
-      case 'pending':
-        // Редиректим на YouTube
-        if (this.attachment.type === 'youtube' && this.attachment.source) {
-          window.open(this.attachment.source, '_blank');
-          this.router.navigate(['/']);
-        }
-        break;
-      case 'ready':
-        // Показываем контент
-        break;
-      case 'rejected':
-        // Показываем сообщение об ошибке обработки
-        break;
-      case 'unavailable':
-        // Показываем сообщение о недоступности
-        break;
+    // Редиректим на YouTube сразу при загрузке
+    if (this.attachment.type === 'youtube' && this.attachment.source) {
+      this.redirectToYouTube();
     }
   }
 
-  onBackClick(): void {
-    this.router.navigate(['/']);
+  private redirectToYouTube(): void {
+    if (!this.attachment || !this.attachment.source) return;
+
+    // Инкрементируем счётчик просмотров
+    this.incrementViews();
+    
+    // Редиректим на YouTube в том же табе
+    window.location.href = this.attachment.source;
+  }
+
+  downloadFile(): void {
+    if (!this.attachment || (this.attachment.type !== 'file' && this.attachment.type !== 'video')) return;
+
+    const fileUrl = this.getFileDownloadUrl();
+    const fileName = this.attachment.filename || 'download';
+    
+    if (!fileUrl) {
+      console.error('Cannot download file: no file URL available');
+      return;
+    }
+    
+    // Создаем временную ссылку для скачивания
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = fileName;
+    link.style.display = 'none';
+    
+    // Добавляем в DOM, кликаем и удаляем
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Инкрементируем счётчик скачиваний
+    this.incrementDownloads();
+  }
+
+  getFileDownloadUrl(): string {
+    if (!this.attachment || !this.attachment.file || this.attachment.file <= 0 || !this.attachment.filename) {
+      return '';
+    }
+    
+    const id = this.attachment.id;
+    const xx = id.substring(0, 2);
+    const yy = id.substring(2, 4);
+    const extension = this.attachment.filename.split('.').pop() || '';
+    
+    return `/attachments-new/${xx}/${yy}/${id}-${this.attachment.file}.${extension}`;
+  }
+
+  getVideoPosterUrl(): string | null {
+    if (!this.attachment) return null;
+    
+    const id = this.attachment.id;
+    const xx = id.substring(0, 2);
+    const yy = id.substring(2, 4);
+    
+    // Если есть превью для видео, используем его как постер
+    if (this.attachment.preview && this.attachment.preview > 0) {
+      return `/attachments-new/${xx}/${yy}/${id}-${this.attachment.preview}-p.jpg`;
+    }
+    
+    return null;
+  }
+
+  private incrementDownloads(): void {
+    if (!this.attachmentId) return;
+
+    // Отправляем запрос на инкремент скачиваний (не ждём ответа)
+    fetch(`/api/attachment-downloads-increment.php?id=${this.attachmentId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    }).catch(() => {
+      // Игнорируем ошибки инкремента скачиваний
+    });
   }
 
   private transformAttachment(rawAttachment: any): INewAttachment {
+    let type = rawAttachment.type;
+    
+    // Если тип пустой, определяем по расширению файла
+    if (!type && rawAttachment.filename) {
+      const extension = rawAttachment.filename.split('.').pop()?.toLowerCase();
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(extension || '')) {
+        type = 'image';
+      } else if (['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv', 'webm', 'rm', 'rmvb', '3gp', 'm4v', 'mpg', 'mpeg'].includes(extension || '')) {
+        type = 'video';
+      } else {
+        type = 'file';
+      }
+    }
+    
     return {
       ...rawAttachment,
-      icon: Boolean(rawAttachment.icon),
-      preview: Boolean(rawAttachment.preview)
+      type: type,
+      icon: Number(rawAttachment.icon) || 0,
+      preview: Number(rawAttachment.preview) || 0,
+      file: Number(rawAttachment.file) || 0
     };
   }
 
-  getAttachmentIcon(): string {
+  getAttachmentImageUrl(): string {
     if (!this.attachment) return '';
     
-    // Если есть иконка, составляем путь к файлу иконки
-    if (this.attachment.icon) {
-      const xx = this.attachment.id.substring(0, 2);
-      const yy = this.attachment.id.substring(2, 4);
-      return `attachments-new/${xx}/${yy}/${this.attachment.id}-i.jpg`;
+    const id = this.attachment.id;
+    const xx = id.substring(0, 2);
+    const yy = id.substring(2, 4);
+    
+    // Для изображений показываем оригинальный файл, если есть
+    if (this.attachment.file && this.attachment.file > 0 && this.attachment.filename) {
+      const extension = this.attachment.filename.split('.').pop() || '';
+      return `/attachments-new/${xx}/${yy}/${id}-${this.attachment.file}.${extension}`;
     }
     
-    // Если есть превьюшка, составляем путь к файлу превьюшки
-    if (this.attachment.preview) {
-      const xx = this.attachment.id.substring(0, 2);
-      const yy = this.attachment.id.substring(2, 4);
-      return `attachments-new/${xx}/${yy}/${this.attachment.id}-p.jpg`;
+    // Если файла нет, но есть превью, используем превью
+    if (this.attachment.preview && this.attachment.preview > 0) {
+      return `/attachments-new/${xx}/${yy}/${id}-${this.attachment.preview}-p.jpg`;
     }
     
-    // Иначе возвращаем стандартные иконки по типу
-    switch (this.attachment.type) {
-      case 'youtube':
-        return '/api/images/attachment-icons/video.png';
-      case 'image':
-        return '/api/images/attachment-icons/image.png';
-      case 'video':
-        return '/api/images/attachment-icons/video.png';
-      case 'file':
-      default:
-        return '/api/images/attachment-icons/file.png';
-    }
+    return '';
   }
 
-  getAttachmentTitle(): string {
-    if (!this.attachment) return '';
+  getFileSize(): string {
+    if (!this.attachment || !this.attachment.size) return 'Размер неизвестен';
     
-    switch (this.attachment.type) {
-      case 'youtube':
-        return 'YouTube видео';
-      case 'image':
-        return 'Изображение';
-      case 'video':
-        return 'Видео';
-      case 'file':
-        return 'Файл';
-      default:
-        return 'Вложение';
-    }
+    return this.formatFileSize(this.attachment.size);
+  }
+
+  private formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Б';
+    
+    const k = 1024;
+    const sizes = ['Б', 'КБ', 'МБ', 'ГБ', 'ТБ'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
 }

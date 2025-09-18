@@ -102,11 +102,15 @@ export interface INewAttachment {
   id: string;
   type: 'file' | 'image' | 'video' | 'youtube';
   created: string;
-  icon?: boolean;
-  preview?: boolean;
-  file?: string;
-  source?: string;
+  icon?: number; // Версия иконки (0 - нет, >0 - есть с версией)
+  preview?: number; // Версия превью (0 - нет, >0 - есть с версией)
+  file?: number; // Версия файла (0 - нет, >0 - есть с версией)
+  filename?: string; // Оригинальное имя файла
+  source?: string; // Исходный URL (для YouTube)
   status: 'unavailable' | 'pending' | 'ready' | 'rejected';
+  views?: number;
+  downloads?: number;
+  size?: number;
 }
 
 export const EMPTY_CHANNEL: IChannelLink = {

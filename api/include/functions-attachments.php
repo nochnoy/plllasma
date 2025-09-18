@@ -1,6 +1,8 @@
 <?
 // Функции для работы с новой системой аттачментов
 
+require_once 'functions-logging.php';
+
 // Извлекает код YouTube из URL
 function getYouTubeCode($url) {
     $patterns = [
@@ -42,25 +44,32 @@ function extractYouTubeUrls($text) {
 }
 
 // Создает новый аттачмент
-function createAttachment($messageId, $type, $source = null, $videoId = null) {
+function createAttachment($messageId, $type, $source = null, $videoId = null, $filename = null) {
     global $mysqli;
     
-    $id = generateGuid();
+    $id = guid();
     $created = date('Y-m-d H:i:s');
     
+    // Обрабатываем имя файла безопасно
+    $safeFilename = $filename ? sanitizeFilename($filename) : null;
+    
     $sql = $mysqli->prepare('
-        INSERT INTO tbl_attachments (id, id_message, type, created, source, status) 
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO tbl_attachments (id, id_message, type, created, source, filename, status) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     ');
     $status = 'pending';
-    $sql->bind_param("sissss", $id, $messageId, $type, $created, $source, $status);
+    $sql->bind_param("sisssss", $id, $messageId, $type, $created, $source, $safeFilename, $status);
     
     if ($sql->execute()) {
+        error_log("Attachment created in DB: $id, type: $type, filename: $safeFilename, videoId: $videoId");
         // Если это YouTube аттачмент, сразу скачиваем превью и иконку
         if ($type === 'youtube' && $videoId) {
+            error_log("Starting YouTube assets download for: $id, videoId: $videoId");
             downloadYouTubeAssets($id, $videoId);
         }
         return $id;
+    } else {
+        error_log("Failed to create attachment in DB: " . $mysqli->error);
     }
     
     return null;
@@ -68,15 +77,33 @@ function createAttachment($messageId, $type, $source = null, $videoId = null) {
 
 // Скачивает превью и иконку для YouTube видео
 function downloadYouTubeAssets($attachmentId, $videoId) {
-    // Создаем пути для файлов
+    // Создаем папку для файлов
     $folderPath = createAttachmentFolder($attachmentId);
     if (!$folderPath) {
         error_log("YouTube attachment $attachmentId: Failed to create folder");
         return false;
     }
     
-    $previewPath = $folderPath . $attachmentId . '-p.jpg';
-    $iconPath = $folderPath . $attachmentId . '-i.jpg';
+    // Получаем текущие версии из БД
+    global $mysqli;
+    $stmt = $mysqli->prepare("SELECT icon, preview FROM tbl_attachments WHERE id = ?");
+    $stmt->bind_param("s", $attachmentId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    
+    if (!$row) {
+        error_log("YouTube attachment $attachmentId: Not found in DB");
+        return false;
+    }
+    
+    // Вычисляем новые версии
+    $previewVersion = max(1, $row['preview'] + 1);
+    $iconVersion = max(1, $row['icon'] + 1);
+    
+    // Строим пути к файлам
+    $previewPath = buildAttachmentPreviewPhysicalPath($attachmentId, $previewVersion);
+    $iconPath = buildAttachmentIconPhysicalPath($attachmentId, $iconVersion);
     
     // Скачиваем превью
     $previewUrl = "http://194.135.33.47:5000/api/preview/" . $videoId;
@@ -100,17 +127,15 @@ function downloadYouTubeAssets($attachmentId, $videoId) {
         }
     }
     
-    // Обновляем запись в БД
-    $iconFlag = $iconSuccess ? '1' : '0';
-    $previewFlag = $previewSuccess ? '1' : '0';
-    updateAttachmentFlags($attachmentId, $iconFlag, $previewFlag);
+    // Обновляем версии файлов в БД
+    updateAttachmentVersions($attachmentId, $iconSuccess, $previewSuccess);
     
     // Обновляем статус
     $status = ($previewSuccess || $iconSuccess) ? 'ready' : 'unavailable';
     updateAttachmentStatus($attachmentId, $status);
     
     // Логируем результат
-    error_log("YouTube attachment $attachmentId: preview=$previewSuccess, icon=$iconSuccess, status=$status");
+    error_log("YouTube attachment $attachmentId: preview=$previewSuccess (v$previewVersion), icon=$iconSuccess (v$iconVersion), status=$status");
     
     return $previewSuccess || $iconSuccess;
 }
@@ -238,20 +263,6 @@ function findExistingAttachment($messageId, $type, $videoId) {
     return null;
 }
 
-// Генерирует GUID
-function generateGuid() {
-    if (function_exists('com_create_guid')) {
-        return trim(com_create_guid(), '{}');
-    }
-    
-    return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
-        mt_rand(0, 0xffff),
-        mt_rand(0, 0x0fff) | 0x4000,
-        mt_rand(0, 0x3fff) | 0x8000,
-        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
-    );
-}
 
 // Обрабатывает аттачменты для сообщения
 function processMessageAttachments($messageId, $message) {
@@ -259,25 +270,33 @@ function processMessageAttachments($messageId, $message) {
     
     // Находим YouTube ссылки
     $youtubeUrls = extractYouTubeUrls($message);
+    error_log("[YOUTUBE] URLs found: " . json_encode($youtubeUrls) . " for message $messageId");
     
     foreach ($youtubeUrls as $url) {
         $videoId = getYouTubeCode($url);
+        error_log("[YOUTUBE] Video ID extracted: $videoId from URL: $url");
         if ($videoId) {
             // Проверяем, есть ли уже такой аттачмент в этом сообщении
             $existingId = findExistingAttachment($messageId, 'youtube', $videoId);
             
             if ($existingId) {
+                error_log("[YOUTUBE] Existing YouTube attachment found: $existingId");
                 $attachments[] = $existingId;
             } else {
                 // Создаем новый аттачмент
+                error_log("[YOUTUBE] Creating new YouTube attachment for video ID: $videoId");
                 $newId = createAttachment($messageId, 'youtube', $url, $videoId);
                 if ($newId) {
+                    error_log("[YOUTUBE] YouTube attachment created successfully: $newId");
                     $attachments[] = $newId;
+                } else {
+                    error_log("[YOUTUBE] Failed to create YouTube attachment for video ID: $videoId");
                 }
             }
         }
     }
     
+    error_log("[YOUTUBE] Total attachments processed: " . count($attachments));
     return $attachments;
 }
 
@@ -285,30 +304,57 @@ function processMessageAttachments($messageId, $message) {
 function updateMessageJson($messageId, $attachments) {
     global $mysqli;
     
-    $jsonData = [];
-    if (!empty($attachments)) {
-        $jsonData['attachments'] = $attachments;
+    if (empty($attachments)) {
+        return true; // Нет аттачментов - ничего не делаем
     }
     
-    $jsonString = !empty($jsonData) ? json_encode($jsonData, JSON_UNESCAPED_UNICODE) : null;
+    // Получаем полные данные об аттачментах
+    $fullAttachments = [];
+    foreach ($attachments as $attachmentId) {
+        $attachment = getAttachmentById($attachmentId);
+        if ($attachment) {
+            $fullAttachments[] = [
+                'id' => $attachment['id'],
+                'type' => $attachment['type'],
+                'created' => $attachment['created'],
+                'icon' => (int)$attachment['icon'],
+                'preview' => (int)$attachment['preview'],
+                'file' => (int)$attachment['file'],
+                'filename' => $attachment['filename'],
+                'source' => $attachment['source'],
+                'status' => $attachment['status'],
+                'views' => (int)$attachment['views'],
+                'downloads' => (int)$attachment['downloads'],
+                'size' => (int)$attachment['size']
+            ];
+        }
+    }
+    
+    $jsonData = ['newAttachments' => $fullAttachments];
+    $jsonString = json_encode($jsonData, JSON_UNESCAPED_UNICODE);
     
     if ($jsonString === false) {
-        error_log("JSON encode failed for message $messageId");
+        error_log("[YOUTUBE] JSON encode failed for message $messageId");
         return false;
     }
+    
+    error_log("[YOUTUBE] Updating message $messageId JSON: $jsonString");
     
     $sql = $mysqli->prepare('UPDATE tbl_messages SET json = ? WHERE id_message = ?');
     $sql->bind_param("si", $jsonString, $messageId);
     
-    return $sql->execute();
+    $result = $sql->execute();
+    error_log("[YOUTUBE] JSON update result for message $messageId: " . ($result ? 'success' : 'failed'));
+    
+    return $result;
 }
 
-// Получает аттачмент по ID
+// Получает аттачмент по ID с построенными путями
 function getAttachmentById($attachmentId) {
     global $mysqli;
     
     $sql = $mysqli->prepare('
-        SELECT id, id_message, type, created, icon, preview, file, source, status 
+        SELECT id, id_message, type, created, icon, preview, file, filename, source, status, views, downloads, size 
         FROM tbl_attachments 
         WHERE id = ?
     ');
@@ -317,6 +363,11 @@ function getAttachmentById($attachmentId) {
     $result = $sql->get_result();
     
     if ($row = mysqli_fetch_assoc($result)) {
+        // Добавляем построенные пути к файлам
+        $row['icon_path'] = buildAttachmentIconPath($attachmentId, $row['icon']);
+        $row['preview_path'] = buildAttachmentPreviewPath($attachmentId, $row['preview']);
+        $row['file_path'] = buildAttachmentFilePath($attachmentId, $row['file'], $row['filename']);
+        
         return $row;
     }
     
@@ -333,37 +384,136 @@ function updateAttachmentStatus($attachmentId, $status) {
     return $sql->execute();
 }
 
-// Обновляет пути к файлам аттачмента
-function updateAttachmentPaths($attachmentId, $icon = null, $preview = null, $file = null) {
+// Обновляет имя файла аттачмента
+function updateAttachmentFilename($attachmentId, $filename) {
     global $mysqli;
+    
+    // Обрабатываем длинное имя файла
+    $safeFilename = sanitizeFilename($filename);
     
     $sql = $mysqli->prepare('
         UPDATE tbl_attachments 
-        SET icon = COALESCE(?, icon), 
-            preview = COALESCE(?, preview), 
-            file = COALESCE(?, file) 
+        SET filename = ?
         WHERE id = ?
     ');
-    $sql->bind_param("ssss", $icon, $preview, $file, $attachmentId);
+    $sql->bind_param("ss", $safeFilename, $attachmentId);
     
     return $sql->execute();
 }
 
-// Обновляет флаги наличия файлов аттачмента (для воркера)
-function updateAttachmentFlags($attachmentId, $hasIcon = false, $hasPreview = false) {
+// Безопасно обрабатывает имя файла
+function sanitizeFilename($filename) {
+    if (!$filename) return null;
+    
+    // Удаляем опасные символы
+    $filename = preg_replace('/[<>:"\\/\\\\|?*]/', '_', $filename);
+    
+    // Если имя слишком длинное, обрезаем, сохраняя расширение
+    if (mb_strlen($filename) > 200) { // Оставляем запас для расширения
+        $pathinfo = pathinfo($filename);
+        $extension = isset($pathinfo['extension']) ? '.' . $pathinfo['extension'] : '';
+        $basename = $pathinfo['filename'];
+        
+        // Обрезаем базовое имя, оставляя место для расширения
+        $maxBasenameLength = 200 - mb_strlen($extension);
+        $basename = mb_substr($basename, 0, $maxBasenameLength);
+        
+        $filename = $basename . $extension;
+    }
+    
+    return $filename;
+}
+
+// Обновляет версии файлов аттачмента (инкрементирует для борьбы с кешированием)
+function updateAttachmentVersions($attachmentId, $hasIcon = false, $hasPreview = false, $hasFile = false) {
     global $mysqli;
     
-    $iconValue = $hasIcon ? 1 : 0;
-    $previewValue = $hasPreview ? 1 : 0;
+    // Получаем текущие версии
+    $checkStmt = $mysqli->prepare("SELECT icon, preview, file FROM tbl_attachments WHERE id = ?");
+    $checkStmt->bind_param("s", $attachmentId);
+    $checkStmt->execute();
+    $result = $checkStmt->get_result();
+    $row = $result->fetch_assoc();
+    
+    if (!$row) {
+        return false;
+    }
+    
+    // Инкрементируем версии для файлов, которые были созданы/обновлены
+    $iconVersion = $hasIcon ? max(1, $row['icon'] + 1) : $row['icon'];
+    $previewVersion = $hasPreview ? max(1, $row['preview'] + 1) : $row['preview'];
+    $fileVersion = $hasFile ? max(1, $row['file'] + 1) : $row['file'];
     
     $sql = $mysqli->prepare('
         UPDATE tbl_attachments 
-        SET icon = ?, preview = ? 
+        SET icon = ?, preview = ?, file = ?
         WHERE id = ?
     ');
-    $sql->bind_param("iis", $iconValue, $previewValue, $attachmentId);
+    $sql->bind_param("iiis", $iconVersion, $previewVersion, $fileVersion, $attachmentId);
     
     return $sql->execute();
+}
+
+// Строит путь к иконке аттачмента
+function buildAttachmentIconPath($attachmentId, $version) {
+    if ($version <= 0) return null;
+    
+    $firstTwo = substr($attachmentId, 0, 2);
+    $nextTwo = substr($attachmentId, 2, 2);
+    
+    return "/attachments-new/$firstTwo/$nextTwo/$attachmentId-$version-i.jpg";
+}
+
+// Строит путь к превью аттачмента
+function buildAttachmentPreviewPath($attachmentId, $version) {
+    if ($version <= 0) return null;
+    
+    $firstTwo = substr($attachmentId, 0, 2);
+    $nextTwo = substr($attachmentId, 2, 2);
+    
+    return "/attachments-new/$firstTwo/$nextTwo/$attachmentId-$version-p.jpg";
+}
+
+// Строит путь к файлу аттачмента
+function buildAttachmentFilePath($attachmentId, $version, $filename) {
+    if ($version <= 0 || !$filename) return null;
+    
+    $firstTwo = substr($attachmentId, 0, 2);
+    $nextTwo = substr($attachmentId, 2, 2);
+    $extension = pathinfo($filename, PATHINFO_EXTENSION);
+    
+    return "/attachments-new/$firstTwo/$nextTwo/$attachmentId-$version.$extension";
+}
+
+// Строит физический путь к иконке аттачмента
+function buildAttachmentIconPhysicalPath($attachmentId, $version) {
+    if ($version <= 0) return null;
+    
+    $folderPath = createAttachmentFolder($attachmentId);
+    if (!$folderPath) return null;
+    
+    return $folderPath . $attachmentId . "-$version-i.jpg";
+}
+
+// Строит физический путь к превью аттачмента
+function buildAttachmentPreviewPhysicalPath($attachmentId, $version) {
+    if ($version <= 0) return null;
+    
+    $folderPath = createAttachmentFolder($attachmentId);
+    if (!$folderPath) return null;
+    
+    return $folderPath . $attachmentId . "-$version-p.jpg";
+}
+
+// Строит физический путь к файлу аттачмента
+function buildAttachmentFilePhysicalPath($attachmentId, $version, $filename) {
+    if ($version <= 0 || !$filename) return null;
+    
+    $folderPath = createAttachmentFolder($attachmentId);
+    if (!$folderPath) return null;
+    
+    $extension = pathinfo($filename, PATHINFO_EXTENSION);
+    return $folderPath . $attachmentId . "-$version.$extension";
 }
 
 // Создает папку для аттачмента
@@ -576,4 +726,5 @@ function analyzeJsonSizes() {
         'min' => $row['min_size'] ?: 0
     ];
 }
+
 ?>

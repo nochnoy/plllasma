@@ -146,8 +146,9 @@ export class Message {
     // Новые аттачменты
     this.newAttachments = (raw.newAttachments || []).map((attachment: any) => ({
       ...attachment,
-      icon: Boolean(attachment.icon),
-      preview: Boolean(attachment.preview)
+      icon: Number(attachment.icon) || 0,
+      preview: Number(attachment.preview) || 0,
+      file: Number(attachment.file) || 0
     }));
 
     if (raw.hasOwnProperty('cm')) {

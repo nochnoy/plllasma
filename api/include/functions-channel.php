@@ -129,18 +129,8 @@ function buildMessagesJson($a, $lastViewed) {
 		// Новые аттачменты из JSON поля
 		if (!empty($row[16])) {
 			$jsonData = safeJsonDecode($row[16]);
-			if ($jsonData && isset($jsonData['attachments']) && !empty($jsonData['attachments'])) {
-				// Получаем полную информацию об аттачментах
-				$attachmentsData = array();
-				foreach ($jsonData['attachments'] as $attachmentId) {
-					$attachment = getAttachmentById($attachmentId);
-					if ($attachment) {
-						$attachmentsData[] = json_encode($attachment, JSON_UNESCAPED_UNICODE);
-					}
-				}
-				if (!empty($attachmentsData)) {
-					$s .= ',"newAttachments":[' . implode(',', $attachmentsData) . ']';
-				}
+			if ($jsonData && isset($jsonData['newAttachments']) && !empty($jsonData['newAttachments'])) {
+				$s .= ',"newAttachments":' . json_encode($jsonData['newAttachments'], JSON_UNESCAPED_UNICODE);
 			}
 		}
 

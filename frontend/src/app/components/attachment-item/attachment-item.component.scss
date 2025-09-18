@@ -17,6 +17,27 @@
   .attachment-icon {
     width: 160px;
     height: 160px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+  }
+
+  .attachment-id {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    right: 4px;
+    padding: 2px 4px;
+    font-size: 10px;
+    line-height: 1.2;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.55);
+    border-radius: 3px;
+    word-break: break-all;
+    pointer-events: none;
+  }
+
+  &:hover .attachment-icon {
+    opacity: 1;
   }
 
   .attachment-loading,

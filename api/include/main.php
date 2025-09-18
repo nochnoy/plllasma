@@ -9,6 +9,7 @@ require("include/functions-channels.php");
 require("include/functions-channel.php");
 require("include/functions-files.php");
 require("include/functions-attachments.php");
+require("include/functions-video.php");
 
 include "../../plllasma-passwords.php";
 if (empty($passwordDB)) {
@@ -16,7 +17,7 @@ if (empty($passwordDB)) {
 }
 
 define("SESSION_NAME", 'plasma');
-define("DOMAIN", $_SERVER['SERVER_NAME']);
+define("DOMAIN", isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : 'localhost');
 define("DB_HOST", "localhost");
 define("DB_USER", "plllasma");
 define("DB_PASSWORD", $passwordDB);

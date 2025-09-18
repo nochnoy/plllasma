@@ -26,35 +26,69 @@ export class AttachmentItemComponent implements OnInit {
 
   onAttachmentClick(): void {
     if (this.attachment) {
-      this.router.navigate(['/attachment', this.attachment.id]);
+      // Для всех типов аттачментов открываем страницу аттачмента в новом табе
+      const url = this.router.serializeUrl(this.router.createUrlTree(['/attachment', this.attachment.id]));
+      // Добавляем hash для правильного роутинга
+      const fullUrl = window.location.origin + '/#' + url;
+      console.log('Full URL with hash:', fullUrl);
+      window.open(fullUrl, '_blank');
     }
   }
 
   onImageError(event: Event): void {
-    // При ошибке загрузки изображения заменяем на черный прямоугольник
+    // При ошибке загрузки изображения заменяем на дефолтную иконку
     const img = event.target as HTMLImageElement;
-    img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMDAwMDAwIi8+Cjwvc3ZnPgo=';
+
+    if (this.attachment) {
+      switch (this.attachment.type) {
+        case 'image':
+          img.src = '/api/images/attachment-icons/image.png';
+          break;
+        case 'video':
+        case 'youtube':
+          img.src = '/api/images/attachment-icons/video.png';
+          break;
+        case 'file':
+        default:
+          img.src = '/api/images/attachment-icons/file.png';
+          break;
+      }
+    } else {
+      // Fallback на черный прямоугольник
+      img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMDAwMDAwIi8+Cjwvc3ZnPgo=';
+    }
   }
 
   getAttachmentIcon(): string {
     if (!this.attachment) return '';
 
-    // Если есть иконка, составляем путь к файлу иконки
-    if (this.attachment.icon) {
-      const xx = this.attachment.id.substring(0, 2);
-      const yy = this.attachment.id.substring(2, 4);
-      return `attachments-new/${xx}/${yy}/${this.attachment.id}-i.jpg`;
+    const id = this.attachment.id || '';
+    const xx = id.substring(0, 2);
+    const yy = id.substring(2, 4);
+
+    // Если есть иконка (версия > 0), строим путь с версией
+    if (this.attachment.icon && this.attachment.icon > 0) {
+      return `/attachments-new/${xx}/${yy}/${this.attachment.id}-${this.attachment.icon}-i.jpg`;
     }
 
-    // Если есть превьюшка, составляем путь к файлу превьюшки
-    if (this.attachment.preview) {
-      const xx = this.attachment.id.substring(0, 2);
-      const yy = this.attachment.id.substring(2, 4);
-      return `attachments-new/${xx}/${yy}/${this.attachment.id}-p.jpg`;
-    }
+    // Для аттачментов без иконок используем дефолтные иконки
+    return this.getDefaultIcon();
+  }
 
-    // Иначе возвращаем путь к черному прямоугольнику
-    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMDAwMDAwIi8+Cjwvc3ZnPgo=';
+  private getDefaultIcon(): string {
+    if (!this.attachment) return '';
+
+    switch (this.attachment.type) {
+      case 'image':
+        return '/api/images/attachment-icons/image.png';
+      case 'video':
+        return '/api/images/attachment-icons/video.png';
+      case 'youtube':
+        return '/api/images/attachment-icons/video.png';
+      case 'file':
+      default:
+        return '/api/images/attachment-icons/file.png';
+    }
   }
 
   getAttachmentTitle(): string {
