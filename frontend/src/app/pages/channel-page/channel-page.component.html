@@ -43,6 +43,7 @@
               <div (click)="unignoreCommand()" *ngIf="channel?.isIgnoring" class="pseudo-link"><i>🎸</i> Не игнорировать</div>
             </ng-container>
 
+            <!--
             <div class="channel-tools">
               <div *ngIf="channel?.canUseSettings" [matMenuTriggerFor]="menu" class="pseudo-link">💼 Настройки <span class="up-down">▾</span></div>
               <mat-menu #menu="matMenu">
@@ -53,6 +54,7 @@
                   <button mat-menu-item (click)="matrix.clearCommand()">Очистить дизайн</button>
               </mat-menu>
             </div>
+            -->
 
           </ng-container>
         </div>
