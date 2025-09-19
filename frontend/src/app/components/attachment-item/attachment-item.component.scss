@@ -4,8 +4,8 @@
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
-  width: 160px;
-  height: 160px;
+  width: var(--attachment-icon-size);
+  height: var(--attachment-icon-size);
   text-align: center;
   vertical-align: center;
 
@@ -15,8 +15,8 @@
   }
 
   .attachment-icon {
-    width: 160px;
-    height: 160px;
+    width: var(--attachment-icon-size);
+    height: var(--attachment-icon-size);
     opacity: 0.7;
     transition: opacity 0.2s ease;
   }
@@ -38,6 +38,19 @@
 
   &:hover .attachment-icon {
     opacity: 1;
+  }
+
+  &.triangle::before {
+    content: '';
+    position: absolute;
+    width: var(--attachment-icon-size);
+    height: var(--attachment-icon-size);
+    background-image: url('~src/assets/video-icon-overlay.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    pointer-events: none;
+    z-index: 2;
   }
 
   .attachment-loading,

@@ -107,4 +107,8 @@ export class AttachmentItemComponent implements OnInit {
         return 'Вложение';
     }
   }
+
+  isVideoAttachment(): boolean {
+    return this.attachment?.type === 'video' || this.attachment?.type === 'youtube';
+  }
 }
