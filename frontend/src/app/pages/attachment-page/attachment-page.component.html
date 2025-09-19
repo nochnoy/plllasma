@@ -11,29 +11,34 @@
 
   <!-- Контент -->
   <div class="content" *ngIf="!loading && !error && attachment">
-    
+
     <!-- Картинка -->
     <div class="image-content" *ngIf="attachment.type === 'image'">
-      <img [src]="getAttachmentImageUrl()" 
-           [alt]="attachment.filename || 'Изображение'" 
+      <img [src]="getAttachmentImageUrl()"
+           [alt]="attachment.filename || 'Изображение'"
            class="content-image" />
     </div>
-    
+
     <!-- Видео -->
     <div class="video-content" *ngIf="attachment.type === 'video'">
-      <video [src]="getAttachmentImageUrl()" 
-             controls 
-             class="content-video"
-             [attr.poster]="getVideoPosterUrl()">
-        Ваш браузер не поддерживает воспроизведение видео.
-      </video>
+      <!-- Видеоплеер - показываем только если браузер поддерживает воспроизведение -->
+      <div *ngIf="canPlayVideo()">
+        <video [src]="getAttachmentImageUrl()"
+               controls
+               loop
+               autoplay
+               class="content-video"
+               [attr.poster]="getVideoPosterUrl()">
+        </video>
+      </div>
+
       <div class="file-info">
         <h2 class="file-name">{{ attachment.filename || 'Видео' }}</h2>
         <button class="download-button" (click)="downloadFile()">Скачать</button>
         <p class="file-size">{{ getFileSize() }}</p>
       </div>
     </div>
-    
+
     <!-- Файл -->
     <div class="file-content" *ngIf="attachment.type === 'file'">
       <div class="file-info">
@@ -42,6 +47,6 @@
         <p class="file-size">{{ getFileSize() }}</p>
       </div>
     </div>
-    
+
   </div>
 </div>

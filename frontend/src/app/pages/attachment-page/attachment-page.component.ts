@@ -229,4 +229,41 @@ export class AttachmentPageComponent implements OnInit {
     
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
+
+  canPlayVideo(): boolean {
+    if (!this.attachment || this.attachment.type !== 'video' || !this.attachment.filename) {
+      return false;
+    }
+
+    const extension = this.attachment.filename.split('.').pop()?.toLowerCase();
+    if (!extension) return false;
+
+    // Создаем временный video элемент для проверки поддержки
+    const video = document.createElement('video');
+    
+    // Маппинг расширений на MIME типы
+    const mimeTypes: { [key: string]: string } = {
+      'mp4': 'video/mp4',
+      'webm': 'video/webm',
+      'ogg': 'video/ogg',
+      'avi': 'video/avi',
+      'mov': 'video/quicktime',
+      'wmv': 'video/x-ms-wmv',
+      'flv': 'video/x-flv',
+      'mkv': 'video/x-matroska',
+      'm4v': 'video/x-m4v',
+      'mpg': 'video/mpeg',
+      'mpeg': 'video/mpeg',
+      '3gp': 'video/3gpp',
+      'rm': 'application/vnd.rn-realmedia',
+      'rmvb': 'application/vnd.rn-realmedia-vbr'
+    };
+
+    const mimeType = mimeTypes[extension];
+    if (!mimeType) return false;
+
+    // Проверяем поддержку MIME типа браузером
+    const canPlay = video.canPlayType(mimeType);
+    return canPlay === 'probably' || canPlay === 'maybe';
+  }
 }
