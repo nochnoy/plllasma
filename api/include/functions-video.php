@@ -332,6 +332,231 @@ function loadImage($path) {
 }
 
 /**
+ * Генерирует превью видео с кадрами
+ * @param string $videoPath Путь к видео файлу
+ * @param string $previewPath Путь для сохранения превью
+ * @param int $previewWidth Ширина превью (по умолчанию 1000px)
+ * @param int $frameSize Размер каждого кадра (по умолчанию 100px)
+ * @param int $maxFrames Максимальное количество кадров (по умолчанию 100)
+ * @param int $minInterval Минимальный интервал между кадрами в секундах (по умолчанию 10)
+ * @return bool true если превью создано успешно
+ */
+function generateVideoPreview($videoPath, $previewPath, $previewWidth = 1000, $frameSize = 100, $maxFrames = 100, $minInterval = 5) {
+    // Проверяем, доступен ли ffmpeg
+    if (!isFFmpegAvailable()) {
+        plllasmaLog("[VIDEO] FFmpeg недоступен, не создаем превью для видео", 'WARNING', 'video-worker');
+        return false;
+    }
+    
+    try {
+        plllasmaLog("[VIDEO] Начинаем генерацию превью для {$videoPath}", 'INFO', 'video-worker');
+        
+        // Создаем временную папку для кадров
+        $tempDir = '../attachments-new/tmp';
+        if (!is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        
+        // Получаем длительность видео
+        $durationCommand = sprintf(
+            'ffprobe -v quiet -show_entries format=duration -of csv="p=0" %s',
+            escapeshellarg($videoPath)
+        );
+        
+        $durationOutput = [];
+        $durationReturnCode = 0;
+        exec($durationCommand, $durationOutput, $durationReturnCode);
+        
+        $duration = 0;
+        if ($durationReturnCode === 0 && !empty($durationOutput[0])) {
+            $duration = floatval($durationOutput[0]);
+        }
+        
+        plllasmaLog("[VIDEO] Длительность видео: {$duration} секунд", 'INFO', 'video-worker');
+        
+        if ($duration <= 0) {
+            plllasmaLog("[VIDEO] Не удалось определить длительность видео", 'WARNING', 'video-worker');
+            return false;
+        }
+        
+        // Вычисляем количество кадров и интервал
+        $totalFrames = $maxFrames;
+        $interval = $duration / $totalFrames;
+        
+        // Если интервал меньше минимального, уменьшаем количество кадров
+        if ($interval < $minInterval) {
+            $totalFrames = max(1, floor($duration / $minInterval));
+            $interval = $duration / $totalFrames;
+        }
+        
+        plllasmaLog("[VIDEO] Будем извлекать {$totalFrames} кадров с интервалом {$interval} секунд", 'INFO', 'video-worker');
+        
+        // Извлекаем кадры одной командой ffmpeg
+        $frameFiles = [];
+        $sessionId = uniqid();
+        $framePattern = $tempDir . '/frame_' . $sessionId . '_%03d.jpg';
+        
+        // Создаем список временных позиций для select фильтра
+        $selectExpression = [];
+        for ($i = 0; $i < $totalFrames; $i++) {
+            $timePos = $i * $interval;
+            $selectExpression[] = "eq(t,{$timePos})";
+        }
+        $selectFilter = implode('+', $selectExpression);
+        
+        // Определяем тип файла для специальной обработки
+        $extension = strtolower(pathinfo($videoPath, PATHINFO_EXTENSION));
+        
+        plllasmaLog("[VIDEO] Извлекаем {$totalFrames} кадров одной командой ffmpeg", 'INFO', 'video-worker');
+        
+        // Пробуем встроенный tile фильтр для всех форматов
+        $tiledPreviewPath = $tempDir . '/tiled_preview_' . $sessionId . '.jpg';
+        $framesPerRow = floor($previewWidth / $frameSize);
+        $totalRows = ceil($totalFrames / $framesPerRow);
+        
+        // Используем fps фильтр для равномерного извлечения кадров
+        $fps = $totalFrames / $duration;
+        $command = "ffmpeg -i " . escapeshellarg($videoPath) . 
+                  " -vf \"fps={$fps},select='lt(n,{$totalFrames})',scale=100:100:force_original_aspect_ratio=increase,crop=100:100,tile={$framesPerRow}x{$totalRows}:padding=0:margin=0:color=black\" " .
+                  " -frames:v 1 -q:v 2 -y " . escapeshellarg($tiledPreviewPath) . " 2>/dev/null";
+        
+        plllasmaLog("[VIDEO] Пробуем встроенный tile фильтр: {$command}", 'INFO', 'video-worker');
+        
+        $output = [];
+        $returnCode = 0;
+        exec($command, $output, $returnCode);
+        
+        if ($returnCode === 0 && file_exists($tiledPreviewPath) && filesize($tiledPreviewPath) > 0) {
+            // Успех! Копируем готовый файл
+            if (copy($tiledPreviewPath, $previewPath)) {
+                plllasmaLog("[VIDEO] Превью создано встроенным tile фильтром", 'INFO', 'video-worker');
+                unlink($tiledPreviewPath);
+                return true;
+            }
+        }
+        
+        plllasmaLog("[VIDEO] Tile фильтр не сработал, используем покадровый метод", 'WARNING', 'video-worker');
+        
+        // Fallback к покадровому методу с select
+        $command = "ffmpeg -i " . escapeshellarg($videoPath) . 
+                  " -vf \"select='(" . $selectFilter . ")',scale=100:100:force_original_aspect_ratio=increase,crop=100:100\" " .
+                  " -q:v 2 -y " . escapeshellarg($framePattern) . " 2>/dev/null";
+        
+        plllasmaLog("[VIDEO] Команда ffmpeg (покадровый): {$command}", 'INFO', 'video-worker');
+        
+        $output = [];
+        $returnCode = 0;
+        exec($command, $output, $returnCode);
+        
+        if ($returnCode === 0) {
+            // Собираем список созданных файлов
+            for ($i = 0; $i < $totalFrames; $i++) {
+                $frameFile = $tempDir . '/frame_' . $sessionId . '_' . sprintf('%03d', $i + 1) . '.jpg';
+                if (file_exists($frameFile) && filesize($frameFile) > 0) {
+                    $frameFiles[] = $frameFile;
+                }
+            }
+            plllasmaLog("[VIDEO] Извлечено кадров покадровым методом: " . count($frameFiles), 'INFO', 'video-worker');
+        } else {
+            plllasmaLog("[VIDEO] Покадровый метод не сработал, превью не создано", 'WARNING', 'video-worker');
+            return false;
+        }
+        
+        // Если tile фильтр уже создал превью, выходим
+        if (file_exists($previewPath)) {
+            plllasmaLog("[VIDEO] Превью уже создано tile фильтром", 'INFO', 'video-worker');
+            return true;
+        }
+        
+        if (empty($frameFiles)) {
+            plllasmaLog("[VIDEO] Не удалось извлечь ни одного кадра", 'ERROR', 'video-worker');
+            return false;
+        }
+        
+        plllasmaLog("[VIDEO] Извлечено кадров: " . count($frameFiles), 'INFO', 'video-worker');
+        
+        // Создаем превью из отдельных кадров (PHP сборка) - плотная сетка без отступов
+        $framesPerRow = floor($previewWidth / $frameSize);
+        $totalRows = ceil(count($frameFiles) / $framesPerRow);
+        
+        // Адаптивная ширина: если кадров меньше 10, делаем ширину по факту
+        $actualFramesCount = count($frameFiles);
+        if ($actualFramesCount < 10) {
+            $actualFramesPerRow = min($actualFramesCount, $framesPerRow);
+            $previewWidth = $actualFramesPerRow * $frameSize;
+            $framesPerRow = $actualFramesPerRow;
+            $totalRows = ceil($actualFramesCount / $framesPerRow);
+        }
+        
+        $previewHeight = $totalRows * $frameSize;
+        
+        plllasmaLog("[VIDEO] Размер превью: {$previewWidth}x{$previewHeight}, кадров в ряду: {$framesPerRow}, рядов: {$totalRows} (адаптивная ширина)", 'INFO', 'video-worker');
+        
+        // Создаем черный холст точно под размер сетки
+        $preview = imagecreatetruecolor($previewWidth, $previewHeight);
+        $black = imagecolorallocate($preview, 0, 0, 0);
+        imagefill($preview, 0, 0, $black);
+        
+        $frameIndex = 0;
+        foreach ($frameFiles as $frameFile) {
+            $frame = loadImage($frameFile);
+            if ($frame) {
+                $row = floor($frameIndex / $framesPerRow);
+                $col = $frameIndex % $framesPerRow;
+                
+                // Позиция без отступов - кадры вплотную друг к другу
+                $x = $col * $frameSize;
+                $y = $row * $frameSize;
+                
+                // Масштабируем кадр до 100x100 с обрезкой (crop to fit)
+                $frameWidth = imagesx($frame);
+                $frameHeight = imagesy($frame);
+                
+                $ratio = max($frameSize / $frameWidth, $frameSize / $frameHeight);
+                $newWidth = $frameWidth * $ratio;
+                $newHeight = $frameHeight * $ratio;
+                
+                $srcX = ($newWidth - $frameSize) / 2 / $ratio;
+                $srcY = ($newHeight - $frameSize) / 2 / $ratio;
+                $srcWidth = $frameSize / $ratio;
+                $srcHeight = $frameSize / $ratio;
+                
+                // Вставляем кадр точно в позицию без отступов
+                imagecopyresampled($preview, $frame, $x, $y, $srcX, $srcY, $frameSize, $frameSize, $srcWidth, $srcHeight);
+                imagedestroy($frame);
+                
+                plllasmaLog("[VIDEO] Кадр {$frameIndex} размещен в сетке ({$x}, {$y})", 'INFO', 'video-worker');
+            }
+            $frameIndex++;
+        }
+        
+        // Сохраняем превью
+        $result = imagejpeg($preview, $previewPath, 90);
+        imagedestroy($preview);
+        
+        // Очищаем временные файлы
+        foreach ($frameFiles as $frameFile) {
+            if (file_exists($frameFile)) {
+                unlink($frameFile);
+            }
+        }
+        
+        if ($result && file_exists($previewPath)) {
+            $previewSize = filesize($previewPath);
+            plllasmaLog("[VIDEO] Превью создано успешно: {$previewPath}, размер: {$previewSize} байт", 'INFO', 'video-worker');
+            return true;
+        } else {
+            plllasmaLog("[VIDEO] Ошибка при сохранении превью", 'ERROR', 'video-worker');
+            return false;
+        }
+        
+    } catch (Exception $e) {
+        plllasmaLog("[VIDEO] Исключение при генерации превью: " . $e->getMessage(), 'ERROR', 'video-worker');
+        return false;
+    }
+}
+
+/**
  * Генерирует черную иконку
  * @param string $iconPath Путь для сохранения иконки
  * @param int $width Ширина иконки
@@ -348,4 +573,5 @@ function generateBlackIcon($iconPath, $width, $height) {
     
     return $result;
 }
+
 ?>

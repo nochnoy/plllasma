@@ -30,10 +30,30 @@
   min-height: 50vh;
 }
 
+.video-content {
+  text-align: center;
+
+  &.has-preview {
+    min-height: 80vh;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+}
+
+.content-video {
+  max-width: 100%;
+  max-height: 80vh;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: transparent;
+}
+
 .file-info {
   text-align: center;
   padding: 2rem;
-  background-color: #f9f9f9;
+  background-color: rgba(249, 249, 249, 0.9);
   border-radius: 1rem;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   max-width: 400px;
@@ -59,11 +79,11 @@
   cursor: pointer;
   margin-bottom: 1rem;
   transition: background-color 0.2s;
-  
+
   &:hover {
     background-color: #0056b3;
   }
-  
+
   &:active {
     background-color: #004085;
   }

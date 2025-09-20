@@ -266,4 +266,21 @@ export class AttachmentPageComponent implements OnInit {
     const canPlay = video.canPlayType(mimeType);
     return canPlay === 'probably' || canPlay === 'maybe';
   }
+
+  hasPreview(): boolean {
+    return this.attachment?.type === 'video' && 
+           this.attachment?.preview !== undefined && 
+           this.attachment.preview > 0;
+  }
+
+  getPreviewBackgroundStyle(): string {
+    if (!this.hasPreview() || !this.attachment) return '';
+
+    const id = this.attachment.id;
+    const xx = id.substring(0, 2);
+    const yy = id.substring(2, 4);
+    const previewUrl = `/attachments-new/${xx}/${yy}/${this.attachment.id}-${this.attachment.preview}-p.jpg`;
+
+    return `url('${previewUrl}')`;
+  }
 }

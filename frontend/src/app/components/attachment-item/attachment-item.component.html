@@ -6,5 +6,6 @@
   <img [src]="getAttachmentIcon()"
        class="attachment-icon"
        loading="lazy"
+       (error)="onImageError($event)"
         />
 </div>

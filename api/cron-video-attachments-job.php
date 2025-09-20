@@ -13,6 +13,93 @@ require_once 'include/functions-logging.php';
 // Конфигурация
 define('MAX_PROCESSING_TIME', 300); // 5 минут - максимальное время обработки одного файла
 
+
+/**
+ * Основная функция воркера
+ */
+function runWorker() {
+    plllasmaLog("=== ЗАПУСК ВОРКЕРА ВИДЕО АТТАЧМЕНТОВ ===", 'INFO', 'video-worker');
+    
+    try {
+        // Проверяем, не запущен ли уже воркер
+        if (isWorkerRunning()) {
+            plllasmaLog("Воркер уже запущен, завершаемся", 'INFO', 'video-worker');
+            return ['status' => 'skipped', 'message' => 'Воркер уже запущен'];
+        }
+        
+        // Получаем детальную диагностику
+        $diagnostics = getVideoFilesDiagnostics();
+        $recentFiles = getRecentVideoFilesDetailed(5);
+        
+        plllasmaLog("=== ДИАГНОСТИКА ВИДЕО ФАЙЛОВ ===", 'INFO', 'video-worker');
+        plllasmaLog("Всего видео: {$diagnostics['total_videos']}, готовых: {$diagnostics['ready_videos']}, с файлом: {$diagnostics['videos_with_file']}, без иконки: {$diagnostics['videos_without_icon']}, без превью: {$diagnostics['videos_without_preview']}, в обработке: {$diagnostics['videos_processing']}, неуспешных: {$diagnostics['videos_failed']}", 'INFO', 'video-worker');
+        
+        // Показываем последние файлы
+        if (!empty($recentFiles)) {
+            plllasmaLog("=== ПОСЛЕДНИЕ 5 ВИДЕО ФАЙЛОВ ===", 'INFO', 'video-worker');
+            foreach ($recentFiles as $file) {
+                $iconStatus = $file['icon_file_exists'] ? '✅' : '❌';
+                $previewStatus = $file['preview_file_exists'] ? '✅' : '❌';
+                $blockingReasons = '';
+                if (!empty($file['blocking_reasons']) && is_array($file['blocking_reasons'])) {
+                    $blockingReasons = ' (блокировки: ' . implode(', ', $file['blocking_reasons']) . ')';
+                }
+                plllasmaLog("ID: {$file['id']}, файл: {$file['filename']}, статус: {$file['status']}, иконка: {$iconStatus}, превью: {$previewStatus}{$blockingReasons}", 'INFO', 'video-worker');
+            }
+        }
+        
+        // Проверяем, есть ли файлы для обработки
+        $availableCount = getAvailableFilesCount();
+        
+        if ($availableCount === 0) {
+            plllasmaLog("Нет файлов для обработки", 'INFO', 'video-worker');
+            return ['status' => 'success', 'message' => 'Нет файлов для обработки'];
+        }
+        
+        plllasmaLog("Доступно файлов для обработки: {$availableCount}", 'INFO', 'video-worker');
+        
+        // Блокируем следующий файл для обработки
+        if (!getNextFileToProcess()) {
+            plllasmaLog("Не удалось заблокировать файл для обработки", 'WARNING', 'video-worker');
+            return ['status' => 'warning', 'message' => 'Не удалось заблокировать файл для обработки'];
+        }
+        
+        // Получаем заблокированный файл
+        $attachment = getLockedFile();
+        
+        if (!$attachment) {
+            plllasmaLog("Не удалось получить заблокированный файл", 'ERROR', 'video-worker');
+            return ['status' => 'error', 'message' => 'Не удалось получить заблокированный файл'];
+        }
+        
+        plllasmaLog("Обрабатываем файл: {$attachment['filename']} (ID: {$attachment['id']})", 'INFO', 'video-worker');
+        
+        // Обрабатываем файл
+        $result = processAttachment($attachment);
+        
+        // Освобождаем блокировку
+        releaseFileLock($attachment['id']);
+        
+        if ($result) {
+            plllasmaLog("Обработка завершена успешно", 'INFO', 'video-worker');
+            return ['status' => 'success', 'message' => 'Обработка завершена успешно'];
+        } else {
+            plllasmaLog("Обработка завершена с ошибкой", 'WARNING', 'video-worker');
+            return ['status' => 'warning', 'message' => 'Обработка завершена с ошибкой'];
+        }
+        
+    } catch (Exception $e) {
+        plllasmaLog("Критическая ошибка воркера: " . $e->getMessage(), 'ERROR', 'video-worker');
+        
+        // Пытаемся освободить блокировку в случае ошибки
+        if (isset($attachment)) {
+            releaseFileLock($attachment['id']);
+        }
+        
+        throw $e;
+    }
+}
+
 /**
  * Проверяет, не запущен ли уже воркер
  */
@@ -48,7 +135,7 @@ function getAvailableFilesCount() {
         WHERE type = 'video' 
         AND status = 'ready' 
         AND file IS NOT NULL
-        AND (icon = 0)
+        AND (icon = 0 OR preview = 0)
         AND (processing_started IS NULL OR processing_started < DATE_SUB(NOW(), INTERVAL ? SECOND))
     ");
     
@@ -97,6 +184,13 @@ function getVideoFilesDiagnostics() {
     $row = $result->fetch_assoc();
     $diagnostics['videos_without_icon'] = $row['count'];
     
+    // Видео без превью
+    $stmt = $mysqli->prepare("SELECT COUNT(*) as count FROM tbl_attachments WHERE type = 'video' AND (preview = 0) AND status != 'processing_failed'");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $diagnostics['videos_without_preview'] = $row['count'];
+    
     // Видео в обработке
     $stmt = $mysqli->prepare("SELECT COUNT(*) as count FROM tbl_attachments WHERE type = 'video' AND processing_started IS NOT NULL AND processing_started > DATE_SUB(NOW(), INTERVAL 300 SECOND)");
     $stmt->execute();
@@ -131,7 +225,7 @@ function getRecentVideoFilesDetailed($limit = 10) {
     global $mysqli;
     
     $stmt = $mysqli->prepare("
-        SELECT id, file, icon, status, processing_started, created, id_message, filename
+        SELECT id, file, icon, preview, status, processing_started, created, id_message, filename
         FROM tbl_attachments 
         WHERE type = 'video'
         ORDER BY created DESC
@@ -156,6 +250,7 @@ function getRecentVideoFilesDetailed($limit = 10) {
         }
         
         $iconPath = $row['icon'] > 0 ? "../attachments-new/{$xx}/{$yy}/{$row['id']}-{$row['icon']}-i.jpg" : null;
+        $previewPath = $row['preview'] > 0 ? "../attachments-new/{$xx}/{$yy}/{$row['id']}-{$row['preview']}-p.jpg" : null;
         
         $row['video_file_exists'] = $filePath ? file_exists($filePath) : false;
         $row['video_file_path'] = $filePath;
@@ -163,6 +258,9 @@ function getRecentVideoFilesDetailed($limit = 10) {
         $row['icon_file_exists'] = $iconPath ? file_exists($iconPath) : false;
         $row['icon_file_path'] = $iconPath;
         $row['icon_file_size'] = $row['icon_file_exists'] ? filesize($iconPath) : 0;
+        $row['preview_file_exists'] = $previewPath ? file_exists($previewPath) : false;
+        $row['preview_file_path'] = $previewPath;
+        $row['preview_file_size'] = $row['preview_file_exists'] ? filesize($previewPath) : 0;
         
         // Проверяем, почему файл не обрабатывается
         $reasons = [];
@@ -174,8 +272,12 @@ function getRecentVideoFilesDetailed($limit = 10) {
         if (empty($row['file'])) {
             $reasons[] = "no_file";
         }
-        if ($row['icon'] > 0) {
-            $reasons[] = "has_icon:{$row['icon']}";
+        if ($row['icon'] > 0 && $row['preview'] > 0) {
+            $reasons[] = "has_icon_and_preview:{$row['icon']},{$row['preview']}";
+        } elseif ($row['icon'] > 0) {
+            $reasons[] = "has_icon_no_preview:{$row['icon']}";
+        } elseif ($row['preview'] > 0) {
+            $reasons[] = "has_preview_no_icon:{$row['preview']}";
         }
         if ($row['processing_started'] && strtotime($row['processing_started']) > (time() - 300)) {
             $reasons[] = "processing:{$row['processing_started']}";
@@ -278,7 +380,7 @@ function getNextFileToProcess() {
                 WHERE type = 'video' 
                 AND status = 'ready' 
                 AND file IS NOT NULL
-                AND (icon = 0)
+                AND (icon = 0 OR preview = 0)
                 AND (processing_started IS NULL OR processing_started < DATE_SUB(NOW(), INTERVAL ? SECOND))
                 ORDER BY created DESC 
                 LIMIT 1
@@ -303,9 +405,14 @@ function getLockedFile() {
         SELECT a.*, m.id_place 
         FROM tbl_attachments a
         JOIN tbl_messages m ON a.id_message = m.id_message
-        WHERE a.processing_started = NOW()
+        WHERE a.processing_started IS NOT NULL 
+        AND a.processing_started > DATE_SUB(NOW(), INTERVAL ? SECOND)
+        ORDER BY a.processing_started DESC
         LIMIT 1
     ");
+    
+    $maxTime = MAX_PROCESSING_TIME;
+    $stmt->bind_param("i", $maxTime);
     
     $stmt->execute();
     $result = $stmt->get_result();
@@ -376,43 +483,84 @@ function processAttachment($attachment) {
     
     plllasmaLog("Обнаружено видео: {$attachmentId} ({$mimeType})", 'INFO', 'video-worker');
     
-    // Генерируем иконку для видео (используем версию 1 для новой иконки)
-    $iconVersion = max(1, $attachment['icon'] + 1);
-    $iconPath = "../attachments-new/{$xx}/{$yy}/{$attachmentId}-{$iconVersion}-i.jpg";
-    plllasmaLog("Генерируем иконку: {$filePath} -> {$iconPath}", 'INFO', 'video-worker');
-    $iconGenerated = generateVideoIcon($filePath, $iconPath, 160, 160);
+    // Определяем, нужно ли генерировать иконку
+    $needIcon = $attachment['icon'] == 0;
+    $iconVersion = $attachment['icon'];
     
-    if (!$iconGenerated) {
-        plllasmaLog("Не удалось сгенерировать иконку для {$attachmentId}, помечаем как неуспешную обработку", 'WARNING', 'video-worker');
+    if ($needIcon) {
+        // Генерируем иконку для видео (используем версию 1 для новой иконки)
+        $iconVersion = max(1, $attachment['icon'] + 1);
+        $iconPath = "../attachments-new/{$xx}/{$yy}/{$attachmentId}-{$iconVersion}-i.jpg";
+        plllasmaLog("Генерируем иконку: {$filePath} -> {$iconPath}", 'INFO', 'video-worker');
+        $iconGenerated = generateVideoIcon($filePath, $iconPath, 160, 160);
         
-        // Устанавливаем статус неуспешной обработки
-        $stmt = $mysqli->prepare("UPDATE tbl_attachments SET status = 'processing_failed' WHERE id = ?");
-        $stmt->bind_param("s", $attachmentId);
-        $stmt->execute();
+        if (!$iconGenerated) {
+            plllasmaLog("Не удалось сгенерировать иконку для {$attachmentId}, помечаем как неуспешную обработку", 'WARNING', 'video-worker');
+            
+            // Устанавливаем статус неуспешной обработки
+            $stmt = $mysqli->prepare("UPDATE tbl_attachments SET status = 'processing_failed' WHERE id = ?");
+            $stmt->bind_param("s", $attachmentId);
+            $stmt->execute();
+            
+            plllasmaLog("Аттачмент {$attachmentId} помечен как неуспешная обработка", 'INFO', 'video-worker');
+            return false;
+        }
         
-        plllasmaLog("Аттачмент {$attachmentId} помечен как неуспешная обработка", 'INFO', 'video-worker');
-        return false;
-    }
-    
-    // Проверяем, что файл иконки действительно создался
-    if (file_exists($iconPath)) {
-        $iconSize = filesize($iconPath);
-        plllasmaLog("Иконка создана успешно: {$iconPath}, размер: {$iconSize} байт", 'INFO', 'video-worker');
+        // Проверяем, что файл иконки действительно создался
+        if (file_exists($iconPath)) {
+            $iconSize = filesize($iconPath);
+            plllasmaLog("Иконка создана успешно: {$iconPath}, размер: {$iconSize} байт", 'INFO', 'video-worker');
+        } else {
+            plllasmaLog("Файл иконки не найден после генерации: {$iconPath}", 'ERROR', 'video-worker');
+            return false;
+        }
     } else {
-        plllasmaLog("Файл иконки не найден после генерации: {$iconPath}", 'ERROR', 'video-worker');
-        return false;
+        plllasmaLog("Иконка уже существует (версия {$iconVersion}), пропускаем генерацию иконки", 'INFO', 'video-worker');
     }
     
-    // Обновляем аттачмент в базе данных (используем новую схему версионирования)
-    plllasmaLog("Обновляем БД: icon версия = {$iconVersion} для аттачмента {$attachmentId}", 'INFO', 'video-worker');
+    // Определяем, нужно ли генерировать превью
+    $needPreview = $attachment['preview'] == 0;
+    $previewVersion = $attachment['preview'];
     
-    $stmt = $mysqli->prepare("
-        UPDATE tbl_attachments 
-        SET icon = ? 
-        WHERE id = ?
-    ");
-    $stmt->bind_param("is", $iconVersion, $attachmentId);
-    $result = $stmt->execute();
+    if ($needPreview) {
+        // Генерируем превью для видео (используем версию 1 для нового превью)
+        $previewVersion = max(1, $attachment['preview'] + 1);
+        $previewPath = "../attachments-new/{$xx}/{$yy}/{$attachmentId}-{$previewVersion}-p.jpg";
+        plllasmaLog("Генерируем превью: {$filePath} -> {$previewPath}", 'INFO', 'video-worker');
+        $previewGenerated = generateVideoPreview($filePath, $previewPath, 1000, 100, 100, 5);
+        
+        if (!$previewGenerated) {
+            plllasmaLog("Не удалось сгенерировать превью для {$attachmentId}, но продолжаем", 'WARNING', 'video-worker');
+            $previewVersion = 0; // Сбрасываем версию превью, если не удалось создать
+        } else {
+            // Проверяем, что файл превью действительно создался
+            if (file_exists($previewPath)) {
+                $previewSize = filesize($previewPath);
+                plllasmaLog("Превью создано успешно: {$previewPath}, размер: {$previewSize} байт", 'INFO', 'video-worker');
+            } else {
+                plllasmaLog("Файл превью не найден после генерации: {$previewPath}", 'WARNING', 'video-worker');
+                $previewVersion = 0; // Сбрасываем версию превью, если файл не найден
+            }
+        }
+    } else {
+        plllasmaLog("Превью уже существует (версия {$previewVersion}), пропускаем генерацию превью", 'INFO', 'video-worker');
+    }
+    
+    // Обновляем аттачмент в базе данных, только если что-то изменилось
+    if ($needIcon || $needPreview) {
+        plllasmaLog("Обновляем БД: icon версия = {$iconVersion}, preview версия = {$previewVersion} для аттачмента {$attachmentId}", 'INFO', 'video-worker');
+        
+        $stmt = $mysqli->prepare("
+            UPDATE tbl_attachments 
+            SET icon = ?, preview = ? 
+            WHERE id = ?
+        ");
+        $stmt->bind_param("iis", $iconVersion, $previewVersion, $attachmentId);
+        $result = $stmt->execute();
+    } else {
+        plllasmaLog("Иконка и превью уже существуют, обновление БД не требуется", 'INFO', 'video-worker');
+        $result = true; // Считаем успешным, если ничего не нужно было делать
+    }
     
     if (!$result) {
         plllasmaLog("Ошибка выполнения UPDATE для аттачмента {$attachmentId}: " . $mysqli->error, 'ERROR', 'video-worker');
@@ -473,154 +621,31 @@ function updateMessageAttachmentsJson($messageId) {
     $stmt->execute();
 }
 
-// Основная логика
-if (php_sapi_name() === 'cli') {
-    plllasmaLog("Воркер запущен (CLI)", 'INFO', 'video-worker');
-    
-    try {
-        // Проверяем, не запущен ли уже воркер
-        if (isWorkerRunning()) {
-            plllasmaLog("Воркер уже запущен, завершаемся", 'INFO', 'video-worker');
-            exit(0);
-        }
-        
-        // Получаем детальную диагностику
-        $diagnostics = getVideoFilesDiagnostics();
-        $recentFiles = getRecentVideoFilesDetailed(5);
-        
-        plllasmaLog("=== ДИАГНОСТИКА ВИДЕО ФАЙЛОВ ===", 'INFO', 'video-worker');
-        plllasmaLog("Всего видео: {$diagnostics['total_videos']}, готовых: {$diagnostics['ready_videos']}, с файлом: {$diagnostics['videos_with_file']}, без иконки: {$diagnostics['videos_without_icon']}, в обработке: {$diagnostics['videos_processing']}, неуспешных: {$diagnostics['videos_failed']}", 'INFO', 'video-worker');
-        plllasmaLog("Статусы: " . json_encode($diagnostics['status_breakdown']), 'INFO', 'video-worker');
-        
-        // Логируем детали последних файлов
-        foreach ($recentFiles as $file) {
-            plllasmaLog("Файл {$file['id']}: статус={$file['status']}, файл_существует=" . ($file['video_file_exists'] ? 'да' : 'нет') . ", иконка_существует=" . ($file['icon_file_exists'] ? 'да' : 'нет') . ", причины_блокировки={$file['blocking_reasons']}", 'INFO', 'video-worker');
-        }
-        
-        $availableFiles = getAvailableFilesCount();
-        plllasmaLog("Доступно для обработки: {$availableFiles}", 'INFO', 'video-worker');
-        
-        // Пытаемся заблокировать файл для обработки
-        if (!getNextFileToProcess()) {
-            plllasmaLog("Нет файлов для обработки", 'INFO', 'video-worker');
-            exit(0);
-        }
-        
-        // Получаем заблокированный файл
-        $attachment = getLockedFile();
-        
-        if (!$attachment) {
-            plllasmaLog("Не удалось получить заблокированный файл", 'ERROR', 'video-worker');
-            exit(1);
-        }
-        
-        // Обрабатываем файл
-        $result = processAttachment($attachment);
-        
-        // Освобождаем блокировку
-        releaseFileLock($attachment['id']);
-        
-        if ($result) {
-            plllasmaLog("Обработка завершена успешно", 'INFO', 'video-worker');
-        } else {
-            plllasmaLog("Обработка завершена с ошибкой", 'WARNING', 'video-worker');
-        }
-        
-    } catch (Exception $e) {
-        plllasmaLog("Критическая ошибка воркера: " . $e->getMessage(), 'ERROR', 'video-worker');
-        
-        // Пытаемся освободить блокировку в случае ошибки
-        if (isset($attachment)) {
-            releaseFileLock($attachment['id']);
-        }
-        
-        exit(1);
-    }
-    
-} else {
-    // Если запущен через HTTP (для cron задач)
-    plllasmaLog("Воркер запущен (HTTP)", 'INFO', 'video-worker');
-    
-    // Устанавливаем заголовки для HTTP ответа
-    header('Content-Type: application/json; charset=UTF-8');
-    
-    // Проверяем, что запрос идет от cron (можно добавить дополнительную проверку)
-    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-    $isCronRequest = strpos($userAgent, 'Wget') !== false || 
-                     strpos($userAgent, 'curl') !== false || 
-                     strpos($userAgent, 'cron') !== false;
-    
-    if (!$isCronRequest) {
-        http_response_code(403);
-        echo json_encode(['error' => 'Доступ запрещен. Только для cron задач.']);
-        exit;
-    }
-    
-    try {
-        // Проверяем, не запущен ли уже воркер
-        if (isWorkerRunning()) {
-            plllasmaLog("Воркер уже запущен, завершаемся", 'INFO', 'video-worker');
-            echo json_encode(['status' => 'skipped', 'message' => 'Воркер уже запущен']);
-            exit;
-        }
-        
-        // Получаем детальную диагностику
-        $diagnostics = getVideoFilesDiagnostics();
-        $recentFiles = getRecentVideoFilesDetailed(5);
-        
-        plllasmaLog("=== ДИАГНОСТИКА ВИДЕО ФАЙЛОВ ===", 'INFO', 'video-worker');
-        plllasmaLog("Всего видео: {$diagnostics['total_videos']}, готовых: {$diagnostics['ready_videos']}, с файлом: {$diagnostics['videos_with_file']}, без иконки: {$diagnostics['videos_without_icon']}, в обработке: {$diagnostics['videos_processing']}, неуспешных: {$diagnostics['videos_failed']}", 'INFO', 'video-worker');
-        plllasmaLog("Статусы: " . json_encode($diagnostics['status_breakdown']), 'INFO', 'video-worker');
-        
-        // Логируем детали последних файлов
-        foreach ($recentFiles as $file) {
-            plllasmaLog("Файл {$file['id']}: статус={$file['status']}, файл_существует=" . ($file['video_file_exists'] ? 'да' : 'нет') . ", иконка_существует=" . ($file['icon_file_exists'] ? 'да' : 'нет') . ", причины_блокировки={$file['blocking_reasons']}", 'INFO', 'video-worker');
-        }
-        
-        $availableFiles = getAvailableFilesCount();
-        plllasmaLog("Доступно для обработки: {$availableFiles}", 'INFO', 'video-worker');
-        
-        // Пытаемся заблокировать файл для обработки
-        if (!getNextFileToProcess()) {
-            plllasmaLog("Нет файлов для обработки", 'INFO', 'video-worker');
-            echo json_encode(['status' => 'no_work', 'message' => 'Нет файлов для обработки']);
-            exit;
-        }
-        
-        // Получаем заблокированный файл
-        $attachment = getLockedFile();
-        
-        if (!$attachment) {
-            plllasmaLog("Не удалось получить заблокированный файл", 'ERROR', 'video-worker');
-            echo json_encode(['status' => 'error', 'message' => 'Не удалось получить заблокированный файл']);
-            exit(1);
-        }
-        
-        // Обрабатываем файл
-        $result = processAttachment($attachment);
-        
-        // Освобождаем блокировку
-        releaseFileLock($attachment['id']);
-        
-        if ($result) {
-            plllasmaLog("Обработка завершена успешно", 'INFO', 'video-worker');
-            echo json_encode(['status' => 'success', 'message' => 'Обработка завершена успешно']);
-        } else {
-            plllasmaLog("Обработка завершена с ошибкой", 'WARNING', 'video-worker');
-            echo json_encode(['status' => 'warning', 'message' => 'Обработка завершена с ошибкой']);
-        }
-        
-    } catch (Exception $e) {
-        plllasmaLog("Критическая ошибка воркера: " . $e->getMessage(), 'ERROR', 'video-worker');
-        
-        // Пытаемся освободить блокировку в случае ошибки
-        if (isset($attachment)) {
-            releaseFileLock($attachment['id']);
-        }
-        
-        http_response_code(500);
-        echo json_encode(['status' => 'error', 'message' => 'Критическая ошибка воркера: ' . $e->getMessage()]);
-        exit(1);
-    }
+// Основная логика - только для HTTP (cron)
+plllasmaLog("Воркер запущен (HTTP)", 'INFO', 'video-worker');
+
+// Устанавливаем заголовки для HTTP ответа
+header('Content-Type: application/json; charset=UTF-8');
+
+// Проверяем, что запрос идет от cron (можно добавить дополнительную проверку)
+$userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+$isCronRequest = strpos($userAgent, 'Wget') !== false || 
+                 strpos($userAgent, 'curl') !== false || 
+                 strpos($userAgent, 'cron') !== false;
+
+if (!$isCronRequest) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Доступ запрещен. Только для cron задач.']);
+    exit;
+}
+
+try {
+    $result = runWorker();
+    echo json_encode($result);
+} catch (Exception $e) {
+    plllasmaLog("Критическая ошибка воркера: " . $e->getMessage(), 'ERROR', 'video-worker');
+    http_response_code(500);
+    echo json_encode(['status' => 'error', 'message' => 'Критическая ошибка воркера: ' . $e->getMessage()]);
+    exit(1);
 }
 ?>

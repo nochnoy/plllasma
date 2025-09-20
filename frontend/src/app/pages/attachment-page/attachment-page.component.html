@@ -20,7 +20,10 @@
     </div>
 
     <!-- Видео -->
-    <div class="video-content" *ngIf="attachment.type === 'video'">
+    <div class="video-content"
+         *ngIf="attachment.type === 'video'"
+         [class.has-preview]="hasPreview()"
+         [style.background-image]="getPreviewBackgroundStyle()">
       <!-- Видеоплеер - показываем только если браузер поддерживает воспроизведение -->
       <div *ngIf="canPlayVideo()">
         <video [src]="getAttachmentImageUrl()"
