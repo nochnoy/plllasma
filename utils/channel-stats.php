@@ -521,6 +521,320 @@ function getRoleColor($role) {
             padding: 40px;
         }
         
+        .stats-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
+        }
+        
+        .stats-btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+        
+        .stats-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .stats-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .stats-btn-secondary {
+            background-color: #dc3545;
+        }
+        
+        .stats-btn-secondary:hover {
+            background-color: #c82333;
+        }
+        
+        .lost-attachment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f3f4;
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .lost-attachment-item:last-child {
+            border-bottom: none;
+        }
+        
+        .lost-attachment-info {
+            flex: 1;
+            margin-right: 16px;
+        }
+        
+        .lost-attachment-name {
+            font-weight: 500;
+            color: #856404;
+            margin-bottom: 4px;
+        }
+        
+        .lost-attachment-details {
+            font-size: 12px;
+            color: #856404;
+        }
+        
+        .lost-attachment-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+        
+        .delete-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .delete-all-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            min-width: 100px;
+        }
+        
+        .delete-all-btn:hover {
+            background-color: #c82333;
+        }
+        
+        .delete-all-btn:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .attachment-stats-content {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .attachment-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .attachment-stat-item {
+            background-color: white;
+            border-radius: 6px;
+            padding: 16px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .attachment-stat-label {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+        
+        .attachment-stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .large-files-section {
+            margin-top: 20px;
+        }
+        
+        .large-files-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 12px;
+        }
+        
+        .large-files-list {
+            background-color: white;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            overflow: hidden;
+        }
+        
+        .large-file-item {
+            padding: 16px;
+            border-bottom: 1px solid #f1f3f4;
+        }
+        
+        .large-file-item:last-child {
+            border-bottom: none;
+        }
+        
+        .large-file-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .large-file-name {
+            font-weight: 500;
+            color: #2c3e50;
+            flex: 1;
+            margin-right: 16px;
+        }
+        
+        .large-file-name a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+        
+        .large-file-name a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+        
+        .large-file-size {
+            color: #e74c3c;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .large-file-message-info {
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+        
+        .message-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        
+        .message-author {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .message-date {
+            color: #6c757d;
+            font-size: 12px;
+        }
+        
+        .message-text {
+            color: #495057;
+            line-height: 1.4;
+            max-height: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+        
+        .message-id {
+            color: #6c757d;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        
+        .message-moved-warning {
+            color: #e74c3c;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 4px;
+            padding: 4px 8px;
+            background-color: #fdf2f2;
+            border-radius: 3px;
+            border: 1px solid #fecaca;
+        }
+        
+        .message-not-found {
+            color: #e74c3c;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 4px;
+            padding: 4px 8px;
+            background-color: #fdf2f2;
+            border-radius: 3px;
+            border: 1px solid #fecaca;
+        }
+        
+        .file-types-section {
+            margin-top: 20px;
+        }
+        
+        .file-types-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 12px;
+        }
+        
+        .file-types-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 8px;
+        }
+        
+        .file-type-item {
+            background-color: white;
+            border-radius: 4px;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+        
+        .file-type-extension {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 12px;
+        }
+        
+        .file-type-count {
+            color: #6c757d;
+            font-size: 11px;
+            margin-top: 2px;
+        }
+        
+        .file-type-size {
+            color: #6c757d;
+            font-size: 10px;
+        }
+        
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -585,6 +899,22 @@ function getRoleColor($role) {
                                 <?php echo $selectedChannel['ignoring_count']; ?>
                             </div>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- Статистика аттачментов старой системы -->
+                <div class="stats-section">
+                    <h2 class="stats-title">Статистика аттачментов (старая система)</h2>
+                    <div class="stats-buttons">
+                        <button id="getAttachmentStatsBtn" class="stats-btn" onclick="getAttachmentStats()">
+                            Получить статистику аттачментов
+                        </button>
+                        <button id="getLostAttachmentsBtn" class="stats-btn stats-btn-secondary" onclick="getLostAttachments()">
+                            Потерянные аттачменты
+                        </button>
+                    </div>
+                    <div id="attachmentStatsContent" class="attachment-stats-content" style="display: none;">
+                        <!-- Здесь будет отображаться статистика аттачментов -->
                     </div>
                 </div>
                 
@@ -741,6 +1071,12 @@ function getRoleColor($role) {
             return div.innerHTML;
         }
         
+        function stripHtmlTags(html) {
+            const div = document.createElement('div');
+            div.innerHTML = html;
+            return div.textContent || div.innerText || '';
+        }
+        
         // Закрытие модального окна по клику вне его
         document.getElementById('usersModal').addEventListener('click', function(e) {
             if (e.target === this) {
@@ -754,6 +1090,511 @@ function getRoleColor($role) {
                 closeModal();
             }
         });
+        
+        // Функция для получения статистики аттачментов
+        function getAttachmentStats() {
+            const btn = document.getElementById('getAttachmentStatsBtn');
+            const content = document.getElementById('attachmentStatsContent');
+            
+            // Показываем индикатор загрузки
+            btn.disabled = true;
+            btn.textContent = 'Загрузка...';
+            content.style.display = 'block';
+            content.innerHTML = '<div class="loading">Сканирование файлов аттачментов...</div>';
+            
+            // Получаем ID канала из URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const channelId = urlParams.get('channel_id');
+            
+            if (!channelId) {
+                content.innerHTML = '<div class="no-data">Ошибка: не указан ID канала</div>';
+                btn.disabled = false;
+                btn.textContent = 'Получить статистику аттачментов';
+                return;
+            }
+            
+            // Отправляем запрос к API
+            fetch(`../api/attachment-stats.php?channel_id=${channelId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text().then(text => {
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            console.error('Ошибка парсинга JSON:', text);
+                            throw new Error('Сервер вернул некорректный JSON. Проверьте консоль для подробностей.');
+                        }
+                    });
+                })
+                .then(data => {
+                    if (data.error) {
+                        content.innerHTML = `<div class="no-data">Ошибка: ${data.message || data.error}</div>`;
+                    } else {
+                        displayAttachmentStats(data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка при получении статистики аттачментов:', error);
+                    content.innerHTML = `<div class="no-data">Ошибка при получении статистики аттачментов: ${error.message}</div>`;
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Получить статистику аттачментов';
+                });
+        }
+        
+        // Функция для отображения статистики аттачментов
+        function displayAttachmentStats(data) {
+            const content = document.getElementById('attachmentStatsContent');
+            
+            // Если есть ошибка, показываем её
+            if (data.error) {
+                content.innerHTML = `<div class="no-data">${data.error}</div>`;
+                return;
+            }
+            
+            let html = `
+                <div class="attachment-stats-grid">
+                    <div class="attachment-stat-item">
+                        <div class="attachment-stat-label">Всего файлов</div>
+                        <div class="attachment-stat-value">${data.total_files}</div>
+                    </div>
+                    <div class="attachment-stat-item">
+                        <div class="attachment-stat-label">Общий размер</div>
+                        <div class="attachment-stat-value">${data.total_size_formatted}</div>
+                    </div>
+                    <div class="attachment-stat-item">
+                        <div class="attachment-stat-label">Больших файлов (>20MB)</div>
+                        <div class="attachment-stat-value" style="color: ${data.large_files.length > 0 ? '#e74c3c' : '#28a745'}">${data.large_files.length}</div>
+                    </div>
+                    <div class="attachment-stat-item">
+                        <div class="attachment-stat-label">Типов файлов</div>
+                        <div class="attachment-stat-value">${Object.keys(data.file_types).length}</div>
+                    </div>
+                </div>
+            `;
+            
+            // Добавляем информацию о больших файлах
+            if (data.large_files.length > 0) {
+                html += `
+                    <div class="large-files-section">
+                        <div class="large-files-title">Файлы больше 20MB (${data.large_files.length})</div>
+                        <div class="large-files-list">
+                `;
+                
+                data.large_files.forEach(file => {
+                    const messageInfo = file.message_info || {};
+                    
+                    // Формируем дополнительные уведомления
+                    let additionalInfo = '';
+                    let showMessageInfo = true;
+                    
+                    if (messageInfo.not_found) {
+                        additionalInfo = '<div class="message-not-found">⚠️ Сообщение не найдено в базе данных</div>';
+                        showMessageInfo = false; // Не показываем информацию о сообщении
+                    } else if (messageInfo.is_moved) {
+                        additionalInfo = `<div class="message-moved-warning">⚠️ Сообщение перенесено в канал "${escapeHtml(messageInfo.message_channel_name || 'ID: ' + messageInfo.message_channel_id)}"</div>`;
+                        showMessageInfo = false; // Не показываем информацию о сообщении для перенесенных
+                    }
+                    
+                    // Создаем ссылку для скачивания
+                    let fileNameHtml = escapeHtml(file.name);
+                    if (file.message_id && file.attachment_id !== null && file.attachment_id !== undefined) {
+                        const downloadUrl = `../api/file.php?p=${data.channel_id}&m=${file.message_id}&a=${file.attachment_id}`;
+                        fileNameHtml = `<a href="${downloadUrl}" target="_blank" title="Скачать файл">${escapeHtml(file.name)}</a>`;
+                    } else {
+                        // Для отладки - показываем информацию о том, почему ссылка не создана
+                        console.log('Не удалось создать ссылку для файла:', file.name, {
+                            message_id: file.message_id,
+                            attachment_id: file.attachment_id,
+                            channel_id: data.channel_id,
+                            debug_info: file.debug_info
+                        });
+                        
+                        // Добавляем визуальную подсказку в интерфейс
+                        fileNameHtml += ' <span style="color: #6c757d; font-size: 11px;" title="Ссылка для скачивания недоступна">🔒</span>';
+                    }
+                    
+                    // Формируем информацию о сообщении только если оно найдено
+                    let messageInfoHtml = '';
+                    if (showMessageInfo && !messageInfo.not_found && messageInfo.nick !== null) {
+                        const messageDate = messageInfo.time_created ? 
+                            new Date(messageInfo.time_created).toLocaleDateString('ru-RU') + ' ' + 
+                            new Date(messageInfo.time_created).toLocaleTimeString('ru-RU', {hour: '2-digit', minute: '2-digit'}) : 
+                            'Неизвестно';
+                            
+                        messageInfoHtml = `
+                            <div class="large-file-message-info">
+                                <div class="message-meta">
+                                    <div class="message-author">${escapeHtml(messageInfo.nick || 'Неизвестно')}</div>
+                                    <div class="message-date">${messageDate}</div>
+                                </div>
+                                <div class="message-text">${escapeHtml(stripHtmlTags(messageInfo.message || 'Сообщение содержит только аттачмент'))}</div>
+                                <div class="message-id">ID сообщения: ${messageInfo.id_message || 'Неизвестно'}</div>
+                                ${additionalInfo}
+                            </div>
+                        `;
+                    } else {
+                        // Показываем только предупреждение без информации о сообщении
+                        messageInfoHtml = `
+                            <div class="large-file-message-info">
+                                ${additionalInfo}
+                            </div>
+                        `;
+                    }
+                    
+                    html += `
+                        <div class="large-file-item">
+                            <div class="large-file-header">
+                                <div class="large-file-name">${fileNameHtml}</div>
+                                <div class="large-file-size">${file.size_mb} MB</div>
+                            </div>
+                            ${messageInfoHtml}
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Добавляем статистику по типам файлов
+            if (Object.keys(data.file_types).length > 0) {
+                html += `
+                    <div class="file-types-section">
+                        <div class="file-types-title">Статистика по типам файлов</div>
+                        <div class="file-types-list">
+                `;
+                
+                // Сортируем типы файлов по количеству
+                const sortedTypes = Object.entries(data.file_types)
+                    .sort(([,a], [,b]) => b.count - a.count);
+                
+                sortedTypes.forEach(([extension, stats]) => {
+                    html += `
+                        <div class="file-type-item">
+                            <div class="file-type-extension">.${extension || 'без расширения'}</div>
+                            <div class="file-type-count">${stats.count} файлов</div>
+                            <div class="file-type-size">${stats.size_formatted}</div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Добавляем информацию о времени сканирования
+            html += `
+                <div style="margin-top: 20px; text-align: center; color: #6c757d; font-size: 12px;">
+                    Сканирование выполнено: ${data.scanned_at}
+                </div>
+            `;
+            
+            content.innerHTML = html;
+        }
+        
+        // Функция для поиска потерянных аттачментов
+        function getLostAttachments() {
+            const btn = document.getElementById('getLostAttachmentsBtn');
+            const content = document.getElementById('attachmentStatsContent');
+            
+            // Показываем индикатор загрузки
+            btn.disabled = true;
+            btn.textContent = 'Поиск...';
+            content.style.display = 'block';
+            content.innerHTML = '<div class="loading">Поиск потерянных аттачментов...</div>';
+            
+            // Получаем ID канала из URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const channelId = urlParams.get('channel_id');
+            
+            if (!channelId) {
+                content.innerHTML = '<div class="no-data">Ошибка: не указан ID канала</div>';
+                btn.disabled = false;
+                btn.textContent = 'Потерянные аттачменты';
+                return;
+            }
+            
+            // Отправляем запрос к API
+            fetch(`../api/attachment-stats.php?channel_id=${channelId}&action=lost_attachments`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text().then(text => {
+                        try {
+                            return JSON.parse(text);
+                        } catch (e) {
+                            console.error('Ошибка парсинга JSON:', text);
+                            throw new Error('Сервер вернул некорректный JSON. Проверьте консоль для подробностей.');
+                        }
+                    });
+                })
+                .then(data => {
+                    if (data.error) {
+                        content.innerHTML = `<div class="no-data">Ошибка: ${data.message || data.error}</div>`;
+                    } else {
+                        displayLostAttachments(data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка при поиске потерянных аттачментов:', error);
+                    content.innerHTML = `<div class="no-data">Ошибка при поиске потерянных аттачментов: ${error.message}</div>`;
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Потерянные аттачменты';
+                });
+        }
+        
+        // Функция для отображения потерянных аттачментов
+        function displayLostAttachments(data) {
+            const content = document.getElementById('attachmentStatsContent');
+            
+            let html = `
+                <div class="attachment-stats-grid">
+                    <div class="attachment-stat-item">
+                        <div class="attachment-stat-label">Всего файлов</div>
+                        <div class="attachment-stat-value">${data.total_files}</div>
+                    </div>
+                    <div class="attachment-stat-item">
+                        <div class="attachment-stat-label">Потерянных файлов</div>
+                        <div class="attachment-stat-value" style="color: ${data.lost_count > 0 ? '#dc3545' : '#28a745'}">${data.lost_count}</div>
+                    </div>
+                    ${data.lost_count > 0 ? `
+                    <div class="attachment-stat-item">
+                        <div class="attachment-stat-label">Действия</div>
+                        <div class="attachment-stat-value">
+                            <button class="delete-all-btn" onclick="deleteAllLostAttachments()" title="Удалить все потерянные файлы">
+                                Удалить все
+                            </button>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            if (data.lost_files.length > 0) {
+                html += `
+                    <div class="large-files-section">
+                        <div class="large-files-title">Потерянные аттачменты (${data.lost_count})</div>
+                        <div class="large-files-list">
+                `;
+                
+                data.lost_files.forEach(file => {
+                    // Создаем ссылку для скачивания
+                    let fileNameHtml = escapeHtml(file.name);
+                    const downloadUrl = `../api/file.php?p=${data.channel_id}&m=${file.message_id}&a=0`;
+                    fileNameHtml = `<a href="${downloadUrl}" target="_blank" title="Скачать файл">${escapeHtml(file.name)}</a>`;
+                    
+                    html += `
+                        <div class="lost-attachment-item">
+                            <div class="lost-attachment-info">
+                                <div class="lost-attachment-name">${fileNameHtml}</div>
+                                <div class="lost-attachment-details">
+                                    Размер: ${file.size_mb} MB | ID сообщения: ${file.message_id} | Изменен: ${file.modified}
+                                </div>
+                            </div>
+                            <div class="lost-attachment-actions">
+                                <button class="delete-btn" onclick="deleteLostAttachment('${escapeHtml(file.path)}', this)">
+                                    Удалить
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div style="margin-top: 20px; text-align: center; color: #28a745; font-weight: 600;">
+                        🎉 Потерянных аттачментов не найдено!
+                    </div>
+                `;
+            }
+            
+            // Добавляем информацию о времени сканирования
+            html += `
+                <div style="margin-top: 20px; text-align: center; color: #6c757d; font-size: 12px;">
+                    Поиск выполнен: ${data.scanned_at}
+                </div>
+            `;
+            
+            content.innerHTML = html;
+        }
+        
+        // Функция для удаления потерянного аттачмента
+        function deleteLostAttachment(filePath, button) {
+            if (!confirm('Вы уверены, что хотите удалить этот файл? Это действие нельзя отменить.')) {
+                return;
+            }
+            
+            const originalText = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Удаление...';
+            
+            const formData = new FormData();
+            formData.append('file_path', filePath);
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const channelId = urlParams.get('channel_id');
+            
+            fetch(`../api/attachment-stats.php?channel_id=${channelId}&action=delete_file`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Удаляем элемент из списка
+                    button.closest('.lost-attachment-item').remove();
+                    
+                    // Обновляем счетчик
+                    const countElement = document.querySelector('.attachment-stat-value[style*="color: #dc3545"]');
+                    if (countElement) {
+                        const currentCount = parseInt(countElement.textContent);
+                        countElement.textContent = currentCount - 1;
+                        
+                        // Если больше нет потерянных файлов, меняем цвет на зеленый
+                        if (currentCount - 1 === 0) {
+                            countElement.style.color = '#28a745';
+                        }
+                    }
+                } else {
+                    alert('Ошибка при удалении файла: ' + (data.message || 'Неизвестная ошибка'));
+                    button.disabled = false;
+                    button.textContent = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при удалении файла:', error);
+                alert('Ошибка при удалении файла. Проверьте консоль браузера для подробностей.');
+                button.disabled = false;
+                button.textContent = originalText;
+            });
+        }
+        
+        // Функция для удаления всех потерянных аттачментов
+        function deleteAllLostAttachments() {
+            const deleteButtons = document.querySelectorAll('.lost-attachment-item .delete-btn');
+            const count = deleteButtons.length;
+            
+            if (count === 0) {
+                alert('Нет потерянных файлов для удаления.');
+                return;
+            }
+            
+            if (!confirm(`Вы уверены, что хотите удалить все ${count} потерянных файлов? Это действие нельзя отменить.`)) {
+                return;
+            }
+            
+            const button = document.querySelector('.delete-all-btn');
+            const originalText = button.textContent;
+            button.disabled = true;
+            
+            let deletedCount = 0;
+            let failedCount = 0;
+            let processedCount = 0;
+            
+            // Функция для обновления текста кнопки
+            function updateButtonText() {
+                button.textContent = `Удаление... (${processedCount}/${count})`;
+            }
+            
+            // Функция для обработки одного файла
+            function deleteNextFile(index) {
+                if (index >= deleteButtons.length) {
+                    // Все файлы обработаны
+                    button.disabled = false;
+                    button.textContent = originalText;
+                    
+                    alert(`Операция завершена!\nУдалено файлов: ${deletedCount}\nОшибок: ${failedCount}`);
+                    
+                    // Скрываем кнопку "Удалить все" если все файлы удалены
+                    if (failedCount === 0) {
+                        button.closest('.attachment-stat-item').style.display = 'none';
+                    }
+                    
+                    return;
+                }
+                
+                const deleteBtn = deleteButtons[index];
+                if (!deleteBtn || !deleteBtn.closest('.lost-attachment-item')) {
+                    // Кнопка уже удалена, переходим к следующей
+                    processedCount++;
+                    updateButtonText();
+                    setTimeout(() => deleteNextFile(index + 1), 100);
+                    return;
+                }
+                
+                // Получаем путь к файлу из onclick атрибута
+                const onclickAttr = deleteBtn.getAttribute('onclick');
+                const match = onclickAttr.match(/deleteLostAttachment\('([^']+)'/);
+                if (!match) {
+                    failedCount++;
+                    processedCount++;
+                    updateButtonText();
+                    setTimeout(() => deleteNextFile(index + 1), 100);
+                    return;
+                }
+                
+                const filePath = match[1];
+                const formData = new FormData();
+                formData.append('file_path', filePath);
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const channelId = urlParams.get('channel_id');
+                
+                fetch(`../api/attachment-stats.php?channel_id=${channelId}&action=delete_file`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        deletedCount++;
+                        // Удаляем элемент из списка
+                        deleteBtn.closest('.lost-attachment-item').remove();
+                    } else {
+                        failedCount++;
+                        console.error(`Ошибка удаления файла ${filePath}:`, data.message);
+                    }
+                })
+                .catch(error => {
+                    failedCount++;
+                    console.error(`Ошибка удаления файла ${filePath}:`, error);
+                })
+                .finally(() => {
+                    processedCount++;
+                    updateButtonText();
+                    
+                    // Обновляем счетчик потерянных файлов
+                    const countElement = document.querySelector('.attachment-stat-value[style*="color: #dc3545"], .attachment-stat-value[style*="color: #28a745"]');
+                    if (countElement) {
+                        const remainingCount = count - processedCount;
+                        countElement.textContent = remainingCount;
+                        countElement.style.color = remainingCount > 0 ? '#dc3545' : '#28a745';
+                    }
+                    
+                    // Переходим к следующему файлу через небольшую задержку
+                    setTimeout(() => deleteNextFile(index + 1), 200);
+                });
+            }
+            
+            // Начинаем удаление с первого файла
+            updateButtonText();
+            deleteNextFile(0);
+        }
     </script>
 </body>
 </html>
