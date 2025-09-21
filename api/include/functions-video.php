@@ -417,7 +417,7 @@ function generateVideoPreview($videoPath, $previewPath, $previewWidth = 1000, $f
         // Используем fps фильтр для равномерного извлечения кадров
         $fps = $totalFrames / $duration;
         $command = "ffmpeg -i " . escapeshellarg($videoPath) . 
-                  " -vf \"fps={$fps},select='lt(n,{$totalFrames})',scale=100:100:force_original_aspect_ratio=increase,crop=100:100,tile={$framesPerRow}x{$totalRows}:padding=0:margin=0:color=white\" " .
+                  " -vf \"fps={$fps},select='lt(n,{$totalFrames})',scale=100:100:force_original_aspect_ratio=increase,crop=100:100,tile={$framesPerRow}x{$totalRows}:padding=0:margin=0:color=0xD7CABB\" " .
                   " -frames:v 1 -q:v 2 -y " . escapeshellarg($tiledPreviewPath) . " 2>/dev/null";
         
         plllasmaLog("[VIDEO] Пробуем встроенный tile фильтр: {$command}", 'INFO', 'video-worker');
@@ -484,10 +484,10 @@ function generateVideoPreview($videoPath, $previewPath, $previewWidth = 1000, $f
         
         plllasmaLog("[VIDEO] Размер превью: {$previewWidth}x{$previewHeight}, кадров в ряду: {$framesPerRow}, рядов: {$totalRows}", 'INFO', 'video-worker');
         
-        // Создаем белый холст точно под размер сетки
+        // Создаем холст с цветом фона #D7CABB
         $preview = imagecreatetruecolor($previewWidth, $previewHeight);
-        $white = imagecolorallocate($preview, 255, 255, 255);
-        imagefill($preview, 0, 0, $white);
+        $bgColor = imagecolorallocate($preview, 215, 202, 187); // #D7CABB
+        imagefill($preview, 0, 0, $bgColor);
         
         $frameIndex = 0;
         foreach ($frameFiles as $frameFile) {

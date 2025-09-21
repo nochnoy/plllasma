@@ -82,9 +82,8 @@
             <div class="video-unloaded">
 
               <h1 class="file-name">{{attachment.filename}}</h1>
-              Этот файл был выгружен для экономии места.
+              Файл был выгружен для экономии места
               @if (attachment.preview) {
-                <br>Но сохранились скриншоты:
                 <img
                   [src]="getPreviewUrl()"
                   [alt]="attachment.filename || ''"
