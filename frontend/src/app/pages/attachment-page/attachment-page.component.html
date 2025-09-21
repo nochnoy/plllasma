@@ -45,6 +45,7 @@
             [class.content-normal]="!isImageMagnified"
             [class.content-zoomed]="isImageMagnified"
             (click)="isImageMagnified = !isImageMagnified"
+            (contextmenu)="$event.preventDefault(); $event.stopPropagation();"
           />
         }
 
@@ -54,11 +55,12 @@
               <div class="video shadow">
                 <video
                   class="content-normal video"
+                  (contextmenu)="$event.preventDefault(); $event.stopPropagation();"
                   [src]="getAttachmentImageUrl()"
+                  [muted]="'muted'"
                   controls
                   loop
                   autoplay
-                  [muted]="'muted'"
                 >
                 </video>
               </div>
