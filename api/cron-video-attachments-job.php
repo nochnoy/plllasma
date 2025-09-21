@@ -527,7 +527,7 @@ function processAttachment($attachment) {
         $previewVersion = max(1, $attachment['preview'] + 1);
         $previewPath = "../attachments-new/{$xx}/{$yy}/{$attachmentId}-{$previewVersion}-p.jpg";
         plllasmaLog("Генерируем превью: {$filePath} -> {$previewPath}", 'INFO', 'video-worker');
-        $previewGenerated = generateVideoPreview($filePath, $previewPath, 1000, 100, 100, 5);
+        $previewGenerated = generateVideoPreview($filePath, $previewPath, 600, 100, 100, 5);
         
         if (!$previewGenerated) {
             plllasmaLog("Не удалось сгенерировать превью для {$attachmentId}, но продолжаем", 'WARNING', 'video-worker');

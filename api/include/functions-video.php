@@ -411,13 +411,13 @@ function generateVideoPreview($videoPath, $previewPath, $previewWidth = 1000, $f
         
         // Пробуем встроенный tile фильтр для всех форматов
         $tiledPreviewPath = $tempDir . '/tiled_preview_' . $sessionId . '.jpg';
-        $framesPerRow = floor($previewWidth / $frameSize);
+        $framesPerRow = 6; // Фиксированное количество кадров на строку
         $totalRows = ceil($totalFrames / $framesPerRow);
         
         // Используем fps фильтр для равномерного извлечения кадров
         $fps = $totalFrames / $duration;
         $command = "ffmpeg -i " . escapeshellarg($videoPath) . 
-                  " -vf \"fps={$fps},select='lt(n,{$totalFrames})',scale=100:100:force_original_aspect_ratio=increase,crop=100:100,tile={$framesPerRow}x{$totalRows}:padding=0:margin=0:color=black\" " .
+                  " -vf \"fps={$fps},select='lt(n,{$totalFrames})',scale=100:100:force_original_aspect_ratio=increase,crop=100:100,tile={$framesPerRow}x{$totalRows}:padding=0:margin=0:color=white\" " .
                   " -frames:v 1 -q:v 2 -y " . escapeshellarg($tiledPreviewPath) . " 2>/dev/null";
         
         plllasmaLog("[VIDEO] Пробуем встроенный tile фильтр: {$command}", 'INFO', 'video-worker');
@@ -476,26 +476,18 @@ function generateVideoPreview($videoPath, $previewPath, $previewWidth = 1000, $f
         plllasmaLog("[VIDEO] Извлечено кадров: " . count($frameFiles), 'INFO', 'video-worker');
         
         // Создаем превью из отдельных кадров (PHP сборка) - плотная сетка без отступов
-        $framesPerRow = floor($previewWidth / $frameSize);
+        $framesPerRow = 6; // Фиксированное количество кадров на строку
         $totalRows = ceil(count($frameFiles) / $framesPerRow);
-        
-        // Адаптивная ширина: если кадров меньше 10, делаем ширину по факту
-        $actualFramesCount = count($frameFiles);
-        if ($actualFramesCount < 10) {
-            $actualFramesPerRow = min($actualFramesCount, $framesPerRow);
-            $previewWidth = $actualFramesPerRow * $frameSize;
-            $framesPerRow = $actualFramesPerRow;
-            $totalRows = ceil($actualFramesCount / $framesPerRow);
-        }
+        $previewWidth = 600; // Фиксированная ширина превью
         
         $previewHeight = $totalRows * $frameSize;
         
-        plllasmaLog("[VIDEO] Размер превью: {$previewWidth}x{$previewHeight}, кадров в ряду: {$framesPerRow}, рядов: {$totalRows} (адаптивная ширина)", 'INFO', 'video-worker');
+        plllasmaLog("[VIDEO] Размер превью: {$previewWidth}x{$previewHeight}, кадров в ряду: {$framesPerRow}, рядов: {$totalRows}", 'INFO', 'video-worker');
         
-        // Создаем черный холст точно под размер сетки
+        // Создаем белый холст точно под размер сетки
         $preview = imagecreatetruecolor($previewWidth, $previewHeight);
-        $black = imagecolorallocate($preview, 0, 0, 0);
-        imagefill($preview, 0, 0, $black);
+        $white = imagecolorallocate($preview, 255, 255, 255);
+        imagefill($preview, 0, 0, $white);
         
         $frameIndex = 0;
         foreach ($frameFiles as $frameFile) {
