@@ -57,7 +57,8 @@ function createAttachment($messageId, $type, $source = null, $videoId = null, $f
         INSERT INTO tbl_attachments (id, id_message, type, created, source, filename, status) 
         VALUES (?, ?, ?, ?, ?, ?, ?)
     ');
-    $status = 'pending';
+    // Определяем статус: pending только для видео файлов, ready для остальных
+    $status = ($type === 'video') ? 'pending' : 'ready';
     $sql->bind_param("sisssss", $id, $messageId, $type, $created, $source, $safeFilename, $status);
     
     if ($sql->execute()) {
