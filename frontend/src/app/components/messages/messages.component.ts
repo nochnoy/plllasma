@@ -6,6 +6,7 @@ import {ChannelService} from "../../services/channel.service";
 import {HttpService} from "../../services/http.service";
 import {delay, tap} from "rxjs/operators";
 import {UserService} from "../../services/user.service";
+import {INewAttachment} from "../../model/app-model";
 
 @Component({
   selector: 'app-messages',
@@ -142,6 +143,18 @@ export class MessagesComponent {
           ).subscribe();
       }
     }
+  }
+
+  // Метод для фильтрации аттачментов с иконками (icon > 0)
+  getAttachmentsWithIcons(attachments: INewAttachment[] | undefined): INewAttachment[] {
+    if (!attachments) return [];
+    return attachments.filter(attachment => attachment.icon && attachment.icon > 0);
+  }
+
+  // Метод для фильтрации аттачментов без иконок (icon = 0)
+  getAttachmentsWithoutIcons(attachments: INewAttachment[] | undefined): INewAttachment[] {
+    if (!attachments) return [];
+    return attachments.filter(attachment => !attachment.icon || attachment.icon === 0);
   }
 }
 

@@ -26,6 +26,7 @@ import {MatDialogModule} from "@angular/material/dialog";
 import { NewyearComponent } from './components/newyear/newyear.component';
 import { AttachmentPageComponent } from './pages/attachment-page/attachment-page.component';
 import { AttachmentItemComponent } from './components/attachment-item/attachment-item.component';
+import { AttachmentListComponent } from './components/attachment-list/attachment-list.component';
 
 @NgModule({
   imports: [
@@ -58,7 +59,8 @@ import { AttachmentItemComponent } from './components/attachment-item/attachment
       DialogDataExampleDialog,
           NewyearComponent,
     AttachmentPageComponent,
-    AttachmentItemComponent
+    AttachmentItemComponent,
+    AttachmentListComponent
     ],
     providers: [
       AppGuard,

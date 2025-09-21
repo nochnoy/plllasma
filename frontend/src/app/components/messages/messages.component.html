@@ -33,6 +33,12 @@
 
         <div *ngIf="message.attachments || (message.newAttachments && message.newAttachments.length > 0)" class="attachments">
 
+          <!-- Новые аттачменты без иконок (icon = 0) в виде списка ссылок -->
+          <app-attachment-list
+            [attachments]="getAttachmentsWithoutIcons(message.newAttachments)"
+            [placeId]="placeId">
+          </app-attachment-list>
+
           <!-- Старые аттачменты -->
           <a *ngFor="let attachment of message.attachments"
              class="attachment" target="_blank"
@@ -40,9 +46,9 @@
             <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
           </a>
 
-          <!-- Новые аттачменты -->
+          <!-- Новые аттачменты с иконками (icon > 0) -->
           <app-attachment-item
-            *ngFor="let attachment of message.newAttachments"
+            *ngFor="let attachment of getAttachmentsWithIcons(message.newAttachments)"
             [attachment]="attachment"
             [placeId]="placeId">
           </app-attachment-item>
@@ -126,13 +132,19 @@
             <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
           </a>
 
-          <!-- Новые аттачменты -->
+          <!-- Новые аттачменты с иконками (icon > 0) -->
           <app-attachment-item
-            *ngFor="let attachment of message.newAttachments"
+            *ngFor="let attachment of getAttachmentsWithIcons(message.newAttachments)"
             [attachment]="attachment"
             [placeId]="placeId">
           </app-attachment-item>
         </div>
+
+        <!-- Новые аттачменты без иконок (icon = 0) в виде списка ссылок -->
+        <app-attachment-list
+          [attachments]="getAttachmentsWithoutIcons(message.newAttachments)"
+          [placeId]="placeId">
+        </app-attachment-list>
 
       </div>
 
