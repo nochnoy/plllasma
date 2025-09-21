@@ -11,10 +11,13 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <style>
     #preloader {
+      position: absolute;
+      z-index: -1;
       display: none;
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      width: 100vw;
       height: 100vh;
     }
   </style>
@@ -28,8 +31,9 @@
   </script>
 </head>
 <body>
-  <div id="preloader" style="">
+  <div id="preloader">
     Загружается. В случае проблем пишите на no-subject@yandex.ru
   </div>
+  <app-root></app-root>
 </body>
 </html>
