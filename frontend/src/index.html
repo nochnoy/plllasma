@@ -11,19 +11,25 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <style>
     #preloader {
-      display: flex;
+      display: none;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      opacity: 30%;
     }
   </style>
+  <script>
+    setTimeout(() => {
+      const preloader = document.getElementById('preloader');
+      if (preloader) {
+        preloader.style.display = 'flex';
+      }
+    }, 3000);
+  </script>
 </head>
 <body>
-  <div id="preloader">
+  <div id="preloader" style="">
     Загружается. В случае проблем пишите на no-subject@yandex.ru
   </div>
-  <app-root></app-root>
 </body>
 </html>
