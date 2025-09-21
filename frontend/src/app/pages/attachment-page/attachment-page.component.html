@@ -1,55 +1,106 @@
-<div class="attachment-page">
-  <!-- Загрузка -->
-  <div class="loading" *ngIf="loading">
-    <p>Загрузка...</p>
-  </div>
-
-  <!-- Ошибка -->
-  <div class="error" *ngIf="error">
-    <p>{{ error }}</p>
-  </div>
-
-  <!-- Контент -->
-  <div class="content" *ngIf="!loading && !error && attachment">
-
-    <!-- Картинка -->
-    <div class="image-content" *ngIf="attachment.type === 'image'">
-      <img [src]="getAttachmentImageUrl()"
-           [alt]="attachment.filename || 'Изображение'"
-           class="content-image" />
+@if (isLoading) {
+  <div class="spinner"></div>
+} @else {
+  @if (error) {
+    <div class="error">
+      <div>🙁</div>
+      <div>{{error}}</div>
     </div>
+  } @else {
+    @if (attachment) {
 
-    <!-- Видео -->
-    <div class="video-content"
-         *ngIf="attachment.type === 'video'"
-         [class.has-preview]="hasPreview()"
-         [style.background-image]="getPreviewBackgroundStyle()">
-      <!-- Видеоплеер - показываем только если браузер поддерживает воспроизведение -->
-      <div *ngIf="canPlayVideo()">
-        <video [src]="getAttachmentImageUrl()"
-               controls
-               loop
-               autoplay
-               class="content-video"
-               [attr.poster]="getVideoPosterUrl()">
-        </video>
+      <div class="info" (click)="isInfoExpanded = !isInfoExpanded">
+        <div
+          class="info-button"
+          [class.up]="isInfoExpanded"
+          [class.down]="!isInfoExpanded"
+        ></div>
+        <div>
+          @if (isInfoExpanded) {
+            <span class="file-name">{{attachment.filename}}</span><br>
+            <br>
+            Размер: <b>{{ getFileSize() }}</b><br>
+            Смотрели: <b>{{attachment.views}}</b><br>
+            Скачали: <b>{{attachment.downloads}}</b><br>
+            <br>
+            @if (attachment.preview) {
+              <a [href]="getPreviewUrl()">Скриншоты</a><br>
+            }
+          }
+          @if (attachment.file) {
+            <a href (click)="$event.preventDefault(); $event.stopImmediatePropagation(); downloadFile(); isInfoExpanded = true;">Скачать</a>
+          } @else {
+            Не скачать :(
+          }
+        </div>
       </div>
 
-      <div class="file-info">
-        <h2 class="file-name">{{ attachment.filename || 'Видео' }}</h2>
-        <button class="download-button" (click)="downloadFile()">Скачать</button>
-        <p class="file-size">{{ getFileSize() }}</p>
-      </div>
-    </div>
+      @switch (attachment.type) {
 
-    <!-- Файл -->
-    <div class="file-content" *ngIf="attachment.type === 'file'">
-      <div class="file-info">
-        <h2 class="file-name">{{ attachment.filename || 'Файл' }}</h2>
-        <button class="download-button" (click)="downloadFile()">Скачать</button>
-        <p class="file-size">{{ getFileSize() }}</p>
-      </div>
-    </div>
+        @case ('image') {
+          <img
+            class="image shadow"
+            [src]="getAttachmentImageUrl()"
+            [alt]="attachment.filename || ''"
+            [class.content-normal]="!isImageMagnified"
+            [class.content-zoomed]="isImageMagnified"
+            (click)="isImageMagnified = !isImageMagnified"
+          />
+        }
 
-  </div>
-</div>
+        @case ('video') {
+          @if (attachment.file) {
+            @if (canPlayVideo()) {
+              <div class="video shadow">
+                <video
+                  class="content-normal video"
+                  [src]="getAttachmentImageUrl()"
+                  controls
+                  loop
+                  autoplay
+                  [muted]="'muted'"
+                >
+                </video>
+              </div>
+            } @else {
+              <div class="file">
+                <h1>{{attachment.filename}}</h1>
+                <button class="button" (click)="downloadFile()">Скачать {{ getFileSize() }}</button>
+                @if (attachment.preview) {
+                  <div style="margin-top: 1rem">
+                    <img
+                      [src]="getPreviewUrl()"
+                      [alt]="attachment.filename || ''"
+                    >
+                  </div>
+                }
+              </div>
+            }
+          } @else {
+            <div class="video-unloaded">
+
+              <h1 class="file-name">{{attachment.filename}}</h1>
+              Этот файл был выгружен для экономии места.
+              @if (attachment.preview) {
+                <br>Но сохранились скриншоты:
+                <img
+                  [src]="getPreviewUrl()"
+                  [alt]="attachment.filename || ''"
+                >
+              }
+            </div>
+          }
+        }
+
+        @case ('file') {
+          <div class="file">
+            <h1>{{attachment.filename}}</h1>
+            <button class="download-button" (click)="downloadFile()">Скачать {{ getFileSize() }}</button>
+          </div>
+        }
+      }
+
+    }
+  }
+}
+

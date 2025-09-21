@@ -1,107 +1,126 @@
-.attachment-page {
+:host {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-}
-
-.content {
-  width: 100%;
-  max-width: 1200px;
-}
-
-.image-content {
-  text-align: center;
-}
-
-.content-image {
-  max-width: 100%;
-  max-height: 80vh;
-  height: auto;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.file-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 50vh;
-}
-
-.video-content {
-  text-align: center;
-
-  &.has-preview {
-    min-height: 80vh;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-  }
-}
-
-.content-video {
-  max-width: 100%;
-  max-height: 80vh;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  background-color: transparent;
-}
-
-.file-info {
-  text-align: center;
-  padding: 2rem;
-  background-color: rgba(249, 249, 249, 0.9);
-  border-radius: 1rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
-  width: 100%;
-}
-
-.file-name {
-  margin: 0 0 1.5rem 0;
-  color: #333;
-  font-size: 1.25rem;
-  word-break: break-all;
-}
-
-.download-button {
-  display: block;
-  width: 100%;
-  padding: 1rem 2rem;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  cursor: pointer;
-  margin-bottom: 1rem;
-  transition: background-color 0.2s;
-
-  &:hover {
-    background-color: #0056b3;
-  }
-
-  &:active {
-    background-color: #004085;
-  }
-}
-
-.file-size {
-  margin: 0;
-  color: #666;
-  font-size: 0.875rem;
-}
-
-.loading, .error {
-  text-align: center;
-  padding: 3rem;
-  color: #666;
-  font-size: 1.125rem;
+  background-color: var(--color-page-bg);
+  box-shadow: inset 0 0 5rem 3rem rgba(0, 0, 0, 0.07);
 }
 
 .error {
-  color: #d32f2f;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.shadow {
+  box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.4)
+}
+
+.info {
+  position: fixed;
+  z-index: 1;
+  top: 1rem;
+  left: 1rem;
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  background: rgba(0, 0, 0, 0.5);
+  color: #d1d1d1;
+  cursor: pointer;
+  font-size: 0.8rem;
+  max-width: 20rem;
+
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.4);
+
+  a {
+    color: #d1d1d1;
+  }
+
+  .info-button {
+    user-select: none;
+    &.up::before {
+      content: '▼';
+    }
+    &.down::before {
+      content: '▲';
+    }
+  }
+}
+
+.file-name {
+  margin: 0;
+  padding: 0;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.content-normal {
+  max-width: 100vw;
+  max-height: calc(100vh - 1rem - 1rem);
+  box-sizing: content-box;
+}
+
+.content-zoomed {
+  max-height: none;
+}
+
+.image {
+  cursor: zoom-out;
+  &:not(.content-zoomed) {
+    max-height: calc(100vh - 2rem);
+    cursor: zoom-in;
+  }
+  border-radius: var(--border-radius);
+}
+
+.video {
+  vertical-align: top; /* Чтобы между <video> и контейнером не было промежутка */
+}
+
+.video-unloaded {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 600px; /* По ширине генерируемых привьюшек */
+  gap: 1rem;
+}
+
+.file {
+  font-weight: bold;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  & > * {
+    word-break: break-all;
+  }
+
+  button {
+    display: block;
+    width: 15rem;
+    height: 3rem;
+    padding: 1rem 2rem;
+    background-color: #ed8c31;
+    color: black;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: #fac51f;
+    }
+
+    &:active {
+      background-color: #852f0f;
+    }
+  }
 }
