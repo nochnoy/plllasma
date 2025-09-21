@@ -83,13 +83,19 @@
   vertical-align: top; /* Чтобы между <video> и контейнером не было промежутка */
 }
 
+.unloaded {
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  background-color: #f3da97;
+  border-radius: 1rem;
+}
+
 .video-unloaded {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   max-width: 600px; /* По ширине генерируемых привьюшек */
-  gap: 1rem;
-  margin-top: 3rem;
+  margin-top: 1rem;
   margin-bottom: 5rem;
 }
 
