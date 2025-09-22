@@ -9,31 +9,33 @@
   } @else {
     @if (attachment) {
 
-      <div class="info" (click)="isInfoExpanded = !isInfoExpanded">
-        <div
-          class="info-button"
-          [class.down]="isInfoExpanded"
-          [class.up]="!isInfoExpanded"
-        ></div>
-        <div>
-          @if (isInfoExpanded) {
-            <span class="file-name">{{attachment.filename}}</span><br>
-            <br>
-            Размер: <b>{{ getFileSize() }}</b><br>
-            Смотрели: <b>{{attachment.views}}</b><br>
-            Скачали: <b>{{attachment.downloads}}</b><br>
-            <br>
-            @if (attachment.preview) {
-              <a [href]="getPreviewUrl()">Скриншоты</a><br>
+      @if (attachment.type !== 'youtube') {
+        <div class="info" (click)="isInfoExpanded = !isInfoExpanded">
+          <div
+            class="info-button"
+            [class.down]="isInfoExpanded"
+            [class.up]="!isInfoExpanded"
+          ></div>
+          <div>
+            @if (isInfoExpanded) {
+              <span class="file-name">{{attachment.filename}}</span><br>
+              <br>
+              Размер: <b>{{ getFileSize() }}</b><br>
+              Смотрели: <b>{{attachment.views}}</b><br>
+              Скачали: <b>{{attachment.downloads}}</b><br>
+              <br>
+              @if (attachment.preview) {
+                <a [href]="getPreviewUrl()">Скриншоты</a><br>
+              }
             }
-          }
-          @if (attachment.file) {
-            <a href (click)="$event.preventDefault(); $event.stopImmediatePropagation(); downloadFile(); isInfoExpanded = true;">Скачать</a>
-          } @else {
-            Не скачать :(
-          }
+            @if (attachment.file) {
+              <a href (click)="$event.preventDefault(); $event.stopImmediatePropagation(); downloadFile(); isInfoExpanded = true;">Скачать</a>
+            } @else {
+              Не скачать :(
+            }
+          </div>
         </div>
-      </div>
+      }
 
       @switch (attachment.type) {
 

@@ -15,13 +15,6 @@
           {{channel.name}}
           <div *ngIf="channel?.isLoading" class="spinner"></div>
         </div>
-        <div
-          *ngIf="!channel?.isLoading && channel?.id !== 1"
-          class="channel-stats"
-          title="Количество людей, добавивших этот канал в своё боковое меню"
-        >
-          {{channel?.statSubscribers}} подписчиков
-        </div>
       </div>
 
       <app-matrix #matrix
@@ -42,6 +35,14 @@
               <div (click)="ignoreCommand()" *ngIf="!channel?.isIgnoring" class="pseudo-link"><i>🎧</i> Игнорировать</div>
               <div (click)="unignoreCommand()" *ngIf="channel?.isIgnoring" class="pseudo-link"><i>🎸</i> Не игнорировать</div>
             </ng-container>
+
+            <div
+              *ngIf="!channel?.isLoading && channel?.id !== 1"
+              class="channel-stats"
+              title="Количество людей, добавивших этот канал в своё боковое меню"
+            >
+              {{channel?.statSubscribers}} подписчиков
+            </div>
 
             <!--
             <div class="channel-tools">

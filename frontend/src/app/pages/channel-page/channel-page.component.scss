@@ -41,13 +41,12 @@
     font-weight: bold;
     color: var(--color-text);
   }
+}
 
-  .channel-stats {
-    font-size: 0.9rem;
-    margin-left: 1.5rem;
-    cursor: crosshair;
-    color: var(--color-date);
-  }
+.channel-stats {
+  font-size: 0.9rem;
+  cursor: crosshair;
+  color: var(--color-date);
 }
 
 :host {
