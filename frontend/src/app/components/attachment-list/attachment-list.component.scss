@@ -1,28 +1,9 @@
-.attachment-list {
-  margin-top: 8px;
-}
 
-.attachment-list-item {
-  margin-bottom: 4px;
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
+.item {
+  display: flex;
+  gap: 0.6rem;
 
-.attachment-link {
-  color: #0066cc;
-  text-decoration: none;
-  cursor: pointer;
-  font-size: 13px;
-  line-height: 1.4;
-  
-  &:hover {
-    text-decoration: underline;
-  }
-  
-  &.pending {
-    color: #666;
-    font-style: italic;
+  .work {
+    color: gray;
   }
 }

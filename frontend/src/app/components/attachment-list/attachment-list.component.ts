@@ -19,11 +19,8 @@ export class AttachmentListComponent implements OnInit {
 
   onAttachmentClick(attachment: INewAttachment): void {
     if (attachment) {
-      // Для всех типов аттачментов открываем страницу аттачмента в новом табе
       const url = this.router.serializeUrl(this.router.createUrlTree(['/attachment', attachment.id]));
-      // Добавляем hash для правильного роутинга
       const fullUrl = window.location.origin + '/#' + url;
-      console.log('Full URL with hash:', fullUrl);
       window.open(fullUrl, '_blank');
     }
   }
@@ -52,3 +49,4 @@ export class AttachmentListComponent implements OnInit {
     return '';
   }
 }
+

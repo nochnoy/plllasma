@@ -1,11 +1,17 @@
 <div class="attachment-list" *ngIf="attachments && attachments.length > 0">
-  <div class="attachment-list-item"
+  <div class="item"
        *ngFor="let attachment of attachments">
     <a href
-       class="attachment-link"
-       [class.pending]="attachment.status === 'pending'"
-       (click)="$event.preventDefault(); onAttachmentClick(attachment)">
-      {{getAttachmentTitle(attachment)}}{{getStatusText(attachment)}}
+       [routerLink]="'/attachment/' + attachment.id"
+       target="_blank"
+    >
+      {{attachment.filename}}
     </a>
+    @if (attachment.status === 'pending') {
+      <div class="work">
+        идёт обработка
+      </div>
+    }
   </div>
 </div>
+
