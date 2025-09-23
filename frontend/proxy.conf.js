@@ -1,7 +1,7 @@
 const PROXY_CONFIG = [
   {
     context: [
-      '/attachments-new/**',
+      '/a/**',
     ],
     target: 'https://plllasma.ru',
     secure: false,

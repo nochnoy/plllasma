@@ -144,7 +144,7 @@ export class Message {
     }
 
     // Новые аттачменты
-    this.newAttachments = (raw.newAttachments || []).map((attachment: any) => ({
+    this.newAttachments = (raw.j || []).map((attachment: any) => ({
       ...attachment,
       icon: Number(attachment.icon) || 0,
       preview: Number(attachment.preview) || 0,

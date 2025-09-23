@@ -2,8 +2,8 @@
   "name": "plllasma",
   "version": "0.0.0",
   "scripts": {
-    "start": "ng serve --host 0.0.0.0 --port 4200 --ssl --proxy-config proxy.conf.js",
-    "start:http": "ng serve --host 0.0.0.0 --port 4200 --proxy-config proxy.conf.js",
+    "start": "ng serve --host 0.0.0.0 --port 4200 --ssl --proxy-config proxy.conf.js --disable-host-check",
+    "start:http": "ng serve --host 0.0.0.0 --port 4200 --proxy-config proxy.conf.js --disable-host-check",
     "build": "ng build"
   },
   "private": true,

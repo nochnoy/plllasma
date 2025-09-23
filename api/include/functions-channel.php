@@ -129,8 +129,8 @@ function buildMessagesJson($a, $lastViewed) {
 		// Новые аттачменты из JSON поля
 		if (!empty($row[16])) {
 			$jsonData = safeJsonDecode($row[16]);
-			if ($jsonData && isset($jsonData['newAttachments']) && !empty($jsonData['newAttachments'])) {
-				$s .= ',"newAttachments":' . json_encode($jsonData['newAttachments'], JSON_UNESCAPED_UNICODE);
+			if ($jsonData && isset($jsonData['j']) && !empty($jsonData['j'])) {
+				$s .= ',"j":' . json_encode($jsonData['j'], JSON_UNESCAPED_UNICODE);
 			}
 		}
 

@@ -237,19 +237,17 @@ function getRecentVideoFilesDetailed($limit = 10) {
     $files = [];
     while ($row = $result->fetch_assoc()) {
         // Проверяем существование файлов (используем новую схему версионирования)
-        $xx = substr($row['id'], 0, 2);
-        $yy = substr($row['id'], 2, 2);
         
         // Строим путь к файлу
         if ($row['filename'] && $row['file'] > 0) {
             $extension = strtolower(pathinfo($row['filename'], PATHINFO_EXTENSION));
-            $filePath = "../attachments-new/{$xx}/{$yy}/{$row['id']}-{$row['file']}.{$extension}";
+            $filePath = "../" . ltrim(getAttachmentPath($row['id'], $row['file'], '', $extension), '/');
         } else {
             $filePath = null;
         }
         
-        $iconPath = $row['icon'] > 0 ? "../attachments-new/{$xx}/{$yy}/{$row['id']}-{$row['icon']}-i.jpg" : null;
-        $previewPath = $row['preview'] > 0 ? "../attachments-new/{$xx}/{$yy}/{$row['id']}-{$row['preview']}-p.jpg" : null;
+        $iconPath = $row['icon'] > 0 ? "../" . ltrim(getAttachmentPath($row['id'], $row['icon'], 'i', 'jpg'), '/') : null;
+        $previewPath = $row['preview'] > 0 ? "../" . ltrim(getAttachmentPath($row['id'], $row['preview'], 'p', 'jpg'), '/') : null;
         
         $row['video_file_exists'] = $filePath ? file_exists($filePath) : false;
         $row['video_file_path'] = $filePath;
@@ -447,8 +445,6 @@ function processAttachment($attachment) {
     plllasmaLog("ID: {$attachmentId}, файл версия: {$fileVersion}, имя файла: {$filename}, статус: {$attachment['status']}, создан: {$attachment['created']}", 'INFO', 'video-worker');
     
     // Составляем путь к файлу используя новую схему версионирования
-    $xx = substr($attachmentId, 0, 2);
-    $yy = substr($attachmentId, 2, 2);
     
     if (!$filename) {
         plllasmaLog("ОШИБКА: Отсутствует имя файла для аттачмента {$attachmentId}", 'ERROR', 'video-worker');
@@ -456,7 +452,7 @@ function processAttachment($attachment) {
     }
     
     $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-    $filePath = "../attachments-new/{$xx}/{$yy}/{$attachmentId}-{$fileVersion}.{$extension}";
+    $filePath = "../" . ltrim(getAttachmentPath($attachmentId, $fileVersion, '', $extension), '/');
     
     // Проверяем, существует ли файл
     plllasmaLog("Проверяем существование файла: {$filePath}", 'INFO', 'video-worker');
@@ -488,7 +484,7 @@ function processAttachment($attachment) {
     if ($needIcon) {
         // Генерируем иконку для видео (используем версию 1 для новой иконки)
         $iconVersion = max(1, $attachment['icon'] + 1);
-        $iconPath = "../attachments-new/{$xx}/{$yy}/{$attachmentId}-{$iconVersion}-i.jpg";
+        $iconPath = "../" . ltrim(getAttachmentPath($attachmentId, $iconVersion, 'i', 'jpg'), '/');
         plllasmaLog("Генерируем иконку: {$filePath} -> {$iconPath}", 'INFO', 'video-worker');
         $iconGenerated = generateVideoIcon($filePath, $iconPath, 160, 160);
         
@@ -516,7 +512,7 @@ function processAttachment($attachment) {
     if ($needPreview) {
         // Генерируем превью для видео (используем версию 1 для нового превью)
         $previewVersion = max(1, $attachment['preview'] + 1);
-        $previewPath = "../attachments-new/{$xx}/{$yy}/{$attachmentId}-{$previewVersion}-p.jpg";
+        $previewPath = "../" . ltrim(getAttachmentPath($attachmentId, $previewVersion, 'p', 'jpg'), '/');
         plllasmaLog("Генерируем превью: {$filePath} -> {$previewPath}", 'INFO', 'video-worker');
         $previewGenerated = generateVideoPreview($filePath, $previewPath, 600, 100, 100, 5);
         
@@ -606,7 +602,7 @@ function updateMessageAttachmentsJson($messageId) {
     }, $attachments);
     
     // Обновляем JSON в сообщении
-    $jsonData = json_encode(['newAttachments' => $newAttachments]);
+    $jsonData = json_encode(['j' => $newAttachments]);
     $stmt = $mysqli->prepare("UPDATE tbl_messages SET json = ? WHERE id_message = ?");
     $stmt->bind_param("si", $jsonData, $messageId);
     $stmt->execute();

@@ -129,7 +129,7 @@ export class AttachmentPageComponent implements OnInit {
     const yy = id.substring(2, 4);
     const extension = this.attachment.filename.split('.').pop() || '';
 
-    return `/attachments-new/${xx}/${yy}/${id}-${this.attachment.file}.${extension}`;
+    return `/a/${xx}/${yy}/${id}-${this.attachment.file}.${extension}`;
   }
 
   getPreviewUrl(): string {
@@ -139,7 +139,7 @@ export class AttachmentPageComponent implements OnInit {
     const xx = id.substring(0, 2);
     const yy = id.substring(2, 4);
 
-    return `/attachments-new/${xx}/${yy}/${id}-${this.attachment.preview}-p.jpg`;
+    return `/a/${xx}/${yy}/${id}-${this.attachment.preview}-p.jpg`;
 
     } else {
       return '';
@@ -194,12 +194,12 @@ export class AttachmentPageComponent implements OnInit {
     // Для изображений показываем оригинальный файл, если есть
     if (this.attachment.file && this.attachment.file > 0 && this.attachment.filename) {
       const extension = this.attachment.filename.split('.').pop() || '';
-      return `/attachments-new/${xx}/${yy}/${id}-${this.attachment.file}.${extension}`;
+      return `/a/${xx}/${yy}/${id}-${this.attachment.file}.${extension}`;
     }
 
     // Если файла нет, но есть превью, используем превью
     if (this.attachment.preview && this.attachment.preview > 0) {
-      return `/attachments-new/${xx}/${yy}/${id}-${this.attachment.preview}-p.jpg`;
+      return `/a/${xx}/${yy}/${id}-${this.attachment.preview}-p.jpg`;
     }
 
     return '';
@@ -267,7 +267,7 @@ export class AttachmentPageComponent implements OnInit {
     const id = this.attachment.id;
     const xx = id.substring(0, 2);
     const yy = id.substring(2, 4);
-    const previewUrl = `/attachments-new/${xx}/${yy}/${this.attachment.id}-${this.attachment.preview}-p.jpg`;
+    const previewUrl = `/a/${xx}/${yy}/${this.attachment.id}-${this.attachment.preview}-p.jpg`;
 
     return `url('${previewUrl}')`;
   }

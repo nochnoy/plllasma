@@ -75,7 +75,11 @@
             "ssl": true,
             "sslKey": "ssl/pllasma.pkey",
             "sslCert": "ssl/pllasma.crt",
-            "proxyConfig": "proxy.conf.js"
+            "proxyConfig": "proxy.conf.js",
+            "disableHostCheck": true,
+            "headers": {
+              "X-Frame-Options": "SAMEORIGIN"
+            }
           },
           "configurations": {
             "production": {

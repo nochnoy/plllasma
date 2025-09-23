@@ -331,7 +331,7 @@ function updateMessageJson($messageId, $attachments) {
         }
     }
     
-    $jsonData = ['newAttachments' => $fullAttachments];
+    $jsonData = ['j' => $fullAttachments];
     $jsonString = json_encode($jsonData, JSON_UNESCAPED_UNICODE);
     
     if ($jsonString === false) {
@@ -462,7 +462,7 @@ function buildAttachmentIconPath($attachmentId, $version) {
     $firstTwo = substr($attachmentId, 0, 2);
     $nextTwo = substr($attachmentId, 2, 2);
     
-    return "/attachments-new/$firstTwo/$nextTwo/$attachmentId-$version-i.jpg";
+    return getAttachmentPath($attachmentId, $version, 'i', 'jpg');
 }
 
 // Строит путь к превью аттачмента
@@ -472,7 +472,7 @@ function buildAttachmentPreviewPath($attachmentId, $version) {
     $firstTwo = substr($attachmentId, 0, 2);
     $nextTwo = substr($attachmentId, 2, 2);
     
-    return "/attachments-new/$firstTwo/$nextTwo/$attachmentId-$version-p.jpg";
+    return getAttachmentPath($attachmentId, $version, 'p', 'jpg');
 }
 
 // Строит путь к файлу аттачмента
@@ -483,7 +483,7 @@ function buildAttachmentFilePath($attachmentId, $version, $filename) {
     $nextTwo = substr($attachmentId, 2, 2);
     $extension = pathinfo($filename, PATHINFO_EXTENSION);
     
-    return "/attachments-new/$firstTwo/$nextTwo/$attachmentId-$version.$extension";
+    return getAttachmentPath($attachmentId, $version, '', $extension);
 }
 
 // Строит физический путь к иконке аттачмента
@@ -524,7 +524,7 @@ function createAttachmentFolder($attachmentId) {
     
     // Определяем корневую папку проекта (папка, содержащая api/)
     $rootPath = dirname(dirname(__DIR__)); // Поднимаемся на 2 уровня от api/include/ до корня проекта
-    $folderPath = $rootPath . "/attachments-new/$firstTwo/$nextTwo/";
+    $folderPath = $rootPath . "/a/$firstTwo/$nextTwo/";
     
     if (!is_dir($folderPath)) {
         // Пробуем создать папку с разными правами
@@ -726,6 +726,41 @@ function analyzeJsonSizes() {
         'max' => $row['max_size'] ?: 0,
         'min' => $row['min_size'] ?: 0
     ];
+}
+
+/**
+ * Получает путь к файлу аттачмента по его ID
+ * @param string $attachmentId ID аттачмента
+ * @param int $version Версия файла (по умолчанию 1)
+ * @param string $suffix Суффикс файла (по умолчанию пустой)
+ * @param string $extension Расширение файла (по умолчанию определяется автоматически)
+ * @return string Путь к файлу аттачмента
+ */
+function getAttachmentPath($attachmentId, $version = 1, $suffix = '', $extension = '') {
+    $xx = substr($attachmentId, 0, 2);
+    $yy = substr($attachmentId, 2, 2);
+    
+    $filename = $attachmentId . '-' . $version;
+    if ($suffix) {
+        $filename .= '-' . $suffix;
+    }
+    if ($extension) {
+        $filename .= '.' . $extension;
+    }
+    
+    return "/a/{$xx}/{$yy}/{$filename}";
+}
+
+/**
+ * Получает полный URL к файлу аттачмента
+ * @param string $attachmentId ID аттачмента
+ * @param int $version Версия файла (по умолчанию 1)
+ * @param string $suffix Суффикс файла (по умолчанию пустой)
+ * @param string $extension Расширение файла (по умолчанию определяется автоматически)
+ * @return string Полный URL к файлу аттачмента
+ */
+function getAttachmentUrl($attachmentId, $version = 1, $suffix = '', $extension = '') {
+    return getAttachmentPath($attachmentId, $version, $suffix, $extension);
 }
 
 ?>

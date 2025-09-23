@@ -59,7 +59,7 @@ try {
         // Создаем папки для аттачмента
         $xx = substr($attachmentId, 0, 2);
         $yy = substr($attachmentId, 2, 2);
-        $attachmentDir = "../attachments-new/{$xx}/{$yy}/";
+        $attachmentDir = "../a/{$xx}/{$yy}/";
         
         if (!file_exists($attachmentDir)) {
             mkdir($attachmentDir, 0777, true);
@@ -242,7 +242,7 @@ function updateMessageAttachmentsJson($messageId) {
     }, $attachments);
     
     // Обновляем JSON в сообщении
-    $jsonData = json_encode(['newAttachments' => $newAttachments]);
+    $jsonData = json_encode(['j' => $newAttachments]);
     logAttachmentUpload("Обновляем JSON для сообщения {$messageId}: " . $jsonData);
     
     $stmt = $mysqli->prepare("UPDATE tbl_messages SET json = ? WHERE id_message = ?");

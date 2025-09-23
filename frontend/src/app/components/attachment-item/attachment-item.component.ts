@@ -68,7 +68,7 @@ export class AttachmentItemComponent implements OnInit {
 
     // Если есть иконка (версия > 0), строим путь с версией
     if (this.attachment.icon && this.attachment.icon > 0) {
-      return `/attachments-new/${xx}/${yy}/${this.attachment.id}-${this.attachment.icon}-i.jpg`;
+      return `/a/${xx}/${yy}/${this.attachment.id}-${this.attachment.icon}-i.jpg`;
     }
 
     // Для аттачментов без иконок используем дефолтные иконки
