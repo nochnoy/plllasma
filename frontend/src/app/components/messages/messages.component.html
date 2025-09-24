@@ -31,28 +31,33 @@
         <p *ngIf="message === channelService.selectedMessage && channelService.selectedMessage.isEditMode"
            class="editable" tabindex="1" autofocus contenteditable="true" [(ngModel)]="message.text"></p>
 
-        <div *ngIf="message.attachments || (message.newAttachments && message.newAttachments.length > 0)" class="attachments">
+        @if (message.attachments?.length || message.newAttachments?.length) {
 
           <!-- Новые аттачменты без иконок (icon = 0) в виде списка ссылок -->
           <app-attachment-list
             [attachments]="getAttachmentsWithoutIcons(message.newAttachments)"
-            [placeId]="placeId">
+          >
           </app-attachment-list>
 
-          <!-- Старые аттачменты -->
-          <a *ngFor="let attachment of message.attachments"
-             class="attachment" target="_blank"
-             [href]="'../api/file.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id">
-            <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
-          </a>
+          <div *ngIf="message.attachments || (message.newAttachments && message.newAttachments.length > 0)" class="attachments">
 
-          <!-- Новые аттачменты с иконками (icon > 0) -->
-          <app-attachment-item
-            *ngFor="let attachment of getAttachmentsWithIcons(message.newAttachments)"
-            [attachment]="attachment"
-            [placeId]="placeId">
-          </app-attachment-item>
-        </div>
+            <!-- Старые аттачменты -->
+            <a *ngFor="let attachment of message.attachments"
+               class="attachment" target="_blank"
+               [href]="'../api/file.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id">
+              <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
+            </a>
+
+            <!-- Новые аттачменты с иконками (icon > 0) -->
+            <app-attachment-item
+
+              *ngFor="let attachment of getAttachmentsWithIcons(message.newAttachments)"
+              [attachment]="attachment"
+              [placeId]="placeId">
+            </app-attachment-item>
+          </div>
+
+        }
 
         <div class="likes" (click)="onMessageClick(message)" *ngIf="message !== channelService.selectedMessage">
           <span *ngIf="message.sps">спс{{message.sps}}</span>
@@ -124,27 +129,31 @@
         <br *ngIf="!message.parent">
         <p *ngIf="!!message.text" [innerHTML]="message.text | linky: true | linksToStubs | shorten"></p>
 
-        <div *ngIf="message.attachments || (message.newAttachments && message.newAttachments.length > 0)">
-          <!-- Старые аттачменты -->
-          <a *ngFor="let attachment of message.attachments"
-             class="attachment" target="_blank"
-             [href]="'../api/file.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id">
-            <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
-          </a>
+        @if (message.attachments?.length || message.newAttachments?.length) {
 
-          <!-- Новые аттачменты с иконками (icon > 0) -->
-          <app-attachment-item
-            *ngFor="let attachment of getAttachmentsWithIcons(message.newAttachments)"
-            [attachment]="attachment"
-            [placeId]="placeId">
-          </app-attachment-item>
-        </div>
+          <!-- Новые аттачменты без иконок (icon = 0) в виде списка ссылок -->
+          <app-attachment-list
+            [attachments]="getAttachmentsWithoutIcons(message.newAttachments)"
+          >
+          </app-attachment-list>
 
-        <!-- Новые аттачменты без иконок (icon = 0) в виде списка ссылок -->
-        <app-attachment-list
-          [attachments]="getAttachmentsWithoutIcons(message.newAttachments)"
-          [placeId]="placeId">
-        </app-attachment-list>
+          <div *ngIf="message.attachments || (message.newAttachments && message.newAttachments.length > 0)">
+            <!-- Старые аттачменты -->
+            <a *ngFor="let attachment of message.attachments"
+               class="attachment" target="_blank"
+               [href]="'../api/file.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id">
+              <img [src]="'../api/i.php?p=' + this.placeId + '&m=' + this.message.id + '&a=' + attachment.id" loading="lazy" />
+            </a>
+
+            <!-- Новые аттачменты с иконками (icon > 0) -->
+            <app-attachment-item
+              *ngFor="let attachment of getAttachmentsWithIcons(message.newAttachments)"
+              [attachment]="attachment"
+              [placeId]="placeId">
+            </app-attachment-item>
+          </div>
+
+        }
 
       </div>
 

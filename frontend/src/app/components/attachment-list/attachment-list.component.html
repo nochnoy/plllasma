@@ -1,4 +1,4 @@
-<div class="attachment-list" *ngIf="attachments && attachments.length > 0">
+@if (attachments?.length) {
   <div class="item"
        *ngFor="let attachment of attachments">
     <a href
@@ -13,6 +13,4 @@
       </div>
     }
   </div>
-</div>
-
-
+}
