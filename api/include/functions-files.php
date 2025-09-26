@@ -21,7 +21,7 @@ function getFileName($path) {
 function getFileExtension($path) {
 	$name = getFileName($path);
 	$a = explode('.', $name);
-	return $a[1];
+	return strtolower($a[1]);
 }
 
 // Отрезает имя файла без расширения

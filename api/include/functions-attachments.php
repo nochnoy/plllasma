@@ -412,7 +412,7 @@ function sanitizeFilename($filename) {
     // Если имя слишком длинное, обрезаем, сохраняя расширение
     if (mb_strlen($filename) > 200) { // Оставляем запас для расширения
         $pathinfo = pathinfo($filename);
-        $extension = isset($pathinfo['extension']) ? '.' . $pathinfo['extension'] : '';
+        $extension = isset($pathinfo['extension']) ? '.' . strtolower($pathinfo['extension']) : '';
         $basename = $pathinfo['filename'];
         
         // Обрезаем базовое имя, оставляя место для расширения
@@ -481,7 +481,7 @@ function buildAttachmentFilePath($attachmentId, $version, $filename) {
     
     $firstTwo = substr($attachmentId, 0, 2);
     $nextTwo = substr($attachmentId, 2, 2);
-    $extension = pathinfo($filename, PATHINFO_EXTENSION);
+    $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     
     return getAttachmentPath($attachmentId, $version, '', $extension);
 }
@@ -513,7 +513,7 @@ function buildAttachmentFilePhysicalPath($attachmentId, $version, $filename) {
     $folderPath = createAttachmentFolder($attachmentId);
     if (!$folderPath) return null;
     
-    $extension = pathinfo($filename, PATHINFO_EXTENSION);
+    $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     return $folderPath . $attachmentId . "-$version.$extension";
 }
 
