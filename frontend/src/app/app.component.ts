@@ -54,8 +54,10 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    let loader = this.renderer.selectRootElement('#preloader');
-    this.renderer.setStyle(loader, 'display', 'none');
+    let loader = this.renderer.selectRootElement('#probloader');
+    if (loader && loader.parentNode) {
+      this.renderer.removeChild(loader.parentNode, loader);
+    }
     if (this.fileUpload) {
       this.uploadService.registerUploadInput(this.fileUpload);
     }
