@@ -129,7 +129,7 @@ export class AttachmentPageComponent implements OnInit {
     const yy = id.substring(2, 4);
     const extension = this.attachment.filename.split('.').pop() || '';
 
-    return `/a/${xx}/${yy}/${id}-${this.attachment.file}.${extension}`;
+    return `/a/${xx}/${yy}/${id}-${this.attachment.file}.${extension.toLowerCase()}`;
   }
 
   getPreviewUrl(): string {
@@ -194,7 +194,7 @@ export class AttachmentPageComponent implements OnInit {
     // Для изображений показываем оригинальный файл, если есть
     if (this.attachment.file && this.attachment.file > 0 && this.attachment.filename) {
       const extension = this.attachment.filename.split('.').pop() || '';
-      return `/a/${xx}/${yy}/${id}-${this.attachment.file}.${extension}`;
+      return `/a/${xx}/${yy}/${id}-${this.attachment.file}.${extension?.toLowerCase()}`;
     }
 
     // Если файла нет, но есть превью, используем превью
