@@ -410,14 +410,20 @@ function generateVideoPreview($videoPath, $previewPath, $previewWidth = 1000, $f
         plllasmaLog("[VIDEO] Извлекаем {$totalFrames} кадров одной командой ffmpeg", 'INFO', 'video-worker');
         
         // Пробуем встроенный tile фильтр для всех форматов
-        $tiledPreviewPath = $tempDir . '/tiled_preview_' . $sessionId . '.jpg';
+        $tiledPreviewPath = $tempDir . '/tiled_preview_' . $sessionId . '.jpg'; // Используем JPG
         $framesPerRow = 6; // Фиксированное количество кадров на строку
         $totalRows = ceil($totalFrames / $framesPerRow);
+        $frameSize = 100; // Размер каждого кадра 100x100px
+        $gap = 4; // Расстояние между кадрами 4px
         
-        // Используем fps фильтр для равномерного извлечения кадров
+        // Вычисляем размеры превью с учетом gap
+        $previewWidth = ($framesPerRow * $frameSize) + (($framesPerRow - 1) * $gap);
+        $previewHeight = ($totalRows * $frameSize) + (($totalRows - 1) * $gap);
+        
+        // Используем fps фильтр для равномерного извлечения кадров с промежутками
         $fps = $totalFrames / $duration;
         $command = "ffmpeg -i " . escapeshellarg($videoPath) . 
-                  " -vf \"fps={$fps},select='lt(n,{$totalFrames})',scale=100:100:force_original_aspect_ratio=increase,crop=100:100,tile={$framesPerRow}x{$totalRows}:padding=0:margin=0:color=0xD7CABB\" " .
+                  " -vf \"fps={$fps},select='lt(n,{$totalFrames})',scale=100:100:force_original_aspect_ratio=increase,crop=100:100,tile={$framesPerRow}x{$totalRows}:padding={$gap}:margin=0:color=0xD7CABB\" " .
                   " -frames:v 1 -q:v 2 -y " . escapeshellarg($tiledPreviewPath) . " 2>/dev/null";
         
         plllasmaLog("[VIDEO] Пробуем встроенный tile фильтр: {$command}", 'INFO', 'video-worker');
@@ -427,9 +433,9 @@ function generateVideoPreview($videoPath, $previewPath, $previewWidth = 1000, $f
         exec($command, $output, $returnCode);
         
         if ($returnCode === 0 && file_exists($tiledPreviewPath) && filesize($tiledPreviewPath) > 0) {
-            // Успех! Копируем готовый файл
+            // Успех! FFmpeg создал превью с промежутками, копируем готовый файл
             if (copy($tiledPreviewPath, $previewPath)) {
-                plllasmaLog("[VIDEO] Превью создано встроенным tile фильтром", 'INFO', 'video-worker');
+                plllasmaLog("[VIDEO] Превью создано встроенным tile фильтром с промежутками", 'INFO', 'video-worker');
                 unlink($tiledPreviewPath);
                 return true;
             }
@@ -475,14 +481,17 @@ function generateVideoPreview($videoPath, $previewPath, $previewWidth = 1000, $f
         
         plllasmaLog("[VIDEO] Извлечено кадров: " . count($frameFiles), 'INFO', 'video-worker');
         
-        // Создаем превью из отдельных кадров (PHP сборка) - плотная сетка без отступов
+        // Создаем превью из отдельных кадров (PHP сборка) - с цветным фоном и gap
         $framesPerRow = 6; // Фиксированное количество кадров на строку
         $totalRows = ceil(count($frameFiles) / $framesPerRow);
-        $previewWidth = 600; // Фиксированная ширина превью
+        $frameSize = 100; // Размер каждого кадра 100x100px
+        $gap = 4; // Расстояние между кадрами 4px
         
-        $previewHeight = $totalRows * $frameSize;
+        // Вычисляем размеры превью с учетом gap
+        $previewWidth = ($framesPerRow * $frameSize) + (($framesPerRow - 1) * $gap);
+        $previewHeight = ($totalRows * $frameSize) + (($totalRows - 1) * $gap);
         
-        plllasmaLog("[VIDEO] Размер превью: {$previewWidth}x{$previewHeight}, кадров в ряду: {$framesPerRow}, рядов: {$totalRows}", 'INFO', 'video-worker');
+        plllasmaLog("[VIDEO] Размер превью: {$previewWidth}x{$previewHeight}, кадров в ряду: {$framesPerRow}, рядов: {$totalRows}, gap: {$gap}px", 'INFO', 'video-worker');
         
         // Создаем холст с цветом фона #D7CABB
         $preview = imagecreatetruecolor($previewWidth, $previewHeight);
@@ -496,9 +505,9 @@ function generateVideoPreview($videoPath, $previewPath, $previewWidth = 1000, $f
                 $row = floor($frameIndex / $framesPerRow);
                 $col = $frameIndex % $framesPerRow;
                 
-                // Позиция без отступов - кадры вплотную друг к другу
-                $x = $col * $frameSize;
-                $y = $row * $frameSize;
+                // Позиция с учетом gap между кадрами
+                $x = $col * ($frameSize + $gap);
+                $y = $row * ($frameSize + $gap);
                 
                 // Масштабируем кадр до 100x100 с обрезкой (crop to fit)
                 $frameWidth = imagesx($frame);
@@ -513,16 +522,16 @@ function generateVideoPreview($videoPath, $previewPath, $previewWidth = 1000, $f
                 $srcWidth = $frameSize / $ratio;
                 $srcHeight = $frameSize / $ratio;
                 
-                // Вставляем кадр точно в позицию без отступов
+                // Вставляем кадр в позицию с учетом gap
                 imagecopyresampled($preview, $frame, $x, $y, $srcX, $srcY, $frameSize, $frameSize, $srcWidth, $srcHeight);
                 imagedestroy($frame);
                 
-                plllasmaLog("[VIDEO] Кадр {$frameIndex} размещен в сетке ({$x}, {$y})", 'INFO', 'video-worker');
+                plllasmaLog("[VIDEO] Кадр {$frameIndex} размещен в сетке ({$x}, {$y}) с gap {$gap}px", 'INFO', 'video-worker');
             }
             $frameIndex++;
         }
         
-        // Сохраняем превью
+        // Сохраняем превью как JPEG
         $result = imagejpeg($preview, $previewPath, 90);
         imagedestroy($preview);
         

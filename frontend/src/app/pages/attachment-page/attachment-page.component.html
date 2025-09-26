@@ -8,105 +8,67 @@
     </div>
   } @else {
     @if (attachment) {
+      <div class="attachment">
 
-      @if (attachment.type !== 'youtube') {
-        <div class="info" (click)="isInfoExpanded = !isInfoExpanded">
-          <div
-            class="info-button"
-            [class.down]="isInfoExpanded"
-            [class.up]="!isInfoExpanded"
-          ></div>
-          <div>
-            @if (isInfoExpanded) {
-              <span class="file-name">{{attachment.filename}}</span><br>
-              <br>
-              Размер: <b>{{ getFileSize() }}</b><br>
-              Смотрели: <b>{{attachment.views}}</b><br>
-              Скачали: <b>{{attachment.downloads}}</b><br>
-              <br>
-              @if (attachment.preview) {
-                <a [href]="getPreviewUrl()">Скриншоты</a><br>
-              }
-            }
-            @if (attachment.file) {
-              <a href (click)="$event.preventDefault(); $event.stopImmediatePropagation(); downloadFile(); isInfoExpanded = true;">Скачать</a>
-            } @else {
-              Не скачать :(
-            }
-          </div>
-        </div>
-      }
+        <h2>{{attachment.filename}}</h2>
 
-      @switch (attachment.type) {
+        @switch (attachment.type) {
 
-        @case ('image') {
-          <img
-            class="image shadow"
-            [src]="getAttachmentImageUrl()"
-            [alt]="attachment.filename || ''"
-            [class.content-normal]="!isImageMagnified"
-            [class.content-zoomed]="isImageMagnified"
-            (click)="isImageMagnified = !isImageMagnified"
-            (contextmenu)="$event.preventDefault(); $event.stopPropagation();"
-          />
-        }
-
-        @case ('video') {
-          @if (attachment.file) {
-            @if (canPlayVideo()) {
-              <div class="video shadow">
-                <video
-                  class="content-normal video"
-                  (contextmenu)="$event.preventDefault(); $event.stopPropagation();"
-                  [src]="getAttachmentImageUrl()"
-                  [muted]="'muted'"
-                  controls
-                  loop
-                  autoplay
-                >
-                </video>
-              </div>
-            } @else {
-              <div class="file">
-                <h2>{{attachment.filename}}</h2>
-                <button class="button" (click)="downloadFile()">Скачать {{ getFileSize() }}</button>
-                @if (attachment.preview) {
-                  <div style="margin-top: 1rem">
-                    <img
-                      [src]="getPreviewUrl()"
-                      [alt]="attachment.filename || ''"
-                    >
-                  </div>
-                }
-              </div>
-            }
-          } @else {
-            <div class="video-unloaded">
-
-              <h2 class="file-name">{{attachment.filename}}</h2>
-              <div class="unloaded">
-                🙁 Файл был выгружен для экономии места
-              </div>
-              @if (attachment.preview) {
-                <div>
-                  <img
-                    [src]="getPreviewUrl()"
-                    [alt]="attachment.filename || ''"
-                  >
-                </div>
-              }
-            </div>
+          @case ('image') {
+            <img
+              class="image stage"
+              [src]="getAttachmentImageUrl()"
+              [alt]="attachment.filename || ''"
+              (click)="isImageMagnified = !isImageMagnified"
+              (contextmenu)="$event.preventDefault(); $event.stopPropagation(); downloadFile();"
+            />
           }
+
+          @case ('video') {
+            @if (attachment.file) {
+              @if (canPlayVideo()) {
+                <div class="video">
+                  <video
+                    class="content-normal video"
+                    (contextmenu)="$event.preventDefault(); $event.stopPropagation();"
+                    [src]="getAttachmentImageUrl()"
+                    [muted]="'muted'"
+                    controls
+                    loop
+                    autoplay
+                  >
+                  </video>
+                </div>
+
+              }
+            }
+          }
+
         }
 
-        @case ('file') {
-          <div class="file">
-            <h2>{{attachment.filename}}</h2>
-            <button class="download-button" (click)="downloadFile()">Скачать {{ getFileSize() }}</button>
+        @if (attachment.file) {
+          <button
+            (click)="downloadFile()"
+            class="download"
+          >
+            Скачать {{getFileSize()}}
+          </button>
+        } @else {
+          <div class="unloaded">
+            🙁 Файл был выгружен для экономии места
           </div>
         }
-      }
 
+        <div class="info">
+          <div>Скачали {{attachment.downloads}}</div>
+          <div>Смотрели {{attachment.views}}</div>
+        </div>
+
+        @if (attachment.preview) {
+          <img [src]="getPreviewUrl()">
+        }
+
+      </div>
     }
   }
 }
