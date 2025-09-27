@@ -61,14 +61,11 @@ button {
 }
 
 .image {
-  cursor: zoom-out;
-  &:not(.content-zoomed) {
-    cursor: zoom-in;
-  }
+  cursor: zoom-in;
   border-radius: var(--border-radius);
 
   &-magnified {
-    cursor: zoom-in;
+    cursor: zoom-out;
   }
 }
 
