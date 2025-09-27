@@ -13,7 +13,6 @@ export class AttachmentPageComponent implements OnInit {
   isLoading = true;
   error = '';
   isImageMagnified = false;
-  isInfoExpanded = false;
 
   constructor(
     private route: ActivatedRoute,

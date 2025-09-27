@@ -66,6 +66,10 @@ button {
     cursor: zoom-in;
   }
   border-radius: var(--border-radius);
+
+  &-magnified {
+    cursor: zoom-in;
+  }
 }
 
 .video {

@@ -8,67 +8,83 @@
     </div>
   } @else {
     @if (attachment) {
-      <div class="attachment">
+      @if (!isImageMagnified) {
+        <div class="attachment">
 
-        <h2>{{attachment.filename}}</h2>
+          <h2>{{attachment.filename}}</h2>
 
-        @switch (attachment.type) {
+          @switch (attachment.type) {
 
-          @case ('image') {
-            <img
-              class="image stage"
-              [src]="getAttachmentImageUrl()"
-              [alt]="attachment.filename || ''"
-              (click)="isImageMagnified = !isImageMagnified"
-              (contextmenu)="$event.preventDefault(); $event.stopPropagation(); downloadFile();"
-            />
-          }
-
-          @case ('video') {
-            @if (attachment.file) {
-              @if (canPlayVideo()) {
-                <div class="video">
-                  <video
-                    class="content-normal video"
-                    (contextmenu)="$event.preventDefault(); $event.stopPropagation();"
-                    [src]="getAttachmentImageUrl()"
-                    [muted]="'muted'"
-                    controls
-                    loop
-                    autoplay
-                  >
-                  </video>
-                </div>
-
+            @case ('image') {
+              @if (!isImageMagnified) {
+                <img
+                  class="image stage"
+                  [src]="getAttachmentImageUrl()"
+                  [alt]="attachment.filename || ''"
+                  (click)="isImageMagnified = true"
+                  (contextmenu)="$event.preventDefault(); $event.stopPropagation(); downloadFile();"
+                />
               }
             }
+
+            @case ('video') {
+              @if (attachment.file) {
+                @if (canPlayVideo()) {
+                  <div class="video">
+                    <video
+                      class="content-normal video"
+                      (contextmenu)="$event.preventDefault(); $event.stopPropagation();"
+                      [src]="getAttachmentImageUrl()"
+                      [muted]="'muted'"
+                      controls
+                      loop
+                      autoplay
+                    >
+                    </video>
+                  </div>
+
+                }
+              }
+            }
+
           }
 
-        }
+          @if (attachment.file) {
+            <button
+              (click)="downloadFile()"
+              class="download"
+            >
+              Скачать {{getFileSize()}}
+            </button>
+          } @else {
+            <div class="unloaded">
+              🙁 Файл был выгружен для экономии места
+            </div>
+          }
 
-        @if (attachment.file) {
-          <button
-            (click)="downloadFile()"
-            class="download"
-          >
-            Скачать {{getFileSize()}}
-          </button>
-        } @else {
-          <div class="unloaded">
-            🙁 Файл был выгружен для экономии места
+          <div class="info">
+            <div>Скачали {{attachment.downloads}}</div>
+            <div>Смотрели {{attachment.views}}</div>
           </div>
-        }
 
-        <div class="info">
-          <div>Скачали {{attachment.downloads}}</div>
-          <div>Смотрели {{attachment.views}}</div>
+          @if (attachment.preview) {
+            <img [src]="getPreviewUrl()">
+          }
+
         </div>
 
-        @if (attachment.preview) {
-          <img [src]="getPreviewUrl()">
-        }
+      } @else {
 
-      </div>
+        <!-- Увеличенная картинка-->
+        <img
+          class="image-magnified"
+          [src]="getAttachmentImageUrl()"
+          [alt]="attachment.filename || ''"
+          (click)="isImageMagnified = false"
+          (contextmenu)="$event.preventDefault(); $event.stopPropagation(); downloadFile();"
+        />
+
+      }
     }
   }
 }
