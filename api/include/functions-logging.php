@@ -8,7 +8,7 @@
 define('LOG_DIR', __DIR__ . '/../../logs/');
 define('LOG_MAX_SIZE', 10 * 1024 * 1024); // 10MB
 define('LOG_MAX_FILES', 5); // Максимум 5 файлов логов
-define('LOG_ENABLED', true); // Флаг для включения/отключения логирования
+define('LOG_ENABLED', false); // Флаг для включения/отключения логирования
 
 // Создаем директорию для логов если её нет
 if (!file_exists(LOG_DIR)) {
