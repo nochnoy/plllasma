@@ -14,7 +14,7 @@ try {
     // Проверяем авторизацию
     loginBySessionOrToken();
     
-    $messageId = intval($_POST['messageId'] ?? 0);
+    $messageId = intval($input['messageId'] ?? 0);
     
     if (!$messageId) {
         throw new Exception('Не указан ID сообщения');
