@@ -85,6 +85,17 @@ export class MessagesComponent {
     }
   }
 
+  onDeleteClick(event: any, message: Message): void {
+    event.preventDefault();
+    if (window.confirm('ПОЛНОСТЬЮ УДАЛИТЬ сообщение и все его подсообщения? Это действие необратимо!')) {
+      this.httpService.deleteMessage(message.id).pipe(
+        tap(() => {
+          this.channelService.invalidateChannel(this.placeId);
+        })
+      ).subscribe();
+    }
+  }
+
   onKitchenClick(event: any, message: Message): void {
     event.preventDefault();
     if (window.confirm('Переместить сообщение и подсообщения в Кухню?')) {

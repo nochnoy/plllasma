@@ -131,6 +131,16 @@ export class HttpService {
     );
   }
 
+  deleteMessage(messageId: number): Observable<any> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/message-delete.php`,
+      {
+        messageId
+      },
+      {observe: 'body', withCredentials: true}
+    );
+  }
+
   getMembers$(nick?: string): Observable<IMember[]> {
     return this.httpClient.post(
       `${HttpService.apiPath}/members.php`,
