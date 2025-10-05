@@ -32,7 +32,7 @@
                 @if (canPlayVideo()) {
                   <div class="video">
                     <video
-                      class="content-normal video"
+                      class="stage content-normal video"
                       (contextmenu)="$event.preventDefault(); $event.stopPropagation();"
                       [src]="getAttachmentImageUrl()"
                       [muted]="'muted'"
