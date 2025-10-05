@@ -109,11 +109,14 @@ try {
         // Получаем размер файла
         $fileSize = filesize($filePath);
         
+        // Определяем статус на основе типа аттачмента
+        $status = ($attachmentType === 'video') ? 'pending' : 'ready';
+        
         // Сохраняем в базу данных
         $stmt = $mysqli->prepare("
             INSERT INTO tbl_attachments 
             (id, id_message, type, created, icon, preview, file, filename, source, status, views, downloads, size) 
-            VALUES (?, ?, ?, NOW(), ?, ?, ?, ?, NULL, 'ready', 0, 0, ?)
+            VALUES (?, ?, ?, NOW(), ?, ?, ?, ?, NULL, ?, 0, 0, ?)
         ");
         
         // В новой схеме icon, preview, file - это версии (числа), а не пути
@@ -124,7 +127,7 @@ try {
         // Обрабатываем имя файла безопасно
         $safeFilename = sanitizeFilename($originalName);
         
-        $stmt->bind_param("sisiiisi", $attachmentId, $messageId, $attachmentType, $iconVersion, $previewVersion, $fileVersion, $safeFilename, $fileSize);
+        $stmt->bind_param("sisiiisii", $attachmentId, $messageId, $attachmentType, $iconVersion, $previewVersion, $fileVersion, $safeFilename, $status, $fileSize);
         
         if (!$stmt->execute()) {
             logAttachmentUpload("ОШИБКА выполнения INSERT: " . $stmt->error, 'ERROR');
