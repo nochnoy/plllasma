@@ -1,16 +1,12 @@
 @if (attachments?.length) {
   <div class="item"
        *ngFor="let attachment of attachments">
+    <div class="attachment-icon" [class.spinning]="attachment.status === 'pending'"></div>
     <a href
        [routerLink]="'/attachment/' + attachment.id"
        target="_blank"
     >
       {{attachment.filename}}
     </a>
-    @if (attachment.status === 'pending') {
-      <div class="work">
-        идёт обработка
-      </div>
-    }
   </div>
 }
