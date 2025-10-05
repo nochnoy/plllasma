@@ -127,12 +127,16 @@ try {
         // Обрабатываем имя файла безопасно
         $safeFilename = sanitizeFilename($originalName);
         
-        $stmt->bind_param("sisiiisii", $attachmentId, $messageId, $attachmentType, $iconVersion, $previewVersion, $fileVersion, $safeFilename, $status, $fileSize);
+        logAttachmentUpload("Параметры для INSERT: attachmentId={$attachmentId}, messageId={$messageId}, type={$attachmentType}, icon={$iconVersion}, preview={$previewVersion}, file={$fileVersion}, filename={$safeFilename}, status={$status}, size={$fileSize}");
+        
+        $stmt->bind_param("sisiiissi", $attachmentId, $messageId, $attachmentType, $iconVersion, $previewVersion, $fileVersion, $safeFilename, $status, $fileSize);
         
         if (!$stmt->execute()) {
             logAttachmentUpload("ОШИБКА выполнения INSERT: " . $stmt->error, 'ERROR');
             throw new Exception("Ошибка сохранения аттачмента в БД: " . $stmt->error);
         }
+        
+        logAttachmentUpload("Аттачмент {$attachmentId} ({$attachmentType}) создан со статусом: {$status}");
         
         $uploadedAttachments[] = [
             'id' => $attachmentId,
@@ -141,7 +145,8 @@ try {
             'filename' => $safeFilename,
             'icon' => $iconVersion,
             'preview' => $previewVersion,
-            'file' => $fileVersion
+            'file' => $fileVersion,
+            'status' => $status
         ];
         
         logAttachmentUpload("Аттачмент {$attachmentId} ({$attachmentType}) успешно создан");
@@ -227,6 +232,7 @@ function updateMessageAttachmentsJson($messageId) {
     
     // Преобразуем в нужный формат
     $newAttachments = array_map(function($attachment) {
+        logAttachmentUpload("Обрабатываем аттачмент {$attachment['id']}: type={$attachment['type']}, status={$attachment['status']}");
         
         return [
             'id' => $attachment['id'],
