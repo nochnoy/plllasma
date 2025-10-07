@@ -84,6 +84,10 @@
               <a href class="like-button" (click)="onKitchenClick($event, message)">В кухню</a>
             </ng-container>
 
+            <ng-container *ngIf="canModerate && message.attachments && message.attachments.length > 0">
+              <a href class="like-button" (click)="onMigrateAttachmentsClick($event, message)">new att</a>
+            </ng-container>
+
             <a href class="like-button" (click)="onEditClick($event)" *ngIf="message.nick === this.userService.user?.nick">Исправить</a>
             <a href class="like-button" (click)="onReplyClick($event)">Написать ответ</a>
 

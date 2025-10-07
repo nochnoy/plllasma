@@ -141,6 +141,16 @@ export class HttpService {
     );
   }
 
+  migrateAttachments(messageId: number): Observable<any> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/attachment-migrate.php`,
+      {
+        messageId
+      },
+      {observe: 'body', withCredentials: true}
+    );
+  }
+
   getMembers$(nick?: string): Observable<IMember[]> {
     return this.httpClient.post(
       `${HttpService.apiPath}/members.php`,

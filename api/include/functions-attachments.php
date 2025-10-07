@@ -763,4 +763,341 @@ function getAttachmentUrl($attachmentId, $version = 1, $suffix = '', $extension 
     return getAttachmentPath($attachmentId, $version, $suffix, $extension);
 }
 
+/**
+ * Определяет тип файла
+ * @param string $filePath Путь к файлу
+ * @param string $mimeType MIME тип файла (опционально)
+ * @return string Тип аттачмента (file, image, video)
+ */
+function detectAttachmentType($filePath, $mimeType = null) {
+    // Определяем MIME тип если не передан
+    if (!$mimeType && file_exists($filePath)) {
+        $mimeType = mime_content_type($filePath);
+    }
+    
+    // Проверяем, является ли файл видео (используем проработанную функцию)
+    if (isVideoFile($filePath, $mimeType)) {
+        return 'video';
+    }
+    
+    // Проверяем, является ли файл изображением
+    if ($mimeType && strpos($mimeType, 'image/') === 0) {
+        return 'image';
+    }
+    
+    // Дополнительная проверка изображений по расширению
+    $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+    $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+    
+    if (in_array($extension, $imageExtensions)) {
+        return 'image';
+    }
+    
+    // Все остальное - файлы
+    return 'file';
+}
+
+/**
+ * Мигрирует старые аттачменты сообщения в новую систему
+ * @param int $messageId ID сообщения
+ * @return array Результат миграции
+ */
+function migrateMessageAttachments($messageId) {
+    global $mysqli;
+    
+    logAttachmentMigration("=== Starting migration for message $messageId ===");
+    
+    // Получаем информацию о сообщении
+    $sql = $mysqli->prepare('SELECT id_place, attachments, json FROM tbl_messages WHERE id_message = ?');
+    $sql->bind_param("i", $messageId);
+    $sql->execute();
+    $result = $sql->get_result();
+    
+    if (!$result || $result->num_rows === 0) {
+        logAttachmentMigration("Message $messageId not found", 'ERROR');
+        return [
+            'success' => false,
+            'error' => 'Message not found'
+        ];
+    }
+    
+    $row = $result->fetch_assoc();
+    $placeId = $row['id_place'];
+    $oldAttachmentsCount = intval($row['attachments']);
+    
+    logAttachmentMigration("Message found: placeId=$placeId, old attachments count=$oldAttachmentsCount");
+    
+    // Проверяем наличие старых аттачментов
+    if ($oldAttachmentsCount <= 0) {
+        logAttachmentMigration("No old attachments found for message $messageId");
+        return [
+            'success' => false,
+            'error' => 'No old attachments found'
+        ];
+    }
+    
+    $rootPath = dirname(dirname(__DIR__));
+    $oldAttachmentsPath = $rootPath . '/attachments/' . $placeId . '/';
+    
+    if (!is_dir($oldAttachmentsPath)) {
+        logAttachmentMigration("Old attachments directory not found: $oldAttachmentsPath", 'ERROR');
+        return [
+            'success' => false,
+            'error' => 'Old attachments directory not found'
+        ];
+    }
+    
+    logAttachmentMigration("Old attachments directory: $oldAttachmentsPath");
+    
+    // Удаляем существующие новые аттачменты этого сообщения
+    logAttachmentMigration("Deleting existing new attachments...");
+    
+    // Сначала получаем список существующих аттачментов для удаления их файлов
+    $existingSql = $mysqli->prepare('SELECT id, icon, preview, file, filename FROM tbl_attachments WHERE id_message = ?');
+    $existingSql->bind_param("i", $messageId);
+    $existingSql->execute();
+    $existingResult = $existingSql->get_result();
+    
+    $deletedFilesCount = 0;
+    while ($existingRow = $existingResult->fetch_assoc()) {
+        $existingId = $existingRow['id'];
+        logAttachmentMigration("Deleting files for existing attachment: $existingId");
+        
+        // Удаляем иконку
+        if ($existingRow['icon'] > 0) {
+            $iconPath = buildAttachmentIconPhysicalPath($existingId, $existingRow['icon']);
+            if ($iconPath && file_exists($iconPath)) {
+                if (unlink($iconPath)) {
+                    logAttachmentMigration("Deleted icon: $iconPath");
+                    $deletedFilesCount++;
+                } else {
+                    logAttachmentMigration("Failed to delete icon: $iconPath", 'WARNING');
+                }
+            }
+        }
+        
+        // Удаляем превью
+        if ($existingRow['preview'] > 0) {
+            $previewPath = buildAttachmentPreviewPhysicalPath($existingId, $existingRow['preview']);
+            if ($previewPath && file_exists($previewPath)) {
+                if (unlink($previewPath)) {
+                    logAttachmentMigration("Deleted preview: $previewPath");
+                    $deletedFilesCount++;
+                } else {
+                    logAttachmentMigration("Failed to delete preview: $previewPath", 'WARNING');
+                }
+            }
+        }
+        
+        // Удаляем файл
+        if ($existingRow['file'] > 0 && $existingRow['filename']) {
+            $filePath = buildAttachmentFilePhysicalPath($existingId, $existingRow['file'], $existingRow['filename']);
+            if ($filePath && file_exists($filePath)) {
+                if (unlink($filePath)) {
+                    logAttachmentMigration("Deleted file: $filePath");
+                    $deletedFilesCount++;
+                } else {
+                    logAttachmentMigration("Failed to delete file: $filePath", 'WARNING');
+                }
+            }
+        }
+    }
+    
+    logAttachmentMigration("Deleted $deletedFilesCount files from existing attachments");
+    
+    // Теперь удаляем записи из БД
+    $deleteSql = $mysqli->prepare('DELETE FROM tbl_attachments WHERE id_message = ?');
+    $deleteSql->bind_param("i", $messageId);
+    $deleteSql->execute();
+    $deletedCount = $deleteSql->affected_rows;
+    logAttachmentMigration("Deleted $deletedCount existing attachment records from DB");
+    
+    // Начинаем миграцию старых аттачментов
+    $migratedCount = 0;
+    $failedCount = 0;
+    $newAttachmentIds = [];
+    
+    for ($i = 0; $i < $oldAttachmentsCount; $i++) {
+        $baseName = $messageId . '_' . $i;
+        logAttachmentMigration("Processing attachment $i: $baseName");
+        
+        // Ищем файл с любым расширением
+        $files = glob($oldAttachmentsPath . $baseName . '.*');
+        
+        if (empty($files)) {
+            logAttachmentMigration("File not found for attachment $i", 'WARNING');
+            $failedCount++;
+            continue;
+        }
+        
+        $oldFilePath = $files[0];
+        $oldIconPath = $oldAttachmentsPath . $baseName . 't.jpg';
+        
+        logAttachmentMigration("Found old file: $oldFilePath");
+        
+        if (!file_exists($oldFilePath)) {
+            logAttachmentMigration("File does not exist: $oldFilePath", 'WARNING');
+            $failedCount++;
+            continue;
+        }
+        
+        // Получаем информацию о файле
+        $pathInfo = pathinfo($oldFilePath);
+        $extension = strtolower($pathInfo['extension']);
+        $filename = $pathInfo['basename'];
+        $fileSize = filesize($oldFilePath);
+        
+        // Определяем MIME тип
+        $mimeType = mime_content_type($oldFilePath);
+        
+        logAttachmentMigration("File info: extension=$extension, filename=$filename, size=$fileSize, mime=$mimeType");
+        
+        // Определяем тип аттачмента (используем проработанную функцию)
+        $type = detectAttachmentType($oldFilePath, $mimeType);
+        logAttachmentMigration("Detected type: $type");
+        
+        // Создаем новый аттачмент в БД
+        $newAttachmentId = createAttachment($messageId, $type);
+        
+        if (!$newAttachmentId) {
+            logAttachmentMigration("Failed to create attachment in DB", 'ERROR');
+            $failedCount++;
+            continue;
+        }
+        
+        logAttachmentMigration("Created new attachment: $newAttachmentId");
+        
+        // Создаем папку для нового аттачмента
+        $newFolderPath = createAttachmentFolder($newAttachmentId);
+        
+        if (!$newFolderPath) {
+            logAttachmentMigration("Failed to create folder for attachment $newAttachmentId", 'ERROR');
+            $failedCount++;
+            continue;
+        }
+        
+        logAttachmentMigration("Created folder: $newFolderPath");
+        
+        // Копируем файл
+        $newFilePath = buildAttachmentFilePhysicalPath($newAttachmentId, 1, $filename);
+        
+        if (!copy($oldFilePath, $newFilePath)) {
+            logAttachmentMigration("Failed to copy file from $oldFilePath to $newFilePath", 'ERROR');
+            $failedCount++;
+            continue;
+        }
+        
+        logAttachmentMigration("Copied file to: $newFilePath");
+        
+        // Обрабатываем в зависимости от типа
+        $iconCreated = false;
+        $previewCreated = false;
+        $status = 'ready';
+        
+        if ($type === 'image') {
+            // Для изображений создаем иконку сразу
+            $newIconPath = buildAttachmentIconPhysicalPath($newAttachmentId, 1);
+            $iconCreated = generateImageIcon($newFilePath, $newIconPath, 160, 160);
+            
+            if ($iconCreated) {
+                logAttachmentMigration("Created icon: $newIconPath");
+            } else {
+                logAttachmentMigration("Failed to create icon", 'WARNING');
+            }
+            
+            // Для изображений превью не создаем
+            $previewCreated = false;
+            $status = 'ready';
+            
+        } else if ($type === 'video') {
+            // Для видео НЕ создаем иконку при миграции
+            // Воркер создаст иконку позже
+            $iconCreated = false;
+            $previewCreated = false;
+            $status = 'pending';
+            logAttachmentMigration("Video attachment - icon will be created by worker, status set to pending");
+            
+        } else {
+            // Для файлов НЕ создаем иконку
+            $iconCreated = false;
+            $previewCreated = false;
+            $status = 'ready';
+            logAttachmentMigration("File attachment - no icon created, status set to ready");
+        }
+        
+        // Обновляем информацию о файле в БД
+        updateAttachmentVersions($newAttachmentId, $iconCreated, $previewCreated, true);
+        updateAttachmentFilename($newAttachmentId, $filename);
+        updateAttachmentStatus($newAttachmentId, $status);
+        
+        // Обновляем размер файла
+        $updateSizeSql = $mysqli->prepare('UPDATE tbl_attachments SET size = ? WHERE id = ?');
+        $updateSizeSql->bind_param("is", $fileSize, $newAttachmentId);
+        $updateSizeSql->execute();
+        
+        logAttachmentMigration("Updated attachment info in DB");
+        
+        $newAttachmentIds[] = $newAttachmentId;
+        $migratedCount++;
+        
+        logAttachmentMigration("Successfully migrated attachment $i");
+    }
+    
+    logAttachmentMigration("Migration summary: migrated=$migratedCount, failed=$failedCount");
+    
+    // Обновляем JSON поле сообщения
+    if (!empty($newAttachmentIds)) {
+        logAttachmentMigration("Updating message JSON...");
+        if (updateMessageJson($messageId, $newAttachmentIds)) {
+            logAttachmentMigration("Message JSON updated successfully");
+        } else {
+            logAttachmentMigration("Failed to update message JSON", 'ERROR');
+        }
+    }
+    
+    // Удаляем старые файлы и обнуляем счетчик старых аттачментов
+    if ($migratedCount > 0) {
+        logAttachmentMigration("Deleting old attachment files...");
+        
+        for ($i = 0; $i < $oldAttachmentsCount; $i++) {
+            $baseName = $messageId . '_' . $i;
+            $files = glob($oldAttachmentsPath . $baseName . '.*');
+            
+            foreach ($files as $file) {
+                if (unlink($file)) {
+                    logAttachmentMigration("Deleted: $file");
+                } else {
+                    logAttachmentMigration("Failed to delete: $file", 'WARNING');
+                }
+            }
+            
+            // Удаляем иконку
+            $iconFile = $oldAttachmentsPath . $baseName . 't.jpg';
+            if (file_exists($iconFile)) {
+                if (unlink($iconFile)) {
+                    logAttachmentMigration("Deleted icon: $iconFile");
+                } else {
+                    logAttachmentMigration("Failed to delete icon: $iconFile", 'WARNING');
+                }
+            }
+        }
+        
+        // Обнуляем счетчик старых аттачментов
+        logAttachmentMigration("Clearing old attachments counter...");
+        $updateSql = $mysqli->prepare('UPDATE tbl_messages SET attachments = 0 WHERE id_message = ?');
+        $updateSql->bind_param("i", $messageId);
+        $updateSql->execute();
+        logAttachmentMigration("Old attachments counter cleared");
+    }
+    
+    logAttachmentMigration("=== Migration completed for message $messageId ===");
+    
+    return [
+        'success' => true,
+        'migrated' => $migratedCount,
+        'failed' => $failedCount,
+        'total' => $oldAttachmentsCount
+    ];
+}
+
 ?>

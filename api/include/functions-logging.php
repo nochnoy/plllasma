@@ -135,6 +135,13 @@ function logAttachmentUpload($message, $level = 'INFO') {
 }
 
 /**
+ * Логирование для миграции аттачментов
+ */
+function logAttachmentMigration($message, $level = 'INFO') {
+    logMessage($message, $level, 'attachment-migration');
+}
+
+/**
  * Логирование для API
  */
 function logApi($message, $level = 'INFO') {

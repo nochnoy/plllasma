@@ -107,6 +107,22 @@ export class MessagesComponent {
     }
   }
 
+  onMigrateAttachmentsClick(event: any, message: Message): void {
+    event.preventDefault();
+    if (window.confirm('Мигрировать старые аттачменты в новую систему?')) {
+      this.httpService.migrateAttachments(message.id).pipe(
+        tap((result: any) => {
+          if (result.success) {
+            alert(`Миграция завершена!\nПеренесено: ${result.migrated}\nОшибок: ${result.failed}\nВсего: ${result.total}`);
+            this.channelService.invalidateChannel(this.placeId);
+          } else {
+            alert(`Ошибка миграции: ${result.error}`);
+          }
+        })
+      ).subscribe();
+    }
+  }
+
   onReplyClick(event: any): void {
     event.preventDefault();
     this.channelService.startMessageReply();
