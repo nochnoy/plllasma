@@ -1045,9 +1045,18 @@ function migrateMessageAttachments($messageId) {
     
     logAttachmentMigration("Migration summary: migrated=$migratedCount, failed=$failedCount");
     
-    // Обновляем JSON поле сообщения
+    // ПРИМЕЧАНИЕ: YouTube аттачменты НЕ обрабатываются при миграции
+    // Причины:
+    // 1. Загрузка иконок с внешнего сервера может занять до 10 сек на каждую ссылку
+    // 2. YouTube ссылки остаются в тексте сообщения
+    // 3. Они будут автоматически созданы при первом открытии/редактировании сообщения
+    // 4. Это ускоряет массовую миграцию
+    
+    logAttachmentMigration("YouTube links NOT processed during migration (will be created on first view/edit)");
+    
+    // Обновляем JSON поле сообщения с мигрированными файлами
     if (!empty($newAttachmentIds)) {
-        logAttachmentMigration("Updating message JSON...");
+        logAttachmentMigration("Updating message JSON with " . count($newAttachmentIds) . " attachments...");
         if (updateMessageJson($messageId, $newAttachmentIds)) {
             logAttachmentMigration("Message JSON updated successfully");
         } else {
