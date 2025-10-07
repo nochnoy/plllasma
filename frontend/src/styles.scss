@@ -457,8 +457,10 @@ textarea {
     }
     .attachments {
       img {
+        width: calc(var(--attachment-icon-size) / 2)!important;
+        height: calc(var(--attachment-icon-size) / 2)!important;;
         opacity: 0.3;
-        filter: grayscale(100%);
+        filter: sepia(100%) brightness(80%);
         margin-right: 0.3rem;
       }
     }

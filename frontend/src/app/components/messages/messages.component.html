@@ -49,9 +49,7 @@
               </a>
 
               <!-- Новые аттачменты с иконками (icon > 0) -->
-              <app-attachment-item
-
-                *ngFor="let attachment of getAttachmentsWithIcons(message.newAttachments)"
+              <app-attachment-item *ngFor="let attachment of getAttachmentsWithIcons(message.newAttachments)"
                 [attachment]="attachment"
                 [placeId]="placeId">
               </app-attachment-item>
@@ -137,7 +135,8 @@
             >
             </app-attachment-list>
 
-            <div *ngIf="message.attachments || (message.newAttachments && message.newAttachments.length > 0)">
+            <div *ngIf="message.attachments || (message.newAttachments && message.newAttachments.length > 0)" class="attachments">
+
               <!-- Старые аттачменты -->
               <a *ngFor="let attachment of message.attachments"
                  class="attachment" target="_blank"
@@ -146,10 +145,9 @@
               </a>
 
               <!-- Новые аттачменты с иконками (icon > 0) -->
-              <app-attachment-item
-                *ngFor="let attachment of getAttachmentsWithIcons(message.newAttachments)"
-                [attachment]="attachment"
-                [placeId]="placeId">
+              <app-attachment-item *ngFor="let attachment of getAttachmentsWithIcons(message.newAttachments)"
+                                   [attachment]="attachment"
+                                   [placeId]="placeId">
               </app-attachment-item>
             </div>
           </div>

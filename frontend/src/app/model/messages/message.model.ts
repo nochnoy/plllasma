@@ -96,6 +96,7 @@ export class Message {
     c.isStarred = this.isStarred;
     c.important = this.important;
     c.attachments = this.attachments;
+    c.newAttachments = this.newAttachments;
     c.sps = this.sps;
     c.heh  = this.heh;
     c.nep = this.nep;
@@ -115,6 +116,7 @@ export class Message {
     this.isStarred = m.isStarred;
     this.important = m.important;
     this.attachments = m.attachments;
+    this.newAttachments = m.newAttachments;
     this.sps = m.sps;
     this.heh  = m.heh;
     this.nep = m.nep;
@@ -143,7 +145,6 @@ export class Message {
       });
     }
 
-    // Новые аттачменты
     this.newAttachments = (raw.j || []).map((attachment: any) => ({
       ...attachment,
       icon: Number(attachment.icon) || 0,
