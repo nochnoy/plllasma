@@ -44,11 +44,14 @@ function extractYouTubeUrls($text) {
 }
 
 // Создает новый аттачмент
-function createAttachment($messageId, $type, $source = null, $videoId = null, $filename = null) {
+function createAttachment($messageId, $type, $source = null, $videoId = null, $filename = null, $created = null) {
     global $mysqli;
     
     $id = guid();
-    $created = date('Y-m-d H:i:s');
+    // Если дата создания не передана, используем текущую
+    if ($created === null) {
+        $created = date('Y-m-d H:i:s');
+    }
     
     // Обрабатываем имя файла безопасно
     $safeFilename = $filename ? sanitizeFilename($filename) : null;
@@ -808,7 +811,7 @@ function migrateMessageAttachments($messageId) {
     logAttachmentMigration("=== Starting migration for message $messageId ===");
     
     // Получаем информацию о сообщении
-    $sql = $mysqli->prepare('SELECT id_place, attachments, json FROM tbl_messages WHERE id_message = ?');
+    $sql = $mysqli->prepare('SELECT id_place, attachments, json, time_created FROM tbl_messages WHERE id_message = ?');
     $sql->bind_param("i", $messageId);
     $sql->execute();
     $result = $sql->get_result();
@@ -824,8 +827,9 @@ function migrateMessageAttachments($messageId) {
     $row = $result->fetch_assoc();
     $placeId = $row['id_place'];
     $oldAttachmentsCount = intval($row['attachments']);
+    $messageCreated = $row['time_created']; // Дата создания сообщения
     
-    logAttachmentMigration("Message found: placeId=$placeId, old attachments count=$oldAttachmentsCount");
+    logAttachmentMigration("Message found: placeId=$placeId, old attachments count=$oldAttachmentsCount, created=$messageCreated");
     
     // Проверяем наличие старых аттачментов
     if ($oldAttachmentsCount <= 0) {
@@ -956,8 +960,8 @@ function migrateMessageAttachments($messageId) {
         $type = detectAttachmentType($oldFilePath, $mimeType);
         logAttachmentMigration("Detected type: $type");
         
-        // Создаем новый аттачмент в БД
-        $newAttachmentId = createAttachment($messageId, $type);
+        // Создаем новый аттачмент в БД с датой создания сообщения
+        $newAttachmentId = createAttachment($messageId, $type, null, null, null, $messageCreated);
         
         if (!$newAttachmentId) {
             logAttachmentMigration("Failed to create attachment in DB", 'ERROR');
@@ -965,7 +969,7 @@ function migrateMessageAttachments($messageId) {
             continue;
         }
         
-        logAttachmentMigration("Created new attachment: $newAttachmentId");
+        logAttachmentMigration("Created new attachment: $newAttachmentId with date: $messageCreated");
         
         // Создаем папку для нового аттачмента
         $newFolderPath = createAttachmentFolder($newAttachmentId);
