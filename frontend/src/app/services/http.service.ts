@@ -141,9 +141,9 @@ export class HttpService {
     );
   }
 
-  migrateAttachments(messageId: number): Observable<any> {
+  youtubizeMessage(messageId: number): Observable<any> {
     return this.httpClient.post(
-      `${HttpService.apiPath}/attachment-migrate.php`,
+      `${HttpService.apiPath}/attachment-youtubize.php`,
       {
         messageId
       },

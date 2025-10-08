@@ -65,26 +65,36 @@ function createAttachment($messageId, $type, $source = null, $videoId = null, $f
     $sql->bind_param("sisssss", $id, $messageId, $type, $created, $source, $safeFilename, $status);
     
     if ($sql->execute()) {
-        error_log("Attachment created in DB: $id, type: $type, filename: $safeFilename, videoId: $videoId");
+        logInfo("Attachment created in DB: $id, type: $type, filename: $safeFilename, videoId: $videoId", 'attachments');
         // Если это YouTube аттачмент, сразу скачиваем превью и иконку
         if ($type === 'youtube' && $videoId) {
-            error_log("Starting YouTube assets download for: $id, videoId: $videoId");
-            downloadYouTubeAssets($id, $videoId);
+            logYouTube("Starting YouTube assets download for: $id, videoId: $videoId");
+            $downloadSuccess = downloadYouTubeAssets($id, $videoId);
+            
+            // Если не удалось скачать иконку, удаляем аттачмент
+            if (!$downloadSuccess) {
+                logYouTube("YouTube attachment $id: Failed to download assets, deleting attachment", 'WARNING');
+                $deleteSql = $mysqli->prepare('DELETE FROM tbl_attachments WHERE id = ?');
+                $deleteSql->bind_param("s", $id);
+                $deleteSql->execute();
+                return null;
+            }
         }
         return $id;
     } else {
-        error_log("Failed to create attachment in DB: " . $mysqli->error);
+        logError("Failed to create attachment in DB: " . $mysqli->error, 'attachments');
     }
     
     return null;
 }
 
 // Скачивает превью и иконку для YouTube видео
+// Возвращает true только если удалось создать хотя бы иконку
 function downloadYouTubeAssets($attachmentId, $videoId) {
     // Создаем папку для файлов
     $folderPath = createAttachmentFolder($attachmentId);
     if (!$folderPath) {
-        error_log("YouTube attachment $attachmentId: Failed to create folder");
+        logYouTube("YouTube attachment $attachmentId: Failed to create folder", 'ERROR');
         return false;
     }
     
@@ -97,7 +107,7 @@ function downloadYouTubeAssets($attachmentId, $videoId) {
     $row = $result->fetch_assoc();
     
     if (!$row) {
-        error_log("YouTube attachment $attachmentId: Not found in DB");
+        logYouTube("YouTube attachment $attachmentId: Not found in DB", 'ERROR');
         return false;
     }
     
@@ -116,7 +126,7 @@ function downloadYouTubeAssets($attachmentId, $videoId) {
     // Дополнительная проверка: файл действительно существует и не пустой
     if ($previewSuccess && (!file_exists($previewPath) || filesize($previewPath) < 1024)) {
         $previewSuccess = false;
-        error_log("YouTube attachment $attachmentId: Preview file not created or too small");
+        logYouTube("YouTube attachment $attachmentId: Preview file not created or too small", 'WARNING');
     }
     
     // Скачиваем иконку (то же превью, но создаем иконку 160x160)
@@ -127,21 +137,30 @@ function downloadYouTubeAssets($attachmentId, $videoId) {
         // Дополнительная проверка иконки
         if ($iconSuccess && (!file_exists($iconPath) || filesize($iconPath) < 1024)) {
             $iconSuccess = false;
-            error_log("YouTube attachment $attachmentId: Icon file not created or too small");
+            logYouTube("YouTube attachment $attachmentId: Icon file not created or too small", 'WARNING');
         }
+    }
+    
+    // Если не удалось создать иконку, удаляем превью и возвращаем false
+    if (!$iconSuccess) {
+        logYouTube("YouTube attachment $attachmentId: Failed to create icon, deleting preview if exists", 'WARNING');
+        if ($previewSuccess && file_exists($previewPath)) {
+            unlink($previewPath);
+        }
+        updateAttachmentStatus($attachmentId, 'unavailable');
+        return false;
     }
     
     // Обновляем версии файлов в БД
     updateAttachmentVersions($attachmentId, $iconSuccess, $previewSuccess);
     
     // Обновляем статус
-    $status = ($previewSuccess || $iconSuccess) ? 'ready' : 'unavailable';
-    updateAttachmentStatus($attachmentId, $status);
+    updateAttachmentStatus($attachmentId, 'ready');
     
     // Логируем результат
-    error_log("YouTube attachment $attachmentId: preview=$previewSuccess (v$previewVersion), icon=$iconSuccess (v$iconVersion), status=$status");
+    logYouTube("YouTube attachment $attachmentId: preview=$previewSuccess (v$previewVersion), icon=$iconSuccess (v$iconVersion), status=ready");
     
-    return $previewSuccess || $iconSuccess;
+    return true;
 }
 
 // Скачивает файл по URL
@@ -155,25 +174,25 @@ function downloadFile($url, $path) {
     
     $content = @file_get_contents($url, false, $context);
     if ($content === false) {
-        error_log("Failed to download from URL: $url");
+        logYouTube("Failed to download from URL: $url", 'ERROR');
         return false;
     }
     
     // Проверяем что контент не пустой и это изображение
     if (strlen($content) < 1024) {
-        error_log("Downloaded content too small: " . strlen($content) . " bytes from $url");
+        logYouTube("Downloaded content too small: " . strlen($content) . " bytes from $url", 'WARNING');
         return false;
     }
     
     // Проверяем что это JPEG (начинается с FF D8 FF)
     if (substr($content, 0, 3) !== "\xFF\xD8\xFF") {
-        error_log("Downloaded content is not a valid JPEG from $url");
+        logYouTube("Downloaded content is not a valid JPEG from $url", 'WARNING');
         return false;
     }
     
     $result = file_put_contents($path, $content);
     if ($result === false) {
-        error_log("Failed to write file to: $path");
+        logError("Failed to write file to: $path", 'attachments');
         return false;
     }
     
@@ -274,33 +293,33 @@ function processMessageAttachments($messageId, $message) {
     
     // Находим YouTube ссылки
     $youtubeUrls = extractYouTubeUrls($message);
-    error_log("[YOUTUBE] URLs found: " . json_encode($youtubeUrls) . " for message $messageId");
+    logYouTube("URLs found: " . json_encode($youtubeUrls) . " for message $messageId");
     
     foreach ($youtubeUrls as $url) {
         $videoId = getYouTubeCode($url);
-        error_log("[YOUTUBE] Video ID extracted: $videoId from URL: $url");
+        logYouTube("Video ID extracted: $videoId from URL: $url");
         if ($videoId) {
             // Проверяем, есть ли уже такой аттачмент в этом сообщении
             $existingId = findExistingAttachment($messageId, 'youtube', $videoId);
             
             if ($existingId) {
-                error_log("[YOUTUBE] Existing YouTube attachment found: $existingId");
+                logYouTube("Existing YouTube attachment found: $existingId");
                 $attachments[] = $existingId;
             } else {
                 // Создаем новый аттачмент
-                error_log("[YOUTUBE] Creating new YouTube attachment for video ID: $videoId");
+                logYouTube("Creating new YouTube attachment for video ID: $videoId");
                 $newId = createAttachment($messageId, 'youtube', $url, $videoId);
                 if ($newId) {
-                    error_log("[YOUTUBE] YouTube attachment created successfully: $newId");
+                    logYouTube("YouTube attachment created successfully: $newId");
                     $attachments[] = $newId;
                 } else {
-                    error_log("[YOUTUBE] Failed to create YouTube attachment for video ID: $videoId");
+                    logYouTube("Failed to create YouTube attachment for video ID: $videoId", 'WARNING');
                 }
             }
         }
     }
     
-    error_log("[YOUTUBE] Total attachments processed: " . count($attachments));
+    logYouTube("Total attachments processed: " . count($attachments));
     return $attachments;
 }
 
@@ -338,17 +357,17 @@ function updateMessageJson($messageId, $attachments) {
     $jsonString = json_encode($jsonData, JSON_UNESCAPED_UNICODE);
     
     if ($jsonString === false) {
-        error_log("[YOUTUBE] JSON encode failed for message $messageId");
+        logError("JSON encode failed for message $messageId", 'attachments');
         return false;
     }
     
-    error_log("[YOUTUBE] Updating message $messageId JSON: $jsonString");
+    logInfo("Updating message $messageId JSON: $jsonString", 'attachments');
     
     $sql = $mysqli->prepare('UPDATE tbl_messages SET json = ? WHERE id_message = ?');
     $sql->bind_param("si", $jsonString, $messageId);
     
     $result = $sql->execute();
-    error_log("[YOUTUBE] JSON update result for message $messageId: " . ($result ? 'success' : 'failed'));
+    logInfo("JSON update result for message $messageId: " . ($result ? 'success' : 'failed'), 'attachments');
     
     return $result;
 }
@@ -537,14 +556,14 @@ function createAttachmentFolder($attachmentId) {
         foreach ($permissions as $perm) {
             if (mkdir($folderPath, $perm, true)) {
                 $created = true;
-                error_log("Directory created successfully: $folderPath with permissions " . decoct($perm));
+                logInfo("Directory created successfully: $folderPath with permissions " . decoct($perm), 'attachments');
                 break;
             }
         }
         
         if (!$created) {
             $error = error_get_last();
-            error_log("Failed to create directory: $folderPath. Error: " . ($error ? $error['message'] : 'Unknown error'));
+            logError("Failed to create directory: $folderPath. Error: " . ($error ? $error['message'] : 'Unknown error'), 'attachments');
             return false;
         }
     }
@@ -660,7 +679,7 @@ function safeJsonDecode($jsonString) {
     $decoded = json_decode($jsonString, true);
     
     if (json_last_error() !== JSON_ERROR_NONE) {
-        error_log("JSON decode error: " . json_last_error_msg() . " for string: " . substr($jsonString, 0, 100));
+        logError("JSON decode error: " . json_last_error_msg() . " for string: " . substr($jsonString, 0, 100), 'attachments');
         return null;
     }
     
@@ -798,6 +817,121 @@ function detectAttachmentType($filePath, $mimeType = null) {
     
     // Все остальное - файлы
     return 'file';
+}
+
+/**
+ * Обрабатывает YouTube ссылки в сообщении: удаляет старые YouTube аттачменты и создает новые
+ * @param int $messageId ID сообщения
+ * @return array Результат обработки ['success' => bool, 'created' => int, 'deleted' => int, 'error' => string]
+ */
+function youtubizeMessage($messageId) {
+    global $mysqli;
+    
+    logYouTube("Starting youtubize for message $messageId");
+    
+    // Получаем сообщение
+    $sql = $mysqli->prepare('SELECT id_place, message, json FROM tbl_messages WHERE id_message = ?');
+    $sql->bind_param("i", $messageId);
+    $sql->execute();
+    $result = $sql->get_result();
+    
+    if (!$result || $result->num_rows === 0) {
+        logYouTube("Message $messageId not found", 'ERROR');
+        return [
+            'success' => false,
+            'error' => 'Message not found',
+            'created' => 0,
+            'deleted' => 0
+        ];
+    }
+    
+    $row = $result->fetch_assoc();
+    $messageText = $row['message'];
+    
+    // Извлекаем YouTube ссылки из текста
+    $youtubeUrls = extractYouTubeUrls($messageText);
+    
+    if (empty($youtubeUrls)) {
+        logYouTube("No YouTube links found in message $messageId", 'WARNING');
+        return [
+            'success' => false,
+            'error' => 'No YouTube links found in message',
+            'created' => 0,
+            'deleted' => 0
+        ];
+    }
+    
+    logYouTube("Found " . count($youtubeUrls) . " YouTube links in message $messageId");
+    
+    // Удаляем существующие YouTube аттачменты для этого сообщения
+    $deleteSql = $mysqli->prepare('SELECT id, icon, preview FROM tbl_attachments WHERE id_message = ? AND type = ?');
+    $type = 'youtube';
+    $deleteSql->bind_param("is", $messageId, $type);
+    $deleteSql->execute();
+    $deleteResult = $deleteSql->get_result();
+    
+    $deletedCount = 0;
+    while ($attachmentRow = $deleteResult->fetch_assoc()) {
+        $attachmentId = $attachmentRow['id'];
+        
+        // Удаляем файлы аттачмента
+        if ($attachmentRow['icon'] > 0) {
+            $iconPath = buildAttachmentIconPhysicalPath($attachmentId, $attachmentRow['icon']);
+            if ($iconPath && file_exists($iconPath)) {
+                unlink($iconPath);
+                logYouTube("Deleted icon: $iconPath");
+            }
+        }
+        
+        if ($attachmentRow['preview'] > 0) {
+            $previewPath = buildAttachmentPreviewPhysicalPath($attachmentId, $attachmentRow['preview']);
+            if ($previewPath && file_exists($previewPath)) {
+                unlink($previewPath);
+                logYouTube("Deleted preview: $previewPath");
+            }
+        }
+        
+        $deletedCount++;
+    }
+    
+    // Удаляем записи из БД
+    $deleteRecordsSql = $mysqli->prepare('DELETE FROM tbl_attachments WHERE id_message = ? AND type = ?');
+    $deleteRecordsSql->bind_param("is", $messageId, $type);
+    $deleteRecordsSql->execute();
+    
+    logYouTube("Deleted $deletedCount existing YouTube attachments for message $messageId");
+    
+    // Обрабатываем YouTube ссылки и создаем новые аттачменты
+    $attachments = processMessageAttachments($messageId, $messageText);
+    
+    if (empty($attachments)) {
+        logYouTube("Failed to create YouTube attachments for message $messageId", 'WARNING');
+        return [
+            'success' => false,
+            'error' => 'Failed to create YouTube attachments',
+            'created' => 0,
+            'deleted' => $deletedCount
+        ];
+    }
+    
+    // Обновляем JSON поле сообщения
+    if (!updateMessageJson($messageId, $attachments)) {
+        logYouTube("Failed to update message JSON for message $messageId", 'ERROR');
+        return [
+            'success' => false,
+            'error' => 'Failed to update message JSON',
+            'created' => count($attachments),
+            'deleted' => $deletedCount
+        ];
+    }
+    
+    logYouTube("Successfully created " . count($attachments) . " YouTube attachments for message $messageId");
+    
+    return [
+        'success' => true,
+        'created' => count($attachments),
+        'deleted' => $deletedCount
+    ];
 }
 
 /**

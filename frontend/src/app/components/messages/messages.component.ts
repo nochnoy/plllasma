@@ -107,16 +107,16 @@ export class MessagesComponent {
     }
   }
 
-  onMigrateAttachmentsClick(event: any, message: Message): void {
+  onYoutubizeClick(event: any, message: Message): void {
     event.preventDefault();
-    if (window.confirm('Мигрировать старые аттачменты в новую систему?')) {
-      this.httpService.migrateAttachments(message.id).pipe(
+    if (window.confirm('Обработать YouTube ссылки в сообщении?')) {
+      this.httpService.youtubizeMessage(message.id).pipe(
         tap((result: any) => {
           if (result.success) {
-            alert(`Миграция завершена!\nПеренесено: ${result.migrated}\nОшибок: ${result.failed}\nВсего: ${result.total}`);
+            alert(`Обработка завершена!\nСоздано аттачментов: ${result.created}\nУдалено старых: ${result.deleted}`);
             this.channelService.invalidateChannel(this.placeId);
           } else {
-            alert(`Ошибка миграции: ${result.error}`);
+            alert(`Ошибка: ${result.error}`);
           }
         })
       ).subscribe();
