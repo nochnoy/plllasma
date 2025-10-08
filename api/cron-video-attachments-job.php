@@ -129,13 +129,15 @@ function isWorkerRunning() {
 function getAvailableFilesCount() {
     global $mysqli;
     
+    // Добавлена проверка существования сообщения через JOIN
     $stmt = $mysqli->prepare("
         SELECT COUNT(*) as count 
-        FROM tbl_attachments 
-        WHERE type = 'video' 
-        AND (status = 'pending' OR (status = 'ready' AND (icon = 0 OR preview = 0)))
-        AND file IS NOT NULL
-        AND (processing_started IS NULL OR processing_started < DATE_SUB(NOW(), INTERVAL ? SECOND))
+        FROM tbl_attachments a
+        JOIN tbl_messages m ON a.id_message = m.id_message
+        WHERE a.type = 'video' 
+        AND (a.status = 'pending' OR (a.status = 'ready' AND (a.icon = 0 OR a.preview = 0)))
+        AND a.file IS NOT NULL
+        AND (a.processing_started IS NULL OR a.processing_started < DATE_SUB(NOW(), INTERVAL ? SECOND))
     ");
     
     $maxTime = MAX_PROCESSING_TIME;
@@ -368,17 +370,20 @@ function getNextFileToProcess() {
     global $mysqli;
     
     // Атомарно блокируем один файл для обработки
+    // Добавлена проверка существования сообщения через JOIN
     $stmt = $mysqli->prepare("
         UPDATE tbl_attachments 
         SET processing_started = NOW() 
         WHERE id = (
             SELECT id FROM (
-                SELECT id FROM tbl_attachments 
-                WHERE type = 'video' 
-                AND (status = 'pending' OR (status = 'ready' AND (icon = 0 OR preview = 0)))
-                AND file IS NOT NULL
-                AND (processing_started IS NULL OR processing_started < DATE_SUB(NOW(), INTERVAL ? SECOND))
-                ORDER BY created DESC 
+                SELECT a.id 
+                FROM tbl_attachments a
+                JOIN tbl_messages m ON a.id_message = m.id_message
+                WHERE a.type = 'video' 
+                AND (a.status = 'pending' OR (a.status = 'ready' AND (a.icon = 0 OR a.preview = 0)))
+                AND a.file IS NOT NULL
+                AND (a.processing_started IS NULL OR a.processing_started < DATE_SUB(NOW(), INTERVAL ? SECOND))
+                ORDER BY a.created DESC 
                 LIMIT 1
             ) AS temp
         )

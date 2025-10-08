@@ -1068,7 +1068,7 @@ function migrateMessageAttachments($messageId) {
         }
     }
     
-    // Удаляем старые файлы и обнуляем счетчик старых аттачментов
+    // Удаляем старые файлы (если они есть)
     if ($migratedCount > 0) {
         logAttachmentMigration("Deleting old attachment files...");
         
@@ -1094,14 +1094,17 @@ function migrateMessageAttachments($messageId) {
                 }
             }
         }
-        
-        // Обнуляем счетчик старых аттачментов
-        logAttachmentMigration("Clearing old attachments counter...");
-        $updateSql = $mysqli->prepare('UPDATE tbl_messages SET attachments = 0 WHERE id_message = ?');
-        $updateSql->bind_param("i", $messageId);
-        $updateSql->execute();
-        logAttachmentMigration("Old attachments counter cleared");
+    } else {
+        logAttachmentMigration("No files were migrated, skipping file deletion");
     }
+    
+    // ВСЕГДА обнуляем счетчик старых аттачментов, даже если миграция не удалась
+    // Это предотвращает бесконечную попытку мигрировать несуществующие файлы
+    logAttachmentMigration("Clearing old attachments counter...");
+    $updateSql = $mysqli->prepare('UPDATE tbl_messages SET attachments = 0 WHERE id_message = ?');
+    $updateSql->bind_param("i", $messageId);
+    $updateSql->execute();
+    logAttachmentMigration("Old attachments counter cleared");
     
     logAttachmentMigration("=== Migration completed for message $messageId ===");
     

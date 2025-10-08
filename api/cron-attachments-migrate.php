@@ -10,7 +10,7 @@ require_once 'include/functions-logging.php';
 require_once 'include/functions-video.php';
 
 // Конфигурация
-define('MESSAGES_PER_RUN', 10); // Количество сообщений для обработки за раз
+define('MESSAGES_PER_RUN', 100); // Количество сообщений для обработки за раз
 
 /**
  * Основная функция воркера
