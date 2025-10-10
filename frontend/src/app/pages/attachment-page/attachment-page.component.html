@@ -47,19 +47,35 @@
               }
             }
 
+            @case ('youtube') {
+              @if (getYouTubeVideoId()) {
+                <div class="youtube">
+                  <iframe
+                    class="stage youtube-player"
+                    [src]="getYouTubeEmbedUrl() | safe: 'resourceUrl'"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                  ></iframe>
+                </div>
+              }
+            }
+
           }
 
-          @if (attachment.file) {
-            <button
-              (click)="downloadFile()"
-              class="download"
-            >
-              Скачать {{getFileSize()}}
-            </button>
-          } @else {
-            <div class="unloaded">
-              🙁 Файл был выгружен для экономии места
-            </div>
+          @if (attachment.type !== 'youtube') {
+            @if (attachment.file) {
+              <button
+                (click)="downloadFile()"
+                class="download"
+              >
+                Скачать {{getFileSize()}}
+              </button>
+            } @else {
+              <div class="unloaded">
+                🙁 Файл был выгружен для экономии места
+              </div>
+            }
           }
 
           <div class="info">

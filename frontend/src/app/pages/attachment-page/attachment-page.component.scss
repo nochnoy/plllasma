@@ -73,6 +73,18 @@ button {
   vertical-align: top; /* Чтобы между <video> и контейнером не было промежутка */
 }
 
+.youtube {
+  vertical-align: top;
+  
+  &-player {
+    width: 800px;
+    height: 450px;
+    min-width: 320px;
+    min-height: 240px;
+    border-radius: var(--border-radius);
+  }
+}
+
 .unloaded {
   padding: 0.5rem 1rem;
   background-color: #eddfc1;

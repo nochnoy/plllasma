@@ -26,16 +26,11 @@ export class AttachmentItemComponent implements OnInit {
 
   onAttachmentClick(): void {
     if (this.attachment) {
-      // Для YouTube аттачментов открываем source URL
-      if (this.attachment.type === 'youtube' && this.attachment.source) {
-        window.open(this.attachment.source, '_blank');
-      } else {
-        // Для всех остальных типов аттачментов открываем страницу аттачмента в новом табе
-        const url = this.router.serializeUrl(this.router.createUrlTree(['/attachment', this.attachment.id]));
-        // Добавляем hash для правильного роутинга
-        const fullUrl = window.location.origin + '/#' + url;
-        window.open(fullUrl, '_blank');
-      }
+      // Для всех типов аттачментов (включая YouTube) открываем страницу аттачмента в новом табе
+      const url = this.router.serializeUrl(this.router.createUrlTree(['/attachment', this.attachment.id]));
+      // Добавляем hash для правильного роутинга
+      const fullUrl = window.location.origin + '/#' + url;
+      window.open(fullUrl, '_blank');
     }
   }
 

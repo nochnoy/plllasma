@@ -119,7 +119,7 @@ function downloadYouTubeAssets($attachmentId, $videoId) {
     $previewPath = buildAttachmentPreviewPhysicalPath($attachmentId, $previewVersion);
     $iconPath = buildAttachmentIconPhysicalPath($attachmentId, $iconVersion);
     
-    // Скачиваем превью
+    // Скачиваем storyboard preview (с раздвинутыми кадрами)
     $previewUrl = "http://194.135.33.47:5000/api/preview/" . $videoId;
     $previewSuccess = downloadFile($previewUrl, $previewPath);
     
@@ -129,10 +129,18 @@ function downloadYouTubeAssets($attachmentId, $videoId) {
         logYouTube("YouTube attachment $attachmentId: Preview file not created or too small", 'WARNING');
     }
     
-    // Скачиваем иконку (то же превью, но создаем иконку 160x160)
+    // Скачиваем обычное превью для создания иконки (БЕЗ раздвинутых кадров!)
+    $iconSourceUrl = "http://194.135.33.47:5000/api/icon/" . $videoId;
+    $iconSourcePath = $folderPath . $attachmentId . "-temp-icon-source.jpg";
+    $iconSourceSuccess = downloadFile($iconSourceUrl, $iconSourcePath);
+    
+    // Создаем иконку 160x160 из обычного превью
     $iconSuccess = false;
-    if ($previewSuccess && file_exists($previewPath)) {
-        $iconSuccess = createIconFromPreview($previewPath, $iconPath);
+    if ($iconSourceSuccess && file_exists($iconSourcePath)) {
+        $iconSuccess = createIconFromPreview($iconSourcePath, $iconPath);
+        
+        // Удаляем временный файл
+        @unlink($iconSourcePath);
         
         // Дополнительная проверка иконки
         if ($iconSuccess && (!file_exists($iconPath) || filesize($iconPath) < 1024)) {

@@ -78,17 +78,7 @@ export class AttachmentPageComponent implements OnInit {
   }
 
   private handleAttachmentStatus(): void {
-    if (this.attachment) {
-      if (this.attachment.type === 'youtube' && this.attachment.source) {
-        this.redirectToYouTube();
-      }
-    }
-  }
-
-  private redirectToYouTube(): void {
-    if (!this.attachment || !this.attachment.source) return;
-    window.location.href = this.attachment.source;
-    this.incrementViews();
+    // Больше не редиректим YouTube аттачменты - показываем их на странице
   }
 
   downloadFile(): void {
@@ -218,6 +208,34 @@ export class AttachmentPageComponent implements OnInit {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  getYouTubeVideoId(): string {
+    if (!this.attachment || this.attachment.type !== 'youtube' || !this.attachment.source) {
+      return '';
+    }
+
+    // Извлекаем video ID из различных форматов YouTube URL (включая Shorts)
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([^&\?\/\s]+)/,
+      /^([a-zA-Z0-9_-]{11})$/
+    ];
+
+    for (const pattern of patterns) {
+      const match = this.attachment.source.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+
+    return '';
+  }
+
+  getYouTubeEmbedUrl(): string {
+    const videoId = this.getYouTubeVideoId();
+    if (!videoId) return '';
+
+    return `https://www.youtube.com/embed/${videoId}`;
   }
 
   canPlayVideo(): boolean {
