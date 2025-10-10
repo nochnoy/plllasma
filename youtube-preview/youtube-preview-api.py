@@ -58,10 +58,26 @@ def is_valid_image_content(content):
 
     return True
 
+@app.route('/api/icon/<video_id>', methods=['GET'])
+def get_icon(video_id):
+    """
+    Получить иконку YouTube видео (обычное превью без изменений).
+    Используется для создания иконки 160x160 на PHP сервере.
+    Приоритет: maxres → hq → sd → mq → default
+    """
+    success, image_content = get_youtube_preview(video_id)
+    if success and image_content:
+        return send_file(
+            io.BytesIO(image_content), 
+            mimetype='image/jpeg'
+        )
+    else:
+        return jsonify({"error": "Icon not found", "video_id": video_id}), 404
+
 @app.route('/api/preview/<video_id>', methods=['GET'])
 def get_preview(video_id):
     """
-    Получить превью YouTube видео.
+    Получить preview YouTube видео (storyboard с раздвинутыми кадрами).
     Приоритет: Storyboard (HQ → LQ) → Regular preview (maxres → hq → sd → mq → default)
     """
     # Сначала пытаемся получить storyboard
@@ -473,7 +489,8 @@ def index():
     
     <h2>Endpoints:</h2>
     <ul>
-        <li>GET <code>/api/preview/&lt;video_id&gt;</code> - получить превью (приоритет: storyboard → regular preview)</li>
+        <li>GET <code>/api/icon/&lt;video_id&gt;</code> - получить иконку (обычное превью для создания иконки 160x160)</li>
+        <li>GET <code>/api/preview/&lt;video_id&gt;</code> - получить превью (storyboard с раздвинутыми кадрами или обычное)</li>
         <li>GET <code>/api/storyboard/&lt;video_id&gt;</code> - получить информацию о storyboard (JSON)</li>
         <li>GET <code>/api/storyboard/&lt;video_id&gt;/image/&lt;index&gt;</code> - получить конкретное изображение storyboard</li>
     </ul>
@@ -486,9 +503,9 @@ def index():
     
     <h3>Примеры:</h3>
     <ul>
-        <li><a href="/api/preview/dQw4w9WgXcQ">/api/preview/dQw4w9WgXcQ</a> - превью (storyboard или обычное)</li>
+        <li><a href="/api/icon/dQw4w9WgXcQ">/api/icon/dQw4w9WgXcQ</a> - иконка (обычное превью)</li>
+        <li><a href="/api/preview/dQw4w9WgXcQ">/api/preview/dQw4w9WgXcQ</a> - превью (storyboard с раздвинутыми кадрами)</li>
         <li><a href="/api/storyboard/dQw4w9WgXcQ">/api/storyboard/dQw4w9WgXcQ</a> - storyboard info (JSON)</li>
-        <li><a href="/api/storyboard/dQw4w9WgXcQ?quality=lq">/api/storyboard/dQw4w9WgXcQ?quality=lq</a> - storyboard info LQ</li>
         <li><a href="/api/storyboard/dQw4w9WgXcQ/image/0">/api/storyboard/dQw4w9WgXcQ/image/0</a> - конкретное изображение</li>
     </ul>
     
