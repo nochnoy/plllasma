@@ -58,6 +58,48 @@ def is_valid_image_content(content):
 
     return True
 
+@app.route('/api/info/<video_id>', methods=['GET'])
+def get_info(video_id):
+    """
+    Получить информацию о YouTube видео (название, длительность, дата публикации).
+    
+    Возвращает JSON:
+    {
+        "title": "...",
+        "duration": 123,
+        "publishDate": "2024-01-01",
+        "uploadDate": "2024-01-01",
+        "author": "...",
+        "viewCount": 12345
+    }
+    """
+    # Получаем страницу YouTube
+    html = get_youtube_page(video_id)
+    if not html:
+        return jsonify({
+            "error": "Failed to fetch YouTube page",
+            "video_id": video_id
+        }), 404
+    
+    # Извлекаем playerResponse
+    player_response = extract_player_response(html)
+    if not player_response:
+        return jsonify({
+            "error": "Failed to extract player response",
+            "video_id": video_id
+        }), 404
+    
+    # Получаем информацию о видео
+    video_info = get_video_info(player_response)
+    if not video_info:
+        return jsonify({
+            "error": "Failed to extract video info",
+            "video_id": video_id
+        }), 404
+    
+    video_info['video_id'] = video_id
+    return jsonify(video_info)
+
 @app.route('/api/icon/<video_id>', methods=['GET'])
 def get_icon(video_id):
     """
@@ -77,28 +119,163 @@ def get_icon(video_id):
 @app.route('/api/preview/<video_id>', methods=['GET'])
 def get_preview(video_id):
     """
-    Получить preview YouTube видео (storyboard с раздвинутыми кадрами).
-    Приоритет: Storyboard (HQ → LQ) → Regular preview (maxres → hq → sd → mq → default)
+    Получить preview YouTube видео (storyboard с раздвинутыми кадрами + обычное превью снизу).
+    Приоритет: Storyboard (HQ → LQ) + Preview → Regular preview (maxres → hq → sd → mq → default)
     """
-    # Сначала пытаемся получить storyboard
-    storyboard_result = try_get_storyboard(video_id)
-    if storyboard_result:
-        return storyboard_result
+    # Пытаемся получить storyboard как PIL Image
+    storyboard_img = try_get_storyboard_image(video_id)
     
-    # Если storyboard не получился, возвращаем обычное превью
-    success, image_content = get_youtube_preview(video_id)
-    if success and image_content:
-        return send_file(
-            io.BytesIO(image_content), 
-            mimetype='image/jpeg'
-        )
-    else:
-        return jsonify({"error": "Preview not found", "video_id": video_id}), 404
+    # Пытаемся получить обычное превью
+    success, preview_content = get_youtube_preview(video_id)
+    preview_img = None
+    if success and preview_content:
+        try:
+            preview_img = Image.open(io.BytesIO(preview_content))
+        except Exception:
+            preview_img = None
+    
+    # Если есть и storyboard и preview - склеиваем
+    if storyboard_img and preview_img:
+        combined_img = combine_storyboard_and_preview(storyboard_img, preview_img)
+        output = io.BytesIO()
+        combined_img.save(output, format='JPEG', quality=90)
+        output.seek(0)
+        return send_file(output, mimetype='image/jpeg')
+    
+    # Если есть только storyboard
+    if storyboard_img:
+        output = io.BytesIO()
+        storyboard_img.save(output, format='JPEG', quality=90)
+        output.seek(0)
+        return send_file(output, mimetype='image/jpeg')
+    
+    # Если есть только preview
+    if preview_img:
+        output = io.BytesIO()
+        preview_img.save(output, format='JPEG', quality=90)
+        output.seek(0)
+        return send_file(output, mimetype='image/jpeg')
+    
+    # Ничего не нашли
+    return jsonify({"error": "Preview not found", "video_id": video_id}), 404
+
+def combine_storyboard_and_preview(storyboard_img, preview_img):
+    """
+    Склеивает storyboard и обычное preview.
+    Preview добавляется снизу с отступом 4px.
+    Если preview шире storyboard - уменьшается пропорционально.
+    """
+    gap_color = (215, 202, 187)  # #D7CABB
+    gap_size = 4
+    
+    storyboard_width = storyboard_img.width
+    storyboard_height = storyboard_img.height
+    
+    preview_width = preview_img.width
+    preview_height = preview_img.height
+    
+    # Если preview шире storyboard - уменьшаем пропорционально
+    if preview_width > storyboard_width:
+        scale = storyboard_width / preview_width
+        new_preview_width = storyboard_width
+        new_preview_height = int(preview_height * scale)
+        preview_img = preview_img.resize((new_preview_width, new_preview_height), Image.Resampling.LANCZOS)
+        preview_width = new_preview_width
+        preview_height = new_preview_height
+    
+    # Вычисляем размер итогового изображения
+    combined_width = max(storyboard_width, preview_width)
+    combined_height = storyboard_height + gap_size + preview_height
+    
+    # Создаем новое изображение с фоном
+    combined_img = Image.new('RGB', (combined_width, combined_height), gap_color)
+    
+    # Вставляем storyboard сверху (центрируем по горизонтали если нужно)
+    storyboard_x = (combined_width - storyboard_width) // 2
+    combined_img.paste(storyboard_img, (storyboard_x, 0))
+    
+    # Вставляем preview снизу (центрируем по горизонтали если нужно)
+    preview_x = (combined_width - preview_width) // 2
+    preview_y = storyboard_height + gap_size
+    combined_img.paste(preview_img, (preview_x, preview_y))
+    
+    return combined_img
+
+def try_get_storyboard_image(video_id):
+    """
+    Попытаться получить storyboard для видео как PIL Image.
+    Возвращает PIL Image если успешно, None если не получилось.
+    """
+    try:
+        # Получаем информацию о storyboard
+        html = get_youtube_page(video_id)
+        if not html:
+            return None
+        
+        player_response = extract_player_response(html)
+        if not player_response:
+            return None
+        
+        spec = parse_storyboard_spec(player_response)
+        duration = get_video_duration(player_response)
+        
+        if not spec or not duration:
+            return None
+        
+        # Пытаемся получить storyboard (HQ → LQ)
+        qualities = [
+            ('hq', True),
+            ('lq', False)
+        ]
+        
+        for quality_name, hq in qualities:
+            storyboard_urls = generate_storyboard_urls(spec, hq, duration)
+            
+            if not storyboard_urls:
+                continue
+            
+            # Берем первое изображение (индекс 0)
+            first_url = storyboard_urls[0]
+            
+            try:
+                response = requests.get(first_url, timeout=10)
+                
+                if response.status_code == 200 and len(response.content) > 1024:
+                    # Проверяем формат (JPEG или WebP)
+                    is_jpeg = response.content[:3] == b'\xff\xd8\xff'
+                    is_webp = response.content[:4] == b'RIFF' and response.content[8:12] == b'WEBP'
+                    
+                    if is_jpeg or is_webp:
+                        # Открываем изображение
+                        img = Image.open(io.BytesIO(response.content))
+                        
+                        # Конвертируем WebP в RGB если нужно
+                        if is_webp:
+                            if img.mode in ('RGBA', 'LA', 'P'):
+                                background = Image.new('RGB', img.size, (255, 255, 255))
+                                if img.mode == 'P':
+                                    img = img.convert('RGBA')
+                                background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                                img = background
+                            elif img.mode != 'RGB':
+                                img = img.convert('RGB')
+                        
+                        # Добавляем линии между кадрами
+                        img = add_grid_lines(img, hq)
+                        
+                        return img
+            except Exception:
+                continue
+        
+        return None
+    except Exception:
+        return None
 
 def try_get_storyboard(video_id):
     """
     Попытаться получить storyboard для видео.
     Возвращает Flask Response если успешно, None если не получилось.
+    DEPRECATED: используйте try_get_storyboard_image()
     """
     try:
         # Получаем информацию о storyboard
@@ -308,6 +485,24 @@ def get_video_duration(player_response):
     except (AttributeError, KeyError, ValueError):
         return None
 
+def get_video_info(player_response):
+    """Получить информацию о видео"""
+    try:
+        video_details = player_response.get('videoDetails', {})
+        microformat = player_response.get('microformat', {}).get('playerMicroformatRenderer', {})
+        
+        info = {
+            'title': video_details.get('title', ''),
+            'duration': int(video_details.get('lengthSeconds', 0)),
+            'publishDate': microformat.get('publishDate', ''),
+            'uploadDate': microformat.get('uploadDate', ''),
+            'author': video_details.get('author', ''),
+            'viewCount': int(video_details.get('viewCount', 0))
+        }
+        return info
+    except (AttributeError, KeyError, ValueError):
+        return None
+
 def generate_storyboard_urls(spec, hq=True, seconds=None):
     """
     Генерировать URLs storyboard изображений
@@ -489,8 +684,9 @@ def index():
     
     <h2>Endpoints:</h2>
     <ul>
+        <li>GET <code>/api/info/&lt;video_id&gt;</code> - получить информацию о видео (название, длительность, дата публикации - JSON)</li>
         <li>GET <code>/api/icon/&lt;video_id&gt;</code> - получить иконку (обычное превью для создания иконки 160x160)</li>
-        <li>GET <code>/api/preview/&lt;video_id&gt;</code> - получить превью (storyboard с раздвинутыми кадрами или обычное)</li>
+        <li>GET <code>/api/preview/&lt;video_id&gt;</code> - получить превью (storyboard с раздвинутыми кадрами + обычное превью снизу)</li>
         <li>GET <code>/api/storyboard/&lt;video_id&gt;</code> - получить информацию о storyboard (JSON)</li>
         <li>GET <code>/api/storyboard/&lt;video_id&gt;/image/&lt;index&gt;</code> - получить конкретное изображение storyboard</li>
     </ul>
@@ -503,8 +699,9 @@ def index():
     
     <h3>Примеры:</h3>
     <ul>
+        <li><a href="/api/info/dQw4w9WgXcQ">/api/info/dQw4w9WgXcQ</a> - информация о видео (JSON)</li>
         <li><a href="/api/icon/dQw4w9WgXcQ">/api/icon/dQw4w9WgXcQ</a> - иконка (обычное превью)</li>
-        <li><a href="/api/preview/dQw4w9WgXcQ">/api/preview/dQw4w9WgXcQ</a> - превью (storyboard с раздвинутыми кадрами)</li>
+        <li><a href="/api/preview/dQw4w9WgXcQ">/api/preview/dQw4w9WgXcQ</a> - превью (storyboard + обычное превью)</li>
         <li><a href="/api/storyboard/dQw4w9WgXcQ">/api/storyboard/dQw4w9WgXcQ</a> - storyboard info (JSON)</li>
         <li><a href="/api/storyboard/dQw4w9WgXcQ/image/0">/api/storyboard/dQw4w9WgXcQ/image/0</a> - конкретное изображение</li>
     </ul>

@@ -112,6 +112,7 @@ export interface INewAttachment {
   views?: number;
   downloads?: number;
   size?: number;
+  duration?: number; // Длительность видео в миллисекундах (только для YouTube)
 }
 
 export const EMPTY_CHANNEL: IChannelLink = {

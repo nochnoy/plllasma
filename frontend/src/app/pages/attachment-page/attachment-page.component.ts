@@ -288,4 +288,21 @@ export class AttachmentPageComponent implements OnInit {
 
     return `url('${previewUrl}')`;
   }
+
+  formatDuration(ms: number | null | undefined): string {
+    if (!ms || ms <= 0) return '';
+
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+
+    if (hours > 0) {
+      const remainingMinutes = minutes % 60;
+      const remainingSeconds = seconds % 60;
+      return `${hours}:${String(remainingMinutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+    } else {
+      const remainingSeconds = seconds % 60;
+      return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`;
+    }
+  }
 }

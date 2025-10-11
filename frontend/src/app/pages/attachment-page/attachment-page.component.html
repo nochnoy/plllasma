@@ -11,11 +11,12 @@
       @if (!isImageMagnified) {
         <div class="attachment">
 
-          <h2>{{attachment.type === 'youtube' ? (attachment.title || attachment.filename) : attachment.filename}}</h2>
-
           @switch (attachment.type) {
 
             @case ('image') {
+
+              <h2>{{attachment.filename}}</h2>
+
               @if (!isImageMagnified) {
                 <img
                   class="image stage"
@@ -28,6 +29,9 @@
             }
 
             @case ('video') {
+
+              <h2>{{attachment.filename}}</h2>
+
               @if (attachment.file) {
                 @if (canPlayVideo()) {
                   <div class="video">
@@ -44,16 +48,22 @@
                   </div>
 
                 }
+              } @else {
+                <div class="unloaded">
+                  🙁 Файл был выгружен для экономии места
+                </div>
               }
             }
 
             @case ('youtube') {
+
+              <a [href]="attachment.source" class="source">
+                {{attachment.source}}
+              </a>
+
+              <h2>{{attachment.title}}</h2>
+
               @if (getYouTubeVideoId()) {
-
-                <a [href]="attachment.source" class="source">
-                  {{attachment.source}}
-                </a>
-
                 <div class="youtube">
                   <iframe
                     class="stage youtube-player"
@@ -83,8 +93,13 @@
           }
 
           <div class="info">
-            <div>Скачали {{attachment.downloads}}</div>
+            @if (attachment.type !== 'youtube') {
+              <div>Скачали {{attachment.downloads}}</div>
+            }
             <div>Смотрели {{attachment.views}}</div>
+            @if (attachment.type === 'youtube' && attachment.duration) {
+              <div>Длительность {{formatDuration(attachment.duration)}}</div>
+            }
           </div>
 
           @if (attachment.preview) {

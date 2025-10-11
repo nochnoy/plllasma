@@ -97,6 +97,47 @@ function createAttachment($messageId, $type, $source = null, $videoId = null, $f
 // Скачивает превью и иконку для YouTube видео
 // Возвращает true только если удалось создать хотя бы иконку
 function downloadYouTubeAssets($attachmentId, $videoId) {
+    global $mysqli;
+    
+    // Получаем информацию о видео с YouTube API
+    $infoUrl = "http://194.135.33.47:5000/api/info/" . $videoId;
+    $infoResponse = @file_get_contents($infoUrl);
+    
+    if ($infoResponse) {
+        $info = json_decode($infoResponse, true);
+        if ($info && !isset($info['error'])) {
+            $title = $info['title'] ?? null;
+            $duration = isset($info['duration']) ? intval($info['duration']) * 1000 : null; // Конвертируем секунды в миллисекунды
+            
+            // Проверяем наличие столбца duration (для обратной совместимости)
+            $checkResult = $mysqli->query("SHOW COLUMNS FROM tbl_attachments LIKE 'duration'");
+            $hasDurationColumn = $checkResult && $checkResult->num_rows > 0;
+            
+            // Сохраняем title и duration в БД
+            if ($title || ($duration !== null && $hasDurationColumn)) {
+                if ($hasDurationColumn) {
+                    $updateSql = $mysqli->prepare("UPDATE tbl_attachments SET title = ?, duration = ? WHERE id = ?");
+                    $updateSql->bind_param("sis", $title, $duration, $attachmentId);
+                } else {
+                    // Если столбца duration нет - обновляем только title
+                    $updateSql = $mysqli->prepare("UPDATE tbl_attachments SET title = ? WHERE id = ?");
+                    $updateSql->bind_param("ss", $title, $attachmentId);
+                }
+                $updateSql->execute();
+                
+                if ($hasDurationColumn) {
+                    logYouTube("YouTube attachment $attachmentId: Saved info - title: " . ($title ?? 'null') . ", duration: " . ($duration ?? 'null') . "ms");
+                } else {
+                    logYouTube("YouTube attachment $attachmentId: Saved title (duration column not exists yet): " . ($title ?? 'null'));
+                }
+            }
+        } else {
+            logYouTube("YouTube attachment $attachmentId: Failed to get video info, API returned error", 'WARNING');
+        }
+    } else {
+        logYouTube("YouTube attachment $attachmentId: Failed to fetch video info from API", 'WARNING');
+    }
+    
     // Создаем папку для файлов
     $folderPath = createAttachmentFolder($attachmentId);
     if (!$folderPath) {
@@ -105,7 +146,6 @@ function downloadYouTubeAssets($attachmentId, $videoId) {
     }
     
     // Получаем текущие версии из БД
-    global $mysqli;
     $stmt = $mysqli->prepare("SELECT icon, preview FROM tbl_attachments WHERE id = ?");
     $stmt->bind_param("s", $attachmentId);
     $stmt->execute();
@@ -345,7 +385,7 @@ function updateMessageJson($messageId, $attachments) {
         return true; // Нет аттачментов - ничего не делаем
     }
     
-    // Получаем полные данные об аттачментах
+    // Получаем полные данные об аттачментов
     $fullAttachments = [];
     foreach ($attachments as $attachmentId) {
         $attachment = getAttachmentById($attachmentId);
@@ -363,6 +403,7 @@ function updateMessageJson($messageId, $attachments) {
                 'views' => (int)$attachment['views'],
                 'downloads' => (int)$attachment['downloads'],
                 'size' => (int)$attachment['size']
+                // duration НЕ включается в JSON сообщений - только на странице аттачмента
             ];
         }
     }
@@ -390,11 +431,23 @@ function updateMessageJson($messageId, $attachments) {
 function getAttachmentById($attachmentId) {
     global $mysqli;
     
-    $sql = $mysqli->prepare('
-        SELECT id, id_message, type, created, icon, preview, file, filename, title, source, status, views, downloads, size 
+    // Проверяем наличие столбца duration (для обратной совместимости)
+    static $hasDurationColumn = null;
+    if ($hasDurationColumn === null) {
+        $checkResult = $mysqli->query("SHOW COLUMNS FROM tbl_attachments LIKE 'duration'");
+        $hasDurationColumn = $checkResult && $checkResult->num_rows > 0;
+    }
+    
+    $columns = 'id, id_message, type, created, icon, preview, file, filename, title, source, status, views, downloads, size';
+    if ($hasDurationColumn) {
+        $columns .= ', duration';
+    }
+    
+    $sql = $mysqli->prepare("
+        SELECT $columns 
         FROM tbl_attachments 
         WHERE id = ?
-    ');
+    ");
     $sql->bind_param("s", $attachmentId);
     $sql->execute();
     $result = $sql->get_result();
@@ -404,6 +457,11 @@ function getAttachmentById($attachmentId) {
         $row['icon_path'] = buildAttachmentIconPath($attachmentId, $row['icon']);
         $row['preview_path'] = buildAttachmentPreviewPath($attachmentId, $row['preview']);
         $row['file_path'] = buildAttachmentFilePath($attachmentId, $row['file'], $row['filename']);
+        
+        // Если столбца duration нет - добавляем null для совместимости с фронтендом
+        if (!$hasDurationColumn) {
+            $row['duration'] = null;
+        }
         
         return $row;
     }
