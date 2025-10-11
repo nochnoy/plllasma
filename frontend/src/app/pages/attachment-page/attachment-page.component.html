@@ -7,11 +7,11 @@
       <div>{{error}}</div>
     </div>
   } @else {
-    @if (attachment) {
+      @if (attachment) {
       @if (!isImageMagnified) {
         <div class="attachment">
 
-          <h2>{{attachment.filename}}</h2>
+          <h2>{{attachment.type === 'youtube' ? (attachment.title || attachment.filename) : attachment.filename}}</h2>
 
           @switch (attachment.type) {
 
@@ -50,7 +50,6 @@
             @case ('youtube') {
               @if (getYouTubeVideoId()) {
 
-                <h2>{{attachment.filename}}</h2>
                 <a [href]="attachment.source" class="source">
                   {{attachment.source}}
                 </a>

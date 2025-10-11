@@ -385,7 +385,7 @@ function getAttachmentById($attachmentId) {
     global $mysqli;
     
     $sql = $mysqli->prepare('
-        SELECT id, id_message, type, created, icon, preview, file, filename, source, status, views, downloads, size 
+        SELECT id, id_message, type, created, icon, preview, file, filename, title, source, status, views, downloads, size 
         FROM tbl_attachments 
         WHERE id = ?
     ');

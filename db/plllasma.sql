@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: localhost
--- Время создания: Сен 17 2025 г., 20:50
+-- Время создания: Окт 11 2025 г., 10:04
 -- Версия сервера: 8.0.28-0ubuntu0.20.04.3
 -- Версия PHP: 7.4.3
 
@@ -114,10 +114,11 @@ CREATE TABLE `tbl_attachments` (
   `id_message` bigint NOT NULL COMMENT 'ID сообщения',
   `type` enum('file','image','video','youtube') NOT NULL COMMENT 'Тип аттачмента',
   `created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Дата создания',
-  `icon` tinyint NOT NULL DEFAULT 0 COMMENT 'Версия иконки (0 - нет, >0 - есть с версией)',
-  `preview` tinyint NOT NULL DEFAULT 0 COMMENT 'Версия превью (0 - нет, >0 - есть с версией)',
-  `file` tinyint NOT NULL DEFAULT 0 COMMENT 'Версия файла (0 - нет, >0 - есть с версией)',
-  `filename` text DEFAULT NULL COMMENT 'Оригинальное имя загруженного файла',
+  `filename` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT 'Оригинальное имя загруженного файла',
+  `title` varchar(500) DEFAULT NULL COMMENT 'Название аттачмента (особенно для YouTube видео)',
+  `icon` tinyint NOT NULL DEFAULT '0' COMMENT 'Версия иконки (0 - нет, >0 - есть с версией)',
+  `preview` tinyint NOT NULL DEFAULT '0' COMMENT 'Версия превью (0 - нет, >0 - есть с версией)',
+  `file` tinyint NOT NULL DEFAULT '0' COMMENT 'Версия файла (0 - нет, >0 - есть с версией)',
   `source` varchar(500) DEFAULT NULL COMMENT 'Исходный URL (для YouTube)',
   `status` enum('unavailable','pending','ready','rejected','processing_failed') NOT NULL DEFAULT 'pending' COMMENT 'Статус обработки',
   `views` int NOT NULL DEFAULT '0' COMMENT 'Количество просмотров',
@@ -495,6 +496,21 @@ CREATE TABLE `tbl_viewed_sub` (
   `viewed` datetime DEFAULT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+-- --------------------------------------------------------
+
+--
+-- Структура таблицы `tbl_youtubize`
+--
+
+CREATE TABLE `tbl_youtubize` (
+  `id_message` int NOT NULL,
+  `status` enum('pending','processing','completed','failed') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `attempts` tinyint NOT NULL DEFAULT '0',
+  `time_added` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `time_processed` datetime DEFAULT NULL,
+  `error_message` text COLLATE utf8mb4_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 --
 -- Индексы сохранённых таблиц
 --
@@ -679,6 +695,14 @@ ALTER TABLE `tbl_viewed`
 --
 ALTER TABLE `tbl_viewed_sub`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Индексы таблицы `tbl_youtubize`
+--
+ALTER TABLE `tbl_youtubize`
+  ADD PRIMARY KEY (`id_message`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_time_added` (`time_added`);
 
 --
 -- AUTO_INCREMENT для сохранённых таблиц

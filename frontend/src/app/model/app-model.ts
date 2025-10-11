@@ -106,6 +106,7 @@ export interface INewAttachment {
   preview?: number; // Версия превью (0 - нет, >0 - есть с версией)
   file?: number; // Версия файла (0 - нет, >0 - есть с версией)
   filename?: string; // Оригинальное имя файла
+  title?: string; // Название аттачмента (особенно для YouTube видео)
   source?: string; // Исходный URL (для YouTube)
   status: 'unavailable' | 'pending' | 'ready' | 'rejected';
   views?: number;
