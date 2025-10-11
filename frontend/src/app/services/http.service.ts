@@ -40,14 +40,20 @@ export class HttpService {
     );
   }
 
-  getChannel$(channelId:number, lastVieved:string, page = 0): Observable<any> {
+  getChannel$(channelId:number, lastVieved:string, page = 0, messageId?: number): Observable<any> {
+    const body: any = {
+      cid: channelId.toString(),
+      lv: lastVieved,
+      page
+    };
+    
+    if (messageId) {
+      body.message_id = messageId;
+    }
+    
     return this.httpClient.post(
       `${HttpService.apiPath}/channel.php`,
-      {
-        cid: channelId.toString(),
-        lv: lastVieved,
-        page
-      },
+      body,
       { observe: 'body', withCredentials: true }
     )
   }

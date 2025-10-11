@@ -67,11 +67,19 @@ export class ChannelPageComponent implements OnInit {
         this.channel = this.createChannelStub(this.channelId);
         this.channel.isLoading = true;
 
-        // Получаем канал
-        return this.channelService.getChannel(
-          this.channelId,
-          '',
-          this.currentPage
+        // Читаем query параметр messageId из URL
+        return this.activatedRoute.queryParams.pipe(
+          switchMap((queryParams) => {
+            const messageId = queryParams['messageId'] ? parseInt(queryParams['messageId'], 10) : undefined;
+            
+            // Получаем канал (с фильтрацией по message_id если указан)
+            return this.channelService.getChannel(
+              this.channelId,
+              '',
+              this.currentPage,
+              messageId
+            );
+          })
         );
       }),
       tap((channel: Channel) => {

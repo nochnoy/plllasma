@@ -16,6 +16,7 @@ $placeId    = $input['cid']; // id канала
 $lastViewed = $input['lv']; // дата, которую клиент просит считать датой последнего просмотра канала. Если пустая - запишем сюда фактический last_viewed.
 $after      = @$input['after']; // Дата. Если указана - выдаст только сообщения, созданные после этой даты.
 $page       = @$input['page'] ?? 0;
+$messageId  = @$input['message_id']; // ID конкретного сообщения для фильтрации
 
 if (!canRead($placeId)) {
     die('{"error": "access"}');
@@ -93,7 +94,13 @@ if (empty($lnkId)) {
 }
 
 // Получаем сообщения канала
-if (!empty($after)) {
+if (!empty($messageId)) {
+    // Передали параметр message_id - выдаём только одно сообщение с его веткой
+    $messagesResult = getChannelMessageJson($placeId, $messageId, $lastViewed);
+    // При фильтрации по message_id всегда 1 страница
+    $pagesCount = 1;
+    $page = 0;
+} elseif (!empty($after)) {
     // Передали параметр after - значит это получение обновлений о канале. Выдадим только обновившиеся сообщения.
     // page вместе с after не работает
     $messagesResult = getChannelUpdateJson($placeId, $lastViewed, $after);
@@ -101,13 +108,15 @@ if (!empty($after)) {
     $messagesResult = getChannelJson($placeId, $lastViewed, $page);
 }
 
-// Получаем общее кол-во сообщений
-$sql = $mysqli->prepare('SELECT COUNT(id_message) FROM tbl_messages WHERE id_parent=0 AND id_place='.$placeId);
-$sql->execute();
-$result = $sql->get_result();
-$row = mysqli_fetch_array($result);
-$total = $row[0] ?? 0;
-$pagesCount = ceil($total / PAGE_SIZE);
+// Получаем общее кол-во сообщений (если не фильтруем по message_id)
+if (empty($messageId)) {
+    $sql = $mysqli->prepare('SELECT COUNT(id_message) FROM tbl_messages WHERE id_parent=0 AND id_place='.$placeId);
+    $sql->execute();
+    $result = $sql->get_result();
+    $row = mysqli_fetch_array($result);
+    $total = $row[0] ?? 0;
+    $pagesCount = ceil($total / PAGE_SIZE);
+}
 
 logActivity('channel '.$placeId);
 

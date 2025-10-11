@@ -112,9 +112,9 @@ export class ChannelService {
 
   }
 
-  getChannel(channelId: number, time_viewed: string, page = 0): Observable<Channel> {
+  getChannel(channelId: number, time_viewed: string, page = 0, messageId?: number): Observable<Channel> {
     return of({}).pipe(
-      switchMap(() => this.httpService.getChannel$(channelId, time_viewed, page)),
+      switchMap(() => this.httpService.getChannel$(channelId, time_viewed, page, messageId)),
       switchMap((input: any) => {
 
         if (input.error) {

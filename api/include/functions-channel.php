@@ -73,6 +73,59 @@ function getChannelUpdateJson($channelId, $lastViewed, $after) {
 	return '['.buildMessagesJson($a, $lastViewed).']';
 }
 
+// Возвращает JSON с конкретным сообщением и всеми его детьми (вся ветка)
+function getChannelMessageJson($channelId, $messageId, $lastViewed) {
+	global $mysqli;
+
+	$a = array();
+
+	// Сначала получаем само сообщение (может быть как рутовым, так и дочерним)
+	$sql  = 'SELECT';
+	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo, json';
+	$sql .= ' FROM tbl_messages';
+	$sql .= ' WHERE id_place='.$channelId.' AND id_message='.$messageId;
+	$result = mysqli_query($mysqli, $sql);
+	
+	$targetMessage = mysqli_fetch_array($result);
+	if (!$targetMessage) {
+		// Сообщение не найдено
+		return '[]';
+	}
+	
+	$a[$targetMessage[0]] = $targetMessage;
+	
+	// Определяем id корневого сообщения ветки
+	$rootId = empty($targetMessage[2]) ? $targetMessage[0] : $targetMessage[2];
+	
+	// Если запрошенное сообщение не является корневым, добавляем корневое
+	if ($rootId != $messageId) {
+		$sql  = 'SELECT';
+		$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo, json';
+		$sql .= ' FROM tbl_messages';
+		$sql .= ' WHERE id_place='.$channelId.' AND id_message='.$rootId;
+		$result = mysqli_query($mysqli, $sql);
+		
+		while ($row = mysqli_fetch_array($result)) {
+			$a[$row[0]] = $row;
+		}
+	}
+	
+	// Получаем все дочерние сообщения ветки
+	$sql  = 'SELECT';
+	$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, children, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo, json';
+	$sql .= ' FROM tbl_messages';
+	$sql .= ' WHERE id_first_parent='.$rootId;
+	$sql .= ' ORDER BY time_created DESC';
+	$result = mysqli_query($mysqli, $sql);
+
+	while ($row = mysqli_fetch_array($result)) {
+		$a[$row[0]] = $row;
+	}
+
+	// Выводим всё полученное в JSON
+	return '['.buildMessagesJson($a, $lastViewed).']';
+}
+
 // Возвращает JSON с сообщениями ветки. Внимание, рутовое сообщение не присылается!
 function getThreadJson($threadId, $lastViewed) {
 	global $mysqli;
