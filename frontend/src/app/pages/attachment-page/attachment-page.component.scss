@@ -32,6 +32,10 @@ h2 {
   hyphens: auto;
 }
 
+a.source {
+  font-size: 1.3rem !important;
+}
+
 .stage {
   max-width: 800px;
   max-height: 500px;
@@ -43,7 +47,7 @@ button {
   width: 15rem;
   height: 3rem;
   padding: 1rem 2rem;
-  background-color: #edae6d;
+  background-color: #e4b248;
   color: black;
   border: none;
   border-radius: 0.5rem;
@@ -75,12 +79,11 @@ button {
 
 .youtube {
   vertical-align: top;
-  
+
   &-player {
     width: 800px;
     height: 450px;
-    min-width: 320px;
-    min-height: 240px;
+    border: 0;
     border-radius: var(--border-radius);
   }
 }

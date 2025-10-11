@@ -49,11 +49,16 @@
 
             @case ('youtube') {
               @if (getYouTubeVideoId()) {
+
+                <h2>{{attachment.filename}}</h2>
+                <a [href]="attachment.source" class="source">
+                  {{attachment.source}}
+                </a>
+
                 <div class="youtube">
                   <iframe
                     class="stage youtube-player"
                     [src]="getYouTubeEmbedUrl() | safe: 'resourceUrl'"
-                    frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowfullscreen
                   ></iframe>

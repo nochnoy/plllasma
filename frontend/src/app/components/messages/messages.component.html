@@ -25,7 +25,7 @@
         <!-- Оригинал сообщения юзер НЕ видит когда выделит своё собственное сообщение -->
         <ng-container *ngIf="!(message === channelService.selectedMessage && channelService.selectedMessage.isEditMode)">
           <br *ngIf="!message.parent">
-          <p *ngIf="!!message.text" [innerHTML]="message.text | linky | newline"></p>
+          <p *ngIf="!!message.text" [innerHTML]="message.text | linky:false:message.newAttachments | newline"></p>
         </ng-container>
         <!-- Юзер выделил своё собственное сообщение. Покажем его в режиме редактирования. -->
         <p *ngIf="message === channelService.selectedMessage && channelService.selectedMessage.isEditMode"
@@ -129,7 +129,7 @@
            target="_blank"
            [class.star]="message.isStarred">{{message.nick}}</a>
         <br *ngIf="!message.parent">
-        <p *ngIf="!!message.text" [innerHTML]="message.text | linky: true | linksToStubs | shorten"></p>
+        <p *ngIf="!!message.text" [innerHTML]="message.text | linky:true:message.newAttachments | linksToStubs | shorten"></p>
 
         @if (message.attachments?.length || message.newAttachments?.length) {
           <div class="att-container">

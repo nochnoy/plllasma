@@ -1,13 +1,26 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import Autolinker, { AutolinkerConfig, ReplaceFnReturn, UrlMatch } from 'autolinker';
 import { Match } from "autolinker/dist/commonjs/match/match";
+import { INewAttachment } from '../../../model/app-model';
 
 @Pipe({ name: 'linky' })
 export class LinkyPipe implements PipeTransform {
-  transform(value: string, noPreviews = false): string {
+  transform(value: string, noPreviews = false, attachments: INewAttachment[] = []): string {
     if (!value) {
       return '';
     }
+
+    // Создаём карту YouTube attachments для быстрого поиска
+    const youtubeAttachmentsMap = new Map<string, INewAttachment>();
+    attachments.forEach(att => {
+      if (att.type === 'youtube' && att.source) {
+        // Нормализуем URL для сравнения
+        const normalizedSource = this.normalizeYouTubeUrl(att.source);
+        if (normalizedSource) {
+          youtubeAttachmentsMap.set(normalizedSource, att);
+        }
+      }
+    });
 
     const config: AutolinkerConfig = {
       truncate: {
@@ -18,6 +31,24 @@ export class LinkyPipe implements PipeTransform {
         try {
           if (match instanceof UrlMatch) {
             const url = match.getUrl();
+            
+            // Проверяем, является ли это YouTube ссылкой
+            const youtubeCode = this.getYouTubeCode(url);
+            if (youtubeCode) {
+              // Нормализуем текущий URL
+              const normalizedUrl = this.normalizeYouTubeUrl(url);
+              
+              // Ищем соответствующий attachment
+              const attachment = normalizedUrl ? youtubeAttachmentsMap.get(normalizedUrl) : null;
+              
+              if (attachment) {
+                // Создаём кастомную ссылку: href на attachment, но текст - оригинальный YouTube URL
+                const attachmentUrl = `#/attachment/${attachment.id}`;
+                const displayText = match.getAnchorText();
+                return `<a href="${attachmentUrl}" target="_blank" rel="noopener noreferrer">${displayText}</a>`;
+              }
+            }
+            
             if (noPreviews) { // попросили не делать превьюшек
               return false; // false означает, что Autolinker создаст обычную ссылку
             }
@@ -37,6 +68,19 @@ export class LinkyPipe implements PipeTransform {
     };
 
     return Autolinker.link(value, config);
+  }
+  
+  /**
+   * Нормализует YouTube URL для сравнения (приводит к единому формату)
+   * @param url Ссылка на видео
+   * @returns Нормализованный URL или null
+   */
+  private normalizeYouTubeUrl(url: string): string | null {
+    const code = this.getYouTubeCode(url);
+    if (!code) return null;
+    
+    // Приводим все YouTube URL к единому формату для сравнения
+    return `youtube:${code}`;
   }
 
   /**
