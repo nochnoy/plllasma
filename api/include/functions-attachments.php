@@ -817,7 +817,7 @@ function detectAttachmentType($filePath, $mimeType = null) {
     
     // Дополнительная проверка изображений по расширению
     $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-    $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+    $imageExtensions = ['jpg', 'jpeg', 'jfif', 'png', 'gif', 'bmp', 'webp'];
     
     if (in_array($extension, $imageExtensions)) {
         return 'image';

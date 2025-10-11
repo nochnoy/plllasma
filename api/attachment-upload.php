@@ -187,6 +187,7 @@ function determineAttachmentType($mimeType, $filename) {
     switch ($extension) {
         case 'jpg':
         case 'jpeg':
+        case 'jfif':
         case 'png':
         case 'gif':
         case 'webp':

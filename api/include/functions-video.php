@@ -306,6 +306,7 @@ function loadImage($path) {
     switch ($extension) {
         case 'jpg':
         case 'jpeg':
+        case 'jfif':
             $result = imagecreatefromjpeg($path);
             if (!$result) plllasmaLog("Ошибка загрузки JPEG: {$path}", 'WARNING', 'video-worker');
             return $result;
