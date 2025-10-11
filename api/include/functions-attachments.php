@@ -6,7 +6,7 @@ require_once 'functions-logging.php';
 // Извлекает код YouTube из URL
 function getYouTubeCode($url) {
     $patterns = [
-        '/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/',
+        '/youtube\.com\/watch.*[?&]v=([a-zA-Z0-9_-]+)/',  // watch?v=... или watch?feature=...&v=...
         '/youtu\.be\/([a-zA-Z0-9_-]+)/',
         '/youtube\.com\/embed\/([a-zA-Z0-9_-]+)/',
         '/youtube\.com\/v\/([a-zA-Z0-9_-]+)/',
@@ -29,11 +29,17 @@ function isYouTubeUrl($url) {
 
 // Извлекает все YouTube ссылки из текста
 function extractYouTubeUrls($text) {
+    // Декодируем HTML entities (например &amp; -> &)
+    $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    
     $urls = [];
     $pattern = '/https?:\/\/[^\s<>"]+/';
     
     if (preg_match_all($pattern, $text, $matches)) {
         foreach ($matches[0] as $url) {
+            // Декодируем HTML entities в URL на всякий случай
+            $url = html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            
             if (isYouTubeUrl($url)) {
                 $urls[] = $url;
             }
