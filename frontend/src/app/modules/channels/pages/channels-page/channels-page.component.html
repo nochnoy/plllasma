@@ -117,6 +117,12 @@
   </main>
   <div class="sidebar" [class.sidebar-halloween]="isHalloween">
 
+
+    <div class="halloween" *ngIf="isHalloween && halloweenText">
+      <img src="assets/img/halloween-pumpkin.png">
+      <div class="halloween-text" [innerHTML]="halloweenText"></div>
+    </div>
+
   </div>
 </div>
 

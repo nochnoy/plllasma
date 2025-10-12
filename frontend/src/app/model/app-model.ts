@@ -193,3 +193,6 @@ export interface IChannelSection {
   description: string;
   default?: boolean;
 }
+
+// Константы для праздничных сообщений
+export const HALLOWEEN_TEXT = '';

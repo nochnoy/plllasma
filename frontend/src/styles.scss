@@ -165,6 +165,8 @@ textarea {
     align-items: center;
     background-color: var(--color-page-bg-shade);
     color: #4f4f4f;
+    min-width: 14rem;
+    max-width: 14rem;
 
     .content {
       margin-top: 1rem;
@@ -210,6 +212,13 @@ textarea {
         img {
           margin: 0 1rem;
         }
+
+        .halloween-text {
+          margin-top: 0.5rem;
+          font-size: 0.9rem;
+          font-weight: bold;
+          color: #b16924;
+        }
       }
     }
 
@@ -233,18 +242,6 @@ textarea {
     }
   }
 
-  @media (min-width: 0rem) {
-    .sidebar {
-      min-width: 8rem;
-      max-width: 8rem;
-
-      .halloween {
-        font-size: 0.9rem;
-        line-height: 1.1rem;
-        margin: 0;
-      }
-    }
-  }
   @media (min-width: 75rem) {
     .sidebar {
       min-width: 14rem;

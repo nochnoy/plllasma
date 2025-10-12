@@ -1,3 +1,9 @@
+.channel-container {
+  container-type: inline-size;
+  container-name: channel;
+  min-width: calc((var(--matrix-cell-size) + var(--matrix-gap)) * var(--matrix-flex-col) + var(--matrix-gap) + var(--matrix-gap) + var(--matrix-gap));
+}
+
 .form {
   margin: var(--margin-section) 0;
   min-height: 10rem;
@@ -42,6 +48,46 @@
     color: var(--color-text);
   }
 }
+
+.channel-controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+
+  .pseudo-link {
+    cursor: pointer;
+    color: var(--color-link);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+
+    i {
+      display: inline-block;
+      font-style: normal;
+    }
+  }
+
+  .channel-stats {
+    font-size: 0.9rem;
+    cursor: crosshair;
+    color: var(--color-date);
+  }
+}
+
+// Базовые стили для блоков управления
+.channel-controls-mobile {
+  display: none; // По умолчанию скрыт
+}
+
+.form-tools-desktop {
+  display: flex; // По умолчанию показан
+}
+
 
 .channel-stats {
   font-size: 0.9rem;

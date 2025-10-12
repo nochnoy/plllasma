@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from 'src/app/services/user.service';
 import {HttpService} from "../../../../services/http.service";
-import {IChannelLink, RoleEnum} from "../../../../model/app-model";
+import {IChannelLink, RoleEnum, HALLOWEEN_TEXT} from "../../../../model/app-model";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {switchMap, tap} from "rxjs/operators";
 import { Const } from 'src/app/model/const';
@@ -28,6 +28,8 @@ export class ChannelsPageComponent implements OnInit {
   searchPhrase = '';
   isHalloween = false;
   currentYear = 0;
+  halloweenText = HALLOWEEN_TEXT;
+  hereAndNowUsers: string[] = [];
 
   channelsAll: IChannelLink[] = [];
   channelsActivity: IChannelLink[] = [];
@@ -43,6 +45,7 @@ export class ChannelsPageComponent implements OnInit {
   ngOnInit(): void {
     this.load();
     this.checkHalloween();
+    this.getHereAndNow();
   }
 
   load(): void {
@@ -134,6 +137,20 @@ export class ChannelsPageComponent implements OnInit {
     const to = new Date(year, 11 - 1, 6);
     this.isHalloween = (now.getTime() >= from.getTime() && now.getTime() <= to.getTime());
     this.currentYear = year;
+
+    // Устанавливаем Хэллоуин-текст только если период активен
+    if (this.isHalloween) {
+      this.halloweenText = HALLOWEEN_TEXT;
+    } else {
+      this.halloweenText = '';
+    }
+  }
+
+  getHereAndNow(): void {
+    this.httpService.getHereAndNow$().pipe(
+      tap((users) => this.hereAndNowUsers = users),
+      untilDestroyed(this)
+    ).subscribe();
   }
 
   onChannelClick(channel: IChannelLink): void {

@@ -13,6 +13,7 @@ import {MAT_DIALOG_DATA, MatDialog} from "@angular/material/dialog";
 import {IMatrix, newDefaultMatrix} from "../../model/matrix.model";
 import {UserService} from "../../services/user.service";
 import {Const} from "../../model/const";
+import {HALLOWEEN_TEXT} from "../../model/app-model";
 
 @UntilDestroy()
 @Component({
@@ -42,6 +43,7 @@ export class ChannelPageComponent implements OnInit {
 
   isHalloween = false;
   isNewYear = false;
+  halloweenText = HALLOWEEN_TEXT;
 
   ngOnInit(): void {
     of({}).pipe(
@@ -71,7 +73,7 @@ export class ChannelPageComponent implements OnInit {
         return this.activatedRoute.queryParams.pipe(
           switchMap((queryParams) => {
             const messageId = queryParams['messageId'] ? parseInt(queryParams['messageId'], 10) : undefined;
-            
+
             // Получаем канал (с фильтрацией по message_id если указан)
             return this.channelService.getChannel(
               this.channelId,
@@ -251,10 +253,13 @@ export class ChannelPageComponent implements OnInit {
   }
 
   checkHollydays(): void {
+    const year = (new Date()).getFullYear();
     const now = new Date();
+    const from = new Date(year, 10 - 1, 11);  // 11 октября
+    const to = new Date(year, 11 - 1, 6);    // 6 ноября
+    this.isHalloween = (now.getTime() >= from.getTime() && now.getTime() <= to.getTime());
     const nowMonth = now.getMonth() + 1;
     const nowDate = now.getDate();
-    this.isHalloween = (nowMonth === 10 && nowDate >= 15) || (nowMonth === 11 && nowDate <= 6);
     this.isNewYear = (nowMonth === 12 && nowDate >= 15) || (nowMonth === 1 && nowDate <= 10);
   }
 
@@ -287,6 +292,10 @@ export class ChannelPageComponent implements OnInit {
   }
 
   unsubscribeCommand(): void {
+    if (this.channel?.id === 1) {
+      alert('Нельзя отписаться от Главного');
+      return;
+    }
     of({}).pipe(
       switchMap(() => this.appService.unsubscribeChannel$(this.channelId)),
       tap((result) => {

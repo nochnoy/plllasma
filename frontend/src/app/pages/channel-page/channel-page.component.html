@@ -8,7 +8,7 @@
     </div>
   </main>
   <main class="main" *ngIf="!channel || channel?.canAccess">
-    <ng-container *ngIf="channel && channel?.canAccess">
+    <div class="channel-container" *ngIf="channel && channel?.canAccess">
 
       <div class="channel-top-bar">
         <div class="channel-title">
@@ -25,39 +25,37 @@
       <div class="form">
         <app-message-form class="form-content" [channelId]="channelId" (onPost)="onNewMessageCreated()"></app-message-form>
 
-        <div class="form-tools" *ngIf="!channel?.isLoading">
-          <ng-container *ngIf="channel?.id !== 1">
-            <div><b>Управление каналом</b></div>
-            <div (click)="subscribeCommand()" *ngIf="!channel?.atMenu" class="pseudo-link"><i>⭐</i> Подписаться</div>
-            <div (click)="unsubscribeCommand()" *ngIf="channel?.atMenu" class="pseudo-link"><i>✖</i> Отписаться</div>
+        <div class="form-tools form-tools-desktop" *ngIf="!channel?.isLoading">
+          <div style="white-space: nowrap"><b>Управление каналом</b></div>
+          <div (click)="subscribeCommand()" *ngIf="!channel?.atMenu" class="pseudo-link"><i>⭐</i> Подписаться</div>
+          <div (click)="unsubscribeCommand()" *ngIf="channel?.atMenu" class="pseudo-link"><i>✖</i> Отписаться</div>
 
-            <ng-container *ngIf="!channel?.atMenu">
-              <div (click)="ignoreCommand()" *ngIf="!channel?.isIgnoring" class="pseudo-link"><i>🎧</i> Игнорировать</div>
-              <div (click)="unignoreCommand()" *ngIf="channel?.isIgnoring" class="pseudo-link"><i>🎸</i> Не игнорировать</div>
-            </ng-container>
-
-            <div
-              *ngIf="!channel?.isLoading && channel?.id !== 1"
-              class="channel-stats"
-              title="Количество людей, добавивших этот канал в своё боковое меню"
-            >
-              {{channel?.statSubscribers}} подписчиков
-            </div>
-
-            <!--
-            <div class="channel-tools">
-              <div *ngIf="channel?.canUseSettings" [matMenuTriggerFor]="menu" class="pseudo-link">💼 Настройки <span class="up-down">▾</span></div>
-              <mat-menu #menu="matMenu">
-                  <button mat-menu-item (click)="matrix.addImageCommand()">Права доступа</button>
-                  <button mat-menu-item (click)="matrix.addImageCommand()">Дизайн: добавить картинку</button>
-                  <button mat-menu-item (click)="matrix.addTextCommand()">Дизайн: добавить текст</button>
-                  <button mat-menu-item (click)="matrix.addTitleCommand()">Дизайн: добавить заголовок</button>
-                  <button mat-menu-item (click)="matrix.clearCommand()">Очистить дизайн</button>
-              </mat-menu>
-            </div>
-            -->
-
+          <ng-container *ngIf="!channel?.atMenu">
+            <div (click)="ignoreCommand()" *ngIf="!channel?.isIgnoring" class="pseudo-link"><i>🎧</i> Игнорировать</div>
+            <div (click)="unignoreCommand()" *ngIf="channel?.isIgnoring" class="pseudo-link"><i>🎸</i> Не игнорировать</div>
           </ng-container>
+
+          <div
+            *ngIf="!channel?.isLoading"
+            class="channel-stats"
+            title="Количество людей, добавивших этот канал в своё боковое меню"
+          >
+            {{channel?.statSubscribers}} подписчиков
+          </div>
+
+          <!--
+          <div class="channel-tools">
+            <div *ngIf="channel?.canUseSettings" [matMenuTriggerFor]="menu" class="pseudo-link">💼 Настройки <span class="up-down">▾</span></div>
+            <mat-menu #menu="matMenu">
+                <button mat-menu-item (click)="matrix.addImageCommand()">Права доступа</button>
+                <button mat-menu-item (click)="matrix.addImageCommand()">Дизайн: добавить картинку</button>
+                <button mat-menu-item (click)="matrix.addTextCommand()">Дизайн: добавить текст</button>
+                <button mat-menu-item (click)="matrix.addTitleCommand()">Дизайн: добавить заголовок</button>
+                <button mat-menu-item (click)="matrix.clearCommand()">Очистить дизайн</button>
+            </mat-menu>
+          </div>
+          -->
+
         </div>
       </div>
 
@@ -90,14 +88,16 @@
         </a>
       </div>
 
-    </ng-container>
+    </div>
   </main>
   <div class="sidebar" [class.sidebar-halloween]="isHalloween" [class.sidebar-newyear]="isNewYear">
 
+
     <app-newyear *ngIf="isNewYear"></app-newyear>
 
-    <div class="halloween" *ngIf="isHalloween">
+    <div class="halloween" *ngIf="isHalloween && halloweenText">
       <img src="assets/img/halloween-pumpkin.png">
+      <div class="halloween-text" [innerHTML]="halloweenText"></div>
     </div>
 
     <div class="content">
