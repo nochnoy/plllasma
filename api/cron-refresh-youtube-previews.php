@@ -33,7 +33,7 @@ function runRefreshWorker() {
         
         // Получаем статистику
         $stats = getRefreshStats();
-        logYouTube("Статистика: всего YouTube аттачментов={$stats['total']}, требуют обновления={$stats['needs_refresh']}");
+        logYouTube("Статистика: всего YouTube аттачментов={$stats['total']}, требуют обновления={$stats['needs_refresh']}, недоступные={$stats['unavailable']}");
         
         if ($stats['needs_refresh'] === 0) {
             logYouTube("Нет аттачментов для обновления");
@@ -91,6 +91,13 @@ function runRefreshWorker() {
                 } else {
                     $failCount++;
                     logYouTube("Ошибка обновления: {$result['error']}", 'ERROR');
+                    
+                    // Помечаем аттачмент как недоступный, если не удалось получить метаданные
+                    if (strpos($result['error'], 'Failed to fetch info API') !== false || 
+                        strpos($result['error'], 'Info API returned error') !== false) {
+                        markAttachmentAsUnavailable($attachmentId, $result['error']);
+                        logYouTube("Аттачмент {$attachmentId} помечен как недоступный: {$result['error']}", 'WARNING');
+                    }
                 }
                 
             } catch (Exception $e) {
@@ -158,7 +165,8 @@ function getRefreshStats() {
         'total' => 0,
         'needs_refresh' => 0,
         'has_duration' => 0,
-        'without_preview' => 0
+        'without_preview' => 0,
+        'unavailable' => 0
     ];
     
     // Всего YouTube аттачментов
@@ -168,8 +176,8 @@ function getRefreshStats() {
         $stats['total'] = (int)$row['count'];
     }
     
-    // Требуют обновления (без duration, но с preview)
-    $result = mysqli_query($mysqli, "SELECT COUNT(*) as count FROM tbl_attachments WHERE type = 'youtube' AND (duration IS NULL OR duration = 0) AND preview > 0");
+    // Требуют обновления (без duration, но с preview, и не недоступные)
+    $result = mysqli_query($mysqli, "SELECT COUNT(*) as count FROM tbl_attachments WHERE type = 'youtube' AND (duration IS NULL OR duration = 0) AND preview > 0 AND status != 'unavailable'");
     if ($result) {
         $row = mysqli_fetch_assoc($result);
         $stats['needs_refresh'] = (int)$row['count'];
@@ -187,6 +195,13 @@ function getRefreshStats() {
     if ($result) {
         $row = mysqli_fetch_assoc($result);
         $stats['without_preview'] = (int)$row['count'];
+    }
+    
+    // Недоступные (помечены как unavailable)
+    $result = mysqli_query($mysqli, "SELECT COUNT(*) as count FROM tbl_attachments WHERE type = 'youtube' AND status = 'unavailable'");
+    if ($result) {
+        $row = mysqli_fetch_assoc($result);
+        $stats['unavailable'] = (int)$row['count'];
     }
     
     return $stats;
@@ -215,6 +230,7 @@ function getAttachmentsToRefresh($limit) {
         AND (a.duration IS NULL OR a.duration = 0)
         AND a.source IS NOT NULL
         AND a.preview > 0
+        AND a.status != 'unavailable'
         ORDER BY m.time_created DESC
         LIMIT ?
     ");
@@ -228,6 +244,24 @@ function getAttachmentsToRefresh($limit) {
     }
     
     return $attachments;
+}
+
+/**
+ * Помечает аттачмент как недоступный
+ */
+function markAttachmentAsUnavailable($attachmentId, $reason) {
+    global $mysqli;
+    
+    $stmt = $mysqli->prepare("UPDATE tbl_attachments SET status = 'unavailable' WHERE id = ?");
+    $stmt->bind_param("s", $attachmentId);
+    
+    if ($stmt->execute()) {
+        logYouTube("Аттачмент {$attachmentId} помечен как недоступный. Причина: {$reason}");
+        return true;
+    } else {
+        logYouTube("Ошибка пометки аттачмента как недоступного: " . $mysqli->error, 'ERROR');
+        return false;
+    }
 }
 
 /**
@@ -378,6 +412,7 @@ try {
             echo "  Требуют обновления (с preview): {$result['stats']['needs_refresh']}\n";
             echo "  Уже обновлены: {$result['stats']['has_duration']}\n";
             echo "  Без preview (пропущены): {$result['stats']['without_preview']}\n";
+            echo "  Недоступные (пропущены): {$result['stats']['unavailable']}\n";
         }
         echo "\n";
     } else {
