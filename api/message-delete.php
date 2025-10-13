@@ -66,6 +66,12 @@ try {
     
     plllasmaLog("Успешно удалено сообщений: {$deletedMessages}", 'INFO', 'message-delete');
 
+    // 5. Пересчитываем количество детей у родительского сообщения
+    if ($message['id_parent'] > 0) {
+        updateParentChildrenCount($message['id_parent']);
+        plllasmaLog("Обновлено количество детей у родительского сообщения {$message['id_parent']}", 'INFO', 'message-delete');
+    }
+
     echo json_encode([
         'success' => true,
         'deletedMessages' => $deletedMessages,
@@ -241,6 +247,25 @@ function getChildrenMessageIds($messageId, $firstParentId) {
     }
     
     return (object)['childrenIds' => $childrenIds];
+}
+
+/**
+ * Обновляет количество детей у родительского сообщения
+ */
+function updateParentChildrenCount($parentId) {
+    global $mysqli;
+    
+    $stmt = $mysqli->prepare('
+        UPDATE tbl_messages
+        SET children = (
+            SELECT COUNT(id_message) 
+            FROM tbl_messages 
+            WHERE id_parent = ?
+        )
+        WHERE id_message = ?
+    ');
+    $stmt->bind_param("ii", $parentId, $parentId);
+    $stmt->execute();
 }
 
 ?>
