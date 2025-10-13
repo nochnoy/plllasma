@@ -92,9 +92,10 @@ function runRefreshWorker() {
                     $failCount++;
                     logYouTube("Ошибка обновления: {$result['error']}", 'ERROR');
                     
-                    // Помечаем аттачмент как недоступный, если не удалось получить метаданные
+                    // Помечаем аттачмент как недоступный, если не удалось получить метаданные или duration = 0
                     if (strpos($result['error'], 'Failed to fetch info API') !== false || 
-                        strpos($result['error'], 'Info API returned error') !== false) {
+                        strpos($result['error'], 'Info API returned error') !== false ||
+                        strpos($result['error'], 'Video duration is 0') !== false) {
                         markAttachmentAsUnavailable($attachmentId, $result['error']);
                         logYouTube("Аттачмент {$attachmentId} помечен как недоступный: {$result['error']}", 'WARNING');
                     }
@@ -298,6 +299,12 @@ function refreshYouTubeAttachment($attachmentId, $videoId, $oldAttachment) {
     $duration = isset($info['duration']) ? intval($info['duration']) * 1000 : null;
     
     logYouTube("Получены метаданные: title={$title}, duration={$duration}ms");
+    
+    // Проверяем, если duration = 0, то видео недоступно
+    if ($duration === 0) {
+        $result['error'] = 'Video duration is 0 - video unavailable';
+        return $result;
+    }
     
     // 2. Обновляем title и duration в БД
     if ($title || $duration !== null) {
