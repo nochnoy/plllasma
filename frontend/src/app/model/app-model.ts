@@ -113,6 +113,7 @@ export interface INewAttachment {
   downloads?: number;
   size?: number;
   duration?: number; // Длительность видео в миллисекундах (только для YouTube)
+  s3?: number; // Файл хранится в S3 (1) или локально (0)
 }
 
 export const EMPTY_CHANNEL: IChannelLink = {

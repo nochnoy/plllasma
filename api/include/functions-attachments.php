@@ -384,8 +384,7 @@ function updateMessageJson($messageId, $attachments) {
     if (empty($attachments)) {
         return true; // Нет аттачментов - ничего не делаем
     }
-    
-    // Получаем полные данные об аттачментов
+
     $fullAttachments = [];
     foreach ($attachments as $attachmentId) {
         $attachment = getAttachmentById($attachmentId);
@@ -402,8 +401,8 @@ function updateMessageJson($messageId, $attachments) {
                 'status' => $attachment['status'],
                 'views' => (int)$attachment['views'],
                 'downloads' => (int)$attachment['downloads'],
-                'size' => (int)$attachment['size']
-                // duration НЕ включается в JSON сообщений - только на странице аттачмента
+                'size' => (int)$attachment['size'],
+                's3' => isset($attachment['s3']) ? (int)$attachment['s3'] : 0
             ];
         }
     }
@@ -438,7 +437,7 @@ function getAttachmentById($attachmentId) {
         $hasDurationColumn = $checkResult && $checkResult->num_rows > 0;
     }
     
-    $columns = 'id, id_message, type, created, icon, preview, file, filename, title, source, status, views, downloads, size';
+    $columns = 'id, id_message, type, created, icon, preview, file, filename, title, source, status, views, downloads, size, s3';
     if ($hasDurationColumn) {
         $columns .= ', duration';
     }

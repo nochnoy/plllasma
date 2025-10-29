@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: localhost
--- Время создания: Окт 11 2025 г., 10:04
+-- Время создания: Окт 29 2025 г., 22:34
 -- Версия сервера: 8.0.28-0ubuntu0.20.04.3
 -- Версия PHP: 7.4.3
 
@@ -119,11 +119,13 @@ CREATE TABLE `tbl_attachments` (
   `icon` tinyint NOT NULL DEFAULT '0' COMMENT 'Версия иконки (0 - нет, >0 - есть с версией)',
   `preview` tinyint NOT NULL DEFAULT '0' COMMENT 'Версия превью (0 - нет, >0 - есть с версией)',
   `file` tinyint NOT NULL DEFAULT '0' COMMENT 'Версия файла (0 - нет, >0 - есть с версией)',
+  `s3` tinyint NOT NULL DEFAULT '0' COMMENT 'Файл хранится в S3 (1) или локально (0)',
   `source` varchar(500) DEFAULT NULL COMMENT 'Исходный URL (для YouTube)',
   `status` enum('unavailable','pending','ready','rejected','processing_failed') NOT NULL DEFAULT 'pending' COMMENT 'Статус обработки',
   `views` int NOT NULL DEFAULT '0' COMMENT 'Количество просмотров',
   `downloads` int NOT NULL DEFAULT '0' COMMENT 'Количество скачиваний',
   `size` bigint DEFAULT NULL COMMENT 'Размер файла в байтах',
+  `duration` int UNSIGNED DEFAULT NULL COMMENT 'Длительность видео в миллисекундах',
   `processing_started` timestamp NULL DEFAULT NULL COMMENT 'Время начала обработки воркером'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Новая система аттачментов к сообщениям';
 

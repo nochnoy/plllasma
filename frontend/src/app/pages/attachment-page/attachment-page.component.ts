@@ -118,6 +118,10 @@ export class AttachmentPageComponent implements OnInit {
     const yy = id.substring(2, 4);
     const extension = this.attachment.filename.split('.').pop() || '';
 
+    if (this.attachment.s3 && Number(this.attachment.s3) === 1) {
+      return `/api/attachment-get-s3.php?id=${id}`;
+    }
+
     return `/a/${xx}/${yy}/${id}-${this.attachment.file}.${extension.toLowerCase()}`;
   }
 
@@ -169,7 +173,8 @@ export class AttachmentPageComponent implements OnInit {
       type: type,
       icon: Number(rawAttachment.icon) || 0,
       preview: Number(rawAttachment.preview) || 0,
-      file: Number(rawAttachment.file) || 0
+      file: Number(rawAttachment.file) || 0,
+      s3: Number(rawAttachment.s3) || 0
     };
   }
 
@@ -182,6 +187,9 @@ export class AttachmentPageComponent implements OnInit {
 
     // Для изображений показываем оригинальный файл, если есть
     if (this.attachment.file && this.attachment.file > 0 && this.attachment.filename) {
+      if (this.attachment.s3 && Number(this.attachment.s3) === 1) {
+        return `/api/attachment-get-s3.php?id=${id}`;
+      }
       const extension = this.attachment.filename.split('.').pop() || '';
       return `/a/${xx}/${yy}/${id}-${this.attachment.file}.${extension?.toLowerCase()}`;
     }
