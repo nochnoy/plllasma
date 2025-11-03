@@ -88,6 +88,10 @@
               <a href class="like-button" (click)="onYoutubizeClick($event, message)">youtubize</a>
             </ng-container>
 
+            <ng-container *ngIf="canModerate">
+              <a href class="like-button" (click)="onS3MigrationClick($event, message)">s3</a>
+            </ng-container>
+
             <a href class="like-button" (click)="onEditClick($event)" *ngIf="message.nick === this.userService.user?.nick">Исправить</a>
             <a href class="like-button" (click)="onReplyClick($event)">Написать ответ</a>
 

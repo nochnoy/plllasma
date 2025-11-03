@@ -196,4 +196,4 @@ export interface IChannelSection {
 }
 
 // Константы для праздничных сообщений
-export const HALLOWEEN_TEXT = '';
+export const HALLOWEEN_TEXT = 'Страшные гигабайтовые аттачменты! Грядут!';

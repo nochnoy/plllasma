@@ -157,6 +157,16 @@ export class HttpService {
     );
   }
 
+  s3MigrationMessage(messageId: number): Observable<any> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/attachment-post-s3.php`,
+      {
+        messageId
+      },
+      {observe: 'body', withCredentials: true}
+    );
+  }
+
   getMembers$(nick?: string): Observable<IMember[]> {
     return this.httpClient.post(
       `${HttpService.apiPath}/members.php`,
