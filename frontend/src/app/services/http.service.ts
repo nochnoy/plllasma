@@ -157,11 +157,11 @@ export class HttpService {
     );
   }
 
-  s3MigrationMessage(messageId: number): Observable<any> {
+  s3MigrationAttachment(attachmentId: string): Observable<any> {
     return this.httpClient.post(
       `${HttpService.apiPath}/attachment-post-s3.php`,
       {
-        messageId
+        attachmentId
       },
       {observe: 'body', withCredentials: true}
     );

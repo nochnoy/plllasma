@@ -123,22 +123,6 @@ export class MessagesComponent {
     }
   }
 
-  onS3MigrationClick(event: any, message: Message): void {
-    event.preventDefault();
-    if (window.confirm('Перенести аттачменты сообщения в S3 хранилище?')) {
-      this.httpService.s3MigrationMessage(message.id).pipe(
-        tap((result: any) => {
-          if (result.success) {
-            alert(`Миграция завершена!\nОбработано аттачментов: ${result.processed}\nУспешно: ${result.success}\nОшибок: ${result.failed}`);
-            this.channelService.invalidateChannel(this.placeId);
-          } else {
-            alert(`Ошибка: ${result.error}`);
-          }
-        })
-      ).subscribe();
-    }
-  }
-
   onReplyClick(event: any): void {
     event.preventDefault();
     this.channelService.startMessageReply();

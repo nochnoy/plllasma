@@ -231,6 +231,23 @@ function canWrite($channelId) {
 	}
 }
 
+function canAdmin($channelId) {
+	global $user;
+	if (empty($user['access'])) {
+		return false;
+	} else {
+		foreach ($user['access'] as $o) {
+			if ($o['id_place'] == $channelId) {
+				$role = intval($o['role']);
+				if ($role == ROLE_MODERATOR || $role == ROLE_ADMIN || $role == ROLE_OWNER || $role == ROLE_GOD) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+}
+
 // Может ли отправлять сообщения в мусорку
 function canTrash($channelId) {
 	global $user;

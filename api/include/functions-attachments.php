@@ -1321,4 +1321,220 @@ function migrateMessageAttachments($messageId) {
     ];
 }
 
+/**
+ * Мигрирует один аттачмент в S3 хранилище
+ * @param string $attachmentId ID аттачмента
+ * @return array Результат миграции
+ */
+function migrateAttachmentToS3($attachmentId) {
+    global $mysqli, $S3_key_id, $S3_key;
+    
+    require_once __DIR__ . '/s3.php';
+    
+    logInfo("Starting S3 migration for attachment $attachmentId", 's3-migration');
+    
+    // Получаем информацию об аттачменте
+    $sql = $mysqli->prepare('
+        SELECT id, id_message, filename, file, type, s3 
+        FROM tbl_attachments 
+        WHERE id = ? AND file > 0 AND filename IS NOT NULL
+    ');
+    $sql->bind_param("s", $attachmentId);
+    $sql->execute();
+    $result = $sql->get_result();
+    
+    if (!$result || $result->num_rows === 0) {
+        logError("Attachment $attachmentId not found or has no file", 's3-migration');
+        return [
+            'success' => false,
+            'error' => 'Attachment not found or has no file'
+        ];
+    }
+    
+    $attachment = $result->fetch_assoc();
+    
+    // Проверяем права доступа к сообщению
+    $messageSql = $mysqli->prepare('SELECT id_place FROM tbl_messages WHERE id_message = ?');
+    $messageSql->bind_param("i", $attachment['id_message']);
+    $messageSql->execute();
+    $messageResult = $messageSql->get_result();
+    
+    if (!$messageResult || $messageResult->num_rows === 0) {
+        logError("Message not found for attachment $attachmentId", 's3-migration');
+        return [
+            'success' => false,
+            'error' => 'Message not found'
+        ];
+    }
+    
+    $messageRow = $messageResult->fetch_assoc();
+    $placeId = $messageRow['id_place'];
+    
+    // Проверяем права администратора для этого канала
+    if (!canAdmin($placeId)) {
+        logError("Access denied: user is not admin for channel $placeId", 's3-migration');
+        return [
+            'success' => false,
+            'error' => 'Access denied'
+        ];
+    }
+    
+    // Проверяем наличие S3 ключей
+    if (empty($S3_key_id) || empty($S3_key) || $S3_key_id === 'Идентификатор секретного ключа') {
+        logError("S3 keys not configured", 's3-migration');
+        return [
+            'success' => false,
+            'error' => 'S3 keys not configured'
+        ];
+    }
+    
+    // Проверяем флаг s3
+    if (intval($attachment['s3']) === 1) {
+        logInfo("Attachment $attachmentId already migrated to S3", 's3-migration');
+        return [
+            'success' => false,
+            'error' => 'Attachment already in S3'
+        ];
+    }
+    
+    $filename = $attachment['filename'];
+    $fileVersion = $attachment['file'];
+    $type = $attachment['type'];
+    $messageId = $attachment['id_message'];
+    
+    logInfo("Processing attachment $attachmentId (type: $type, file: $filename)", 's3-migration');
+    
+    // Строим путь к локальному файлу
+    $localFilePath = buildAttachmentFilePhysicalPath($attachmentId, $fileVersion, $filename);
+    
+    if (!$localFilePath || !file_exists($localFilePath)) {
+        logError("Local file not found for attachment $attachmentId: $localFilePath", 's3-migration');
+        return [
+            'success' => false,
+            'error' => 'Local file not found'
+        ];
+    }
+    
+    // Проверяем размер файла
+    $fileSize = filesize($localFilePath);
+    $maxFileSize = 100 * 1024 * 1024; // 100 МБ - лимит для синхронной загрузки
+    
+    if ($fileSize > $maxFileSize) {
+        logError("File too large for synchronous upload: $fileSize bytes (max: $maxFileSize)", 's3-migration');
+        return [
+            'success' => false,
+            'error' => 'File too large for direct upload. Please use background worker for files > 100MB'
+        ];
+    }
+    
+    // Увеличиваем таймауты для больших файлов
+    $timeout = max(300, ceil($fileSize / (1024 * 1024)) * 2); // Минимум 5 минут, +2 сек на каждый МБ
+    set_time_limit($timeout);
+    
+    // Определяем MIME тип
+    $mimeType = mime_content_type($localFilePath);
+    if (!$mimeType) {
+        $mimeType = 'application/octet-stream';
+    }
+    
+    // Настраиваем S3 клиент
+    S3::setAuth($S3_key_id, $S3_key);
+    S3::setSSL(true);
+    
+    // Создаем экземпляр S3 с правильным endpoint для Yandex Cloud
+    $s3 = new S3($S3_key_id, $S3_key, true, 'storage.yandexcloud.net');
+    
+    $bucketName = 'plllasma';
+    
+    // Ключ объекта в S3 = ID аттачмента
+    $objectKey = $attachmentId;
+    
+    try {
+        // Устанавливаем таймауты для cURL (через статические свойства S3, если доступны)
+        // Для больших файлов увеличиваем таймаут загрузки
+        $originalTimeout = ini_get('max_execution_time');
+        @ini_set('max_execution_time', $timeout);
+        
+        logInfo("Uploading file to S3: size=" . number_format($fileSize) . " bytes, timeout=$timeout seconds", 's3-migration');
+        
+        // Загружаем файл в S3
+        $uploadResult = S3::putObjectFile(
+            $localFilePath,
+            $bucketName,
+            $objectKey,
+            S3::ACL_PRIVATE,
+            array(),
+            array('Content-Type' => $mimeType)
+        );
+        
+        // Восстанавливаем оригинальный таймаут
+        if ($originalTimeout !== false) {
+            @ini_set('max_execution_time', $originalTimeout);
+        }
+        
+        if ($uploadResult) {
+            // Проверяем наличие файла в S3 через HEAD запрос
+            $exists = S3::getObjectInfo($bucketName, $objectKey);
+            
+            if ($exists) {
+                // Файл успешно загружен и существует в S3
+                // Обновляем поле s3 = 1 в БД
+                $updateSql = $mysqli->prepare('UPDATE tbl_attachments SET s3 = 1 WHERE id = ?');
+                $updateSql->bind_param("s", $attachmentId);
+                
+                if ($updateSql->execute()) {
+                    // Удаляем локальный файл (только сам файл, не иконку и не превью)
+                    if (unlink($localFilePath)) {
+                        logInfo("Successfully migrated attachment $attachmentId to S3 and deleted local file", 's3-migration');
+                    } else {
+                        logError("Failed to delete local file for attachment $attachmentId: $localFilePath", 's3-migration');
+                        // Не считаем это критической ошибкой, файл уже в S3
+                    }
+                    
+                    // Обновляем JSON сообщения
+                    $allAttachments = getMessageAttachments($messageId);
+                    if (!empty($allAttachments)) {
+                        updateMessageJson($messageId, $allAttachments);
+                    }
+                    
+                    return [
+                        'success' => true,
+                        'message' => 'Attachment migrated to S3 successfully'
+                    ];
+                } else {
+                    logError("Failed to update s3 flag for attachment $attachmentId: " . $mysqli->error, 's3-migration');
+                    return [
+                        'success' => false,
+                        'error' => 'Failed to update database'
+                    ];
+                }
+            } else {
+                logError("File uploaded to S3 but verification failed for attachment $attachmentId", 's3-migration');
+                return [
+                    'success' => false,
+                    'error' => 'File verification failed'
+                ];
+            }
+        } else {
+            logError("Failed to upload attachment $attachmentId to S3", 's3-migration');
+            return [
+                'success' => false,
+                'error' => 'Failed to upload to S3'
+            ];
+        }
+        
+    } catch (Exception $e) {
+        // Восстанавливаем оригинальный таймаут в случае ошибки
+        if (isset($originalTimeout) && $originalTimeout !== false) {
+            @ini_set('max_execution_time', $originalTimeout);
+        }
+        
+        logError("Exception during S3 upload for attachment $attachmentId: " . $e->getMessage(), 's3-migration');
+        return [
+            'success' => false,
+            'error' => 'Exception: ' . $e->getMessage()
+        ];
+    }
+}
+
 ?>

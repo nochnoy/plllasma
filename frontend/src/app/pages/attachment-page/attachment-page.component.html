@@ -92,6 +92,15 @@
             }
           }
 
+          @if (canModerate() && attachment.file && !attachment.s3) {
+            <button
+              (click)="onS3MigrationClick()"
+              style="margin-top: 10px;"
+            >
+              Перенести в S3
+            </button>
+          }
+
           <div class="info">
             @if (attachment.type !== 'youtube') {
               <div>Скачали {{attachment.downloads}}</div>

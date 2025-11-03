@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { INewAttachment } from '../../model/app-model';
+import { HttpService } from '../../services/http.service';
+import { UserService } from '../../services/user.service';
+import { tap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-attachment-page',
@@ -16,7 +19,9 @@ export class AttachmentPageComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private httpService: HttpService,
+    public userService: UserService
   ) {}
 
   ngOnInit(): void {
@@ -311,6 +316,30 @@ export class AttachmentPageComponent implements OnInit {
     } else {
       const remainingSeconds = seconds % 60;
       return `${minutes}:${String(remainingSeconds).padStart(2, '0')}`;
+    }
+  }
+
+  canModerate(): boolean {
+    return this.userService.user?.nick === 'Марат';
+  }
+
+  onS3MigrationClick(): void {
+    if (!this.attachmentId || !this.attachment) {
+      return;
+    }
+
+    if (window.confirm('Перенести этот аттачмент в S3 хранилище?')) {
+      this.httpService.s3MigrationAttachment(this.attachmentId).pipe(
+        tap((result: any) => {
+          if (result.success) {
+            alert('Аттачмент успешно перенесен в S3');
+            // Перезагружаем страницу для обновления данных
+            this.loadAttachment();
+          } else {
+            alert(`Ошибка: ${result.error || 'Неизвестная ошибка'}`);
+          }
+        })
+      ).subscribe();
     }
   }
 }
