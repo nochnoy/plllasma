@@ -44,13 +44,19 @@ export class NewyearComponent implements OnInit {
     of({}).pipe(
       switchMap(() => {
         return of({}).pipe(
-          switchMap(() => from(this.glowTune).pipe(concatMap(x => of(x).pipe(delay(1000 * 4))))),
-          tap((rec) => {
-            rec.forEach((color, id) => {
-              this.glowingColors[id] = color;
-            })
-          }),
-          repeat(),
+          switchMap(() => from(this.glowTune).pipe(
+            concatMap((rec) => {
+              return of(rec).pipe(
+                tap((newColors) => {
+                  newColors.forEach((color, id) => {
+                    this.glowingColors[id] = color;
+                  });
+                }),
+                delay(1000 * 4)
+              );
+            }),
+            repeat(),
+          )),
         );
       }),
       untilDestroyed(this)
