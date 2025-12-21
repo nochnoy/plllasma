@@ -1,0 +1,21 @@
+header {
+  .avatar {
+    margin-right: 0.3rem!important;
+    image-rendering: pixelated;
+    margin-bottom: 0!important;
+    width: 30px;
+    height: 30px;
+  }
+
+  h1 {
+    white-space: nowrap;
+    font-size: 2rem;
+    vertical-align: bottom;
+  }
+}
+
+.profile {
+  margin-top: 1rem;
+  max-width: var(--max-text-size);
+}
+

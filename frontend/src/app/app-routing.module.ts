@@ -22,6 +22,7 @@ const routes: Routes = [
   { path: 'members', loadChildren: () => import('./modules/members/members.module').then(m => m.MembersModule) },
   { path: 'about', loadChildren: () => import('./modules/about/about.module').then(m => m.AboutModule) },
   { path: 'settings', loadChildren: () => import('./modules/settings/settings.module').then(m => m.SettingsModule) },
+  { path: 'info', loadChildren: () => import('./modules/info/info.module').then(m => m.InfoModule) },
   { path: '**', redirectTo: '', pathMatch: 'full' },
 ];
 

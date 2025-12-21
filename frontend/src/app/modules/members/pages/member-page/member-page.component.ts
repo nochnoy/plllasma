@@ -4,7 +4,7 @@ import {HttpService} from "../../../../services/http.service";
 import {IMailMessage, IMember} from "../../../../model/app-model";
 import {of} from "rxjs";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
-import {ActivatedRoute} from "@angular/router";
+import {ActivatedRoute, Router} from "@angular/router";
 import {AppService} from "../../../../services/app.service";
 import {UserService} from "../../../../services/user.service";
 import {Utils} from "../../../../utils/utils";
@@ -20,7 +20,8 @@ export class MemberPageComponent implements OnInit {
   constructor(
     public userService: UserService,
     public httpService: HttpService,
-    public activatedRoute: ActivatedRoute
+    public activatedRoute: ActivatedRoute,
+    private router: Router
   ) { }
 
   isLoading = true;
@@ -45,6 +46,12 @@ export class MemberPageComponent implements OnInit {
       switchMap(() => this.activatedRoute.url),
       switchMap((urlSegments) => {
         this.nick = urlSegments[0].path;
+
+        if (this.nick === 'Привидение') {
+          this.router.navigate(['/info/ghost']);
+          return of([]);
+        }
+
         this.isMe = this.nick === this.userService.user.nick;
         return this.httpService.getMembers$(this.nick);
       }),
