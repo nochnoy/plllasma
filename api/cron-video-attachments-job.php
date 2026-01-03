@@ -9,6 +9,7 @@
 require_once 'include/main.php';
 require_once 'include/functions-video.php';
 require_once 'include/functions-logging.php';
+require_once 'include/s3.php';
 
 // Конфигурация
 define('MAX_PROCESSING_TIME', 300); // 5 минут - максимальное время обработки одного файла
@@ -457,15 +458,61 @@ function processAttachment($attachment) {
     }
     
     $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-    $filePath = "../" . ltrim(getAttachmentPath($attachmentId, $fileVersion, '', $extension), '/');
+    $isS3 = isset($attachment['s3']) && intval($attachment['s3']) === 1;
+    $tempFilePath = null;
     
-    // Проверяем, существует ли файл
-    plllasmaLog("Проверяем существование файла: {$filePath}", 'INFO', 'video-worker');
-    if (!file_exists($filePath)) {
-        plllasmaLog("ОШИБКА: Файл не найден: {$filePath}", 'ERROR', 'video-worker');
-        plllasmaLog("Директория существует: " . (is_dir(dirname($filePath)) ? 'да' : 'нет'), 'INFO', 'video-worker');
-        plllasmaLog("Содержимое директории: " . (is_dir(dirname($filePath)) ? implode(', ', scandir(dirname($filePath))) : 'N/A'), 'INFO', 'video-worker');
-        return false;
+    if ($isS3) {
+        // Файл хранится в S3 - скачиваем во временную директорию
+        plllasmaLog("Файл хранится в S3, скачиваем для обработки", 'INFO', 'video-worker');
+        
+        global $S3_key_id, $S3_key;
+        
+        if (empty($S3_key_id) || empty($S3_key) || $S3_key_id === 'Идентификатор секретного ключа') {
+            plllasmaLog("ОШИБКА: S3 ключи не настроены", 'ERROR', 'video-worker');
+            return false;
+        }
+        
+        // Настраиваем S3 клиент
+        S3::setAuth($S3_key_id, $S3_key);
+        S3::setSSL(true);
+        S3::$endpoint = 'storage.yandexcloud.net';
+        
+        $bucket = 'plllasma';
+        $objectKey = $attachmentId;
+        
+        // Создаём временный файл
+        $tempDir = sys_get_temp_dir();
+        $tempFilePath = $tempDir . '/plasma_video_' . $attachmentId . '.' . $extension;
+        
+        plllasmaLog("Скачиваем из S3: {$bucket}/{$objectKey} -> {$tempFilePath}", 'INFO', 'video-worker');
+        
+        $result = S3::getObject($bucket, $objectKey, $tempFilePath);
+        
+        if (!$result || $result->error !== false) {
+            $errorMsg = $result ? (is_array($result->error) ? $result->error['message'] : 'Unknown error') : 'No response';
+            plllasmaLog("ОШИБКА: Не удалось скачать файл из S3: {$errorMsg}", 'ERROR', 'video-worker');
+            return false;
+        }
+        
+        if (!file_exists($tempFilePath)) {
+            plllasmaLog("ОШИБКА: Временный файл не создан после скачивания из S3", 'ERROR', 'video-worker');
+            return false;
+        }
+        
+        $filePath = $tempFilePath;
+        plllasmaLog("Файл успешно скачан из S3, размер: " . filesize($tempFilePath) . " байт", 'INFO', 'video-worker');
+    } else {
+        // Локальный файл
+        $filePath = "../" . ltrim(getAttachmentPath($attachmentId, $fileVersion, '', $extension), '/');
+        
+        // Проверяем, существует ли файл
+        plllasmaLog("Проверяем существование файла: {$filePath}", 'INFO', 'video-worker');
+        if (!file_exists($filePath)) {
+            plllasmaLog("ОШИБКА: Файл не найден: {$filePath}", 'ERROR', 'video-worker');
+            plllasmaLog("Директория существует: " . (is_dir(dirname($filePath)) ? 'да' : 'нет'), 'INFO', 'video-worker');
+            plllasmaLog("Содержимое директории: " . (is_dir(dirname($filePath)) ? implode(', ', scandir(dirname($filePath))) : 'N/A'), 'INFO', 'video-worker');
+            return false;
+        }
     }
     
     $fileSize = filesize($filePath);
@@ -477,6 +524,10 @@ function processAttachment($attachment) {
     // Проверяем, является ли файл видео
     if (!isVideoFile($filePath, $mimeType)) {
         plllasmaLog("Файл {$attachmentId} не является видео ({$mimeType})", 'INFO', 'video-worker');
+        // Удаляем временный файл, если был создан
+        if ($tempFilePath && file_exists($tempFilePath)) {
+            unlink($tempFilePath);
+        }
         return false;
     }
     
@@ -556,6 +607,10 @@ function processAttachment($attachment) {
     
     if (!$result) {
         plllasmaLog("Ошибка выполнения UPDATE для аттачмента {$attachmentId}: " . $mysqli->error, 'ERROR', 'video-worker');
+        // Удаляем временный файл, если был создан
+        if ($tempFilePath && file_exists($tempFilePath)) {
+            unlink($tempFilePath);
+        }
         return false;
     }
     
@@ -566,6 +621,12 @@ function processAttachment($attachment) {
     plllasmaLog("Обновляем JSON для сообщения {$attachment['id_message']}", 'INFO', 'video-worker');
     updateMessageAttachmentsJson($attachment['id_message']);
     plllasmaLog("JSON обновлен для сообщения {$attachment['id_message']}", 'INFO', 'video-worker');
+    
+    // Удаляем временный файл, если он был создан для S3
+    if ($tempFilePath && file_exists($tempFilePath)) {
+        unlink($tempFilePath);
+        plllasmaLog("Временный файл удалён: {$tempFilePath}", 'INFO', 'video-worker');
+    }
     
     plllasmaLog("Аттачмент {$attachmentId} успешно преобразован в видео", 'INFO', 'video-worker');
     return true;
