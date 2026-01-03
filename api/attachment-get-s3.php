@@ -59,12 +59,36 @@ if (empty($attachment['file']) || intval($attachment['file']) <= 0 || empty($att
 // Строим ключ объекта - просто ID аттачмента без слешей и расширений
 $objectKey = $attachmentId;
 
-// Имя бакета - укажите ваше имя бакета здесь
+// Имя бакета
 $bucket = 'plllasma';
 
-$s3Url = 'https://storage.yandexcloud.net/' . $bucket . '/' . $objectKey;
+// Подключаем S3 класс
+require_once 'include/s3.php';
 
-// Делаем временный редирект
+// Проверяем наличие S3 ключей
+global $S3_key_id, $S3_key;
+if (empty($S3_key_id) || empty($S3_key) || $S3_key_id === 'Идентификатор секретного ключа') {
+    http_response_code(500);
+    echo 's3_not_configured';
+    exit;
+}
+
+// Настраиваем S3 клиент для Yandex Cloud
+S3::setAuth($S3_key_id, $S3_key);
+S3::setSSL(true);
+S3::$endpoint = 'storage.yandexcloud.net';
+
+// Генерируем преподписанный URL (действителен 1 час)
+$lifetime = 3600; // 1 час
+$s3Url = S3::getAuthenticatedURL($bucket, $objectKey, $lifetime, false, true);
+
+if (!$s3Url) {
+    http_response_code(500);
+    echo 'failed_to_generate_url';
+    exit;
+}
+
+// Делаем временный редирект на преподписанный URL
 header('Cache-Control: private, max-age=0');
 header('Location: ' . $s3Url, true, 302);
 exit;
