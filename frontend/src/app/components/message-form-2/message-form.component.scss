@@ -268,3 +268,32 @@
     opacity: 0.6;
   }
 }
+
+.upload-error {
+  background-color: #ffebee;
+  border: 1px solid #ef9a9a;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  
+  .upload-error-text {
+    display: block;
+    color: #c62828;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  
+  .upload-error-hint {
+    display: block;
+    color: #666;
+    font-size: 0.85em;
+  }
+}
+
+.cancel-draft {
+  color: #c62828;
+  
+  &:hover {
+    color: #b71c1c;
+  }
+}

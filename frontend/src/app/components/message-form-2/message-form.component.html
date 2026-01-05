@@ -79,8 +79,15 @@
         <label>Файлы<span #dnd hidden="hidden">. Можно драг-н-дропом. До 1 GB.</span></label>
       </div>
     </div>
-    <div  class="tools-send">
-      <a href *ngIf="replyMode && !isUploading" (click)="onCancelEditClick($event)">Отменить</a>
+    <!-- Сообщение об ошибке -->
+    <div class="upload-error" *ngIf="uploadError">
+      <span class="upload-error-text">{{uploadError}}</span>
+      <span class="upload-error-hint">Исправьте проблемные файлы и попробуйте снова, или отмените отправку.</span>
+    </div>
+    
+    <div class="tools-send">
+      <a href *ngIf="replyMode && !isUploading && !draftMessageId" (click)="onCancelEditClick($event)">Отменить</a>
+      <a href *ngIf="draftMessageId" (click)="onCancelDraft(); $event.preventDefault();" class="cancel-draft">Отменить отправку</a>
       <button *ngIf="!isSending && !isUploading" (click)="onSendClick()">{{replyMode ? 'Ответить' : 'Отправить'}}</button>
       <div class="spinner" *ngIf="isSending">Отправка</div>
       <div class="spinner" *ngIf="isUploading && !isSending">Загрузка файлов...</div>

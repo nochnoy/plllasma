@@ -22,10 +22,18 @@ if (!canWrite($placeId)) {
 }
 
 // Проверяем, что сообщение принадлежит пользователю
+// Разрешаем загрузку для черновиков (id_place = 0) или для сообщений в указанном канале
 $result = mysqli_query($mysqli, 
-    'SELECT id_message FROM tbl_messages WHERE id_message='.$messageId.' AND id_user='.$user['id_user'].' AND id_place='.$placeId
+    'SELECT id_message, id_place FROM tbl_messages WHERE id_message='.$messageId.' AND id_user='.$user['id_user']
 );
-if (!mysqli_fetch_assoc($result)) {
+$messageRow = mysqli_fetch_assoc($result);
+if (!$messageRow) {
+    die(json_encode(['success' => false, 'error' => 'access']));
+}
+
+// Сообщение должно быть либо черновиком (id_place=0), либо в указанном канале
+$msgPlaceId = intval($messageRow['id_place']);
+if ($msgPlaceId !== 0 && $msgPlaceId !== intval($placeId)) {
     die(json_encode(['success' => false, 'error' => 'access']));
 }
 

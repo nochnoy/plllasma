@@ -125,11 +125,15 @@ export class AppService {
       { observe: 'body', withCredentials: true })
   }
 
-  addMessage$(channelId: number, message: string, parentMessageId: number = 0, ghost = false, attachments: IUploadingAttachment[] = []): Observable<any> {
+  addMessage$(channelId: number, message: string, parentMessageId: number = 0, ghost = false, attachments: IUploadingAttachment[] = [], draft = false): Observable<any> {
     const formData = new FormData();
     formData.append(`placeId`, channelId + '');
     formData.append(`message`, message);
     formData.append(`ghost`, ghost ? '1' : '0');
+    
+    if (draft) {
+      formData.append(`draft`, '1');
+    }
 
     if (parentMessageId) {
       formData.append(`parent`, parentMessageId + '');
@@ -148,15 +152,28 @@ export class AppService {
       { observe: 'body', withCredentials: true })
   }
 
-  editMessage$(messageId: number, message: string): Observable<any> {
+  // Редактирование сообщения. Если передан placeId — это публикация черновика.
+  editMessage$(messageId: number, message: string, placeId?: number): Observable<any> {
     const formData = new FormData();
     formData.append(`messageId`, messageId + '');
     formData.append(`message`, message);
+    
+    if (placeId) {
+      formData.append(`placeId`, placeId + '');
+    }
 
     return this.httpClient.post(
       `${this.apiPath}/message-edit.php`,
       formData,
       { observe: 'body', withCredentials: true })
+  }
+
+  deleteMessage$(messageId: number): Observable<any> {
+    return this.httpClient.post(
+      `${this.apiPath}/message-delete.php`,
+      { messageId },
+      { observe: 'body', withCredentials: true }
+    );
   }
 
   uploadFiles$(formData: FormData): Observable<any> {
