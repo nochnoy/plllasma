@@ -141,6 +141,11 @@ export interface IUploadingAttachment {
   isReady: boolean;
   bitmap?: any;
   error?: string;
+  // Для chunked upload
+  isChunked?: boolean;
+  uploadId?: string;
+  progress?: number; // 0-100
+  uploadStatus?: 'pending' | 'uploading' | 'paused' | 'completing' | 'completed' | 'error' | 'aborted';
 }
 
 export interface IMember {

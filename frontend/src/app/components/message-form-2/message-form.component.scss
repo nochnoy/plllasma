@@ -184,5 +184,87 @@
         color: red;
       }
     }
+
+    // Прогрессбар для chunked upload
+    .attachment-progress-container {
+      flex-grow: 1;
+      max-width: 120px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+
+      .attachment-progress-bar {
+        height: 4px;
+        background-color: #e0e0e0;
+        border-radius: 2px;
+        overflow: hidden;
+
+        .attachment-progress-fill {
+          height: 100%;
+          background-color: #4caf50;
+          transition: width 0.2s ease;
+
+          &.paused {
+            background-color: #ff9800;
+          }
+
+          &.error {
+            background-color: #f44336;
+          }
+
+          &.completing {
+            background-color: #2196f3;
+            animation: pulse 1s infinite;
+          }
+        }
+      }
+
+      .attachment-progress-text {
+        font-size: 0.7rem;
+        color: #666;
+      }
+    }
+
+    .attachment-controls {
+      display: flex;
+      gap: 4px;
+
+      .attachment-control-btn {
+        width: 16px;
+        height: 16px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        padding: 0;
+        font-size: 10px;
+        color: #666;
+        border-radius: 2px;
+
+        &:hover {
+          background-color: #e0e0e0;
+        }
+
+        &.pause {
+          &:before {
+            content: '⏸';
+          }
+        }
+
+        &.resume {
+          &:before {
+            content: '▶';
+          }
+        }
+      }
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
   }
 }

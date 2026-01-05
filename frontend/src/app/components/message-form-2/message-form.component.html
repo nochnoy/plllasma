@@ -35,6 +35,37 @@
           <div class="attachment-icon" *ngIf="!attachment.isImage"></div>
           <img class="attachment-thumb" *ngIf="attachment.isImage" [src]="attachment.bitmap" />
           <span class="attachment-name" [title]="attachment.file.name">{{attachment.file.name}}</span>
+          
+          <!-- Прогрессбар для chunked upload -->
+          <div class="attachment-progress-container" *ngIf="attachment.isChunked && attachment.uploadStatus && attachment.uploadStatus !== 'completed'">
+            <div class="attachment-progress-bar">
+              <div class="attachment-progress-fill" 
+                   [style.width.%]="attachment.progress || 0"
+                   [class.paused]="attachment.uploadStatus === 'paused'"
+                   [class.error]="attachment.uploadStatus === 'error'"
+                   [class.completing]="attachment.uploadStatus === 'completing'">
+              </div>
+            </div>
+            <span class="attachment-progress-text">
+              <ng-container *ngIf="attachment.uploadStatus === 'uploading'">{{attachment.progress}}%</ng-container>
+              <ng-container *ngIf="attachment.uploadStatus === 'paused'">Пауза</ng-container>
+              <ng-container *ngIf="attachment.uploadStatus === 'completing'">Завершение...</ng-container>
+              <ng-container *ngIf="attachment.uploadStatus === 'error'">Ошибка</ng-container>
+            </span>
+          </div>
+          
+          <!-- Кнопки управления для chunked upload -->
+          <div class="attachment-controls" *ngIf="attachment.isChunked && (attachment.uploadStatus === 'uploading' || attachment.uploadStatus === 'paused')">
+            <button class="attachment-control-btn pause" 
+                    *ngIf="attachment.uploadStatus === 'uploading'"
+                    (click)="onPauseClick(attachment)" 
+                    title="Пауза"></button>
+            <button class="attachment-control-btn resume" 
+                    *ngIf="attachment.uploadStatus === 'paused'"
+                    (click)="onResumeClick(attachment)" 
+                    title="Продолжить"></button>
+          </div>
+          
           <span class="attachment-error" *ngIf="attachment.error">{{attachment.error}}</span>
           <span class="attachment-remove" (click)="onremoveClick(attachment)" title="Удалить">✕</span>
         </div>
@@ -43,15 +74,16 @@
         <button (click)="onAddAttachmensClick()"
                 (mouseover)="dnd.hidden = false"
                 (mouseout)="dnd.hidden = true"
-                [disabled]="isSending">+
+                [disabled]="isSending || isUploading">+
         </button>
         <label>Файлы<span #dnd hidden="hidden">. Можно драг-н-дропом. До 1 GB.</span></label>
       </div>
     </div>
     <div  class="tools-send">
-      <a href *ngIf="replyMode" (click)="onCancelEditClick($event)">Отменить</a>
-      <button *ngIf="!isSending" (click)="onSendClick()">{{replyMode ? 'Ответить' : 'Отправить'}}</button>
-      <div class="spinner" *ngIf="isSending">Загрузка</div>
+      <a href *ngIf="replyMode && !isUploading" (click)="onCancelEditClick($event)">Отменить</a>
+      <button *ngIf="!isSending && !isUploading" (click)="onSendClick()">{{replyMode ? 'Ответить' : 'Отправить'}}</button>
+      <div class="spinner" *ngIf="isSending">Отправка</div>
+      <div class="spinner" *ngIf="isUploading && !isSending">Загрузка файлов...</div>
     </div>
   </div>
 </div>

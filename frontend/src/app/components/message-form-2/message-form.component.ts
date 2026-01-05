@@ -1,8 +1,7 @@
-import {Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, ViewChild, AfterViewInit} from '@angular/core';
+import {Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, ViewChild, AfterViewInit, OnDestroy} from '@angular/core';
 import {AppService} from "../../services/app.service";
-import {tap, switchMap, map} from "rxjs/operators";
-import {of, Observable} from "rxjs";
-import {HttpClient} from "@angular/common/http";
+import {tap, switchMap} from "rxjs/operators";
+import {of, Observable, Subscription} from "rxjs";
 import {IUploadingAttachment} from "../../model/app-model";
 import {Utils} from "../../utils/utils";
 import {Const} from "../../model/const";
@@ -11,6 +10,7 @@ import {UserService} from "../../services/user.service";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {ChannelService} from "../../services/channel.service";
 import {UploadService} from "../../services/upload.service";
+import {ChunkedUploadService} from "../../services/chunked-upload.service";
 
 @UntilDestroy()
 @Component({
@@ -18,14 +18,14 @@ import {UploadService} from "../../services/upload.service";
   templateUrl: './message-form.component.html',
   styleUrls: ['./message-form.component.scss']
 })
-export class MessageFormComponent implements OnInit, AfterViewInit{
+export class MessageFormComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     public appService: AppService,
     public userService: UserService,
     public channelService: ChannelService,
     public uploadService: UploadService,
-    private httpClient: HttpClient,
+    public chunkedUploadService: ChunkedUploadService,
   ) { }
 
   @ViewChild('textarea') textarea?: ElementRef;
@@ -38,8 +38,11 @@ export class MessageFormComponent implements OnInit, AfterViewInit{
   isGhost = false;
   isDragging = false;
   isSending = false;
+  isUploading = false;
   userName = '';
   userIcon = '';
+  
+  private uploadSubscriptions: Map<string, Subscription> = new Map();
 
   ngOnInit() {
     this.userName = this.userService.user.nick ?? '';
@@ -56,35 +59,60 @@ export class MessageFormComponent implements OnInit, AfterViewInit{
     this.adjustTextareaHeight();
   }
 
+  ngOnDestroy(): void {
+    // Отписываемся от всех загрузок
+    this.uploadSubscriptions.forEach(sub => sub.unsubscribe());
+    this.uploadSubscriptions.clear();
+  }
+
+  // Предупреждение при уходе со страницы во время загрузки
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): string | undefined {
+    if (this.isUploading || this.chunkedUploadService.hasActiveUploads()) {
+      event.preventDefault();
+      event.returnValue = 'Загрузка файлов ещё не завершена. Вы уверены, что хотите уйти?';
+      return event.returnValue;
+    }
+    return undefined;
+  }
+
   addAttachments(files: File[]) {
     const newAttachments: IUploadingAttachment[] = files.map((file) => {
       return {
         file: file,
+        name: file.name,
         isImage: file?.type?.split('/')[0] === 'image',
-        isReady: false
+        isReady: false,
+        isChunked: true, // Все файлы загружаются через multipart
+        progress: 0,
+        uploadStatus: 'pending'
       } as IUploadingAttachment;
     });
+    
     const checkAttachmentsReady = () => {
       if (!newAttachments.some((attachment) => !attachment || !attachment.isReady)) {
         this.attachments = [...this.attachments, ...newAttachments];
       }
     }
+    
     newAttachments.forEach((attachment: IUploadingAttachment) => {
-      const reader = new FileReader();
+      // Проверяем размер файла
       if (Utils.bytesToMegabytes(attachment.file.size) > Const.maxFileUploadSizeMb) {
         attachment.error = 'Слишком большой';
       }
+      
       if (attachment.isImage) {
+        const reader = new FileReader();
         reader.onload = (e: any) => {
           attachment.bitmap = e.target.result;
           attachment.isReady = true;
           checkAttachmentsReady();
         };
+        reader.readAsDataURL(attachment.file);
       } else {
         attachment.isReady = true;
         checkAttachmentsReady();
       }
-      reader.readAsDataURL(attachment.file);
     })
   }
 
@@ -96,6 +124,11 @@ export class MessageFormComponent implements OnInit, AfterViewInit{
   onSendClick(): void {
     const cleanedText = this.cleanMessageText(this.messageText);
     if (cleanedText || this.attachments.length) {
+      // Проверяем, что нет активных загрузок
+      if (this.isUploading) {
+        return;
+      }
+      
       this.isSending = true;
       
       // Сначала создаем сообщение без аттачментов
@@ -104,18 +137,66 @@ export class MessageFormComponent implements OnInit, AfterViewInit{
           switchMap((result: any) => {
             const messageId = result.messageId;
             
-            // Если есть аттачменты, загружаем их в новую систему
-            if (this.attachments.length > 0) {
-              return this.uploadAttachments(messageId).pipe(
-                map(() => result)
-              );
+            // Все файлы загружаются через multipart upload
+            const validAttachments = this.attachments.filter(a => !a.error);
+            
+            if (validAttachments.length === 0) {
+              return of(result);
             }
             
-            return of(result);
+            this.isUploading = true;
+            
+            // Запускаем параллельную загрузку всех файлов
+            const uploadPromises = validAttachments.map(attachment => {
+              return new Promise<void>((resolve, reject) => {
+                const sub = this.chunkedUploadService.startUpload(
+                  attachment.file, 
+                  this.channelId, 
+                  messageId
+                ).subscribe({
+                  next: (state) => {
+                    attachment.uploadId = state.uploadId;
+                    attachment.progress = state.progress;
+                    attachment.uploadStatus = state.status;
+                    this.updateUploadingState();
+                  },
+                  error: (err) => {
+                    attachment.uploadStatus = 'error';
+                    attachment.error = err.message || 'Ошибка загрузки';
+                    this.updateUploadingState();
+                    reject(err);
+                  },
+                  complete: () => {
+                    this.updateUploadingState();
+                    resolve();
+                  }
+                });
+                
+                // Сохраняем подписку после получения uploadId
+                const checkAndSave = setInterval(() => {
+                  if (attachment.uploadId) {
+                    this.uploadSubscriptions.set(attachment.uploadId, sub);
+                    clearInterval(checkAndSave);
+                  }
+                }, 50);
+              });
+            });
+            
+            return new Observable(observer => {
+              Promise.all(uploadPromises)
+                .then(() => {
+                  observer.next(result);
+                  observer.complete();
+                })
+                .catch(err => observer.error(err));
+            });
           }),
           tap((result: any) => {
             this.isSending = false;
             this.attachments.length = 0;
+            this.uploadSubscriptions.forEach(sub => sub.unsubscribe());
+            this.uploadSubscriptions.clear();
+            this.isUploading = false;
             this.messageText = '';
             // Возвращаем высоту textarea к минимальной после обновления DOM
             setTimeout(() => {
@@ -130,22 +211,6 @@ export class MessageFormComponent implements OnInit, AfterViewInit{
           untilDestroyed(this)
         ).subscribe();
     }
-  }
-
-  private uploadAttachments(messageId: number): Observable<any> {
-    const formData = new FormData();
-    formData.append('placeId', this.channelId.toString());
-    formData.append('messageId', messageId.toString());
-    
-    // Добавляем файлы
-    const validAttachments = this.attachments.filter(a => !a.error);
-    validAttachments.forEach((attachment, index) => {
-      formData.append(`file${index}`, attachment.file);
-    });
-    
-    return this.httpClient.post('/api/attachment-upload.php', formData, {
-      withCredentials: true
-    });
   }
 
   private cleanMessageText(text: string): string {
@@ -192,9 +257,37 @@ export class MessageFormComponent implements OnInit, AfterViewInit{
   }
 
   onremoveClick(attachment: IUploadingAttachment): void {
-    this.attachments = this.attachments.filter((a) => a !== attachment);
-    if (!this.attachments.length) {
+    // Если это chunked upload - отменяем его
+    if (attachment.isChunked && attachment.uploadId) {
+      this.chunkedUploadService.abortUpload(attachment.uploadId);
+      const sub = this.uploadSubscriptions.get(attachment.uploadId);
+      if (sub) {
+        sub.unsubscribe();
+        this.uploadSubscriptions.delete(attachment.uploadId);
+      }
     }
+    
+    this.attachments = this.attachments.filter((a) => a !== attachment);
+    this.updateUploadingState();
+  }
+
+  onPauseClick(attachment: IUploadingAttachment): void {
+    if (attachment.uploadId) {
+      this.chunkedUploadService.pauseUpload(attachment.uploadId);
+    }
+  }
+
+  onResumeClick(attachment: IUploadingAttachment): void {
+    if (attachment.uploadId) {
+      this.chunkedUploadService.resumeUpload(attachment.uploadId);
+    }
+  }
+
+  private updateUploadingState(): void {
+    this.isUploading = this.attachments.some(a => 
+      a.isChunked && a.uploadStatus && 
+      ['pending', 'uploading', 'paused', 'completing'].includes(a.uploadStatus)
+    );
   }
 
   onUserLineClick(): void {
