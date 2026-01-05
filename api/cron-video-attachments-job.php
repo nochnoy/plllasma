@@ -446,9 +446,30 @@ function processAttachment($attachment) {
     $attachmentId = $attachment['id'];
     $fileVersion = $attachment['file'];
     $filename = $attachment['filename'];
+    $messageId = $attachment['id_message'];
     
     plllasmaLog("=== НАЧИНАЕМ ОБРАБОТКУ АТТАЧМЕНТА ===", 'INFO', 'video-worker');
     plllasmaLog("ID: {$attachmentId}, файл версия: {$fileVersion}, имя файла: {$filename}, статус: {$attachment['status']}, создан: {$attachment['created']}", 'INFO', 'video-worker');
+    
+    // Проверяем, что сообщение ещё существует (могло быть удалено во время обработки)
+    $stmt = $mysqli->prepare("SELECT id_message FROM tbl_messages WHERE id_message = ?");
+    $stmt->bind_param("i", $messageId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if (!$result->fetch_assoc()) {
+        plllasmaLog("Сообщение {$messageId} удалено, прерываем обработку аттачмента {$attachmentId}", 'WARNING', 'video-worker');
+        return false;
+    }
+    
+    // Проверяем, что аттачмент ещё существует в БД (мог быть удалён)
+    $stmt = $mysqli->prepare("SELECT id FROM tbl_attachments WHERE id = ?");
+    $stmt->bind_param("s", $attachmentId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if (!$result->fetch_assoc()) {
+        plllasmaLog("Аттачмент {$attachmentId} удалён из БД, прерываем обработку", 'WARNING', 'video-worker');
+        return false;
+    }
     
     // Составляем путь к файлу используя новую схему версионирования
     
