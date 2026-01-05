@@ -5,6 +5,7 @@ import { ChannelPageComponent } from './pages/channel-page/channel-page.componen
 import { LoginPageComponent } from "./pages/login-page/login-page.component";
 import { TestMessagesPageComponent } from "./pages/test-messages-page/test-messages-page.component";
 import { AttachmentPageComponent } from "./pages/attachment-page/attachment-page.component";
+import { UploadInProgressGuard } from "./guards/upload-in-progress.guard";
 
 const routes: Routes = [
   { path: '', redirectTo: 'channel/1', pathMatch: 'full' },
@@ -13,9 +14,10 @@ const routes: Routes = [
   { path: 'attachment/:id', component: AttachmentPageComponent, canActivate: [AppGuard] },
   {
     path: 'channel',
+    canDeactivate: [UploadInProgressGuard],
     children: [
-      {path: '', component: ChannelPageComponent, canActivate: [AppGuard]},
-      {path: '**', component: ChannelPageComponent, canActivate: [AppGuard]},
+      {path: '', component: ChannelPageComponent, canActivate: [AppGuard], canDeactivate: [UploadInProgressGuard]},
+      {path: '**', component: ChannelPageComponent, canActivate: [AppGuard], canDeactivate: [UploadInProgressGuard]},
     ]
   },
   { path: 'channels', loadChildren: () => import('./modules/channels/channels.module').then(m => m.ChannelsModule) },
