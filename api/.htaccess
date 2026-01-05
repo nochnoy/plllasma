@@ -8,3 +8,10 @@ php_flag log_errors off
 php_flag report_memleaks on
 php_flag track_errors on
 
+# Лимиты для загрузки файлов (1 ГБ)
+php_value upload_max_filesize 1024M
+php_value post_max_size 1024M
+php_value max_execution_time 300
+php_value max_input_time 300
+php_value memory_limit 512M
+

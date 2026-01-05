@@ -1417,18 +1417,18 @@ function migrateAttachmentToS3($attachmentId) {
     
     // Проверяем размер файла
     $fileSize = filesize($localFilePath);
-    $maxFileSize = 100 * 1024 * 1024; // 100 МБ - лимит для синхронной загрузки
+    $maxFileSize = 1024 * 1024 * 1024; // 1 ГБ - лимит для синхронной загрузки
     
     if ($fileSize > $maxFileSize) {
         logError("File too large for synchronous upload: $fileSize bytes (max: $maxFileSize)", 's3-migration');
         return [
             'success' => false,
-            'error' => 'File too large for direct upload. Please use background worker for files > 100MB'
+            'error' => 'File too large for direct upload. Please use background worker for files > 1GB'
         ];
     }
     
     // Увеличиваем таймауты для больших файлов
-    $timeout = max(300, ceil($fileSize / (1024 * 1024)) * 2); // Минимум 5 минут, +2 сек на каждый МБ
+    $timeout = max(1800, ceil($fileSize / (1024 * 1024)) * 3); // Минимум 30 минут, +3 сек на каждый МБ
     set_time_limit($timeout);
     
     // Определяем MIME тип
