@@ -184,7 +184,7 @@ export class MessageFormComponent implements OnInit, AfterViewInit, OnDestroy {
             
             // Загружаем только те файлы, которые ещё не загружены
             const uploadPromises = pendingAttachments.map(attachment => {
-              return new Promise<{success: boolean, attachment: IUploadingAttachment, error?: string}>((resolve) => {
+              return new Promise<void>((resolve, reject) => {
                 const sub = this.chunkedUploadService.startUpload(
                   attachment.file, 
                   this.channelId, 
@@ -196,16 +196,19 @@ export class MessageFormComponent implements OnInit, AfterViewInit, OnDestroy {
                     attachment.uploadStatus = state.status;
                     this.updateUploadingState();
                   },
-                  error: (err) => {
+                  error: (err: Error) => {
                     attachment.uploadStatus = 'error';
                     attachment.error = err.message || 'Ошибка загрузки';
                     this.updateUploadingState();
-                    resolve({ success: false, attachment, error: err.message });
+                    reject(new Error(`${attachment.name}: ${attachment.error}`));
                   },
                   complete: () => {
                     this.updateUploadingState();
-                    const isSuccess = attachment.uploadStatus === 'completed' && !attachment.error;
-                    resolve({ success: isSuccess, attachment, error: attachment.error });
+                    if (attachment.uploadStatus === 'completed' && !attachment.error) {
+                      resolve();
+                    } else {
+                      reject(new Error(`${attachment.name}: ${attachment.error || 'Ошибка загрузки'}`));
+                    }
                   }
                 });
                 
@@ -221,28 +224,19 @@ export class MessageFormComponent implements OnInit, AfterViewInit, OnDestroy {
             
             return new Observable(observer => {
               Promise.all(uploadPromises)
-                .then((results) => {
-                  // Проверяем, есть ли ошибки
-                  const failedUploads = results.filter(r => !r.success);
-                  
-                  if (failedUploads.length > 0) {
-                    // Есть ошибки — НЕ публикуем, показываем ошибку
-                    const failedNames = failedUploads.map(f => f.attachment.name).join(', ');
-                    observer.error(new Error(`Ошибка загрузки: ${failedNames}`));
-                  } else {
-                    // Все файлы загружены успешно — публикуем черновик
-                    this.appService.editMessage$(messageId, cleanedText, this.channelId).subscribe({
-                      next: () => {
-                        observer.next({ messageId });
-                        observer.complete();
-                      },
-                      error: (err) => {
-                        observer.error(new Error('Не удалось опубликовать сообщение'));
-                      }
-                    });
-                  }
+                .then(() => {
+                  // Все файлы загружены успешно — публикуем черновик
+                  this.appService.editMessage$(messageId, cleanedText, this.channelId).subscribe({
+                    next: () => {
+                      observer.next({ messageId });
+                      observer.complete();
+                    },
+                    error: () => {
+                      observer.error(new Error('Не удалось опубликовать сообщение'));
+                    }
+                  });
                 })
-                .catch(err => {
+                .catch((err: Error) => {
                   observer.error(err);
                 });
             });
