@@ -31,10 +31,12 @@
   <div class="tools">
     <div class="tools-attach">
       <div class="attachments" *ngIf="attachments && attachments.length">
-        <div *ngFor="let attachment of attachments" class="attachment" [title]="'Удалить ' + attachment.file.name">
-          <div class="imagecontainer"><img *ngIf="attachment.isImage" [src]="attachment.bitmap"></div>
-          <div *ngIf="attachment.error" class="message"><div>{{attachment.error}}</div></div>
-          <div class="remove" (click)="onremoveClick(attachment)">X</div>
+        <div *ngFor="let attachment of attachments" class="attachment" [class.attachment--error]="attachment.error">
+          <div class="attachment-icon" *ngIf="!attachment.isImage"></div>
+          <img class="attachment-thumb" *ngIf="attachment.isImage" [src]="attachment.bitmap" />
+          <span class="attachment-name" [title]="attachment.file.name">{{attachment.file.name}}</span>
+          <span class="attachment-error" *ngIf="attachment.error">{{attachment.error}}</span>
+          <span class="attachment-remove" (click)="onremoveClick(attachment)" title="Удалить">✕</span>
         </div>
       </div>
       <div class="tools-attach-buttons">
@@ -43,7 +45,7 @@
                 (mouseout)="dnd.hidden = true"
                 [disabled]="isSending">+
         </button>
-        <label>Файлы<span #dnd hidden="hidden">. Можно драг-н-дропом. До 50 MB.</span></label>
+        <label>Файлы<span #dnd hidden="hidden">. Можно драг-н-дропом. До 1 GB.</span></label>
       </div>
     </div>
     <div  class="tools-send">

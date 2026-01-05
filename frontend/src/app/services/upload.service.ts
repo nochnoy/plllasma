@@ -1,4 +1,4 @@
-import {ElementRef, Injectable} from '@angular/core';
+import {Injectable} from '@angular/core';
 import {Observable, Subject} from "rxjs";
 
 @Injectable({
@@ -6,26 +6,34 @@ import {Observable, Subject} from "rxjs";
 })
 export class UploadService {
 
-  public uploadInput?: ElementRef;
-  private nextUploadingFiles?: Subject<File[]>;
-
   constructor() { }
 
-  registerUploadInput(input: ElementRef): void {
-    this.uploadInput = input;
-  }
-
   upload(): Observable<File[]> {
-    this.nextUploadingFiles = new Subject<File[]>();
-    this.uploadInput?.nativeElement.click();
-    return this.nextUploadingFiles;
-  }
-
-  onFilesSelected(files: File[]): void {
-    if (this.nextUploadingFiles) {
-      this.nextUploadingFiles.next(files);
-      this.nextUploadingFiles.complete();
-      delete this.nextUploadingFiles;
-    }
+    const subject = new Subject<File[]>();
+    
+    // Создаём input на лету
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.style.display = 'none';
+    
+    input.onchange = () => {
+      const files = Array.from(input.files ?? []);
+      subject.next(files);
+      subject.complete();
+      input.remove(); // Удаляем после использования
+    };
+    
+    // Если пользователь закрыл диалог без выбора
+    input.oncancel = () => {
+      subject.next([]);
+      subject.complete();
+      input.remove();
+    };
+    
+    document.body.appendChild(input);
+    input.click();
+    
+    return subject;
   }
 }
