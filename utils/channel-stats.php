@@ -256,6 +256,16 @@ function getRoleColor($role) {
     }
 }
 
+// Функция для форматирования размера
+function formatBytes($bytes, $precision = 2) {
+    $units = array('B', 'KB', 'MB', 'GB', 'TB');
+    $bytes = max($bytes, 0);
+    $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+    $pow = min($pow, count($units) - 1);
+    $bytes /= pow(1024, $pow);
+    return round($bytes, $precision) . ' ' . $units[$pow];
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -294,6 +304,16 @@ function getRoleColor($role) {
             color: #2c3e50;
             font-size: 18px;
             font-weight: 600;
+        }
+        
+        .sidebar h2 a {
+            text-decoration: none;
+            color: inherit;
+            transition: color 0.2s ease;
+        }
+        
+        .sidebar h2 a:hover {
+            color: #1976d2;
         }
         
         .channel-list {
@@ -855,7 +875,14 @@ function getRoleColor($role) {
 <body>
     <div class="container">
         <div class="sidebar">
-            <h2>Каналы</h2>
+            <ul class="channel-list">
+                <li class="channel-item">
+                    <a href="?" 
+                       class="channel-link <?php echo !$selectedChannel ? 'active' : ''; ?>">
+                        Начало
+                    </a>
+                </li>
+            </ul>
             <ul class="channel-list">
                 <?php foreach ($channels as $channel): ?>
                     <li class="channel-item">
@@ -941,6 +968,50 @@ function getRoleColor($role) {
                     </div>
                 </div>
             <?php else: ?>
+                <!-- Информация о свободном месте на диске -->
+                <div class="stats-section">
+                    <h2 class="stats-title">Свободное место на диске</h2>
+                    <?php
+                    // Получаем информацию о диске
+                    $diskPath = getcwd() . '/../'; // Корневая директория проекта
+                    $totalSpace = disk_total_space($diskPath);
+                    $freeSpace = disk_free_space($diskPath);
+                    $usedSpace = $totalSpace - $freeSpace;
+                    
+                    $totalFormatted = formatBytes($totalSpace);
+                    $freeFormatted = formatBytes($freeSpace);
+                    $usedFormatted = formatBytes($usedSpace);
+                    $usedPercent = $totalSpace > 0 ? round(($usedSpace / $totalSpace) * 100, 2) : 0;
+                    $freePercent = 100 - $usedPercent;
+                    ?>
+                    <div class="attachment-stats-grid">
+                        <div class="attachment-stat-item">
+                            <div class="attachment-stat-label">Всего места</div>
+                            <div class="attachment-stat-value"><?php echo $totalFormatted; ?></div>
+                        </div>
+                        <div class="attachment-stat-item">
+                            <div class="attachment-stat-label">Использовано</div>
+                            <div class="attachment-stat-value" style="color: <?php echo $usedPercent > 90 ? '#e74c3c' : ($usedPercent > 75 ? '#f39c12' : '#28a745'); ?>">
+                                <?php echo $usedFormatted; ?> (<?php echo $usedPercent; ?>%)
+                            </div>
+                        </div>
+                        <div class="attachment-stat-item">
+                            <div class="attachment-stat-label">Свободно</div>
+                            <div class="attachment-stat-value" style="color: <?php echo $freePercent < 10 ? '#e74c3c' : ($freePercent < 25 ? '#f39c12' : '#28a745'); ?>">
+                                <?php echo $freeFormatted; ?> (<?php echo $freePercent; ?>%)
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <div style="background-color: #e9ecef; border-radius: 4px; height: 24px; position: relative; overflow: hidden;">
+                            <div style="background-color: <?php echo $usedPercent > 90 ? '#e74c3c' : ($usedPercent > 75 ? '#f39c12' : '#28a745'); ?>; height: 100%; width: <?php echo $usedPercent; ?>%; transition: width 0.3s ease;"></div>
+                            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 12px; font-weight: 600; color: #2c3e50; text-shadow: 0 0 2px white;">
+                                <?php echo $usedPercent; ?>% использовано
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="no-data">
                     <h2>Выберите канал</h2>
                     <p>Выберите канал из списка слева, чтобы просмотреть статистику прав доступа.</p>
