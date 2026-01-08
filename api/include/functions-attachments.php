@@ -27,6 +27,28 @@ function isYouTubeUrl($url) {
     return getYouTubeCode($url) !== null;
 }
 
+// Получает id_place канала, которому принадлежит аттачмент
+function getAttachmentPlaceId($attachmentId) {
+    global $mysqli;
+    
+    $sql = $mysqli->prepare('
+        SELECT m.id_place 
+        FROM tbl_attachments a
+        JOIN tbl_messages m ON a.id_message = m.id_message
+        WHERE a.id = ?
+    ');
+    $sql->bind_param("s", $attachmentId);
+    $sql->execute();
+    $result = $sql->get_result();
+    
+    if ($result && $result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        return $row['id_place'];
+    }
+    
+    return null;
+}
+
 // Извлекает все YouTube ссылки из текста
 function extractYouTubeUrls($text) {
     // Декодируем HTML entities (например &amp; -> &)
@@ -1352,32 +1374,6 @@ function migrateAttachmentToS3($attachmentId) {
     }
     
     $attachment = $result->fetch_assoc();
-    
-    // Проверяем права доступа к сообщению
-    $messageSql = $mysqli->prepare('SELECT id_place FROM tbl_messages WHERE id_message = ?');
-    $messageSql->bind_param("i", $attachment['id_message']);
-    $messageSql->execute();
-    $messageResult = $messageSql->get_result();
-    
-    if (!$messageResult || $messageResult->num_rows === 0) {
-        logError("Message not found for attachment $attachmentId", 's3-migration');
-        return [
-            'success' => false,
-            'error' => 'Message not found'
-        ];
-    }
-    
-    $messageRow = $messageResult->fetch_assoc();
-    $placeId = $messageRow['id_place'];
-    
-    // Проверяем права администратора для этого канала
-    if (!canAdmin($placeId)) {
-        logError("Access denied: user is not admin for channel $placeId", 's3-migration');
-        return [
-            'success' => false,
-            'error' => 'Access denied'
-        ];
-    }
     
     // Проверяем наличие S3 ключей
     if (empty($S3_key_id) || empty($S3_key) || $S3_key_id === 'Идентификатор секретного ключа') {
