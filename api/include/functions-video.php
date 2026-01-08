@@ -417,14 +417,17 @@ function generateVideoPreview($videoPath, $previewPath, $previewWidth = 1000, $f
         $frameSize = 100; // Размер каждого кадра 100x100px
         $gap = 4; // Расстояние между кадрами 4px
         
+        // Если один ряд и кадров меньше 6, обрезаем по фактическому количеству
+        $actualFramesInRow = ($totalRows == 1 && $totalFrames < $framesPerRow) ? $totalFrames : $framesPerRow;
+        
         // Вычисляем размеры превью с учетом gap
-        $previewWidth = ($framesPerRow * $frameSize) + (($framesPerRow - 1) * $gap);
+        $previewWidth = ($actualFramesInRow * $frameSize) + (($actualFramesInRow - 1) * $gap);
         $previewHeight = ($totalRows * $frameSize) + (($totalRows - 1) * $gap);
         
         // Используем fps фильтр для равномерного извлечения кадров с промежутками
         $fps = $totalFrames / $duration;
         $command = "ffmpeg -i " . escapeshellarg($videoPath) . 
-                  " -vf \"fps={$fps},select='lt(n,{$totalFrames})',scale=100:100:force_original_aspect_ratio=increase,crop=100:100,tile={$framesPerRow}x{$totalRows}:padding={$gap}:margin=0:color=0xD7CABB\" " .
+                  " -vf \"fps={$fps},select='lt(n,{$totalFrames})',scale=100:100:force_original_aspect_ratio=increase,crop=100:100,tile={$actualFramesInRow}x{$totalRows}:padding={$gap}:margin=0:color=0xD7CABB\" " .
                   " -frames:v 1 -q:v 2 -y " . escapeshellarg($tiledPreviewPath) . " 2>/dev/null";
         
         plllasmaLog("[VIDEO] Пробуем встроенный tile фильтр: {$command}", 'INFO', 'video-worker');
@@ -484,15 +487,19 @@ function generateVideoPreview($videoPath, $previewPath, $previewWidth = 1000, $f
         
         // Создаем превью из отдельных кадров (PHP сборка) - с цветным фоном и gap
         $framesPerRow = 6; // Фиксированное количество кадров на строку
-        $totalRows = ceil(count($frameFiles) / $framesPerRow);
+        $totalFramesExtracted = count($frameFiles);
+        $totalRows = ceil($totalFramesExtracted / $framesPerRow);
         $frameSize = 100; // Размер каждого кадра 100x100px
         $gap = 4; // Расстояние между кадрами 4px
         
-        // Вычисляем размеры превью с учетом gap
-        $previewWidth = ($framesPerRow * $frameSize) + (($framesPerRow - 1) * $gap);
+        // Если один ряд и кадров меньше 6, обрезаем ширину по фактическому количеству кадров
+        $actualFramesInRow = ($totalRows == 1) ? $totalFramesExtracted : $framesPerRow;
+        
+        // Вычисляем размеры превью с учетом gap и фактического количества кадров
+        $previewWidth = ($actualFramesInRow * $frameSize) + (($actualFramesInRow - 1) * $gap);
         $previewHeight = ($totalRows * $frameSize) + (($totalRows - 1) * $gap);
         
-        plllasmaLog("[VIDEO] Размер превью: {$previewWidth}x{$previewHeight}, кадров в ряду: {$framesPerRow}, рядов: {$totalRows}, gap: {$gap}px", 'INFO', 'video-worker');
+        plllasmaLog("[VIDEO] Размер превью: {$previewWidth}x{$previewHeight}, кадров в ряду: {$actualFramesInRow}, рядов: {$totalRows}, gap: {$gap}px", 'INFO', 'video-worker');
         
         // Создаем холст с цветом фона #D7CABB
         $preview = imagecreatetruecolor($previewWidth, $previewHeight);
