@@ -108,8 +108,8 @@ function deleteMessageAttachments($messageId) {
     while ($attachment = $result->fetch_assoc()) {
         $attachmentId = $attachment['id'];
         
-        // Снимаем блокировку воркера, если файл был заблокирован для обработки
-        $lockStmt = $mysqli->prepare('UPDATE tbl_attachments SET processing_started = NULL WHERE id = ?');
+        // Снимаем блокировки воркера, если файл был заблокирован для обработки или миграции
+        $lockStmt = $mysqli->prepare('UPDATE tbl_attachments SET processing_started = NULL, s3_migration_started = NULL WHERE id = ?');
         $lockStmt->bind_param("s", $attachmentId);
         $lockStmt->execute();
         

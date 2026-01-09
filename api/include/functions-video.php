@@ -63,8 +63,9 @@ function generateVideoIcon($videoPath, $iconPath, $width = 160, $height = 160) {
     }
     
     try {
-        // Создаем временный файл для кадра в папке a
-        $tempDir = '../a/tmp';
+        // Создаем временный файл для кадра в папке a (абсолютный путь)
+        $rootPath = dirname(dirname(__DIR__));
+        $tempDir = $rootPath . '/a/tmp';
         if (!is_dir($tempDir)) {
             mkdir($tempDir, 0755, true);
         }
@@ -352,8 +353,9 @@ function generateVideoPreview($videoPath, $previewPath, $previewWidth = 1000, $f
     try {
         plllasmaLog("[VIDEO] Начинаем генерацию превью для {$videoPath}", 'INFO', 'video-worker');
         
-        // Создаем временную папку для кадров
-        $tempDir = '../a/tmp';
+        // Создаем временную папку для кадров (абсолютный путь)
+        $rootPath = dirname(dirname(__DIR__));
+        $tempDir = $rootPath . '/a/tmp';
         if (!is_dir($tempDir)) {
             mkdir($tempDir, 0755, true);
         }
