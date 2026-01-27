@@ -3,10 +3,11 @@
  * REST для полного удаления сообщения
  * Удаляет сообщение, его аттачменты (новая и старая система) и файлы с диска
  */
-
+ 
 require_once 'include/main.php';
 require_once 'include/functions-attachments.php';
 require_once 'include/functions-logging.php';
+require_once 'include/s3.php';
 
 header('Content-Type: application/json');
 
@@ -97,7 +98,7 @@ function deleteMessageAttachments($messageId) {
     $deletedCount = 0;
     
     // Получаем все аттачменты сообщения
-    $stmt = $mysqli->prepare('SELECT id, type, icon, preview, file, filename FROM tbl_attachments WHERE id_message = ?');
+    $stmt = $mysqli->prepare('SELECT id, type, icon, preview, file, filename, s3 FROM tbl_attachments WHERE id_message = ?');
     $stmt->bind_param("i", $messageId);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -120,10 +121,15 @@ function deleteMessageAttachments($messageId) {
 }
 
 /**
- * Удаляет файлы аттачмента с диска
+ * Удаляет файлы аттачмента с диска и из S3
  */
 function deleteAttachmentFiles($attachmentId, $attachment) {
-    // Удаляем иконку
+    global $S3_key_id, $S3_key, $mysqli;
+    
+    // Проверяем, хранится ли файл в S3
+    $isS3 = isset($attachment['s3']) && intval($attachment['s3']) === 1;
+    
+    // Удаляем иконку (всегда локальная)
     if ($attachment['icon'] > 0) {
         $iconPath = "../" . ltrim(getAttachmentPath($attachmentId, $attachment['icon'], 'i', 'jpg'), '/');
         if (file_exists($iconPath)) {
@@ -132,7 +138,7 @@ function deleteAttachmentFiles($attachmentId, $attachment) {
         }
     }
     
-    // Удаляем превью
+    // Удаляем превью (всегда локальная)
     if ($attachment['preview'] > 0) {
         $previewPath = "../" . ltrim(getAttachmentPath($attachmentId, $attachment['preview'], 'p', 'jpg'), '/');
         if (file_exists($previewPath)) {
@@ -142,7 +148,29 @@ function deleteAttachmentFiles($attachmentId, $attachment) {
     }
     
     // Удаляем основной файл
-    if ($attachment['file'] > 0 && $attachment['filename']) {
+    if ($isS3 && !empty($S3_key_id) && !empty($S3_key) && $S3_key_id !== 'Идентификатор секретного ключа') {
+        // Удаляем объект из S3
+        try {
+            S3::setAuth($S3_key_id, $S3_key);
+            S3::setSSL(true);
+            
+            // Создаем экземпляр S3 с правильным endpoint для Yandex Cloud
+            $s3 = new S3($S3_key_id, $S3_key, true, 'storage.yandexcloud.net');
+            
+            $bucketName = 'plllasma';
+            $objectKey = $attachmentId;
+            
+            // Удаляем объект из S3
+            if (S3::deleteObject($bucketName, $objectKey)) {
+                plllasmaLog("Удален объект из S3: {$objectKey}", 'INFO', 'message-delete');
+            } else {
+                plllasmaLog("Не удалось удалить объект из S3: {$objectKey}", 'WARNING', 'message-delete');
+            }
+        } catch (Exception $e) {
+            plllasmaLog("Ошибка при удалении объекта из S3: {$objectKey}, ошибка: " . $e->getMessage(), 'ERROR', 'message-delete');
+        }
+    } else if ($attachment['file'] > 0 && $attachment['filename']) {
+        // Удаляем локальный основной файл
         $extension = strtolower(pathinfo($attachment['filename'], PATHINFO_EXTENSION));
         $filePath = "../" . ltrim(getAttachmentPath($attachmentId, $attachment['file'], '', $extension), '/');
         if (file_exists($filePath)) {

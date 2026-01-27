@@ -1062,6 +1062,8 @@ function migrateMessageAttachments($messageId) {
     logAttachmentMigration("Deleting existing new attachments...");
     
     // Сначала получаем список существующих аттачментов для удаления их файлов
+    // Примечание: при миграции старых аттачментов не ожидаем файлов в S3,
+    // поэтому удаляем только локальные файлы
     $existingSql = $mysqli->prepare('SELECT id, icon, preview, file, filename FROM tbl_attachments WHERE id_message = ?');
     $existingSql->bind_param("i", $messageId);
     $existingSql->execute();
