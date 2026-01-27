@@ -11,6 +11,7 @@ $placeId 			= @$_POST['placeId'];
 $parentMessageId 	= @$_POST['parent'];
 $message 			= @trim($_POST['message']);
 $ghost 				= @trim($_POST['ghost']) == '1';
+$isDraft 			= @trim($_POST['draft']) == '1'; // Черновик - сообщение создаётся с id_place=0
 
 $channelFolder 		= getcwd().'/../attachments/'.$placeId.'/';
 $iconFolder 		= getcwd().'/images/attachment-icons/';
@@ -28,8 +29,15 @@ function lll($s) {
 
 loginBySessionOrToken();
 
+// Проверяем права на целевой канал (даже для черновиков)
 if (!canWrite($placeId)) {
 	die('{"error": "access"}');
+}
+
+// Сохраняем реальный placeId для черновиков
+$realPlaceId = $placeId;
+if ($isDraft) {
+	$placeId = 0; // Черновик не виден в каналах
 }
 
 // это коммент к другому cообщению
@@ -217,10 +225,15 @@ if ($receivedFilesCount > 0) {
 	mysqli_query($mysqli, 'UPDATE tbl_messages SET attachments='.$receivedFilesCount.' WHERE id_message='.$messageId.' LIMIT 1');
 }
 
-mysqli_query($mysqli, 'UPDATE tbl_places SET time_changed = NOW() WHERE id_place='.$placeId);
+// Обновляем время канала только если это не черновик
+if (!$isDraft && $placeId > 0) {
+	mysqli_query($mysqli, 'UPDATE tbl_places SET time_changed = NOW() WHERE id_place='.$placeId);
+}
 
 exit(json_encode((object)[
 	'messageId' => $messageId,
+	'realPlaceId' => $realPlaceId, // Для черновиков — куда потом опубликовать
+	'isDraft' => $isDraft,
 	'log' => $lll
 ]));
 

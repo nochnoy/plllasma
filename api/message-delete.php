@@ -3,7 +3,7 @@
  * REST для полного удаления сообщения
  * Удаляет сообщение, его аттачменты (новая и старая система) и файлы с диска
  */
- 
+
 require_once 'include/main.php';
 require_once 'include/functions-attachments.php';
 require_once 'include/functions-logging.php';
@@ -103,11 +103,22 @@ function deleteMessageAttachments($messageId) {
     $stmt->execute();
     $result = $stmt->get_result();
     
+    $s3Errors = [];
+
     while ($attachment = $result->fetch_assoc()) {
         $attachmentId = $attachment['id'];
         
-        // Удаляем файлы с диска
-        deleteAttachmentFiles($attachmentId, $attachment);
+        // Снимаем блокировки воркера, если файл был заблокирован для обработки или миграции
+        $lockStmt = $mysqli->prepare('UPDATE tbl_attachments SET processing_started = NULL, s3_migration_started = NULL WHERE id = ?');
+        $lockStmt->bind_param("s", $attachmentId);
+        $lockStmt->execute();
+
+        // Удаляем файлы с диска или из S3
+        $deleteResult = deleteAttachmentFiles($attachmentId, $attachment);
+
+        if ($deleteResult !== true) {
+            $s3Errors[] = $deleteResult;
+        }
         
         // Удаляем запись из БД
         $deleteStmt = $mysqli->prepare('DELETE FROM tbl_attachments WHERE id = ?');
@@ -117,19 +128,62 @@ function deleteMessageAttachments($messageId) {
         }
     }
     
+    // Если были ошибки S3, выбрасываем исключение
+    if (!empty($s3Errors)) {
+        throw new Exception('Не удалось удалить файлы из S3: ' . implode('; ', $s3Errors));
+    }
+
     return $deletedCount;
 }
 
 /**
- * Удаляет файлы аттачмента с диска и из S3
+ * Удаляет файлы аттачмента с диска или из S3
+ * @return true|string Возвращает true при успехе или строку с ошибкой
  */
 function deleteAttachmentFiles($attachmentId, $attachment) {
-    global $S3_key_id, $S3_key, $mysqli;
-    
-    // Проверяем, хранится ли файл в S3
     $isS3 = isset($attachment['s3']) && intval($attachment['s3']) === 1;
-    
-    // Удаляем иконку (всегда локальная)
+
+    // Если файл в S3 - удаляем из S3
+    if ($isS3 && $attachment['file'] > 0) {
+        global $S3_key_id, $S3_key;
+
+        if (empty($S3_key_id) || empty($S3_key) || $S3_key_id === 'Идентификатор секретного ключа') {
+            plllasmaLog("ОШИБКА: S3 ключи не настроены для удаления {$attachmentId}", 'ERROR', 'message-delete');
+            return "S3 ключи не настроены для аттачмента {$attachmentId}";
+        }
+
+        // Настраиваем S3 клиент
+        S3::setAuth($S3_key_id, $S3_key);
+        S3::setSSL(true);
+        S3::$endpoint = 'storage.yandexcloud.net';
+
+        $bucket = 'plllasma';
+        $objectKey = $attachmentId;
+
+        plllasmaLog("Удаляем файл из S3: {$bucket}/{$objectKey}", 'INFO', 'message-delete');
+
+        $deleteResult = S3::deleteObject($bucket, $objectKey);
+
+        if (!$deleteResult) {
+            plllasmaLog("ОШИБКА: Не удалось удалить файл из S3: {$bucket}/{$objectKey}", 'ERROR', 'message-delete');
+            return "Не удалось удалить файл {$attachmentId} из S3";
+        }
+
+        plllasmaLog("Файл успешно удален из S3: {$bucket}/{$objectKey}", 'INFO', 'message-delete');
+    } else {
+        // Удаляем основной файл с локального диска
+        if ($attachment['file'] > 0 && $attachment['filename']) {
+            $extension = strtolower(pathinfo($attachment['filename'], PATHINFO_EXTENSION));
+            $filePath = "../" . ltrim(getAttachmentPath($attachmentId, $attachment['file'], '', $extension), '/');
+            if (file_exists($filePath)) {
+                unlink($filePath);
+                plllasmaLog("Удален основной файл: {$filePath}", 'INFO', 'message-delete');
+            }
+        }
+    }
+
+    // Иконка и превью всегда хранятся локально
+    // Удаляем иконку
     if ($attachment['icon'] > 0) {
         $iconPath = "../" . ltrim(getAttachmentPath($attachmentId, $attachment['icon'], 'i', 'jpg'), '/');
         if (file_exists($iconPath)) {
@@ -138,7 +192,7 @@ function deleteAttachmentFiles($attachmentId, $attachment) {
         }
     }
     
-    // Удаляем превью (всегда локальная)
+    // Удаляем превью
     if ($attachment['preview'] > 0) {
         $previewPath = "../" . ltrim(getAttachmentPath($attachmentId, $attachment['preview'], 'p', 'jpg'), '/');
         if (file_exists($previewPath)) {
@@ -146,39 +200,7 @@ function deleteAttachmentFiles($attachmentId, $attachment) {
             plllasmaLog("Удален файл превью: {$previewPath}", 'INFO', 'message-delete');
         }
     }
-    
-    // Удаляем основной файл
-    if ($isS3 && !empty($S3_key_id) && !empty($S3_key) && $S3_key_id !== 'Идентификатор секретного ключа') {
-        // Удаляем объект из S3
-        try {
-            S3::setAuth($S3_key_id, $S3_key);
-            S3::setSSL(true);
-            
-            // Создаем экземпляр S3 с правильным endpoint для Yandex Cloud
-            $s3 = new S3($S3_key_id, $S3_key, true, 'storage.yandexcloud.net');
-            
-            $bucketName = 'plllasma';
-            $objectKey = $attachmentId;
-            
-            // Удаляем объект из S3
-            if (S3::deleteObject($bucketName, $objectKey)) {
-                plllasmaLog("Удален объект из S3: {$objectKey}", 'INFO', 'message-delete');
-            } else {
-                plllasmaLog("Не удалось удалить объект из S3: {$objectKey}", 'WARNING', 'message-delete');
-            }
-        } catch (Exception $e) {
-            plllasmaLog("Ошибка при удалении объекта из S3: {$objectKey}, ошибка: " . $e->getMessage(), 'ERROR', 'message-delete');
-        }
-    } else if ($attachment['file'] > 0 && $attachment['filename']) {
-        // Удаляем локальный основной файл
-        $extension = strtolower(pathinfo($attachment['filename'], PATHINFO_EXTENSION));
-        $filePath = "../" . ltrim(getAttachmentPath($attachmentId, $attachment['file'], '', $extension), '/');
-        if (file_exists($filePath)) {
-            unlink($filePath);
-            plllasmaLog("Удален основной файл: {$filePath}", 'INFO', 'message-delete');
-        }
-    }
-    
+
     // Удаляем папку аттачмента, если она пустая
     $xx = substr($attachmentId, 0, 2);
     $yy = substr($attachmentId, 2, 2);
@@ -191,6 +213,8 @@ function deleteAttachmentFiles($attachmentId, $attachment) {
             plllasmaLog("Удалена пустая папка аттачмента: {$attachmentDir}", 'INFO', 'message-delete');
         }
     }
+
+    return true;
 }
 
 /**

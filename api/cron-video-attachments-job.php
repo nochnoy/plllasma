@@ -9,6 +9,8 @@
 require_once 'include/main.php';
 require_once 'include/functions-video.php';
 require_once 'include/functions-logging.php';
+require_once 'include/functions-attachments.php';
+require_once 'include/s3.php';
 
 // Конфигурация
 define('MAX_PROCESSING_TIME', 300); // 5 минут - максимальное время обработки одного файла
@@ -48,15 +50,23 @@ function runWorker() {
             }
         }
         
-        // Проверяем, есть ли файлы для обработки
+        // Проверяем, есть ли видео файлы для обработки
         $availableCount = getAvailableFilesCount();
+        plllasmaLog("getAvailableFilesCount() вернул: {$availableCount}", 'DEBUG', 'video-worker');
         
         if ($availableCount === 0) {
-            plllasmaLog("Нет файлов для обработки", 'INFO', 'video-worker');
+            plllasmaLog("Нет видео для обработки, проверяем файлы для S3 миграции", 'INFO', 'video-worker');
+            
+            // Пробуем мигрировать файлы в S3
+            $migrationResult = tryS3Migration();
+            if ($migrationResult) {
+                return $migrationResult;
+            }
+            
             return ['status' => 'success', 'message' => 'Нет файлов для обработки'];
         }
         
-        plllasmaLog("Доступно файлов для обработки: {$availableCount}", 'INFO', 'video-worker');
+        plllasmaLog("Доступно видео для обработки: {$availableCount}", 'INFO', 'video-worker');
         
         // Блокируем следующий файл для обработки
         if (!getNextFileToProcess()) {
@@ -102,23 +112,27 @@ function runWorker() {
 
 /**
  * Проверяет, не запущен ли уже воркер
+ * Проверяет оба флага: processing_started (видео) и s3_migration_started (S3)
  */
 function isWorkerRunning() {
     global $mysqli;
     
-    // Ищем файлы, которые обрабатываются сейчас
+    $maxTime = MAX_PROCESSING_TIME;
+    
+    // Ищем файлы, которые обрабатываются сейчас (видео или S3 миграция)
     $stmt = $mysqli->prepare("
         SELECT COUNT(*) as count 
         FROM tbl_attachments 
-        WHERE processing_started IS NOT NULL 
-        AND processing_started > DATE_SUB(NOW(), INTERVAL ? SECOND)
+        WHERE (processing_started IS NOT NULL AND processing_started > DATE_SUB(NOW(), INTERVAL ? SECOND))
+           OR (s3_migration_started IS NOT NULL AND s3_migration_started > DATE_SUB(NOW(), INTERVAL ? SECOND))
     ");
     
-    $maxTime = MAX_PROCESSING_TIME;
-    $stmt->bind_param("i", $maxTime);
+    $stmt->bind_param("ii", $maxTime, $maxTime);
     $stmt->execute();
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
+    
+    plllasmaLog("isWorkerRunning: активных задач = {$row['count']} (maxTime={$maxTime})", 'DEBUG', 'video-worker');
     
     return $row['count'] > 0;
 }
@@ -243,13 +257,13 @@ function getRecentVideoFilesDetailed($limit = 10) {
         // Строим путь к файлу
         if ($row['filename'] && $row['file'] > 0) {
             $extension = strtolower(pathinfo($row['filename'], PATHINFO_EXTENSION));
-            $filePath = "../" . ltrim(getAttachmentPath($row['id'], $row['file'], '', $extension), '/');
+            $filePath = buildAttachmentFilePhysicalPath($row['id'], $row['file'], $row['filename']);
         } else {
             $filePath = null;
         }
         
-        $iconPath = $row['icon'] > 0 ? "../" . ltrim(getAttachmentPath($row['id'], $row['icon'], 'i', 'jpg'), '/') : null;
-        $previewPath = $row['preview'] > 0 ? "../" . ltrim(getAttachmentPath($row['id'], $row['preview'], 'p', 'jpg'), '/') : null;
+        $iconPath = $row['icon'] > 0 ? buildAttachmentIconPhysicalPath($row['id'], $row['icon']) : null;
+        $previewPath = $row['preview'] > 0 ? buildAttachmentPreviewPhysicalPath($row['id'], $row['preview']) : null;
         
         $row['video_file_exists'] = $filePath ? file_exists($filePath) : false;
         $row['video_file_path'] = $filePath;
@@ -445,9 +459,30 @@ function processAttachment($attachment) {
     $attachmentId = $attachment['id'];
     $fileVersion = $attachment['file'];
     $filename = $attachment['filename'];
+    $messageId = $attachment['id_message'];
     
     plllasmaLog("=== НАЧИНАЕМ ОБРАБОТКУ АТТАЧМЕНТА ===", 'INFO', 'video-worker');
     plllasmaLog("ID: {$attachmentId}, файл версия: {$fileVersion}, имя файла: {$filename}, статус: {$attachment['status']}, создан: {$attachment['created']}", 'INFO', 'video-worker');
+    
+    // Проверяем, что сообщение ещё существует (могло быть удалено во время обработки)
+    $stmt = $mysqli->prepare("SELECT id_message FROM tbl_messages WHERE id_message = ?");
+    $stmt->bind_param("i", $messageId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if (!$result->fetch_assoc()) {
+        plllasmaLog("Сообщение {$messageId} удалено, прерываем обработку аттачмента {$attachmentId}", 'WARNING', 'video-worker');
+        return false;
+    }
+    
+    // Проверяем, что аттачмент ещё существует в БД (мог быть удалён)
+    $stmt = $mysqli->prepare("SELECT id FROM tbl_attachments WHERE id = ?");
+    $stmt->bind_param("s", $attachmentId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if (!$result->fetch_assoc()) {
+        plllasmaLog("Аттачмент {$attachmentId} удалён из БД, прерываем обработку", 'WARNING', 'video-worker');
+        return false;
+    }
     
     // Составляем путь к файлу используя новую схему версионирования
     
@@ -457,15 +492,63 @@ function processAttachment($attachment) {
     }
     
     $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-    $filePath = "../" . ltrim(getAttachmentPath($attachmentId, $fileVersion, '', $extension), '/');
+    $isS3 = isset($attachment['s3']) && intval($attachment['s3']) === 1;
+    $tempFilePath = null;
     
-    // Проверяем, существует ли файл
-    plllasmaLog("Проверяем существование файла: {$filePath}", 'INFO', 'video-worker');
-    if (!file_exists($filePath)) {
-        plllasmaLog("ОШИБКА: Файл не найден: {$filePath}", 'ERROR', 'video-worker');
-        plllasmaLog("Директория существует: " . (is_dir(dirname($filePath)) ? 'да' : 'нет'), 'INFO', 'video-worker');
-        plllasmaLog("Содержимое директории: " . (is_dir(dirname($filePath)) ? implode(', ', scandir(dirname($filePath))) : 'N/A'), 'INFO', 'video-worker');
-        return false;
+    if ($isS3) {
+        // Файл хранится в S3 - скачиваем во временную директорию
+        plllasmaLog("Файл хранится в S3, скачиваем для обработки", 'INFO', 'video-worker');
+        
+        global $S3_key_id, $S3_key;
+        
+        if (empty($S3_key_id) || empty($S3_key) || $S3_key_id === 'Идентификатор секретного ключа') {
+            plllasmaLog("ОШИБКА: S3 ключи не настроены", 'ERROR', 'video-worker');
+            return false;
+        }
+        
+        // Настраиваем S3 клиент
+        S3::setAuth($S3_key_id, $S3_key);
+        S3::setSSL(true);
+        S3::$endpoint = 'storage.yandexcloud.net';
+        
+        $bucket = 'plllasma';
+        $objectKey = $attachmentId;
+        
+        // Создаём временный файл
+        $tempDir = sys_get_temp_dir();
+        $tempFilePath = $tempDir . '/plasma_video_' . $attachmentId . '.' . $extension;
+        
+        plllasmaLog("Скачиваем из S3: {$bucket}/{$objectKey} -> {$tempFilePath}", 'INFO', 'video-worker');
+        
+        $result = S3::getObject($bucket, $objectKey, $tempFilePath);
+        
+        if (!$result || $result->error !== false) {
+            $errorMsg = $result ? (is_array($result->error) ? $result->error['message'] : 'Unknown error') : 'No response';
+            plllasmaLog("ОШИБКА: Не удалось скачать файл из S3: {$errorMsg}", 'ERROR', 'video-worker');
+            return false;
+        }
+        
+        if (!file_exists($tempFilePath)) {
+            plllasmaLog("ОШИБКА: Временный файл не создан после скачивания из S3", 'ERROR', 'video-worker');
+            return false;
+        }
+        
+        $filePath = $tempFilePath;
+        plllasmaLog("Файл успешно скачан из S3, размер: " . filesize($tempFilePath) . " байт", 'INFO', 'video-worker');
+    } else {
+        // Локальный файл - используем абсолютный путь
+        $filePath = buildAttachmentFilePhysicalPath($attachmentId, $fileVersion, $attachment['filename']);
+        
+        // Проверяем, существует ли файл
+        plllasmaLog("Проверяем существование файла: {$filePath}", 'INFO', 'video-worker');
+        if (!$filePath || !file_exists($filePath)) {
+            plllasmaLog("ОШИБКА: Файл не найден: {$filePath}", 'ERROR', 'video-worker');
+            if ($filePath) {
+                plllasmaLog("Директория существует: " . (is_dir(dirname($filePath)) ? 'да' : 'нет'), 'INFO', 'video-worker');
+                plllasmaLog("Содержимое директории: " . (is_dir(dirname($filePath)) ? implode(', ', scandir(dirname($filePath))) : 'N/A'), 'INFO', 'video-worker');
+            }
+            return false;
+        }
     }
     
     $fileSize = filesize($filePath);
@@ -477,6 +560,10 @@ function processAttachment($attachment) {
     // Проверяем, является ли файл видео
     if (!isVideoFile($filePath, $mimeType)) {
         plllasmaLog("Файл {$attachmentId} не является видео ({$mimeType})", 'INFO', 'video-worker');
+        // Удаляем временный файл, если был создан
+        if ($tempFilePath && file_exists($tempFilePath)) {
+            unlink($tempFilePath);
+        }
         return false;
     }
     
@@ -489,7 +576,7 @@ function processAttachment($attachment) {
     if ($needIcon) {
         // Генерируем иконку для видео (используем версию 1 для новой иконки)
         $iconVersion = max(1, $attachment['icon'] + 1);
-        $iconPath = "../" . ltrim(getAttachmentPath($attachmentId, $iconVersion, 'i', 'jpg'), '/');
+        $iconPath = buildAttachmentIconPhysicalPath($attachmentId, $iconVersion);
         plllasmaLog("Генерируем иконку: {$filePath} -> {$iconPath}", 'INFO', 'video-worker');
         $iconGenerated = generateVideoIcon($filePath, $iconPath, 160, 160);
         
@@ -517,7 +604,7 @@ function processAttachment($attachment) {
     if ($needPreview) {
         // Генерируем превью для видео (используем версию 1 для нового превью)
         $previewVersion = max(1, $attachment['preview'] + 1);
-        $previewPath = "../" . ltrim(getAttachmentPath($attachmentId, $previewVersion, 'p', 'jpg'), '/');
+        $previewPath = buildAttachmentPreviewPhysicalPath($attachmentId, $previewVersion);
         plllasmaLog("Генерируем превью: {$filePath} -> {$previewPath}", 'INFO', 'video-worker');
         $previewGenerated = generateVideoPreview($filePath, $previewPath, 600, 100, 100, 5);
         
@@ -556,6 +643,10 @@ function processAttachment($attachment) {
     
     if (!$result) {
         plllasmaLog("Ошибка выполнения UPDATE для аттачмента {$attachmentId}: " . $mysqli->error, 'ERROR', 'video-worker');
+        // Удаляем временный файл, если был создан
+        if ($tempFilePath && file_exists($tempFilePath)) {
+            unlink($tempFilePath);
+        }
         return false;
     }
     
@@ -566,6 +657,12 @@ function processAttachment($attachment) {
     plllasmaLog("Обновляем JSON для сообщения {$attachment['id_message']}", 'INFO', 'video-worker');
     updateMessageAttachmentsJson($attachment['id_message']);
     plllasmaLog("JSON обновлен для сообщения {$attachment['id_message']}", 'INFO', 'video-worker');
+    
+    // Удаляем временный файл, если он был создан для S3
+    if ($tempFilePath && file_exists($tempFilePath)) {
+        unlink($tempFilePath);
+        plllasmaLog("Временный файл удалён: {$tempFilePath}", 'INFO', 'video-worker');
+    }
     
     plllasmaLog("Аттачмент {$attachmentId} успешно преобразован в видео", 'INFO', 'video-worker');
     return true;
@@ -610,6 +707,172 @@ function updateMessageAttachmentsJson($messageId) {
     $jsonData = json_encode(['j' => $newAttachments]);
     $stmt = $mysqli->prepare("UPDATE tbl_messages SET json = ? WHERE id_message = ?");
     $stmt->bind_param("si", $jsonData, $messageId);
+    $stmt->execute();
+}
+
+/**
+ * Пытается выполнить S3 миграцию, если есть файлы для переноса
+ * @return array|null Результат миграции или null если нечего мигрировать
+ */
+function tryS3Migration() {
+    global $mysqli, $S3_key_id, $S3_key;
+    
+    plllasmaLog("=== НАЧАЛО tryS3Migration ===", 'DEBUG', 'video-worker');
+    plllasmaLog("S3_key_id: " . (empty($S3_key_id) ? 'EMPTY' : substr($S3_key_id, 0, 10) . '...'), 'DEBUG', 'video-worker');
+    plllasmaLog("S3_key: " . (empty($S3_key) ? 'EMPTY' : 'SET'), 'DEBUG', 'video-worker');
+    
+    // Проверяем наличие S3 ключей
+    if (empty($S3_key_id) || empty($S3_key) || $S3_key_id === 'Идентификатор секретного ключа') {
+        plllasmaLog("S3 ключи не настроены, пропускаем миграцию", 'INFO', 'video-worker');
+        return null;
+    }
+    
+    plllasmaLog("S3 ключи настроены, ищем файлы для миграции", 'DEBUG', 'video-worker');
+    
+    // Получаем самый большой файл, не перенесённый в S3
+    $attachment = getNextFileForS3Migration();
+    
+    plllasmaLog("Результат getNextFileForS3Migration: " . ($attachment ? json_encode($attachment) : 'NULL'), 'DEBUG', 'video-worker');
+    
+    if (!$attachment) {
+        plllasmaLog("Нет файлов для S3 миграции", 'INFO', 'video-worker');
+        return null;
+    }
+    
+    plllasmaLog("Найден файл для S3 миграции: {$attachment['filename']} (ID: {$attachment['id']}, размер: " . number_format($attachment['size']) . " байт)", 'INFO', 'video-worker');
+    
+    // Блокируем файл для миграции
+    if (!lockFileForS3Migration($attachment['id'])) {
+        plllasmaLog("Не удалось заблокировать файл для S3 миграции", 'WARNING', 'video-worker');
+        return ['status' => 'warning', 'message' => 'Не удалось заблокировать файл для S3 миграции'];
+    }
+    
+    try {
+        require_once 'include/functions-attachments.php';
+        
+        $result = migrateAttachmentToS3($attachment['id']);
+        
+        // Снимаем блокировку
+        releaseS3MigrationLock($attachment['id']);
+        
+        if ($result['success']) {
+            plllasmaLog("S3 миграция завершена успешно: {$attachment['filename']}", 'INFO', 'video-worker');
+            return ['status' => 'success', 'message' => 'S3 миграция завершена успешно'];
+        } else {
+            plllasmaLog("S3 миграция завершена с ошибкой: " . ($result['error'] ?? 'unknown'), 'WARNING', 'video-worker');
+            return ['status' => 'warning', 'message' => 'S3 миграция завершена с ошибкой: ' . ($result['error'] ?? 'unknown')];
+        }
+    } catch (Exception $e) {
+        releaseS3MigrationLock($attachment['id']);
+        plllasmaLog("Ошибка S3 миграции: " . $e->getMessage(), 'ERROR', 'video-worker');
+        return ['status' => 'error', 'message' => 'Ошибка S3 миграции: ' . $e->getMessage()];
+    }
+}
+
+/**
+ * Получает следующий файл для S3 миграции (самый большой локальный файл)
+ * @return array|null Информация о файле или null
+ */
+function getNextFileForS3Migration() {
+    global $mysqli;
+    
+    plllasmaLog("=== getNextFileForS3Migration ===", 'DEBUG', 'video-worker');
+    
+    // Сначала посмотрим, сколько вообще файлов в канале 12 с s3=0
+    $debugStmt = $mysqli->prepare("
+        SELECT COUNT(*) as cnt, 
+               SUM(CASE WHEN a.file > 0 THEN 1 ELSE 0 END) as with_file,
+               SUM(CASE WHEN a.filename IS NOT NULL THEN 1 ELSE 0 END) as with_filename
+        FROM tbl_attachments a
+        JOIN tbl_messages m ON a.id_message = m.id_message
+        WHERE a.s3 = 0 AND m.id_place = 12
+    ");
+    $debugStmt->execute();
+    $debugResult = $debugStmt->get_result();
+    $debugRow = $debugResult->fetch_assoc();
+    plllasmaLog("Канал 12, s3=0: всего={$debugRow['cnt']}, с file>0={$debugRow['with_file']}, с filename={$debugRow['with_filename']}", 'DEBUG', 'video-worker');
+    
+    // Покажем конкретные записи
+    $listStmt = $mysqli->prepare("
+        SELECT a.id, a.filename, a.size, a.file, a.s3, a.s3_migration_started, m.id_place
+        FROM tbl_attachments a
+        JOIN tbl_messages m ON a.id_message = m.id_message
+        WHERE m.id_place = 12
+        ORDER BY a.created DESC
+        LIMIT 5
+    ");
+    $listStmt->execute();
+    $listResult = $listStmt->get_result();
+    while ($row = $listResult->fetch_assoc()) {
+        plllasmaLog("  Attachment: id={$row['id']}, file={$row['file']}, s3={$row['s3']}, filename=" . ($row['filename'] ?? 'NULL') . ", size={$row['size']}, migration_started=" . ($row['s3_migration_started'] ?? 'NULL'), 'DEBUG', 'video-worker');
+    }
+    
+    // Берём самый большой файл с s3=0 (локальный), у которого есть файл (file > 0)
+    // и который не заблокирован для миграции
+    // ВРЕМЕННО: только канал id=12
+    $maxTime = MAX_PROCESSING_TIME;
+    
+    $stmt = $mysqli->prepare("
+        SELECT a.id, a.filename, a.size, a.file
+        FROM tbl_attachments a
+        JOIN tbl_messages m ON a.id_message = m.id_message
+        WHERE a.s3 = 0 
+          AND a.file > 0 
+          AND a.filename IS NOT NULL
+          AND m.id_place = 12
+          AND (a.s3_migration_started IS NULL OR a.s3_migration_started < DATE_SUB(NOW(), INTERVAL ? SECOND))
+        ORDER BY a.size DESC
+        LIMIT 1
+    ");
+    
+    $stmt->bind_param("i", $maxTime);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    plllasmaLog("Основной запрос: найдено строк = " . $result->num_rows, 'DEBUG', 'video-worker');
+    
+    if ($result && $result->num_rows > 0) {
+        return $result->fetch_assoc();
+    }
+    
+    return null;
+}
+
+/**
+ * Блокирует файл для S3 миграции
+ * @param string $attachmentId ID аттачмента
+ * @return bool Успешность блокировки
+ */
+function lockFileForS3Migration($attachmentId) {
+    global $mysqli;
+    
+    plllasmaLog("lockFileForS3Migration: пытаемся заблокировать {$attachmentId}", 'DEBUG', 'video-worker');
+    
+    $stmt = $mysqli->prepare("
+        UPDATE tbl_attachments 
+        SET s3_migration_started = NOW() 
+        WHERE id = ? AND (s3_migration_started IS NULL OR s3_migration_started < DATE_SUB(NOW(), INTERVAL ? SECOND))
+    ");
+    
+    $maxTime = MAX_PROCESSING_TIME;
+    $stmt->bind_param("si", $attachmentId, $maxTime);
+    $stmt->execute();
+    
+    $success = $stmt->affected_rows > 0;
+    plllasmaLog("lockFileForS3Migration: affected_rows = {$stmt->affected_rows}, success = " . ($success ? 'true' : 'false'), 'DEBUG', 'video-worker');
+    
+    return $success;
+}
+
+/**
+ * Снимает блокировку S3 миграции
+ * @param string $attachmentId ID аттачмента
+ */
+function releaseS3MigrationLock($attachmentId) {
+    global $mysqli;
+    
+    $stmt = $mysqli->prepare("UPDATE tbl_attachments SET s3_migration_started = NULL WHERE id = ?");
+    $stmt->bind_param("s", $attachmentId);
     $stmt->execute();
 }
 

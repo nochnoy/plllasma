@@ -17,6 +17,22 @@ if (empty($attachmentId)) {
     ]));
 }
 
+// Проверяем права доступа к каналу, которому принадлежит аттачмент
+$placeId = getAttachmentPlaceId($attachmentId);
+if ($placeId === null) {
+    exit(json_encode([
+        'success' => false,
+        'error' => 'Attachment or message not found'
+    ]));
+}
+
+if (!canAdmin($placeId)) {
+    exit(json_encode([
+        'success' => false,
+        'error' => 'Access denied'
+    ]));
+}
+
 $result = migrateAttachmentToS3($attachmentId);
 exit(json_encode($result));
 ?>

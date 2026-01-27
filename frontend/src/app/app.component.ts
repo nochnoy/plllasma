@@ -1,4 +1,4 @@
-import {Component, OnInit, AfterViewInit, Renderer2, ViewChild, ElementRef} from '@angular/core';
+import {Component, OnInit, AfterViewInit, Renderer2} from '@angular/core';
 import {switchMap, tap} from "rxjs/operators";
 import {Router} from "@angular/router";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
@@ -6,7 +6,6 @@ import {UserService} from "./services/user.service";
 import {AppService} from "./services/app.service";
 import {of} from "rxjs";
 import { LoginStatus } from './model/app-model';
-import {UploadService} from "./services/upload.service";
 
 @UntilDestroy()
 @Component({
@@ -16,14 +15,11 @@ import {UploadService} from "./services/upload.service";
 })
 export class AppComponent implements OnInit, AfterViewInit {
 
-  @ViewChild('fileUpload') fileUpload?: ElementRef;
-
   constructor(
     public appService: AppService,
     public userService: UserService,
     public renderer: Renderer2,
     public router: Router,
-    public uploadService: UploadService,
   ) {}
 
   ngOnInit(): void {
@@ -58,13 +54,6 @@ export class AppComponent implements OnInit, AfterViewInit {
     if (loader && loader.parentNode) {
       this.renderer.removeChild(loader.parentNode, loader);
     }
-    if (this.fileUpload) {
-      this.uploadService.registerUploadInput(this.fileUpload);
-    }
-  }
-
-  onFilesSelected(event: any): void {
-    this.uploadService.onFilesSelected(Array.from(event.target?.files) ?? []);
   }
 
 }

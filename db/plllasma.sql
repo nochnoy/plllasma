@@ -126,7 +126,8 @@ CREATE TABLE `tbl_attachments` (
   `downloads` int NOT NULL DEFAULT '0' COMMENT 'Количество скачиваний',
   `size` bigint DEFAULT NULL COMMENT 'Размер файла в байтах',
   `duration` int UNSIGNED DEFAULT NULL COMMENT 'Длительность видео в миллисекундах',
-  `processing_started` timestamp NULL DEFAULT NULL COMMENT 'Время начала обработки воркером'
+  `processing_started` timestamp NULL DEFAULT NULL COMMENT 'Время начала обработки воркером',
+  `s3_migration_started` datetime DEFAULT NULL COMMENT 'Время начала миграции в S3'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='Новая система аттачментов к сообщениям';
 
 -- --------------------------------------------------------
@@ -573,7 +574,8 @@ ALTER TABLE `tbl_attachments`
   ADD KEY `idx_views` (`views`),
   ADD KEY `idx_downloads` (`downloads`),
   ADD KEY `idx_processing` (`processing_started`),
-  ADD KEY `idx_size` (`size`);
+  ADD KEY `idx_size` (`size`),
+  ADD KEY `idx_s3_migration` (`s3_migration_started`);
 
 --
 -- Индексы таблицы `tbl_boards`

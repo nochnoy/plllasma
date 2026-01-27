@@ -12,11 +12,16 @@ include("include/main.php");
 loginBySessionOrToken();
 
 $userId     = $user['id_user'];
-$placeId    = $input['cid']; // id канала
+$placeId    = intval($input['cid']); // id канала
 $lastViewed = $input['lv']; // дата, которую клиент просит считать датой последнего просмотра канала. Если пустая - запишем сюда фактический last_viewed.
 $after      = @$input['after']; // Дата. Если указана - выдаст только сообщения, созданные после этой даты.
 $page       = @$input['page'] ?? 0;
 $messageId  = @$input['message_id']; // ID конкретного сообщения для фильтрации
+
+// id_place = 0 используется для черновиков, доступ к нему запрещён
+if ($placeId <= 0) {
+    die('{"error": "invalid_channel"}');
+}
 
 if (!canRead($placeId)) {
     die('{"error": "access"}');
