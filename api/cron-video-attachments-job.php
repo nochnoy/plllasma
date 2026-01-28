@@ -793,26 +793,26 @@ function getNextFileForS3Migration() {
     
     plllasmaLog("=== getNextFileForS3Migration ===", 'DEBUG', 'video-worker');
     
-    // Сначала посмотрим, сколько вообще файлов в канале 12 с s3=0
+    // Сначала посмотрим, сколько вообще файлов с s3=0
     $debugStmt = $mysqli->prepare("
         SELECT COUNT(*) as cnt, 
                SUM(CASE WHEN a.file > 0 THEN 1 ELSE 0 END) as with_file,
                SUM(CASE WHEN a.filename IS NOT NULL THEN 1 ELSE 0 END) as with_filename
         FROM tbl_attachments a
         JOIN tbl_messages m ON a.id_message = m.id_message
-        WHERE a.s3 = 0 AND m.id_place = 12
+        WHERE a.s3 = 0
     ");
     $debugStmt->execute();
     $debugResult = $debugStmt->get_result();
     $debugRow = $debugResult->fetch_assoc();
-    plllasmaLog("Канал 12, s3=0: всего={$debugRow['cnt']}, с file>0={$debugRow['with_file']}, с filename={$debugRow['with_filename']}", 'DEBUG', 'video-worker');
+    plllasmaLog("Все каналы, s3=0: всего={$debugRow['cnt']}, с file>0={$debugRow['with_file']}, с filename={$debugRow['with_filename']}", 'DEBUG', 'video-worker');
     
     // Покажем конкретные записи
     $listStmt = $mysqli->prepare("
         SELECT a.id, a.filename, a.size, a.file, a.s3, a.s3_migration_started, m.id_place
         FROM tbl_attachments a
         JOIN tbl_messages m ON a.id_message = m.id_message
-        WHERE m.id_place = 12
+        WHERE a.s3 = 0
         ORDER BY a.created DESC
         LIMIT 5
     ");
@@ -824,7 +824,6 @@ function getNextFileForS3Migration() {
     
     // Берём самый большой файл с s3=0 (локальный), у которого есть файл (file > 0)
     // и который не заблокирован для миграции
-    // ВРЕМЕННО: только канал id=12
     $maxTime = MAX_PROCESSING_TIME;
     
     $stmt = $mysqli->prepare("
@@ -834,7 +833,6 @@ function getNextFileForS3Migration() {
         WHERE a.s3 = 0 
           AND a.file > 0 
           AND a.filename IS NOT NULL
-          AND m.id_place = 12
           AND (a.s3_migration_started IS NULL OR a.s3_migration_started < DATE_SUB(NOW(), INTERVAL ? SECOND))
         ORDER BY a.size DESC
         LIMIT 1
