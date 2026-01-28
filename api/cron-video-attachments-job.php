@@ -34,7 +34,8 @@ function runWorker() {
         $recentFiles = getRecentVideoFilesDetailed(5);
         
         plllasmaLog("=== ДИАГНОСТИКА ВИДЕО ФАЙЛОВ ===", 'INFO', 'video-worker');
-        plllasmaLog("Всего видео: {$diagnostics['total_videos']}, готовых: {$diagnostics['ready_videos']}, с файлом: {$diagnostics['videos_with_file']}, без иконки: {$diagnostics['videos_without_icon']}, без превью: {$diagnostics['videos_without_preview']}, в обработке: {$diagnostics['videos_processing']}, ожидающих: {$diagnostics['videos_pending']}", 'INFO', 'video-worker');
+        $failedCount = $diagnostics['videos_failed'] ?? 0;
+        plllasmaLog("Всего видео: {$diagnostics['total_videos']}, готовых: {$diagnostics['ready_videos']}, с файлом: {$diagnostics['videos_with_file']}, без иконки: {$diagnostics['videos_without_icon']}, без превью: {$diagnostics['videos_without_preview']}, в обработке: {$diagnostics['videos_processing']}, ожидающих: {$diagnostics['videos_pending']}, необрабатываемых: {$failedCount}", 'INFO', 'video-worker');
         
         // Показываем последние файлы
         if (!empty($recentFiles)) {
@@ -149,7 +150,7 @@ function getAvailableFilesCount() {
         FROM tbl_attachments a
         JOIN tbl_messages m ON a.id_message = m.id_message
         WHERE a.type = 'video' 
-        AND (a.status = 'pending' OR (a.status = 'ready' AND (a.icon = 0 OR a.preview = 0)))
+        AND a.status = 'pending'
         AND a.file IS NOT NULL
         AND (a.processing_started IS NULL OR a.processing_started < DATE_SUB(NOW(), INTERVAL ? SECOND))
     ");
@@ -219,6 +220,13 @@ function getVideoFilesDiagnostics() {
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
     $diagnostics['videos_pending'] = $row['count'];
+    
+    // Видео со статусом failed (обработка не удалась)
+    $stmt = $mysqli->prepare("SELECT COUNT(*) as count FROM tbl_attachments WHERE type = 'video' AND status = 'failed'");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $diagnostics['videos_failed'] = $row['count'];
     
     // Видео с разными статусами
     $stmt = $mysqli->prepare("SELECT status, COUNT(*) as count FROM tbl_attachments WHERE type = 'video' GROUP BY status");
@@ -394,7 +402,7 @@ function getNextFileToProcess() {
                 FROM tbl_attachments a
                 JOIN tbl_messages m ON a.id_message = m.id_message
                 WHERE a.type = 'video' 
-                AND (a.status = 'pending' OR (a.status = 'ready' AND (a.icon = 0 OR a.preview = 0)))
+                AND a.status = 'pending'
                 AND a.file IS NOT NULL
                 AND (a.processing_started IS NULL OR a.processing_started < DATE_SUB(NOW(), INTERVAL ? SECOND))
                 ORDER BY a.created DESC 
@@ -582,7 +590,7 @@ function processAttachment($attachment) {
         
         if (!$iconGenerated) {
             plllasmaLog("Не удалось сгенерировать иконку для {$attachmentId}, но продолжаем обработку", 'WARNING', 'video-worker');
-            $iconVersion = 0; // Сбрасываем версию иконки, если не удалось создать
+            $iconVersion = 0; // Оставляем 0, если не удалось создать
         }
         
         // Проверяем, что файл иконки действительно создался
@@ -610,7 +618,7 @@ function processAttachment($attachment) {
         
         if (!$previewGenerated) {
             plllasmaLog("Не удалось сгенерировать превью для {$attachmentId}, но продолжаем", 'WARNING', 'video-worker');
-            $previewVersion = 0; // Сбрасываем версию превью, если не удалось создать
+            $previewVersion = 0; // Оставляем 0, если не удалось создать
         } else {
             // Проверяем, что файл превью действительно создался
             if (file_exists($previewPath)) {
@@ -627,14 +635,17 @@ function processAttachment($attachment) {
     
     // Обновляем аттачмент в базе данных, только если что-то изменилось
     if ($needIcon || $needPreview) {
-        plllasmaLog("Обновляем БД: icon версия = {$iconVersion}, preview версия = {$previewVersion} для аттачмента {$attachmentId}", 'INFO', 'video-worker');
+        // Определяем статус: если ничего не создалось (icon=0 и preview=0) - failed, иначе ready
+        $newStatus = ($iconVersion === 0 && $previewVersion === 0) ? 'failed' : 'ready';
+        
+        plllasmaLog("Обновляем БД: icon версия = {$iconVersion}, preview версия = {$previewVersion}, статус = {$newStatus} для аттачмента {$attachmentId}", 'INFO', 'video-worker');
         
         $stmt = $mysqli->prepare("
             UPDATE tbl_attachments 
-            SET icon = ?, preview = ?, status = 'ready' 
+            SET icon = ?, preview = ?, status = ? 
             WHERE id = ?
         ");
-        $stmt->bind_param("iis", $iconVersion, $previewVersion, $attachmentId);
+        $stmt->bind_param("iiss", $iconVersion, $previewVersion, $newStatus, $attachmentId);
         $result = $stmt->execute();
     } else {
         plllasmaLog("Иконка и превью уже существуют, обновление БД не требуется", 'INFO', 'video-worker');
@@ -664,7 +675,11 @@ function processAttachment($attachment) {
         plllasmaLog("Временный файл удалён: {$tempFilePath}", 'INFO', 'video-worker');
     }
     
-    plllasmaLog("Аттачмент {$attachmentId} успешно преобразован в видео", 'INFO', 'video-worker');
+    if (isset($newStatus) && $newStatus === 'failed') {
+        plllasmaLog("Аттачмент {$attachmentId} помечен как failed (не удалось создать иконку/превью)", 'WARNING', 'video-worker');
+    } else {
+        plllasmaLog("Аттачмент {$attachmentId} успешно преобразован в видео", 'INFO', 'video-worker');
+    }
     return true;
 }
 

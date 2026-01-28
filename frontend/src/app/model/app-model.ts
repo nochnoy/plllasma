@@ -108,7 +108,7 @@ export interface INewAttachment {
   filename?: string; // Оригинальное имя файла
   title?: string; // Название аттачмента (особенно для YouTube видео)
   source?: string; // Исходный URL (для YouTube)
-  status: 'unavailable' | 'pending' | 'ready' | 'rejected';
+  status: 'unavailable' | 'pending' | 'ready' | 'rejected' | 'failed';
   views?: number;
   downloads?: number;
   size?: number;
