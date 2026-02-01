@@ -1012,6 +1012,36 @@ function formatBytes($bytes, $precision = 2) {
                     </div>
                 </div>
                 
+                <!-- Лог работы видео воркера -->
+                <?php
+                // Используем LOG_DIR из системы логирования (уже подключено через main.php)
+                if (defined('LOG_DIR')) {
+                    $logFile = LOG_DIR . 'video-summary.log';
+                } else {
+                    // Fallback на прямой путь
+                    $logFile = __DIR__ . '/../logs/video-summary.log';
+                }
+                if (file_exists($logFile)) {
+                    $logLines = file($logFile);
+                    if ($logLines !== false && !empty($logLines)) {
+                        // Берём последние 50 строк
+                        $recentLines = array_slice($logLines, -50);
+                        ?>
+                        <div class="stats-section" style="margin-top: 20px;">
+                            <h2 class="stats-title">Лог работы видео воркера</h2>
+                            <div style="background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px; padding: 12px; max-height: 400px; overflow-y: auto; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.5;">
+                                <?php
+                                foreach ($recentLines as $line) {
+                                    echo htmlspecialchars($line) . '<br>';
+                                }
+                                ?>
+                            </div>
+                        </div>
+                        <?php
+                    }
+                }
+                ?>
+                
                 <div class="no-data">
                     <h2>Выберите канал</h2>
                     <p>Выберите канал из списка слева, чтобы просмотреть статистику прав доступа.</p>

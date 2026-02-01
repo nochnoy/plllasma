@@ -425,9 +425,10 @@ function getLockedFile() {
     global $mysqli;
     
     $stmt = $mysqli->prepare("
-        SELECT a.*, m.id_place 
+        SELECT a.*, m.id_place, p.name as channel_name
         FROM tbl_attachments a
         JOIN tbl_messages m ON a.id_message = m.id_message
+        LEFT JOIN tbl_places p ON m.id_place = p.id_place
         WHERE a.processing_started IS NOT NULL 
         AND a.processing_started > DATE_SUB(NOW(), INTERVAL ? SECOND)
         ORDER BY a.processing_started DESC
@@ -441,6 +442,46 @@ function getLockedFile() {
     $result = $stmt->get_result();
     
     return $result->fetch_assoc();
+}
+
+/**
+ * Записывает результат работы воркера в video-summary.log
+ * Использует систему логирования Plasma, но пишет в фиксированный файл без даты
+ * @param string $message Сообщение для записи
+ */
+function writeVideoSummaryLog($message) {
+    if (!defined('LOG_DIR')) {
+        return; // Система логирования не инициализирована
+    }
+    
+    $logFile = LOG_DIR . 'video-summary.log';
+    
+    // Ротируем лог если он слишком большой (10MB)
+    if (file_exists($logFile) && filesize($logFile) > 10 * 1024 * 1024) {
+        // Сохраняем последние 1000 строк
+        $lines = file($logFile);
+        if ($lines !== false && count($lines) > 1000) {
+            $lines = array_slice($lines, -1000);
+            file_put_contents($logFile, implode('', $lines), LOCK_EX);
+        }
+    }
+    
+    $timestamp = date('Y-m-d H:i:s');
+    $logLine = "[{$timestamp}] {$message}" . PHP_EOL;
+    
+    @file_put_contents($logFile, $logLine, FILE_APPEND | LOCK_EX);
+}
+
+/**
+ * Форматирует размер в байтах в читаемый формат
+ * @param int $bytes Размер в байтах
+ * @return string Отформатированный размер
+ */
+function formatBytes($bytes) {
+    if ($bytes == 0) return '0 B';
+    $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    $i = floor(log($bytes, 1024));
+    return round($bytes / pow(1024, $i), 2) . ' ' . $units[$i];
 }
 
 /**
@@ -679,6 +720,19 @@ function processAttachment($attachment) {
         plllasmaLog("Аттачмент {$attachmentId} помечен как failed (не удалось создать иконку/превью)", 'WARNING', 'video-worker');
     } else {
         plllasmaLog("Аттачмент {$attachmentId} успешно преобразован в видео", 'INFO', 'video-worker');
+        
+        // Записываем в summary лог
+        if (isset($newStatus) && $newStatus === 'ready' && ($iconVersion > 0 || $previewVersion > 0)) {
+            $filename = $attachment['filename'] ?? 'unknown';
+            $size = isset($attachment['size']) ? formatBytes($attachment['size']) : 'unknown';
+            $channelName = $attachment['channel_name'] ?? 'unknown';
+            
+            $iconText = $iconVersion > 0 ? 'иконка' : '';
+            $previewText = $previewVersion > 0 ? 'превью' : '';
+            $createdText = trim($iconText . ($iconText && $previewText ? ' и ' : '') . $previewText);
+            
+            writeVideoSummaryLog("Аттачмент {$filename} ({$size}) в канале {$channelName} - создана {$createdText}");
+        }
     }
     return true;
 }
@@ -772,6 +826,13 @@ function tryS3Migration() {
         
         if ($result['success']) {
             plllasmaLog("S3 миграция завершена успешно: {$attachment['filename']}", 'INFO', 'video-worker');
+            
+            // Записываем в summary лог
+            $filename = $attachment['filename'] ?? 'unknown';
+            $size = isset($attachment['size']) ? formatBytes($attachment['size']) : 'unknown';
+            $channelName = $attachment['channel_name'] ?? 'unknown';
+            writeVideoSummaryLog("Аттачмент {$filename} ({$size}) в канале {$channelName} - перенесён в S3");
+            
             return ['status' => 'success', 'message' => 'S3 миграция завершена успешно'];
         } else {
             plllasmaLog("S3 миграция завершена с ошибкой: " . ($result['error'] ?? 'unknown'), 'WARNING', 'video-worker');
@@ -827,9 +888,10 @@ function getNextFileForS3Migration() {
     $maxTime = MAX_PROCESSING_TIME;
     
     $stmt = $mysqli->prepare("
-        SELECT a.id, a.filename, a.size, a.file
+        SELECT a.id, a.filename, a.size, a.file, p.name as channel_name
         FROM tbl_attachments a
         JOIN tbl_messages m ON a.id_message = m.id_message
+        LEFT JOIN tbl_places p ON m.id_place = p.id_place
         WHERE a.s3 = 0 
           AND a.file > 0 
           AND a.filename IS NOT NULL
