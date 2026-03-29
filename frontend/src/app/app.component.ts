@@ -32,15 +32,19 @@ export class AppComponent implements OnInit, AfterViewInit {
           case LoginStatus.authorised:
             // Мы уже авторизовались а ты всё ещё сидишь на странице логина. Уходи.
             // TODO: возможно надо на самой странице логин слушать статус авторизации и уходить. А это убрать.
-            if (this.router.url === '/login') {
-              //
+            const path = this.router.url.split('?')[0];
+            if (path === '/login' || path === '/register') {
               this.router.navigate(['']);
             }
             break;
 
-          case LoginStatus.unauthorised:
-            this.router.navigate(['login']);
+          case LoginStatus.unauthorised: {
+            const u = this.router.url.split('?')[0];
+            if (u !== '/login' && u !== '/register') {
+              this.router.navigate(['login']);
+            }
             break;
+          }
 
         }
       }),

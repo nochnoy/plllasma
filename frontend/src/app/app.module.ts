@@ -10,6 +10,7 @@ import {RouterModule} from "@angular/router";
 import { DefaultPageComponent } from './pages/default-page/default-page.component';
 import {AppRoutingModule} from "./app-routing.module";
 import { LoginPageComponent } from './pages/login-page/login-page.component';
+import { RegisterPageComponent } from './pages/register-page/register-page.component';
 import { AppGuard } from './app.guard';
 import {ChannelPageComponent, DialogDataExampleDialog} from './pages/channel-page/channel-page.component';
 import { MessagesComponent } from './components/messages/messages.component';
@@ -50,6 +51,7 @@ import { AttachmentListComponent } from './components/attachment-list/attachment
       ImageViewerComponent,
       DefaultPageComponent,
       LoginPageComponent,
+      RegisterPageComponent,
       ChannelPageComponent,
       MessagesComponent,
       MessageFormComponent,

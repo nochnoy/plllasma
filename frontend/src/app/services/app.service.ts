@@ -92,6 +92,43 @@ export class AppService {
     );
   }
 
+  register$(email: string, password: string, nick: string): Observable<{ ok: boolean; error?: string }> {
+    const e = email.trim().toLowerCase();
+    return of({}).pipe(
+      switchMap(() =>
+        this.httpClient.post(
+          `${this.apiPath}/register.php`,
+          { email: e, login: e, password, nick },
+          { observe: 'body', withCredentials: true }
+        )
+      ),
+      map((result: any) => {
+        if (result.error) {
+          return { ok: false, error: String(result.error) };
+        }
+        this.userService.user.nick = result.nick;
+        this.userService.user.icon = result.icon;
+        this.userService.user.access = result.access;
+        this.userService.user.superstar = result.unreadChannels ?? 0;
+        return { ok: true };
+      }),
+      switchMap((r) => {
+        if (r.ok) {
+          return of({}).pipe(
+            switchMap(() => this.channelService.loadChannels$()),
+            switchMap(() => of(r))
+          );
+        }
+        return of(r);
+      }),
+      tap((r) => {
+        if (r.ok) {
+          this.userService.loginStatus$.next(LoginStatus.authorised);
+        }
+      })
+    );
+  }
+
   logoff$(): Observable<any> {
     return of({}).pipe(
       switchMap((dialogData) => {

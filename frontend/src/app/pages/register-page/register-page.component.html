@@ -1,0 +1,28 @@
+<main>
+  <form [formGroup]="form">
+    <div class="logo"></div>
+    <div class="title">Регистрация</div>
+    <div class="progress">
+      <ng-container *ngIf="submitting">
+        <div class="spinner"></div>
+      </ng-container>
+      <ng-container *ngIf="!submitting && errorMessage">
+        <span class="error-text">{{ errorMessage }}</span>
+      </ng-container>
+    </div>
+    <input class="input input-wide" placeholder="E-mail" type="email" formControlName="email" autocomplete="email">
+    <input class="input" placeholder="Ник" type="text" formControlName="nick" autocomplete="nickname">
+    <div class="password-block">
+      <input class="input" placeholder="Пароль" type="password" formControlName="password" autocomplete="new-password">
+      <input class="input" placeholder="Пароль ещё раз" type="password" formControlName="passwordConfirm" autocomplete="new-password">
+      <span class="password-mismatch" *ngIf="form.hasError('passwordMismatch') && (form.get('password')?.touched || form.get('passwordConfirm')?.touched)">
+        Пароли не совпадают
+      </span>
+    </div>
+    <button class="button"
+            [disabled]="form.invalid || submitting"
+            (click)="onSubmit()">
+      Создать аккаунт
+    </button>
+  </form>
+</main>

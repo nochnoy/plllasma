@@ -313,6 +313,7 @@ CREATE TABLE `tbl_places` (
   `time_changed` datetime DEFAULT NULL,
   `id_user` int NOT NULL,
   `anonim` tinyint NOT NULL DEFAULT '1',
+  `privacy_mode` enum('open','private') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'open' COMMENT 'open — авто-доступ при регистрации; private — нет',
   `path` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `typ` enum('board','album','page','site') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'board',
   `script` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,

@@ -82,7 +82,9 @@ function loginByPassword($login, $password) {
 
 	sleep(2); // Защита от брутфорса
 
-	$q = $mysqli->prepare('SELECT * FROM tbl_users WHERE login=? AND password=? LIMIT 1');
+	$login = mb_strtolower(trim((string)$login));
+
+	$q = $mysqli->prepare('SELECT * FROM tbl_users WHERE LOWER(login) = ? AND password = ? LIMIT 1');
 	$q->bind_param("ss", $login, $password);
 	$q->execute();
 	$result = $q->get_result();

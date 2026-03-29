@@ -1,9 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import {FormGroup, FormControl, RequiredValidator, Validators} from '@angular/forms';
-import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
-import {UserService} from "../../services/user.service";
-import {AppService} from "../../services/app.service";
-import {tap} from "rxjs/operators";
+import { Component } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { AppService } from '../../services/app.service';
+import { tap } from 'rxjs/operators';
 
 @UntilDestroy()
 @Component({
@@ -13,9 +12,7 @@ import {tap} from "rxjs/operators";
 })
 export class LoginPageComponent {
 
-  constructor(
-    public appService: AppService,
-  ) { }
+  constructor(public appService: AppService) {}
 
   form = new FormGroup({
     login: new FormControl('', [Validators.required]),
@@ -47,5 +44,4 @@ export class LoginPageComponent {
       untilDestroyed(this)
     ).subscribe();
   }
-
 }

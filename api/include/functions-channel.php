@@ -191,6 +191,9 @@ function buildMessagesJson($a, $lastViewed) {
 		if ($row[9] == 1) { 
 			// anonim
 			$s .= ',"i":"ghost"';
+		} elseif ((int)$row[10] === 0) {
+			// системный пользователь id_user = 0 → /i/0.gif
+			$s .= ',"i":"0"';
 		} else {
 			if ($row[8]) {
 				// У юзера есть иконка

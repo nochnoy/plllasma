@@ -3,6 +3,7 @@ import { Routes, RouterModule } from '@angular/router';
 import { AppGuard } from './app.guard';
 import { ChannelPageComponent } from './pages/channel-page/channel-page.component';
 import { LoginPageComponent } from "./pages/login-page/login-page.component";
+import { RegisterPageComponent } from "./pages/register-page/register-page.component";
 import { TestMessagesPageComponent } from "./pages/test-messages-page/test-messages-page.component";
 import { AttachmentPageComponent } from "./pages/attachment-page/attachment-page.component";
 import { UploadInProgressGuard } from "./guards/upload-in-progress.guard";
@@ -10,6 +11,7 @@ import { UploadInProgressGuard } from "./guards/upload-in-progress.guard";
 const routes: Routes = [
   { path: '', redirectTo: 'channel/1', pathMatch: 'full' },
   { path: 'login', component: LoginPageComponent },
+  { path: 'register', component: RegisterPageComponent },
   { path: 'test-messages', component: TestMessagesPageComponent },
   { path: 'attachment/:id', component: AttachmentPageComponent, canActivate: [AppGuard] },
   {

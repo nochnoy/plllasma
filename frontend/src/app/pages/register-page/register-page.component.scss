@@ -1,0 +1,115 @@
+main {
+  --controls-height: 3rem;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 34rem 34rem;
+
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  form {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+
+    *:not(:last-child) {
+      margin-bottom: var(--margin-standard);
+    }
+
+    .input-wide {
+      width: 14rem;
+    }
+
+    .input {
+      background-color: #ffffff;
+      width: 10rem;
+      height: var(--controls-height);
+      line-height: var(--controls-height);
+      padding: 0 1rem;
+      border: 1px solid #c5b9ac;
+      &::placeholder {
+        color: #b6b6b6;
+      }
+    }
+
+    .button {
+      color: #f1eeec;
+      width: 9rem;
+      height: var(--controls-height);
+      margin-top: 1rem;
+      line-height: var(--controls-height);
+
+      &:hover {
+        background-color: #1f6f8f;
+      }
+      &:disabled {
+        background-color: #9a9a9a;
+      }
+    }
+  }
+
+  .title {
+    max-width: 14rem;
+    text-align: center;
+    font-size: 2.2rem;
+    margin-bottom: 0 !important;
+  }
+
+  .progress {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 2.4rem;
+    font-size: 1.4rem;
+
+    .spinner {
+      margin-right: 2rem;
+      padding-bottom: 1rem;
+    }
+  }
+
+  .error-text {
+    font-size: 0.95rem;
+    text-align: center;
+    max-width: 14rem;
+    line-height: 1.3;
+  }
+
+  .password-block {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .password-mismatch {
+    font-size: 0.85rem;
+    color: #8b2e2e;
+    text-align: center;
+    max-width: 14rem;
+    line-height: 1.2;
+    margin-top: 0.25rem;
+  }
+
+  .footer-link {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+    a {
+      color: var(--color-black);
+      &:visited {
+        color: var(--color-black);
+      }
+      &:hover {
+        color: #1f6f8f;
+      }
+    }
+  }
+}
