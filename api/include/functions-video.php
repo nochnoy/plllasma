@@ -90,21 +90,20 @@ function generateVideoIcon($videoPath, $iconPath, $width = 160, $height = 160) {
         // Если не удалось получить длительность, используем 2 секунды
         $seekTime = $duration > 0 ? $duration * 0.3 : 2;
         
-        // Извлекаем кадр из видео (на 30% от длительности - лучше чем первый кадр)
-        // Определяем тип файла для специальной обработки
+        // Извлекаем кадр (30% длительности). -ss до -i: быстрый seek, без декодирования с начала файла.
+        // -an: не трогаем аудио (меньше работы декодеру).
         $extension = strtolower(pathinfo($videoPath, PATHINFO_EXTENSION));
+        $vf = escapeshellarg($videoPath);
+        $out = escapeshellarg($tempFrame);
         
         if (in_array($extension, ['wmv', 'asf'])) {
-            // Для WMV используем специальные параметры
             plllasmaLog("Обрабатываем WMV файл с специальными параметрами", 'INFO', 'video-worker');
-            $command = "ffmpeg -i " . escapeshellarg($videoPath) . " -ss " . $seekTime . " -vframes 1 -q:v 2 -c:v mjpeg -y " . escapeshellarg($tempFrame) . " 2>/dev/null";
+            $command = "ffmpeg -ss {$seekTime} -i {$vf} -vframes 1 -q:v 2 -c:v mjpeg -an -y {$out} 2>/dev/null";
         } elseif (in_array($extension, ['rm', 'rmvb'])) {
-            // Для Real Media используем специальные параметры
             plllasmaLog("Обрабатываем Real Media файл с специальными параметрами", 'INFO', 'video-worker');
-            $command = "ffmpeg -i " . escapeshellarg($videoPath) . " -ss " . $seekTime . " -vframes 1 -q:v 2 -f image2 -y " . escapeshellarg($tempFrame) . " 2>/dev/null";
+            $command = "ffmpeg -ss {$seekTime} -i {$vf} -vframes 1 -q:v 2 -f image2 -an -y {$out} 2>/dev/null";
         } else {
-            // Для остальных форматов используем стандартные параметры
-            $command = "ffmpeg -i " . escapeshellarg($videoPath) . " -ss " . $seekTime . " -vframes 1 -q:v 2 -y " . escapeshellarg($tempFrame) . " 2>/dev/null";
+            $command = "ffmpeg -ss {$seekTime} -i {$vf} -vframes 1 -q:v 2 -an -y {$out} 2>/dev/null";
         }
         
         plllasmaLog("Временный файл: {$tempFrame}", 'INFO', 'video-worker');

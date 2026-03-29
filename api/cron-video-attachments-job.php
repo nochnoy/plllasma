@@ -1,7 +1,7 @@
 <?php
 /**
  * Воркер для обработки видео аттачментов
- * Запускается cron'ом каждые 5 минут
+ * Запускается cron'ом (часто каждые 5 минут; блокировка в БД держится MAX_PROCESSING_TIME)
  * Обрабатывает один файл за запуск
  * Использует только проверку в БД для предотвращения множественных запусков
  */
@@ -12,9 +12,30 @@ require_once 'include/functions-logging.php';
 require_once 'include/functions-attachments.php';
 require_once 'include/s3.php';
 
-// Конфигурация
-define('MAX_PROCESSING_TIME', 300); // 5 минут - максимальное время обработки одного файла
+// Конфигурация (должно покрывать долгий ffmpeg: иконка + tile-превью для длинных роликов; совпадает с окном блокировки в БД)
+define('MAX_PROCESSING_TIME', 1200); // 20 минут — максимальное время обработки одного файла и срок «активной» блокировки
 
+/**
+ * После долгого ffmpeg соединение с MySQL может закрыться по wait_timeout — переподключаемся перед UPDATE.
+ */
+function ensureMysqliConnection() {
+    global $mysqli;
+    $ok = false;
+    try {
+        $ok = @$mysqli->ping();
+    } catch (Throwable $e) {
+        $ok = false;
+    }
+    if ($ok) {
+        return;
+    }
+    plllasmaLog('MySQL: соединение неактивно, переподключение', 'WARNING', 'video-worker');
+    @$mysqli->close();
+    $mysqli = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_DB);
+    $mysqli->query("SET NAMES 'utf8'");
+    $mysqli->set_charset('utf8mb4');
+    $mysqli->options(MYSQLI_OPT_INT_AND_FLOAT_NATIVE, 1);
+}
 
 /**
  * Основная функция воркера
@@ -208,7 +229,9 @@ function getVideoFilesDiagnostics() {
     $diagnostics['videos_without_preview'] = $row['count'];
     
     // Видео в обработке
-    $stmt = $mysqli->prepare("SELECT COUNT(*) as count FROM tbl_attachments WHERE type = 'video' AND processing_started IS NOT NULL AND processing_started > DATE_SUB(NOW(), INTERVAL 300 SECOND)");
+    $maxProc = MAX_PROCESSING_TIME;
+    $stmt = $mysqli->prepare("SELECT COUNT(*) as count FROM tbl_attachments WHERE type = 'video' AND processing_started IS NOT NULL AND processing_started > DATE_SUB(NOW(), INTERVAL ? SECOND)");
+    $stmt->bind_param("i", $maxProc);
     $stmt->execute();
     $result = $stmt->get_result();
     $row = $result->fetch_assoc();
@@ -300,7 +323,7 @@ function getRecentVideoFilesDetailed($limit = 10) {
         } elseif ($row['preview'] > 0) {
             $reasons[] = "has_preview_no_icon:{$row['preview']}";
         }
-        if ($row['processing_started'] && strtotime($row['processing_started']) > (time() - 300)) {
+        if ($row['processing_started'] && strtotime($row['processing_started']) > (time() - MAX_PROCESSING_TIME)) {
             $reasons[] = "processing:{$row['processing_started']}";
         }
         if (!$row['video_file_exists']) {
@@ -545,59 +568,35 @@ function processAttachment($attachment) {
     $tempFilePath = null;
     
     if ($isS3) {
-        // Файл хранится в S3 - скачиваем во временную директорию
-        plllasmaLog("Файл хранится в S3, скачиваем для обработки", 'INFO', 'video-worker');
-        
-        global $S3_key_id, $S3_key;
-        
-        if (empty($S3_key_id) || empty($S3_key) || $S3_key_id === 'Идентификатор секретного ключа') {
-            plllasmaLog("ОШИБКА: S3 ключи не настроены", 'ERROR', 'video-worker');
+        plllasmaLog("Видео только в S3: не скачиваем, помечаем как ready без иконки и превью", 'INFO', 'video-worker');
+        ensureMysqliConnection();
+        $stmt = $mysqli->prepare("
+            UPDATE tbl_attachments 
+            SET icon = 0, preview = 0, status = 'ready' 
+            WHERE id = ?
+        ");
+        $stmt->bind_param("s", $attachmentId);
+        $result = $stmt->execute();
+        if (!$result) {
+            plllasmaLog("Ошибка UPDATE (S3, без превью) для аттачмента {$attachmentId}: " . $mysqli->error, 'ERROR', 'video-worker');
             return false;
         }
-        
-        // Настраиваем S3 клиент
-        S3::setAuth($S3_key_id, $S3_key);
-        S3::setSSL(true);
-        S3::$endpoint = 'storage.yandexcloud.net';
-        
-        $bucket = 'plllasma';
-        $objectKey = $attachmentId;
-        
-        // Создаём временный файл
-        $tempDir = sys_get_temp_dir();
-        $tempFilePath = $tempDir . '/plasma_video_' . $attachmentId . '.' . $extension;
-        
-        plllasmaLog("Скачиваем из S3: {$bucket}/{$objectKey} -> {$tempFilePath}", 'INFO', 'video-worker');
-        
-        $result = S3::getObject($bucket, $objectKey, $tempFilePath);
-        
-        if (!$result || $result->error !== false) {
-            $errorMsg = $result ? (is_array($result->error) ? $result->error['message'] : 'Unknown error') : 'No response';
-            plllasmaLog("ОШИБКА: Не удалось скачать файл из S3: {$errorMsg}", 'ERROR', 'video-worker');
-            return false;
+        plllasmaLog("БД: аттачмент {$attachmentId} — ready, icon=0, preview=0 (объект в S3)", 'INFO', 'video-worker');
+        updateMessageAttachmentsJson($messageId);
+        plllasmaLog("JSON обновлён для сообщения {$messageId}", 'INFO', 'video-worker');
+        return true;
+    }
+    
+    // Локальный файл — абсолютный путь
+    $filePath = buildAttachmentFilePhysicalPath($attachmentId, $fileVersion, $attachment['filename']);
+    plllasmaLog("Проверяем существование файла: {$filePath}", 'INFO', 'video-worker');
+    if (!$filePath || !file_exists($filePath)) {
+        plllasmaLog("ОШИБКА: Файл не найден: {$filePath}", 'ERROR', 'video-worker');
+        if ($filePath) {
+            plllasmaLog("Директория существует: " . (is_dir(dirname($filePath)) ? 'да' : 'нет'), 'INFO', 'video-worker');
+            plllasmaLog("Содержимое директории: " . (is_dir(dirname($filePath)) ? implode(', ', scandir(dirname($filePath))) : 'N/A'), 'INFO', 'video-worker');
         }
-        
-        if (!file_exists($tempFilePath)) {
-            plllasmaLog("ОШИБКА: Временный файл не создан после скачивания из S3", 'ERROR', 'video-worker');
-            return false;
-        }
-        
-        $filePath = $tempFilePath;
-        plllasmaLog("Файл успешно скачан из S3, размер: " . filesize($tempFilePath) . " байт", 'INFO', 'video-worker');
-    } else {
-        // Локальный файл - используем абсолютный путь
-        $filePath = buildAttachmentFilePhysicalPath($attachmentId, $fileVersion, $attachment['filename']);
-        
-        // Проверяем, существует ли файл
-        plllasmaLog("Проверяем существование файла: {$filePath}", 'INFO', 'video-worker');
-        if (!$filePath || !file_exists($filePath)) {
-            plllasmaLog("ОШИБКА: Файл не найден: {$filePath}", 'ERROR', 'video-worker');
-            if ($filePath) {
-                plllasmaLog("Директория существует: " . (is_dir(dirname($filePath)) ? 'да' : 'нет'), 'INFO', 'video-worker');
-                plllasmaLog("Содержимое директории: " . (is_dir(dirname($filePath)) ? implode(', ', scandir(dirname($filePath))) : 'N/A'), 'INFO', 'video-worker');
-            }
-            return false;
-        }
+        return false;
     }
     
     $fileSize = filesize($filePath);
@@ -673,6 +672,8 @@ function processAttachment($attachment) {
     } else {
         plllasmaLog("Превью уже существует (версия {$previewVersion}), пропускаем генерацию превью", 'INFO', 'video-worker');
     }
+    
+    ensureMysqliConnection();
     
     // Обновляем аттачмент в базе данных, только если что-то изменилось
     if ($needIcon || $needPreview) {
