@@ -27,6 +27,17 @@
 
         <div class="form-tools form-tools-desktop" *ngIf="!channel?.isLoading">
           <div style="white-space: nowrap"><b>Управление каналом</b></div>
+
+          <div class="channel-tools" *ngIf="channel?.canEditMatrix">
+            <div [matMenuTriggerFor]="menu" class="pseudo-link">💼 Настройки <span class="up-down">▾</span></div>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="matrix.addLinkCommand()">Добавить ссылку</button>
+              <button mat-menu-item (click)="matrix.addImageCommand()">Добавить картинку</button>
+              <button mat-menu-item (click)="matrix.addTextCommand()">Добавить текст</button>
+              <button mat-menu-item (click)="matrix.addTitleCommand()">Добавить заголовок</button>
+            </mat-menu>
+          </div>
+
           <div (click)="subscribeCommand()" *ngIf="!channel?.atMenu" class="pseudo-link"><i>⭐</i> Подписаться</div>
           <div (click)="unsubscribeCommand()" *ngIf="channel?.atMenu" class="pseudo-link"><i>✖</i> Отписаться</div>
 
@@ -42,19 +53,6 @@
           >
             {{channel?.statSubscribers}} подписчиков
           </div>
-
-          <!--
-          <div class="channel-tools">
-            <div *ngIf="channel?.canUseSettings" [matMenuTriggerFor]="menu" class="pseudo-link">💼 Настройки <span class="up-down">▾</span></div>
-            <mat-menu #menu="matMenu">
-                <button mat-menu-item (click)="matrix.addImageCommand()">Права доступа</button>
-                <button mat-menu-item (click)="matrix.addImageCommand()">Дизайн: добавить картинку</button>
-                <button mat-menu-item (click)="matrix.addTextCommand()">Дизайн: добавить текст</button>
-                <button mat-menu-item (click)="matrix.addTitleCommand()">Дизайн: добавить заголовок</button>
-                <button mat-menu-item (click)="matrix.clearCommand()">Очистить дизайн</button>
-            </mat-menu>
-          </div>
-          -->
 
         </div>
       </div>

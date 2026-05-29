@@ -24,6 +24,8 @@ import {UploadService} from "../../services/upload.service";
 import {AppService} from "../../services/app.service";
 import {UserService} from "../../services/user.service";
 import {HttpService} from "../../services/http.service";
+import {MatDialog} from "@angular/material/dialog";
+import {MatrixLinkDialogComponent, MatrixLinkDialogData} from "../matrix-link-dialog/matrix-link-dialog.component";
 
 @UntilDestroy()
 @Component({
@@ -39,11 +41,13 @@ export class MatrixComponent implements OnInit, OnDestroy {
     public elementRef: ElementRef,
     public userService: UserService,
     public httpService: HttpService,
+    public dialog: MatDialog,
   ) { }
 
   readonly objectTypeText = MatrixObjectTypeEnum.text;
   readonly objectTypeImage = MatrixObjectTypeEnum.image;
   readonly objectTypeTitle = MatrixObjectTypeEnum.title;
+  readonly objectTypeLink = MatrixObjectTypeEnum.link;
 
   @Output('change')
   change = new EventEmitter<IMatrix>();
@@ -93,6 +97,10 @@ export class MatrixComponent implements OnInit, OnDestroy {
     return this.channelValue;
   }
   channelValue: Channel | null = null;
+
+  get canEditMatrix(): boolean {
+    return this.userService.canEditMatrix(this.channel?.id ?? -1);
+  }
 
   get selectionRect(): DOMRect | undefined {
     return this.selectionRectValue;
@@ -168,24 +176,26 @@ export class MatrixComponent implements OnInit, OnDestroy {
     }
 
     if (this.mouseDownPoint && this.mouseDownObject) {
-      // Мы тащим выделенный объект.
-      if (this.isMouseDownAndMoving) {
-        this.onDrag();
-      } else {
-        if (Math.abs(event.pageX - this.mouseDownPoint.x) > matrixDragThreshold || Math.abs(event.pageY - this.mouseDownPoint.y) > matrixDragThreshold) {
+      if (this.canEditMatrix) {
+        // Мы тащим выделенный объект.
+        if (this.isMouseDownAndMoving) {
+          this.onDrag();
+        } else {
+          if (Math.abs(event.pageX - this.mouseDownPoint.x) > matrixDragThreshold || Math.abs(event.pageY - this.mouseDownPoint.y) > matrixDragThreshold) {
 
-          // Выделяем то что тащим
-          if (this.mouseDownObject !== this.selectedObject) {
-            this.select(this.mouseDownObject);
+            // Выделяем то что тащим
+            if (this.mouseDownObject !== this.selectedObject) {
+              this.select(this.mouseDownObject);
+            }
+
+            this.isMouseDownAndMoving = true;
+            this.startDrag();
           }
-
-          this.isMouseDownAndMoving = true;
-          this.startDrag();
         }
       }
     } else {
       setTimeout(() => { // Пропустим кадр чтобы успел засеттится isMouseDown
-        if (!this.selectedObject && !this.isMouseDown/* защита от деселекта при ресайзе */ ) {
+        if (this.canEditMatrix && !this.selectedObject && !this.isMouseDown/* защита от деселекта при ресайзе */ ) {
           // Мы ничего не тащим и нет выделенных объектов. Тогда попробуем софт-селектнуть объект над которым мышь.
           const block: any = event?.target;
           if (block?.parentNode?.nodeName !== 'APP-SELECTION') { // Проверка что мы не навелись на рамку выделения
@@ -397,6 +407,20 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   onClickObject(): void {
     if (this.mouseDownObject) {
+      if (!this.canEditMatrix) {
+        // Без прав редактирования клик по картинке/ссылке сразу открывает их, выделение отключено
+        switch (this.mouseDownObject.type) {
+          case MatrixObjectTypeEnum.image:
+            window.open('/matrix' + '/' + this.channel?.id + '/' + this.mouseDownObject.image, '_blank');
+            break;
+          case MatrixObjectTypeEnum.link:
+            if (this.mouseDownObject.link) {
+              window.open(this.mouseDownObject.link, '_blank');
+            }
+            break;
+        }
+        return;
+      }
       if (this.mouseDownObject === this.selectedObject) { // Был выделен объект и мы ткнули в него ещё раз
         this.onDoubleClickObject();
       } else {
@@ -426,7 +450,11 @@ export class MatrixComponent implements OnInit, OnDestroy {
           }
           break;
 
-
+        case MatrixObjectTypeEnum.link:
+          if (this.selectedObject.link) {
+            window.open(this.selectedObject.link, '_blank');
+          }
+          break;
 
       }
     }
@@ -679,6 +707,39 @@ export class MatrixComponent implements OnInit, OnDestroy {
         this.channel.viewed = this.now(); // Чтобы на объекте не появилась звёздочка
       }
     }
+  }
+
+  addLinkCommand(): void {
+    if (!this.channel?.matrix || !this.userService.canEditMatrix(this.channel.id)) {
+      return;
+    }
+    const dialogRef = this.dialog.open<MatrixLinkDialogComponent, MatrixLinkDialogData>(MatrixLinkDialogComponent, {
+      data: { url: '', caption: '' }
+    });
+    dialogRef.afterClosed().subscribe((result: MatrixLinkDialogData | undefined) => {
+      if (result?.url && result?.caption) {
+        let w = 4;
+        let h = 1;
+        let x = matrixAddCol;
+        let y = this.getFreeY();
+
+        const o: IMatrixObject = {
+          type: MatrixObjectTypeEnum.link,
+          y, x, w, h,
+          text: result.caption,
+          link: result.url,
+          id: this.matrix.newObjectId++,
+          changed: this.now(),
+        };
+        this.matrix.objects.push(o);
+        this.select(o);
+        this.updateMatrixHeight();
+        this.change.emit(this.matrix);
+        if (this.channel) {
+          this.channel.viewed = this.now();
+        }
+      }
+    });
   }
 
   addImageCommand(): void {

@@ -27,6 +27,7 @@ export enum MatrixObjectTypeEnum {
   image = 1,
   door = 2,
   title = 3,
+  link = 4,
 }
 
 export interface IMatrixObject extends IMatrixRect {
@@ -37,6 +38,7 @@ export interface IMatrixObject extends IMatrixRect {
   type?: MatrixObjectTypeEnum
   image?: string;
   text?: string;
+  link?: string;
   changed: string;
 }
 
@@ -87,7 +89,7 @@ export function fixMatrixBoundaries(matrix: IMatrix): IMatrix {
   // Разделяем объекты на те, что в границах и те, что нужно переместить
   fixedMatrix.objects.forEach(obj => {
     // Вырезаем объекты неизвестного типа
-    if (obj.type === undefined || obj.type < 0 || obj.type > 3) {
+    if (obj.type === undefined || obj.type < 0 || obj.type > 4) {
       console.log(`Вырезаем объект неизвестного типа: ${obj.type}, id: ${obj.id}`);
       return;
     }

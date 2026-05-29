@@ -11,6 +11,8 @@
   </div>
 
   <div class="matrix"
+       [class.reader]="!canEditMatrix"
+       [class.admin]="canEditMatrix"
        [style.height]="((matrixHeight * cellSizePlusGap) - gap) + 'px'">
 
     <!-- Объекты -->
@@ -33,6 +35,8 @@
          class="item dragging"
          [class.item-text]="transform.object.type === objectTypeText"
          [class.item-title]="transform.object.type === objectTypeTitle"
+         [class.item-image]="transform.object.type === objectTypeImage"
+         [class.item-link]="transform.object.type === objectTypeLink"
          [style.left]="(matrixRect.left + transform.resultDomRect.left) + 'px'"
          [style.top]="(matrixRect.top + transform.resultDomRect.top) + 'px'"
          [style.background-image]="'url(/matrix/' + this.channel?.id + '/' + transform.object.image + ')'"
@@ -67,6 +71,8 @@
        [class.selected]="selectedObject === object"
        [class.item-text]="object.type === objectTypeText"
        [class.item-title]="object.type === objectTypeTitle"
+       [class.item-image]="object.type === objectTypeImage"
+       [class.item-link]="object.type === objectTypeLink"
 
        [class.matrix-star]="object.type === objectTypeImage && object.changed > (channel?.viewed ?? '')"
        [style.grid-area]="(object.y + 1) + '/' + (object.x + 1) + '/' + (object.y + 1 + object.h) + '/' + (object.x + 1 + object.w)"
@@ -74,5 +80,6 @@
        [attr.id]="object.id">
     <ng-container *ngIf="object.type === objectTypeText">{{object.text}}</ng-container>
     <ng-container *ngIf="object.type === objectTypeTitle">{{object.text}}</ng-container>
+    <ng-container *ngIf="object.type === objectTypeLink">{{object.text}}</ng-container>
   </div>
 </ng-template>

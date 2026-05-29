@@ -28,6 +28,7 @@ import { NewyearComponent } from './components/newyear/newyear.component';
 import { AttachmentPageComponent } from './pages/attachment-page/attachment-page.component';
 import { AttachmentItemComponent } from './components/attachment-item/attachment-item.component';
 import { AttachmentListComponent } from './components/attachment-list/attachment-list.component';
+import { MatrixLinkDialogComponent } from './components/matrix-link-dialog/matrix-link-dialog.component';
 
 @NgModule({
   imports: [
@@ -59,6 +60,7 @@ import { AttachmentListComponent } from './components/attachment-list/attachment
       MatrixComponent,
       SelectionComponent,
       DialogDataExampleDialog,
+      MatrixLinkDialogComponent,
           NewyearComponent,
     AttachmentPageComponent,
     AttachmentItemComponent,

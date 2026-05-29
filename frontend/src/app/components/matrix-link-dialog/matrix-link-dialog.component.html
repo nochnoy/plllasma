@@ -1,0 +1,17 @@
+<h1 mat-dialog-title>Добавить ссылку</h1>
+<div mat-dialog-content>
+  <div style="display: flex; flex-direction: column; gap: 0.8rem; margin: 0.5rem 0;">
+    <div style="display: flex; flex-direction: column;">
+      <label style="font-size: 0.9rem; margin-bottom: 0.2rem;">URL</label>
+      <input [(ngModel)]="data.url" placeholder="https://example.com" style="width: 100%; box-sizing: border-box;" />
+    </div>
+    <div style="display: flex; flex-direction: column;">
+      <label style="font-size: 0.9rem; margin-bottom: 0.2rem;">Подпись</label>
+      <input [(ngModel)]="data.caption" placeholder="Текст ссылки" style="width: 100%; box-sizing: border-box;" />
+    </div>
+  </div>
+</div>
+<div mat-dialog-actions style="display: flex; justify-content: flex-end; gap: 0.5rem; padding: 0.5rem 1rem;">
+  <button class="button" (click)="onCancel()">Отмена</button>
+  <button class="button button__blue" (click)="onSubmit()">Добавить</button>
+</div>

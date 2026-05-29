@@ -104,6 +104,16 @@
     width: 100%;
     height: 100%;
   }
+
+  &.reader {
+    .item {
+      cursor: default;
+    }
+    .item-image,
+    .item-link {
+      cursor: pointer;
+    }
+  }
 }
 
 .item {
@@ -144,7 +154,13 @@
     padding-top: 0.3rem; // если блок высотой в 1 клетку и в нём одна строка текста - она по вертикали должна выровняться по центру
   }
 
-
+  &-link {
+    font-size: 1.2rem;
+    color: var(--color-link);
+    text-decoration: underline;
+    padding-top: 0.3rem;
+    cursor: pointer;
+  }
 
   .content {
     pointer-events: none;
