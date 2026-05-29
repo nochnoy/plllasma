@@ -6,6 +6,7 @@ import {
   IMatrixRect,
   matrixAddCol,
   matrixCellSize,
+  matrixCellHeight,
   matrixColsCount,
   matrixDragThreshold,
   matrixFlexCol,
@@ -55,9 +56,11 @@ export class MatrixComponent implements OnInit, OnDestroy {
   matrix = {} as IMatrix;
   matrixHeight = 1;
   matrixRect: DOMRect = new DOMRect(0,0,0,0);
-  cellSize: number = matrixCellSize;
+  cellSize: number = matrixCellSize;     // ширина клетки (для совместимости)
+  cellHeight: number = matrixCellHeight;  // высота клетки
   gap = matrixGap;
-  cellSizePlusGap: number = matrixCellSize + matrixGap;
+  cellSizePlusGap: number = matrixCellSize + matrixGap;   // ширина клетки + gap
+  cellHeightPlusGap: number = matrixCellHeight + matrixGap; // высота клетки + gap
   flexColWidth: number = 0; // ширина 13го столбца
   flexColWidthPlusGap: number = 0; // ширина 13го столбца с гапом
 
@@ -264,7 +267,7 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   isXYInsideObject(x: number, y: number, object: IMatrixObject): boolean {
     const cellX = Math.round((x - this.matrixRect.x) / this.cellSizePlusGap);
-    const cellY = Math.round((y - this.matrixRect.y) / this.cellSizePlusGap);
+    const cellY = Math.round((y - this.matrixRect.y) / this.cellHeightPlusGap);
     return (cellX >= object.x && cellX <= object.x + object.w) && (cellY>= object.y && cellY <= object.y + object.h);
   }
 
@@ -373,9 +376,9 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
       this.transform.resultDomRect = new DOMRect(
         (this.transform.object.x   * this.cellSizePlusGap) + flexColShift + shiftX,
-        (this.transform.object.y   * this.cellSizePlusGap) + shiftY,
+        (this.transform.object.y   * this.cellHeightPlusGap) + shiftY,
         this.transform.object.w * this.cellSizePlusGap - this.gap,
-        this.transform.object.h * this.cellSizePlusGap - this.gap,
+        this.transform.object.h * this.cellHeightPlusGap - this.gap,
       );
 
       this.transform.resultMatrixRect =  this.domRectToMatrixRect(this.transform.resultDomRect);
@@ -515,8 +518,8 @@ export class MatrixComponent implements OnInit, OnDestroy {
   matrixRectToDomRect(rect: IMatrixRect): DOMRect {
     let x = this.matrixRect.x + rect.x * this.cellSizePlusGap;
     let w = rect.w * this.cellSizePlusGap - this.gap;
-    let y = this.matrixRect.y + rect.y * this.cellSizePlusGap;
-    let h = rect.h * this.cellSizePlusGap - this.gap;
+    let y = this.matrixRect.y + rect.y * this.cellHeightPlusGap;
+    let h = rect.h * this.cellHeightPlusGap - this.gap;
 
     // Учтём влияние тянущегося столбца
     if (rect.x > matrixFlexCol) {
@@ -541,9 +544,9 @@ export class MatrixComponent implements OnInit, OnDestroy {
 
   domRectToMatrixRect(domRect: DOMRect): IMatrixRect {
     let x = -1;
-    let y = Math.round(domRect.top     / this.cellSizePlusGap);
+    let y = Math.round(domRect.top     / this.cellHeightPlusGap);
     let w = Math.round(domRect.width   / this.cellSizePlusGap);
-    let h = Math.round(domRect.height  / this.cellSizePlusGap);
+    let h = Math.round(domRect.height  / this.cellHeightPlusGap);
 
     // Учитываем смещение 13го столбца и столбцов за ним
     const w13start = matrixFlexCol * this.cellSizePlusGap;

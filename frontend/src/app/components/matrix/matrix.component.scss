@@ -68,7 +68,7 @@
   display: block;
   width: 100%;
   min-width: 600px;
-  min-height: 10px; // чтобы она раскукожилась. А то её размер зависит от cellSize а cellSize зависит от её размера.
+  min-height: 10px; // чтобы она раскукожилась. А то её размер зависит от cellHeight а cellHeight зависит от её размера.
 
   .bg {
     position: relative;
@@ -80,17 +80,17 @@
     flex-direction: row;
     justify-content: stretch;
     align-items: stretch;
-    opacity: 0.3;
 
     :nth-child(1) {
       display: inline-block;
-      background-image: url('~src/assets/img/matrix-bg.png');
-      min-width: calc((var(--matrix-cell-size) + var(--matrix-gap)) * var(--matrix-flex-col));
+      background-image: url('~src/assets/img/matrix-bg.svg');
+      background-size: var(--matrix-cell-width-plus-gap) var(--matrix-cell-height-plus-gap);
+      min-width: calc((var(--matrix-cell-width) + var(--matrix-gap)) * var(--matrix-flex-col));
     }
     :nth-child(2) {
       display: inline-block;
-      background-image: url('~src/assets/img/matrix-flex-bg.png');
-      background-size: 100% calc(var(--matrix-cell-size) + var(--matrix-gap));
+      background-image: url('~src/assets/img/matrix-flex-bg.svg');
+      background-size: 100% var(--matrix-cell-height-plus-gap);
       background-repeat: repeat-y;
       flex-grow: 1;
     }
@@ -98,8 +98,8 @@
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(17, var(--matrix-cell-size)) minmax(var(--matrix-cell-size), 1fr);
-    grid-auto-rows: var(--matrix-cell-size);
+    grid-template-columns: repeat(17, var(--matrix-cell-width)) minmax(var(--matrix-cell-width), 1fr);
+    grid-auto-rows: var(--matrix-cell-height);
     gap: var(--matrix-gap);
     width: 100%;
     height: 100%;
@@ -145,20 +145,17 @@
 
   &-text {
     font-size: 1rem;
-    padding-top: 0.4rem; // если блок высотой в 1 клетку и в нём одна строка текста - она по вертикали должна выровняться по центру
   }
 
   &-title {
     font-size: 1.2rem;
     font-weight: bold;
-    padding-top: 0.3rem; // если блок высотой в 1 клетку и в нём одна строка текста - она по вертикали должна выровняться по центру
   }
 
   &-link {
-    font-size: 1.2rem;
+    font-size: 1rem;
     color: var(--color-link);
     text-decoration: underline;
-    padding-top: 0.3rem;
     cursor: pointer;
   }
 

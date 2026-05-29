@@ -1,7 +1,7 @@
 .channel-container {
   container-type: inline-size;
   container-name: channel;
-  min-width: calc((var(--matrix-cell-size) + var(--matrix-gap)) * var(--matrix-flex-col) + var(--matrix-gap) + var(--matrix-gap) + var(--matrix-gap));
+  min-width: calc((var(--matrix-cell-width) + var(--matrix-gap)) * var(--matrix-flex-col) + var(--matrix-gap) + var(--matrix-gap) + var(--matrix-gap));
 }
 
 .form {
@@ -13,8 +13,8 @@
 
   &-content {
     flex-grow: 1;
-    min-width: calc(((var(--matrix-cell-size) + var(--matrix-gap)) * 14) - var(--matrix-gap) + 2px);
-    max-width: calc(((var(--matrix-cell-size) + var(--matrix-gap)) * 14) - var(--matrix-gap) + 2px);
+    min-width: calc(((var(--matrix-cell-width) + var(--matrix-gap)) * 14) - var(--matrix-gap) + 2px);
+    max-width: calc(((var(--matrix-cell-width) + var(--matrix-gap)) * 14) - var(--matrix-gap) + 2px);
   }
 
   &-tools {

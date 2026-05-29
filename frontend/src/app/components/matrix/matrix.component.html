@@ -13,7 +13,7 @@
   <div class="matrix"
        [class.reader]="!canEditMatrix"
        [class.admin]="canEditMatrix"
-       [style.height]="((matrixHeight * cellSizePlusGap) - gap) + 'px'">
+       [style.height]="((matrixHeight * cellHeightPlusGap) - gap) + 'px'">
 
     <!-- Объекты -->
     <div class="grid">
@@ -24,8 +24,8 @@
 
   <!-- Задний фон - серые квадратики -->
   <div class="bg"
-       [style.top]="'-' + ((matrixHeight * cellSizePlusGap) - gap) + 'px'"
-       [style.height]="((matrixHeight * cellSizePlusGap) - gap) + 'px'">
+       [style.top]="'-' + ((matrixHeight * cellHeightPlusGap) - gap) + 'px'"
+       [style.height]="((matrixHeight * cellHeightPlusGap) - gap) + 'px'">
     <div></div>
     <div></div>
   </div>

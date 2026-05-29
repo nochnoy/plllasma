@@ -52,14 +52,17 @@
   --avatar-size: 16px;
   --avatar-margin: 0.2rem;
 
-  --matrix-cell-size: 2rem; // ! должна быть равна константе matrixCellSize
-  --matrix-gap: 0.5rem;     // ! должна быть равна константе matrixGap
-  --matrix-cols-count: 18;  // ! должна быть равна константе matrixColsCount А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
-  --matrix-flex-col: 17;    // ! должна быть равна константе matrixFlexCol   А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
+  --matrix-cell-width: 2rem;  // ! должна быть равна константе matrixCellSize (ширина клетки)
+  --matrix-cell-height: 1.25rem; // ! должна быть равна константе matrixCellHeight (высота клетки)
+  --matrix-gap: 0.5rem;       // ! должна быть равна константе matrixGap
+  --matrix-cell-width-plus-gap: calc(var(--matrix-cell-width) + var(--matrix-gap));
+  --matrix-cell-height-plus-gap: calc(var(--matrix-cell-height) + var(--matrix-gap));
+  --matrix-cols-count: 18;    // ! должна быть равна константе matrixColsCount А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
+  --matrix-flex-col: 17;      // ! должна быть равна константе matrixFlexCol   А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
   --matrix-right-cols-count: calc(var(--matrix-cols-count) - var(--matrix-flex-col) - 1); // кол-во столбцов справа от резинового
   --matrix-star-size: 0.8rem;
   --matrix-collapsed-height-cells: 10; // ! должна быть равна константе matrixCollapsedHeightCells
-  --matrix-collapsed-height: calc((var(--matrix-cell-size) + var(--matrix-gap)) * var(--matrix-collapsed-height-cells) + var(--matrix-gap));
+  --matrix-collapsed-height: calc((var(--matrix-cell-height) + var(--matrix-gap)) * var(--matrix-collapsed-height-cells) + var(--matrix-gap));
 
   --selection-handle-size: 11px;
 
