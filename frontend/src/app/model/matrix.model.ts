@@ -1,10 +1,10 @@
 import {Const} from "./const";
 
-export const matrixCellSize = 2 * Const.remInPixels;             // ! должна быть равна css-переменной --matrix-cell-width (ширина клетки)
+export const matrixCellSize = Math.round(1.25 * Const.remInPixels); // ! должна быть равна css-переменной --matrix-cell-width (ширина клетки)
 export const matrixCellHeight = Math.round(1.25 * Const.remInPixels); // ! должна быть равна css-переменной --matrix-cell-height (высота клетки)
 export const matrixGap = Math.round(0.5 * Const.remInPixels);    // ! должна быть равна css-переменной --matrix-gap
-export const matrixColsCount = 18;                                       // ! должна быть равна css-переменной --matrix-cols-count А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
-export const matrixFlexCol = 17;                                         // ! должна быть равна css-переменной --matrix-flex-col А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
+export const matrixColsCount = 25;                                       // ! должна быть равна css-переменной --matrix-cols-count А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
+export const matrixFlexCol = 24;                                         // ! должна быть равна css-переменной --matrix-flex-col А ТАКЖЕ соответствовать css-гриду и .bg в matrix.component.css
 export const matrixAddCol = 10;                                          // На какой столбец добавляются блоки когда юзер их создаёт
 export const matrixDragThreshold = 4;
 export const matrixCollapsedHeightCells = 10;                            // ! должна быть равна css-переменной --matrix-collapsed-height-cells

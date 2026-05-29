@@ -98,7 +98,7 @@
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(17, var(--matrix-cell-width)) minmax(var(--matrix-cell-width), 1fr);
+    grid-template-columns: repeat(24, var(--matrix-cell-width)) minmax(var(--matrix-cell-width), 1fr);
     grid-auto-rows: var(--matrix-cell-height);
     gap: var(--matrix-gap);
     width: 100%;
