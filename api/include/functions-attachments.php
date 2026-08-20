@@ -120,44 +120,40 @@ function createAttachment($messageId, $type, $source = null, $videoId = null, $f
 // Возвращает true только если удалось создать хотя бы иконку
 function downloadYouTubeAssets($attachmentId, $videoId) {
     global $mysqli;
-    
-    // Получаем информацию о видео с YouTube API
-    $infoUrl = "http://194.135.33.47:5000/api/info/" . $videoId;
-    $infoResponse = @file_get_contents($infoUrl);
-    
-    if ($infoResponse) {
-        $info = json_decode($infoResponse, true);
-        if ($info && !isset($info['error'])) {
-            $title = $info['title'] ?? null;
-            $duration = isset($info['duration']) ? intval($info['duration']) * 1000 : null; // Конвертируем секунды в миллисекунды
-            
-            // Проверяем наличие столбца duration (для обратной совместимости)
-            $checkResult = $mysqli->query("SHOW COLUMNS FROM tbl_attachments LIKE 'duration'");
-            $hasDurationColumn = $checkResult && $checkResult->num_rows > 0;
-            
-            // Сохраняем title и duration в БД
-            if ($title || ($duration !== null && $hasDurationColumn)) {
-                if ($hasDurationColumn) {
-                    $updateSql = $mysqli->prepare("UPDATE tbl_attachments SET title = ?, duration = ? WHERE id = ?");
-                    $updateSql->bind_param("sis", $title, $duration, $attachmentId);
-                } else {
-                    // Если столбца duration нет - обновляем только title
-                    $updateSql = $mysqli->prepare("UPDATE tbl_attachments SET title = ? WHERE id = ?");
-                    $updateSql->bind_param("ss", $title, $attachmentId);
-                }
-                $updateSql->execute();
-                
-                if ($hasDurationColumn) {
-                    logYouTube("YouTube attachment $attachmentId: Saved info - title: " . ($title ?? 'null') . ", duration: " . ($duration ?? 'null') . "ms");
-                } else {
-                    logYouTube("YouTube attachment $attachmentId: Saved title (duration column not exists yet): " . ($title ?? 'null'));
-                }
+
+    // Загружаем watch-страницу YouTube один раз (через SOCKS5-прокси):
+    // из playerResponse берем и метаданные (title/duration), и storyboard для превью
+    $playerResponse = getYouTubePlayerResponse($videoId);
+    $info = extractYouTubeVideoInfo($playerResponse);
+
+    if ($info) {
+        $title = !empty($info['title']) ? $info['title'] : null;
+        $duration = isset($info['duration']) ? intval($info['duration']) * 1000 : null; // Конвертируем секунды в миллисекунды
+
+        // Проверяем наличие столбца duration (для обратной совместимости)
+        $checkResult = $mysqli->query("SHOW COLUMNS FROM tbl_attachments LIKE 'duration'");
+        $hasDurationColumn = $checkResult && $checkResult->num_rows > 0;
+
+        // Сохраняем title и duration в БД
+        if ($title || ($duration !== null && $hasDurationColumn)) {
+            if ($hasDurationColumn) {
+                $updateSql = $mysqli->prepare("UPDATE tbl_attachments SET title = ?, duration = ? WHERE id = ?");
+                $updateSql->bind_param("sis", $title, $duration, $attachmentId);
+            } else {
+                // Если столбца duration нет - обновляем только title
+                $updateSql = $mysqli->prepare("UPDATE tbl_attachments SET title = ? WHERE id = ?");
+                $updateSql->bind_param("ss", $title, $attachmentId);
             }
-        } else {
-            logYouTube("YouTube attachment $attachmentId: Failed to get video info, API returned error", 'WARNING');
+            $updateSql->execute();
+
+            if ($hasDurationColumn) {
+                logYouTube("YouTube attachment $attachmentId: Saved info - title: " . ($title ?? 'null') . ", duration: " . ($duration ?? 'null') . "ms");
+            } else {
+                logYouTube("YouTube attachment $attachmentId: Saved title (duration column not exists yet): " . ($title ?? 'null'));
+            }
         }
     } else {
-        logYouTube("YouTube attachment $attachmentId: Failed to fetch video info from API", 'WARNING');
+        logYouTube("YouTube attachment $attachmentId: Failed to fetch video info from YouTube", 'WARNING');
     }
     
     // Создаем папку для файлов
@@ -187,34 +183,38 @@ function downloadYouTubeAssets($attachmentId, $videoId) {
     $previewPath = buildAttachmentPreviewPhysicalPath($attachmentId, $previewVersion);
     $iconPath = buildAttachmentIconPhysicalPath($attachmentId, $iconVersion);
     
-    // Скачиваем storyboard preview (с раздвинутыми кадрами)
-    $previewUrl = "http://194.135.33.47:5000/api/preview/" . $videoId;
-    $previewSuccess = downloadFile($previewUrl, $previewPath);
-    
+    // Собираем storyboard preview (с раздвинутыми кадрами) + обычное превью снизу
+    $previewImg = buildYouTubePreviewImage($videoId, $playerResponse);
+    $previewSuccess = false;
+    if ($previewImg) {
+        $previewSuccess = saveYouTubeGdImage($previewImg, $previewPath);
+    }
+
     // Дополнительная проверка: файл действительно существует и не пустой
     if ($previewSuccess && (!file_exists($previewPath) || filesize($previewPath) < 1024)) {
         $previewSuccess = false;
         logYouTube("YouTube attachment $attachmentId: Preview file not created or too small", 'WARNING');
     }
-    
+
     // Скачиваем обычное превью для создания иконки (БЕЗ раздвинутых кадров!)
-    $iconSourceUrl = "http://194.135.33.47:5000/api/icon/" . $videoId;
-    $iconSourcePath = $folderPath . $attachmentId . "-temp-icon-source.jpg";
-    $iconSourceSuccess = downloadFile($iconSourceUrl, $iconSourcePath);
-    
+    $iconSourceContent = fetchYouTubeThumbnail($videoId);
+
     // Создаем иконку 160x160 из обычного превью
     $iconSuccess = false;
-    if ($iconSourceSuccess && file_exists($iconSourcePath)) {
-        $iconSuccess = createIconFromPreview($iconSourcePath, $iconPath);
-        
-        // Удаляем временный файл
-        @unlink($iconSourcePath);
-        
-        // Дополнительная проверка иконки
-        if ($iconSuccess && (!file_exists($iconPath) || filesize($iconPath) < 1024)) {
-            $iconSuccess = false;
-            logYouTube("YouTube attachment $attachmentId: Icon file not created or too small", 'WARNING');
+    if ($iconSourceContent !== null) {
+        $iconSourceImg = @imagecreatefromstring($iconSourceContent);
+        if ($iconSourceImg) {
+            $iconSuccess = createIconFromGdImage($iconSourceImg, $iconPath);
+            imagedestroy($iconSourceImg);
+        } else {
+            logYouTube("YouTube attachment $attachmentId: Failed to decode thumbnail image", 'WARNING');
         }
+    }
+
+    // Дополнительная проверка иконки
+    if ($iconSuccess && (!file_exists($iconPath) || filesize($iconPath) < 1024)) {
+        $iconSuccess = false;
+        logYouTube("YouTube attachment $attachmentId: Icon file not created or too small", 'WARNING');
     }
     
     // Если не удалось создать иконку, удаляем превью и возвращаем false
@@ -275,48 +275,436 @@ function downloadFile($url, $path) {
     return true;
 }
 
+// === ПРЯМАЯ ЗАГРУЗКА ПРЕВЬЮ С YOUTUBE ===
+// Раньше этим занимался отдельный Python-сервис (папка youtube-preview),
+// теперь бэкенд ходит на YouTube сам через SOCKS5-прокси.
+// Настройки прокси лежат в plllasma-passwords.php (уровнем выше корня сайта):
+//   $youtubeProxyHost, $youtubeProxyPort, $youtubeProxyUser, $youtubeProxyPassword
+// ВАЖНО: прокси используется только этими функциями, все остальные запросы идут напрямую.
+
+// Скачивает URL с YouTube через SOCKS5-прокси (если прокси не настроен - напрямую)
+// Возвращает содержимое ответа или null
+function fetchYouTubeUrl($url, $timeout = 20) {
+    global $youtubeProxyHost, $youtubeProxyPort, $youtubeProxyUser, $youtubeProxyPassword;
+
+    if (!function_exists('curl_init')) {
+        logYouTube("fetchYouTubeUrl: PHP cURL extension is not installed", 'ERROR');
+        return null;
+    }
+
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_MAXREDIRS => 5,
+        CURLOPT_TIMEOUT => $timeout,
+        CURLOPT_CONNECTTIMEOUT => 15,
+        CURLOPT_ENCODING => '', // принимаем gzip/deflate
+        CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    ]);
+
+    if (!empty($youtubeProxyHost)) {
+        curl_setopt($ch, CURLOPT_PROXY, $youtubeProxyHost . ':' . intval($youtubeProxyPort));
+        // SOCKS5 с резолвом доменов на стороне прокси (аналог socks5h://)
+        curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
+        if (!empty($youtubeProxyUser)) {
+            curl_setopt($ch, CURLOPT_PROXYUSERPWD, $youtubeProxyUser . ':' . $youtubeProxyPassword);
+        }
+    }
+
+    $content = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
+    curl_close($ch);
+
+    if ($content === false) {
+        logYouTube("fetchYouTubeUrl: cURL error for $url: $curlError", 'WARNING');
+        return null;
+    }
+    if ($httpCode !== 200) {
+        logYouTube("fetchYouTubeUrl: HTTP $httpCode for $url", 'WARNING');
+        return null;
+    }
+
+    return $content;
+}
+
+// Скачивает watch-страницу видео и извлекает ytInitialPlayerResponse
+// Возвращает массив playerResponse или null
+function getYouTubePlayerResponse($videoId) {
+    $html = fetchYouTubeUrl("https://www.youtube.com/watch?v=" . urlencode($videoId), 25);
+    if (!$html) {
+        return null;
+    }
+
+    // Ищем ytInitialPlayerResponse в HTML
+    $patterns = [
+        '/var ytInitialPlayerResponse\s*=\s*(\{.+?\});/s',
+        '/ytInitialPlayerResponse\s*=\s*(\{.+?\});/s',
+        '/ytInitialPlayerResponse"\s*:\s*(\{.+?\}),/s',
+    ];
+
+    foreach ($patterns as $pattern) {
+        if (preg_match($pattern, $html, $matches)) {
+            $playerResponse = json_decode($matches[1], true);
+            if (is_array($playerResponse)) {
+                return $playerResponse;
+            }
+        }
+    }
+
+    logYouTube("getYouTubePlayerResponse: ytInitialPlayerResponse not found for $videoId", 'WARNING');
+    return null;
+}
+
+// Извлекает метаданные видео из playerResponse (аналог /api/info старого сервиса)
+// duration возвращается в секундах
+function extractYouTubeVideoInfo($playerResponse) {
+    if (!is_array($playerResponse)) {
+        return null;
+    }
+
+    $videoDetails = $playerResponse['videoDetails'] ?? [];
+    $microformat = $playerResponse['microformat']['playerMicroformatRenderer'] ?? [];
+
+    return [
+        'title' => $videoDetails['title'] ?? '',
+        'duration' => intval($videoDetails['lengthSeconds'] ?? 0),
+        'publishDate' => $microformat['publishDate'] ?? '',
+        'uploadDate' => $microformat['uploadDate'] ?? '',
+        'author' => $videoDetails['author'] ?? '',
+        'viewCount' => intval($videoDetails['viewCount'] ?? 0),
+    ];
+}
+
+// Скачивает обычное превью (thumbnail) видео по приоритету качества:
+// maxres -> hq -> sd -> mq -> default (аналог /api/icon старого сервиса)
+// Возвращает бинарное содержимое JPEG или null
+function fetchYouTubeThumbnail($videoId) {
+    $qualities = ['maxresdefault.jpg', 'hqdefault.jpg', 'sddefault.jpg', 'mqdefault.jpg', 'default.jpg'];
+
+    foreach ($qualities as $quality) {
+        $content = fetchYouTubeUrl("https://img.youtube.com/vi/$videoId/$quality", 15);
+        if ($content !== null && isValidYouTubeJpeg($content)) {
+            return $content;
+        }
+    }
+
+    return null;
+}
+
+// Проверяет, что контент - валидный JPEG от YouTube
+function isValidYouTubeJpeg($content) {
+    if (strlen($content) < 1024) {
+        return false;
+    }
+    // Сигнатура JPEG
+    if (substr($content, 0, 3) !== "\xFF\xD8\xFF") {
+        return false;
+    }
+    // Дополнительная проверка на текстовые ошибки
+    $lower = strtolower($content);
+    if (strpos($lower, 'html') !== false || strpos($lower, 'error') !== false) {
+        return false;
+    }
+    return true;
+}
+
+// Извлекает storyboard spec из playerResponse
+function getYouTubeStoryboardSpec($playerResponse) {
+    if (!is_array($playerResponse)) {
+        return null;
+    }
+    return $playerResponse['storyboards']['playerStoryboardSpecRenderer']['spec'] ?? null;
+}
+
+// Генерирует URL'ы storyboard-шитов из spec (порт generate_storyboard_urls из youtube-preview-api.py)
+function generateYouTubeStoryboardUrls($spec, $hq, $seconds) {
+    if (!$spec || !$seconds) {
+        return [];
+    }
+
+    $parts = explode('|', $spec);
+    $baseParts = explode('$', $parts[0]);
+    $baseUrl = $baseParts[0] . ($hq ? '2/' : '1/');
+
+    $nSplit = explode('$N', $parts[0], 2);
+    if (!isset($nSplit[1])) {
+        return [];
+    }
+    $sgpPart = $nSplit[1];
+
+    // Определяем sigh части
+    $sighHq = null;
+    $sighLq = null;
+    $partsCount = count($parts);
+    if ($partsCount === 3) {
+        $tmp = explode('M#', $parts[2]);
+        $sighHq = $tmp[1] ?? null;
+        $tmp = explode('M#', $parts[1]);
+        $sighLq = $tmp[1] ?? null;
+    } elseif ($partsCount === 2) {
+        if (strpos($parts[1], 't#') !== false) {
+            $tmp = explode('t#', $parts[1]);
+        } else {
+            $tmp = explode('M#', $parts[1]);
+        }
+        $sighHq = $tmp[1] ?? null;
+        $sighLq = $sighHq; // Используем HQ для LQ как fallback
+    } elseif ($partsCount >= 4) {
+        $tmp = explode('M#', $parts[3]);
+        $sighHq = $tmp[1] ?? null;
+        $tmp = explode('M#', $parts[2]);
+        $sighLq = $tmp[1] ?? null;
+    }
+
+    $sigh = $hq ? $sighHq : $sighLq;
+    if ($sigh === null) {
+        return [];
+    }
+
+    // Вычисляем количество шитов
+    $division = $hq ? 25 : 100;
+    if ($seconds < 250) {
+        $boardsCount = (int)ceil(($seconds / 2) / $division);
+    } elseif ($seconds < 1000) {
+        $boardsCount = (int)ceil(($seconds / 4) / $division);
+    } else {
+        $boardsCount = (int)ceil(($seconds / 10) / $division);
+    }
+
+    $urls = [];
+    for ($i = 0; $i < $boardsCount; $i++) {
+        $urls[] = $baseUrl . "M$i" . $sgpPart . '&sigh=' . $sigh;
+    }
+
+    return $urls;
+}
+
+// Скачивает первый storyboard-шит (HQ -> LQ) и раздвигает кадры
+// Возвращает GD-картинку или null
+function fetchYouTubeStoryboardImage($videoId, $playerResponse) {
+    $spec = getYouTubeStoryboardSpec($playerResponse);
+    $duration = intval($playerResponse['videoDetails']['lengthSeconds'] ?? 0);
+    if (!$spec || !$duration) {
+        return null;
+    }
+
+    foreach ([true, false] as $hq) {
+        $urls = generateYouTubeStoryboardUrls($spec, $hq, $duration);
+        if (empty($urls)) {
+            continue;
+        }
+
+        // Берем первое изображение (индекс 0)
+        $content = fetchYouTubeUrl($urls[0], 15);
+        if ($content === null || strlen($content) < 1024) {
+            continue;
+        }
+
+        // Проверяем формат (JPEG или WebP)
+        $isJpeg = substr($content, 0, 3) === "\xFF\xD8\xFF";
+        $isWebp = substr($content, 0, 4) === 'RIFF' && substr($content, 8, 4) === 'WEBP';
+        if (!$isJpeg && !$isWebp) {
+            continue;
+        }
+
+        $img = @imagecreatefromstring($content);
+        if (!$img) {
+            continue;
+        }
+
+        // Добавляем промежутки между кадрами
+        return addYouTubeStoryboardGridLines($img, $hq);
+    }
+
+    return null;
+}
+
+// Раздвигает кадры storyboard-шита промежутками 4px (порт add_grid_lines из youtube-preview-api.py)
+// Если размер шита нестандартный - возвращает оригинал без изменений
+function addYouTubeStoryboardGridLines($img, $hq = true) {
+    $width = imagesx($img);
+    $height = imagesy($img);
+
+    $cols = $hq ? 5 : 10;
+    $rows = $hq ? 5 : 10;
+
+    // Размеры должны делиться нацело, иначе возвращаем оригинал
+    if ($width % $cols !== 0 || $height % $rows !== 0) {
+        logYouTube("WARNING: Non-standard storyboard size {$width}x{$height}, skipping grid lines");
+        return $img;
+    }
+
+    $frameWidth = intdiv($width, $cols);
+    $frameHeight = intdiv($height, $rows);
+
+    // Ожидаемые размеры кадров: HQ ~160x90, LQ ~80x45, допускаем отклонение ±50%
+    $expectedWidth = $hq ? 160 : 80;
+    $expectedHeight = $hq ? 90 : 45;
+    if (!($expectedWidth * 0.5 <= $frameWidth && $frameWidth <= $expectedWidth * 1.5) ||
+        !($expectedHeight * 0.5 <= $frameHeight && $frameHeight <= $expectedHeight * 1.5)) {
+        logYouTube("WARNING: Unexpected frame size {$frameWidth}x{$frameHeight}, skipping grid lines");
+        return $img;
+    }
+
+    $gapSize = 4;
+    $newWidth = $width + $gapSize * ($cols - 1);
+    $newHeight = $height + $gapSize * ($rows - 1);
+
+    $newImg = imagecreatetruecolor($newWidth, $newHeight);
+    $gapColor = imagecolorallocate($newImg, 215, 202, 187); // #D7CABB
+    imagefill($newImg, 0, 0, $gapColor);
+
+    // Копируем каждый кадр с промежутками
+    for ($row = 0; $row < $rows; $row++) {
+        for ($col = 0; $col < $cols; $col++) {
+            imagecopy(
+                $newImg, $img,
+                $col * ($frameWidth + $gapSize),
+                $row * ($frameHeight + $gapSize),
+                $col * $frameWidth,
+                $row * $frameHeight,
+                $frameWidth,
+                $frameHeight
+            );
+        }
+    }
+
+    imagedestroy($img);
+    return $newImg;
+}
+
+// Склеивает storyboard и обычное превью (storyboard сверху, превью снизу через зазор 4px)
+// Если превью шире storyboard - уменьшается пропорционально
+function combineYouTubeStoryboardAndPreview($storyboardImg, $previewImg) {
+    $storyboardWidth = imagesx($storyboardImg);
+    $storyboardHeight = imagesy($storyboardImg);
+    $previewWidth = imagesx($previewImg);
+    $previewHeight = imagesy($previewImg);
+
+    if ($previewWidth > $storyboardWidth) {
+        $scale = $storyboardWidth / $previewWidth;
+        $newPreviewWidth = $storyboardWidth;
+        $newPreviewHeight = (int)($previewHeight * $scale);
+        $resized = imagecreatetruecolor($newPreviewWidth, $newPreviewHeight);
+        imagecopyresampled($resized, $previewImg, 0, 0, 0, 0, $newPreviewWidth, $newPreviewHeight, $previewWidth, $previewHeight);
+        imagedestroy($previewImg);
+        $previewImg = $resized;
+        $previewWidth = $newPreviewWidth;
+        $previewHeight = $newPreviewHeight;
+    }
+
+    $gapSize = 4;
+    $combinedWidth = max($storyboardWidth, $previewWidth);
+    $combinedHeight = $storyboardHeight + $gapSize + $previewHeight;
+
+    $combined = imagecreatetruecolor($combinedWidth, $combinedHeight);
+    $gapColor = imagecolorallocate($combined, 215, 202, 187); // #D7CABB
+    imagefill($combined, 0, 0, $gapColor);
+
+    // Storyboard сверху (по центру), превью снизу (по центру)
+    imagecopy($combined, $storyboardImg, intdiv($combinedWidth - $storyboardWidth, 2), 0, 0, 0, $storyboardWidth, $storyboardHeight);
+    imagecopy($combined, $previewImg, intdiv($combinedWidth - $previewWidth, 2), $storyboardHeight + $gapSize, 0, 0, $previewWidth, $previewHeight);
+
+    imagedestroy($storyboardImg);
+    imagedestroy($previewImg);
+    return $combined;
+}
+
+// Собирает итоговое превью (аналог /api/preview старого сервиса):
+// storyboard с раздвинутыми кадрами + обычное превью снизу.
+// Если storyboard нет - возвращает просто обычное превью.
+// Возвращает GD-картинку или null
+function buildYouTubePreviewImage($videoId, $playerResponse = null) {
+    // Пытаемся получить storyboard
+    $storyboardImg = null;
+    if ($playerResponse) {
+        $storyboardImg = fetchYouTubeStoryboardImage($videoId, $playerResponse);
+    }
+
+    // Пытаемся получить обычное превью
+    $previewImg = null;
+    $previewContent = fetchYouTubeThumbnail($videoId);
+    if ($previewContent !== null) {
+        $previewImg = @imagecreatefromstring($previewContent);
+        if (!$previewImg) {
+            $previewImg = null;
+        }
+    }
+
+    if ($storyboardImg && $previewImg) {
+        return combineYouTubeStoryboardAndPreview($storyboardImg, $previewImg);
+    }
+    if ($storyboardImg) {
+        return $storyboardImg;
+    }
+    if ($previewImg) {
+        return $previewImg;
+    }
+    return null;
+}
+
+// Сохраняет GD-картинку в JPEG и освобождает память
+function saveYouTubeGdImage($img, $path, $quality = 90) {
+    $result = imagejpeg($img, $path, $quality);
+    imagedestroy($img);
+    return $result;
+}
+
 // Создает иконку 160x160 из превью (crop to fit)
 function createIconFromPreview($previewPath, $iconPath) {
     if (!file_exists($previewPath)) {
         return false;
     }
-    
+
     // Загружаем изображение
     $image = @imagecreatefromjpeg($previewPath);
     if (!$image) {
         return false;
     }
-    
+
+    $result = createIconFromGdImage($image, $iconPath);
+    imagedestroy($image);
+
+    return $result;
+}
+
+// Создает иконку 160x160 из GD-картинки (crop to fit)
+function createIconFromGdImage($image, $iconPath) {
     // Получаем размеры
     $width = imagesx($image);
     $height = imagesy($image);
-    
+    if ($width <= 0 || $height <= 0) {
+        return false;
+    }
+
     // Создаем новое изображение 160x160
     $icon = imagecreatetruecolor(160, 160);
-    
+
     // Вычисляем масштаб для заполнения всего пространства
     $scaleX = 160 / $width;
     $scaleY = 160 / $height;
     $scale = max($scaleX, $scaleY); // Берем больший масштаб
-    
+
     // Вычисляем новые размеры после масштабирования
     $newWidth = $width * $scale;
     $newHeight = $height * $scale;
-    
+
     // Вычисляем координаты для обрезки (центрируем)
     $srcX = ($newWidth - 160) / 2 / $scale;
     $srcY = ($newHeight - 160) / 2 / $scale;
-    
+
     // Копируем и масштабируем с обрезкой
     imagecopyresampled($icon, $image, 0, 0, $srcX, $srcY, 160, 160, 160 / $scale, 160 / $scale);
-    
+
     // Сохраняем
     $result = imagejpeg($icon, $iconPath, 90);
-    
+
     // Освобождаем память
-    imagedestroy($image);
     imagedestroy($icon);
-    
+
     return $result;
 }
 
