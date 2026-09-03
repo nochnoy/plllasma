@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import {switchMap, tap} from "rxjs/operators";
 import {HttpService} from "../../../../services/http.service";
-import {IMailMessage, IMember} from "../../../../model/app-model";
+import {IMailMessage, IMember, IIgnoreRelation} from "../../../../model/app-model";
 import {of} from "rxjs";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {ActivatedRoute, Router} from "@angular/router";
 import {AppService} from "../../../../services/app.service";
 import {UserService} from "../../../../services/user.service";
+import {ChannelService} from "../../../../services/channel.service";
 import {Utils} from "../../../../utils/utils";
 
 @UntilDestroy()
@@ -20,6 +21,8 @@ export class MemberPageComponent implements OnInit {
   constructor(
     public userService: UserService,
     public httpService: HttpService,
+    public appService: AppService,
+    public channelService: ChannelService,
     public activatedRoute: ActivatedRoute,
     private router: Router
   ) { }
@@ -29,6 +32,7 @@ export class MemberPageComponent implements OnInit {
   isMe = false;
   nick?: string;
   member?: IMember;
+  ignore?: IIgnoreRelation;
   years = '';
   spasibas = '';
   messages = '';
@@ -49,7 +53,7 @@ export class MemberPageComponent implements OnInit {
 
         if (this.nick === 'Привидение') {
           this.router.navigate(['/info/ghost']);
-          return of([]);
+          return of({users: [] as IMember[], ignore: undefined});
         }
 
         this.isMe = this.nick === this.userService.user.nick;
@@ -57,10 +61,11 @@ export class MemberPageComponent implements OnInit {
       }),
       switchMap((result) => {
         this.isLoading = false;
-        const members = (result || []) as IMember[];
+        const members = (result?.users || []) as IMember[];
         if (members.length) {
           this.member = members[0];
         }
+        this.ignore = result?.ignore;
 
         if (this.member) {
           this.spasibas = this.member.sps + ' ' + Utils.chisl(this.member.sps, ['спасибу', 'спасибы', 'спасиб']);
@@ -125,6 +130,73 @@ export class MemberPageComponent implements OnInit {
   onOpenFormClick(event: any): void {
     event.preventDefault();
     this.isGoingToWrite = true;
+  }
+
+  ignoreCommand(event: any): void {
+    event.preventDefault();
+    if (!this.ignore) {
+      return;
+    }
+    this.appService.ignoreUser$(this.ignore.uid).pipe(
+      tap((result) => {
+        if (result.ok && this.ignore) {
+          this.ignore.iIgnore = true;
+        }
+      }),
+      switchMap(() => this.channelService.loadChannels$()), // Перечитаем меню - звёздочки пересчитаются
+      untilDestroyed(this)
+    ).subscribe();
+  }
+
+  unignoreCommand(event: any): void {
+    event.preventDefault();
+    if (!this.ignore) {
+      return;
+    }
+    this.appService.unignoreUser$(this.ignore.uid).pipe(
+      tap((result) => {
+        if (result.ok && this.ignore) {
+          this.ignore.iIgnore = false;
+        }
+      }),
+      switchMap(() => this.channelService.loadChannels$()),
+      untilDestroyed(this)
+    ).subscribe();
+  }
+
+  vanishCommand(event: any): void {
+    event.preventDefault();
+    if (!this.ignore) {
+      return;
+    }
+    this.appService.vanishUser$(this.ignore.uid).pipe(
+      tap((result) => {
+        if (result.ok && this.ignore) {
+          this.ignore.vanished = true;
+          this.ignore.vanishInitiatorMe = true;
+          this.ignore.iIgnore = false;
+        }
+      }),
+      switchMap(() => this.channelService.loadChannels$()),
+      untilDestroyed(this)
+    ).subscribe();
+  }
+
+  returnCommand(event: any): void {
+    event.preventDefault();
+    if (!this.ignore) {
+      return;
+    }
+    this.appService.returnUser$(this.ignore.uid).pipe(
+      tap((result) => {
+        if (result.ok && this.ignore) {
+          this.ignore.vanished = false;
+          this.ignore.vanishInitiatorMe = false;
+        }
+      }),
+      switchMap(() => this.channelService.loadChannels$()),
+      untilDestroyed(this)
+    ).subscribe();
   }
 
 }

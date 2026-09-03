@@ -7,6 +7,9 @@ export interface IUserData {
   icon: string;
   access: IAccess[];
   superstar?: number; // значение "цифровой звёздочки" на ссылке "каналы" - сколько есть непрочитанных неподписанных каналов на которые у юзера есть права
+  ignoredSoft: number[]; // кого юзер мягко игнорит (id юзеров)
+  vanished: number[]; // с кем юзер взаимно исчез (id юзеров, в обе стороны)
+  vanishedByMe: number[]; // vanish, где инициатор сам юзер (только он может отменить)
 }
 
 export enum LoginStatus {
@@ -90,6 +93,7 @@ export interface IChannelLink {
   at_menu?: 't' | 'f';
   role?: RoleEnum;
   ignoring?: 1 | 0;
+  star?: boolean; // Серверная звёздочка (_STAR_) - посчитана с учётом игнорируемых и исчезнувших юзеров
 }
 
 export interface IMenuCity {
@@ -169,6 +173,15 @@ export interface IMember {
   inboxStarred: boolean;
   sex: Sex;
   profilephoto: string;
+}
+
+// Состояние отношений текущего юзера с просматриваемым мембером (блок игнора в профиле)
+export interface IIgnoreRelation {
+  uid: number; // id мембера (нужен для вызовов user-ignore и компании)
+  iIgnore: boolean; // Я soft-игнорю его
+  heIgnoresMe: boolean; // Он soft-игнорит меня
+  vanished: boolean; // Активен взаимный vanish
+  vanishInitiatorMe: boolean; // Инициатор vanish - я (только я могу отменить)
 }
 
 export interface IMailMessage {

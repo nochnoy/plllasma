@@ -72,6 +72,9 @@ export class AppService {
           this.userService.user.icon = result.icon;
           this.userService.user.access = result.access;
           this.userService.user.superstar = result.unreadChannels ?? 0;
+          this.userService.user.ignoredSoft = result.ignoredSoft ?? [];
+          this.userService.user.vanished = result.vanished ?? [];
+          this.userService.user.vanishedByMe = result.vanishedByMe ?? [];
           return true;
         }
       }),
@@ -110,6 +113,9 @@ export class AppService {
         this.userService.user.icon = result.icon;
         this.userService.user.access = result.access;
         this.userService.user.superstar = result.unreadChannels ?? 0;
+        this.userService.user.ignoredSoft = result.ignoredSoft ?? [];
+        this.userService.user.vanished = result.vanished ?? [];
+        this.userService.user.vanishedByMe = result.vanishedByMe ?? [];
         return { ok: true };
       }),
       switchMap((r) => {
@@ -281,6 +287,53 @@ export class AppService {
         channelId
       },
       { observe: 'body', withCredentials: true }
+    );
+  }
+
+  ignoreUser$(uid: number): Observable<any> {
+    return this.httpService.ignoreUser$(uid).pipe(
+      tap((result) => {
+        if (result.ok && !this.userService.user.ignoredSoft.includes(uid)) {
+          this.userService.user.ignoredSoft.push(uid);
+        }
+      })
+    );
+  }
+
+  unignoreUser$(uid: number): Observable<any> {
+    return this.httpService.unignoreUser$(uid).pipe(
+      tap((result) => {
+        if (result.ok) {
+          this.userService.user.ignoredSoft = this.userService.user.ignoredSoft.filter((id) => id !== uid);
+        }
+      })
+    );
+  }
+
+  vanishUser$(uid: number): Observable<any> {
+    return this.httpService.vanishUser$(uid).pipe(
+      tap((result) => {
+        if (result.ok) {
+          this.userService.user.ignoredSoft = this.userService.user.ignoredSoft.filter((id) => id !== uid);
+          if (!this.userService.user.vanished.includes(uid)) {
+            this.userService.user.vanished.push(uid);
+          }
+          if (!this.userService.user.vanishedByMe.includes(uid)) {
+            this.userService.user.vanishedByMe.push(uid);
+          }
+        }
+      })
+    );
+  }
+
+  returnUser$(uid: number): Observable<any> {
+    return this.httpService.returnUser$(uid).pipe(
+      tap((result) => {
+        if (result.ok) {
+          this.userService.user.vanished = this.userService.user.vanished.filter((id) => id !== uid);
+          this.userService.user.vanishedByMe = this.userService.user.vanishedByMe.filter((id) => id !== uid);
+        }
+      })
     );
   }
 

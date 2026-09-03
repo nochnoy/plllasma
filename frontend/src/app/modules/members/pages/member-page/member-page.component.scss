@@ -35,6 +35,38 @@ header {
   max-width: var(--max-text-size);
 }
 
+.member-ignore-block {
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+
+  > div + div {
+    margin-top: 0.5rem;
+  }
+}
+
+.member-ignore {
+  div + div {
+    margin-top: 0.5rem;
+  }
+}
+
+.ignoring {
+  padding: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  border-radius: 0.5rem;
+  background-color: var(--color-page-bg-dark);
+
+  div {
+    margin-left: 1.8rem;
+    margin-bottom: 0.1rem;
+    &:first-child {
+      position: absolute;
+      margin-left: 0;
+    }
+  }
+}
+
 .mail-title {
   height: 2rem;
   line-height: 2rem;

@@ -1,5 +1,6 @@
 import {Thread} from './thread.model';
 import {IMatrix} from "../matrix.model";
+import {Utils} from "../../utils/utils";
 
 export class Channel {
   id: number = 0;
@@ -40,6 +41,10 @@ export class Channel {
 
     this.pagesCount = input.pages ?? 0;
     this.threads = new Array<Thread>();
+
+    // Выбрасываем сообщения исчезнувших юзеров и их под-ветки,
+    // чтобы они не загрязняли starred-массивы, счётчики и серые дайджесты
+    input.messages = Utils.filterVanishedMessages(input.messages);
 
     // Бежим по сообщениям и распихиваем их по тредам
 

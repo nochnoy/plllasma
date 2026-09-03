@@ -147,9 +147,44 @@ if (!empty($nick)) {
 	logActivity('members ');
 }
 
+// Состояние отношений просматривающего с запрошенным мембером (для блока игнора в профиле)
+$ignore = (object)[
+	'uid' => 0,
+	'iIgnore' => false,
+	'heIgnoresMe' => false,
+	'vanished' => false,
+	'vanishInitiatorMe' => false
+];
+
+if (!empty($userId)) {
+	// id нужен фронту для вызова user-ignore и компании (в users он заunset'ан)
+	$ignore->uid = intval($userId);
+
+	// На своём профиле контролы игнора не показываются, запрос не нужен
+	if ($userId != $user['id_user']) {
+		$sql = $mysqli->prepare('SELECT mode, id_user, id_ignored_user FROM lnk_user_ignore WHERE (id_user = ? AND id_ignored_user = ?) OR (id_user = ? AND id_ignored_user = ?)');
+		$sql->bind_param("iiii", $user['id_user'], $userId, $userId, $user['id_user']);
+		$sql->execute();
+		$result = $sql->get_result();
+		while ($row = mysqli_fetch_assoc($result)) {
+			if ($row['mode'] == 1) {
+				if ($row['id_user'] == $user['id_user']) {
+					$ignore->iIgnore = true;
+				} else {
+					$ignore->heIgnoresMe = true;
+				}
+			} elseif ($row['mode'] == 2) {
+				$ignore->vanished = true;
+				$ignore->vanishInitiatorMe = ($row['id_user'] == $user['id_user']);
+			}
+		}
+	}
+}
+
 // Выдадим
 exit(json_encode((object)[
-	'users' => $users
+	'users' => $users,
+	'ignore' => $ignore
 ]));
 
 ?>

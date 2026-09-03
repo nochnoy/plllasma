@@ -21,9 +21,37 @@
         </div>
       </header>
 
+      <div *ngIf="!isMe && ignore && ignore.uid && ignore.vanished" class="ignoring">
+        <div>💀</div>
+        <div><b>Вы исчезли друг для друга</b></div>
+        <div>Вы и этот гражданин не видите сообщений друг друга, и каналы в которых вы что-нибудь напишите не будут для вас подсвечиваться красными значками</div>
+      </div>
+
+      <div *ngIf="!isMe && ignore && ignore.uid && !ignore.vanished && ignore.iIgnore" class="ignoring">
+        <div>😶</div>
+        <div><b>Вы игнорируете этого гражданина</b></div>
+        <div>Вы видите его сообщения, но они больше не подсвечиваются красными значками. Он не узнает, что вы с ним так поступили.</div>
+      </div>
+
       <div class="profile" *ngIf="member.profile" [innerHTML]="member.profile | linky"></div>
 
-      <a class="back-link" routerLink="/members"><i>←</i> К списку граждан</a>
+      <div class="member-ignore-block" *ngIf="!isMe && ignore && ignore.uid">
+        <div class="member-ignore" *ngIf="!ignore.vanished">
+          <div>
+            <span *ngIf="!ignore.iIgnore">😶 </span><a href *ngIf="!ignore.iIgnore" (click)="ignoreCommand($event)">Игнорировать</a>
+            <span *ngIf="!ignore.iIgnore"> - вы перестанете видеть красные значки на его сообщениях</span>
+            <span *ngIf="ignore.iIgnore">😶 </span><a href *ngIf="ignore.iIgnore" (click)="unignoreCommand($event)">Не игнорировать</a>
+          </div>
+          <div *ngIf="!ignore.iIgnore">
+            <span>💀 </span><a href (click)="vanishCommand($event)">Исчезнуть</a>
+            <span> - вы ОБА перестанете видеть сообщения друг друга</span>
+          </div>
+        </div>
+
+        <div class="member-ignore" *ngIf="ignore.vanished && ignore.vanishInitiatorMe">
+          <span>💀 </span><a href (click)="returnCommand($event)">Отменить исчезновение</a>
+        </div>
+      </div>
 
       <ng-container *ngIf="!isMe">
 

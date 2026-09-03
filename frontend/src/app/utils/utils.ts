@@ -21,4 +21,34 @@ export class Utils {
     return `${date} ${time}`;
   }
 
+  // Выбрасывает из сырой выдачи сообщения исчезнувших (vanish) авторов (флаг van от сервера)
+  // и все под-ветки вниз от них. Родитель, отсутствующий в этой порции,
+  // исчезнувшим не считается - это нормальный кейс дайджестов и догрузок треда.
+  static filterVanishedMessages(messages: any[]): any[] {
+    if (!messages || !messages.length) {
+      return messages;
+    }
+    if (!messages.some((m) => m.van)) {
+      return messages;
+    }
+    const byId = new Map<number, any>();
+    messages.forEach((m) => byId.set(m.id, m));
+
+    return messages.filter((m) => {
+      let cur = m;
+      let guard = 0;
+      while (cur && guard++ < 1000) {
+        if (cur.van) {
+          return false;
+        }
+        const parent = cur.pid ? byId.get(cur.pid) : undefined;
+        if (!parent) {
+          break; // Родителя в порции нет - цепочку дальше не проверить, оставляем
+        }
+        cur = parent;
+      }
+      return true;
+    });
+  }
+
 }

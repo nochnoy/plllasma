@@ -14,6 +14,7 @@ import {IMatrix, newDefaultMatrix} from "../../model/matrix.model";
 import {UserService} from "../../services/user.service";
 import {Const} from "../../model/const";
 import {HALLOWEEN_TEXT} from "../../model/app-model";
+import {Utils} from "../../utils/utils";
 
 @UntilDestroy()
 @Component({
@@ -149,7 +150,8 @@ export class ChannelPageComponent implements OnInit {
         of({}).pipe(
           switchMap(() => this.appService.getThread$(thread.rootMessageId, this.lv)),
           tap((input: any) => {
-            thread.addMessages(input.messages);
+            // Выбрасываем сообщения исчезнувших юзеров и их под-ветки
+            thread.addMessages(Utils.filterVanishedMessages(input.messages));
             thread.isExpanded = true;
             delete this.isExpanding;
           }),

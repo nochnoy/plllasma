@@ -51,14 +51,15 @@ CREATE TABLE `lnk_user_face` (
 -- --------------------------------------------------------
 
 --
--- Структура таблицы `lnk_user_ignor`
+-- Структура таблицы `lnk_user_ignore`
 --
 
-CREATE TABLE `lnk_user_ignor` (
+CREATE TABLE `lnk_user_ignore` (
   `id` int NOT NULL,
-  `id_user` int NOT NULL,
-  `id_ignored_user` int NOT NULL,
-  `date_created` datetime NOT NULL
+  `id_user` bigint NOT NULL COMMENT 'Инициатор. mode=1: кто игнорит. mode=2: кто нажал «Исчезнуть» (только он может отменить)',
+  `id_ignored_user` bigint NOT NULL COMMENT 'Кого игнорируют',
+  `mode` tinyint NOT NULL COMMENT '1 = soft (направленный, не подсвечивать сообщения); 2 = vanish (взаимное исчезновение)',
+  `date_created` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
@@ -532,12 +533,12 @@ ALTER TABLE `lnk_user_face`
   ADD PRIMARY KEY (`id`);
 
 --
--- Индексы таблицы `lnk_user_ignor`
+-- Индексы таблицы `lnk_user_ignore`
 --
-ALTER TABLE `lnk_user_ignor`
+ALTER TABLE `lnk_user_ignore`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `id_user` (`id_user`,`id_ignored_user`),
-  ADD KEY `id_user_2` (`id_user`) USING BTREE;
+  ADD UNIQUE KEY `uk_pair` (`id_user`,`id_ignored_user`),
+  ADD KEY `idx_ignored` (`id_ignored_user`) USING BTREE;
 
 --
 -- Индексы таблицы `lnk_user_place`
@@ -632,7 +633,10 @@ ALTER TABLE `tbl_messages`
   ADD KEY `id_recipient_face` (`id_recipient_face`),
   ADD KEY `id_user` (`id_user`),
   ADD KEY `id_face` (`id_face`),
-  ADD KEY `time_created` (`time_created`);
+  ADD KEY `time_created` (`time_created`),
+  ADD KEY `idx_place_time` (`id_place`,`time_created`),
+  ADD KEY `idx_place_parent` (`id_place`,`id_parent`),
+  ADD KEY `idx_first_parent` (`id_first_parent`);
 
 --
 -- Индексы таблицы `tbl_places`
@@ -687,7 +691,8 @@ ALTER TABLE `tbl_unread`
 -- Индексы таблицы `tbl_users`
 --
 ALTER TABLE `tbl_users`
-  ADD PRIMARY KEY (`id_user`);
+  ADD PRIMARY KEY (`id_user`),
+  ADD KEY `idx_logkey` (`logkey`);
 
 --
 -- Индексы таблицы `tbl_viewed`
@@ -726,9 +731,9 @@ ALTER TABLE `lnk_user_face`
   MODIFY `id` bigint NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT для таблицы `lnk_user_ignor`
+-- AUTO_INCREMENT для таблицы `lnk_user_ignore`
 --
-ALTER TABLE `lnk_user_ignor`
+ALTER TABLE `lnk_user_ignore`
   MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --

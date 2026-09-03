@@ -130,6 +130,7 @@ export class ChannelService {
         if (channelAtMenu) {
           channelAtMenu.timeViewedDeferred = input.viewed;
           channelAtMenu.time_changed = input.changed;
+          channelAtMenu.star = false;
         }
 
         let channel = new Channel();

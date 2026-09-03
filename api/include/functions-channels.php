@@ -23,8 +23,15 @@ function getChannels() {
 
 	$softStars = false;
 
+	// Авторы, чьи новые сообщения не должны звездить каналы:
+	// мягко игнорируемые юзеры и юзеры, с которыми взаимно исчезли
+	$excludedAuthors = array_merge(
+		!empty($user['ignored_soft']) ? $user['ignored_soft'] : array(),
+		!empty($user['vanished']) ? $user['vanished'] : array()
+	);
+
 	// Если юзер кого-то игнорит то пробуем вычислить звёздочки по датам сообщений, учитывая игнорируемых юзеров и прочие факторы
-	if (count($user['ignored']) > 0) {
+	if (count($excludedAuthors) > 0) {
 		$softStars = true;
 
 		$placeIds = array();
@@ -36,18 +43,19 @@ function getChannels() {
 		}
 
 		// Получаем список каналов, в которых есть новые сообщения не от игноренных юзеров
-		$sql =
-			'SELECT l.id_place, m.id_user, m.message'
-			.' FROM tbl_messages m'
-			.' LEFT JOIN lnk_user_place l ON l.id_user='.$user['id_user'].' AND l.id_place = m.id_place'
-			.' WHERE m.id_place IN ('.implode(',', $placeIds).') AND m.time_created > l.time_viewed'
-			.' AND m.id_user NOT IN ('.implode(',', $user['ignored']).')'
-			.' GROUP BY id_place'
-			;
-		$r = mysqli_query($mysqli, $sql);
 		$updatedPlaces = array();
-		while($r2 = mysqli_fetch_array($r)) {
-			$updatedPlaces[] = $r2[0];
+		if (count($placeIds) > 0) {
+			$sql =
+				'SELECT DISTINCT m.id_place'
+				.' FROM tbl_messages m'
+				.' LEFT JOIN lnk_user_place l ON l.id_user='.$user['id_user'].' AND l.id_place = m.id_place'
+				.' WHERE m.id_place IN ('.implode(',', $placeIds).') AND m.time_created > l.time_viewed'
+				.' AND (m.id_user IS NULL OR m.id_user NOT IN ('.implode(',', $excludedAuthors).'))'
+				;
+			$r = mysqli_query($mysqli, $sql);
+			while($r2 = mysqli_fetch_array($r)) {
+				$updatedPlaces[] = $r2[0];
+			}
 		}
 
 		// Раздаём звёздочки

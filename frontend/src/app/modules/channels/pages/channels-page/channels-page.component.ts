@@ -105,7 +105,8 @@ export class ChannelsPageComponent implements OnInit {
   }
 
   isChannelAffectingSuperstar(channel: IChannelLink): boolean {
-    return channel.time_changed > channel.time_viewed
+    // Звёздочка серверная (_STAR_) - уже посчитана с учётом игнорируемых и исчезнувших юзеров
+    return !!channel.star
       && channel.ignoring === 0
       && channel.at_menu !== 't'
       && (!!channel.role && channel.role !== RoleEnum.nobody);

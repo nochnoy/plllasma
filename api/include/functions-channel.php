@@ -1,6 +1,17 @@
 <?
 // Функции для работы с каналом и его ветками
 
+// Возвращает SQL-кусок, исключающий сообщения юзеров, с которыми текущий юзер взаимно исчез.
+// Используется только в счётчиках «есть ли новое видимое», в выдаче сообщений не фильтруем -
+// скрытие исчезнувших вместе с под-ветками делает клиент (по флагу "van").
+function sqlVanishFilter($field = 'id_user') {
+	global $user;
+	if (empty($user['vanished'])) {
+		return '';
+	}
+	return ' AND ('.$field.' IS NULL OR '.$field.' NOT IN ('.implode(',', $user['vanished']).'))';
+}
+
 // Возвращает JSON с сообщениями канала - 50 верхних плюс звезданутые и те, на которых висят завезданутые
 function getChannelJson($channelId, $lastViewed, $page = 0) {
 	global $mysqli;
@@ -25,7 +36,7 @@ function getChannelJson($channelId, $lastViewed, $page = 0) {
 
 	// Если есть звезданутые сообщения и их не слишком много, получаем полностью все ветки, в которых есть звезданутые
 
-	$resultStarredCount = mysqli_query($mysqli, 'SELECT COUNT(id_message) FROM tbl_messages WHERE id_place='.$channelId.' AND time_created >= "'.$lastViewed.'"');
+	$resultStarredCount = mysqli_query($mysqli, 'SELECT COUNT(id_message) FROM tbl_messages WHERE id_place='.$channelId.' AND time_created >= "'.$lastViewed.'"'.sqlVanishFilter());
 	$row = mysqli_fetch_array($resultStarredCount);
 	if ($row[0] > 0 && $row[0] < MAX_STARRED_THREADS) { // Если звезданутых больше 20ти значит юзер не был здесь слишком долго и дайджестов не получит.
 
@@ -33,7 +44,7 @@ function getChannelJson($channelId, $lastViewed, $page = 0) {
 		$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, -1, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo, json'; 
 		$sql .= ' FROM tbl_messages';
 		$sql .= ' WHERE';
-		$sql .= ' (id_first_parent<>0 && id_first_parent IN (SELECT id_first_parent FROM tbl_messages WHERE id_place='.$channelId.' AND time_created >= "'.$lastViewed.'"))';
+		$sql .= ' (id_first_parent<>0 && id_first_parent IN (SELECT id_first_parent FROM tbl_messages WHERE id_place='.$channelId.' AND time_created >= "'.$lastViewed.'"'.sqlVanishFilter().'))';
 		$result = mysqli_query($mysqli, $sql);
 
 		while ($row = mysqli_fetch_array($result)) {
@@ -153,6 +164,8 @@ function getThreadJson($threadId, $lastViewed) {
 // Получает плоский массив row'ов сообщений
 // Возвращает json c плоским массивом сообщений
 function buildMessagesJson($a, $lastViewed) {
+	global $user;
+
 	$s = '';
 	foreach ($a as $key => $row) {
 
@@ -203,8 +216,20 @@ function buildMessagesJson($a, $lastViewed) {
 			}
 		}
 
-		// Есть ли звёздочка
-		if ($row[6] > $lastViewed) {
+		// Есть ли звёздочка (сообщения мягко игнорируемых и взаимно исчезнувших юзеров не подсвечиваем)
+		$authorId = intval($row[10]);
+		$isSoftIgnored = !empty($user['ignored_soft']) && in_array($authorId, $user['ignored_soft']);
+		$isVanished = !$isSoftIgnored && !empty($user['vanished']) && in_array($authorId, $user['vanished']);
+
+		if ($isSoftIgnored) {
+			$s .= ',"ignored":1';
+		}
+
+		if ($isVanished) {
+			$s .= ',"van":1';
+		}
+
+		if ($row[6] > $lastViewed && !$isSoftIgnored && !$isVanished) {
 			$s .= ',"star":' . 1;
 		}		
 

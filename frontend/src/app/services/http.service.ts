@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import {Observable, of} from "rxjs";
 import {map, switchMap} from "rxjs/operators";
 import {HttpClient} from "@angular/common/http";
-import {IFocus, IMailMessage, IMember} from "../model/app-model";
+import {IFocus, IIgnoreRelation, IMailMessage, IMember} from "../model/app-model";
 import {IMatrix, serializeMatrix} from "../model/matrix.model";
 
 @Injectable({
@@ -24,6 +24,10 @@ export class HttpService {
           { },
           { observe: 'body', withCredentials: true }
         );
+      }),
+      map((channels: any) => {
+        (channels || []).forEach((channel: any) => channel.star = !!channel._STAR_);
+        return channels;
       })
     );
   }
@@ -36,6 +40,10 @@ export class HttpService {
           { },
           { observe: 'body', withCredentials: true }
         );
+      }),
+      map((channels: any) => {
+        (channels || []).forEach((channel: any) => channel.star = !!channel._STAR_);
+        return channels;
       })
     );
   }
@@ -167,7 +175,7 @@ export class HttpService {
     );
   }
 
-  getMembers$(nick?: string): Observable<IMember[]> {
+  getMembers$(nick?: string): Observable<{users: IMember[], ignore?: IIgnoreRelation}> {
     return this.httpClient.post(
       `${HttpService.apiPath}/members.php`,
       {
@@ -176,8 +184,43 @@ export class HttpService {
       {observe: 'body', withCredentials: true}
     ).pipe(
       map((result: any) => {
-        return result?.users as IMember[];
+        return {
+          users: result?.users as IMember[],
+          ignore: result?.ignore as IIgnoreRelation | undefined
+        };
       })
+    );
+  }
+
+  ignoreUser$(uid: number): Observable<any> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/user-ignore.php`,
+      { uid },
+      {observe: 'body', withCredentials: true}
+    );
+  }
+
+  unignoreUser$(uid: number): Observable<any> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/user-unignore.php`,
+      { uid },
+      {observe: 'body', withCredentials: true}
+    );
+  }
+
+  vanishUser$(uid: number): Observable<any> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/user-vanish.php`,
+      { uid },
+      {observe: 'body', withCredentials: true}
+    );
+  }
+
+  returnUser$(uid: number): Observable<any> {
+    return this.httpClient.post(
+      `${HttpService.apiPath}/user-return.php`,
+      { uid },
+      {observe: 'body', withCredentials: true}
     );
   }
 

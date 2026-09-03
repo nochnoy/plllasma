@@ -43,7 +43,7 @@ export class MembersPageComponent implements OnInit {
         this.isLoading = false;
 
         // Вообще все
-        this.membersAll = result || [];
+        this.membersAll = result?.users || [];
 
         // Те кто был на сайте последние 24 часа
         this.membersToday = this.membersAll.filter((member) => member.today).sort((a, b) => {

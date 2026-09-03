@@ -13,7 +13,10 @@ export class UserService {
     icon: '',
     nick: '',
     access: [],
-    superstar: 0
+    superstar: 0,
+    ignoredSoft: [],
+    vanished: [],
+    vanishedByMe: []
   }
 
   loginStatus$ = new BehaviorSubject<LoginStatus>(LoginStatus.unauthorised);

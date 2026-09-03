@@ -6,6 +6,7 @@ import {of} from "rxjs";
 import {switchMap, tap} from "rxjs/operators";
 import {AppService} from "../../services/app.service";
 import {TestMessagesMock} from "./test-messages-mock";
+import {Utils} from "../../utils/utils";
 
 @Component({
   selector: 'app-test-messages-page',
@@ -61,7 +62,7 @@ export class TestMessagesPageComponent implements OnInit {
       of({}).pipe(
         switchMap(() => this.appService.getThread$(thread.rootMessageId, this.channel.time_viewed)),
         tap((input: any) => {
-          thread.addMessages(input.messages);
+          thread.addMessages(Utils.filterVanishedMessages(input.messages));
           thread.isExpanded = true;
         })
       ).subscribe();
