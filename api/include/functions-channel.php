@@ -40,15 +40,23 @@ function getChannelJson($channelId, $lastViewed, $page = 0) {
 	$row = mysqli_fetch_array($resultStarredCount);
 	if ($row[0] > 0 && $row[0] < MAX_STARRED_THREADS) { // Если звезданутых больше 20ти значит юзер не был здесь слишком долго и дайджестов не получит.
 
+		$digestThreads = 'SELECT id_first_parent FROM tbl_messages WHERE id_place='.$channelId.' AND time_created >= "'.$lastViewed.'"'.sqlVanishFilter();
+
 		$sql  = 'SELECT';
 		$sql .= ' id_message, id_parent, id_first_parent, children, nick, CONCAT(subject, " ", message), time_created, -1, icon, anonim, id_user, attachments, emote_sps, emote_heh, emote_wut, emote_ogo, json'; 
 		$sql .= ' FROM tbl_messages';
 		$sql .= ' WHERE';
-		$sql .= ' (id_first_parent<>0 && id_first_parent IN (SELECT id_first_parent FROM tbl_messages WHERE id_place='.$channelId.' AND time_created >= "'.$lastViewed.'"'.sqlVanishFilter().'))';
+		$sql .= ' (id_first_parent<>0 && id_first_parent IN ('.$digestThreads.'))';
+		// Дотягиваем руты звезданутых веток, иначе у серого дайджеста не будет родительского сообщения.
+		// Если рут от исчезнувшего юзера - клиент выбросит его вместе со всей веткой по флагу "van".
+		$sql .= ' OR (id_parent=0 && id_message IN ('.$digestThreads.'))';
 		$result = mysqli_query($mysqli, $sql);
 
 		while ($row = mysqli_fetch_array($result)) {
-			$a[$row[0]] = $row;
+			// Не затираем руты, уже полученные страничным запросом - там посчитано количество детей
+			if (!isset($a[$row[0]])) {
+				$a[$row[0]] = $row;
+			}
 		}
 	}
 

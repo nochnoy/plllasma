@@ -228,6 +228,28 @@ if (isset($_GET['channel_id']) && is_numeric($_GET['channel_id'])) {
     }
 }
 
+// Список игноров и исчезновений между юзерами - нужен только на начальном экране
+$ignorePairs = array();
+if (!$selectedChannel) {
+    $sql = "
+        SELECT
+            i.mode,
+            i.date_created,
+            u1.nick AS from_nick,
+            u1.login AS from_login,
+            u2.nick AS to_nick,
+            u2.login AS to_login
+        FROM lnk_user_ignore i
+        LEFT JOIN tbl_users u1 ON u1.id_user = i.id_user
+        LEFT JOIN tbl_users u2 ON u2.id_user = i.id_ignored_user
+        ORDER BY i.date_created DESC
+    ";
+    $result = mysqli_query($mysqli, $sql);
+    while ($row = mysqli_fetch_assoc($result)) {
+        $ignorePairs[] = $row;
+    }
+}
+
 // Функция для получения названия роли
 function getRoleName($role) {
     switch ($role) {
@@ -854,6 +876,42 @@ function formatBytes($bytes, $precision = 2) {
             color: #6c757d;
             font-size: 10px;
         }
+
+        .ignore-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .ignore-table th {
+            text-align: left;
+            padding: 8px 12px;
+            border-bottom: 2px solid #dee2e6;
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .ignore-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .ignore-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .ignore-type {
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        .ignore-date {
+            color: #6c757d;
+            font-size: 13px;
+            white-space: nowrap;
+        }
         
         @media (max-width: 768px) {
             .container {
@@ -1042,6 +1100,41 @@ function formatBytes($bytes, $precision = 2) {
                 }
                 ?>
                 
+                <!-- Игноры и исчезновения между юзерами -->
+                <div class="stats-section" style="margin-top: 20px;">
+                    <h2 class="stats-title">Игноры и исчезновения</h2>
+                    <?php if (empty($ignorePairs)): ?>
+                        <div class="no-data">Пока никто никого не игнорирует</div>
+                    <?php else: ?>
+                        <table class="ignore-table">
+                            <thead>
+                                <tr>
+                                    <th>Тип</th>
+                                    <th>Кто</th>
+                                    <th>Кого</th>
+                                    <th>Когда</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($ignorePairs as $pair): ?>
+                                    <tr>
+                                        <?php if ($pair['mode'] == 2): ?>
+                                            <td class="ignore-type" style="color: #2c3e50;">💀 Исчезновение</td>
+                                            <td><?php echo htmlspecialchars($pair['from_nick'] ?? '?'); ?> <span style="color: #6c757d;">(инициатор, может отменить)</span></td>
+                                            <td><?php echo htmlspecialchars($pair['to_nick'] ?? '?'); ?></td>
+                                        <?php else: ?>
+                                            <td class="ignore-type" style="color: #f39c12;">😶 Игнор</td>
+                                            <td><?php echo htmlspecialchars($pair['from_nick'] ?? '?'); ?></td>
+                                            <td><?php echo htmlspecialchars($pair['to_nick'] ?? '?'); ?></td>
+                                        <?php endif; ?>
+                                        <td class="ignore-date"><?php echo htmlspecialchars($pair['date_created']); ?></td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    <?php endif; ?>
+                </div>
+
                 <div class="no-data">
                     <h2>Выберите канал</h2>
                     <p>Выберите канал из списка слева, чтобы просмотреть статистику прав доступа.</p>

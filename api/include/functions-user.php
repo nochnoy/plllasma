@@ -14,6 +14,40 @@ function loginBySessionOrToken() {
 			die('{"error": "auth"}');
 		}
 	}
+
+	// Списки игноров перечитываем на каждый запрос - они могли измениться с момента логина
+	// (другой браузер, отмена vanish второй стороной), а сессия у активного юзера живёт долго
+	loadUserIgnoreLists();
+}
+
+// Загружает в $user списки игнорируемых и взаимно исчезнувших юзеров
+function loadUserIgnoreLists() {
+	global $mysqli;
+	global $user;
+
+	// ignored_soft - кого юзер мягко игнорит (их сообщения читаются, но не подсвечиваются)
+	// vanished - с кем юзер взаимно исчез (в обе стороны, независимо от инициатора)
+	// vanished_by_me - vanish-записи, где инициатор сам юзер (только он может отменить)
+	$user['ignored_soft'] = array();
+	$user['vanished'] = array();
+	$user['vanished_by_me'] = array();
+
+	$q = $mysqli->prepare('SELECT id_user, id_ignored_user, mode FROM lnk_user_ignore WHERE id_user=? OR id_ignored_user=?');
+	$q->bind_param("ii", $user['id_user'], $user['id_user']);
+	$q->execute();
+	$result = $q->get_result();
+	while ($row = mysqli_fetch_assoc($result)) {
+		if ($row['mode'] == 1 && $row['id_user'] == $user['id_user']) {
+			$user['ignored_soft'][] = intval($row['id_ignored_user']);
+		} elseif ($row['mode'] == 2) {
+			if ($row['id_user'] == $user['id_user']) {
+				$user['vanished'][] = intval($row['id_ignored_user']);
+				$user['vanished_by_me'][] = intval($row['id_ignored_user']);
+			} else {
+				$user['vanished'][] = intval($row['id_user']);
+			}
+		}
+	}
 }
 
 // Пробуем восстановить юзерские данные из сессии
@@ -164,30 +198,8 @@ function buildUser($rec) {
 		$user['icon'] = '-';
 	}
 
-	// Списки игнорируемых уродов:
-	// ignored_soft - кого юзер мягко игнорит (их сообщения читаются, но не подсвечиваются)
-	// vanished - с кем юзер взаимно исчез (в обе стороны, независимо от инициатора)
-	// vanished_by_me - vanish-записи, где инициатор сам юзер (только он может отменить)
-	$user['ignored_soft'] = array();
-	$user['vanished'] = array();
-	$user['vanished_by_me'] = array();
-
-	$q = $mysqli->prepare('SELECT id_user, id_ignored_user, mode FROM lnk_user_ignore WHERE id_user=? OR id_ignored_user=?');
-	$q->bind_param("ii", $user['id_user'], $user['id_user']);
-	$q->execute();
-	$result = $q->get_result();
-	while ($row = mysqli_fetch_assoc($result)) {
-		if ($row['mode'] == 1 && $row['id_user'] == $user['id_user']) {
-			$user['ignored_soft'][] = intval($row['id_ignored_user']);
-		} elseif ($row['mode'] == 2) {
-			if ($row['id_user'] == $user['id_user']) {
-				$user['vanished'][] = intval($row['id_ignored_user']);
-				$user['vanished_by_me'][] = intval($row['id_ignored_user']);
-			} else {
-				$user['vanished'][] = intval($row['id_user']);
-			}
-		}
-	}
+	// Списки игнорируемых уродов
+	loadUserIgnoreLists();
 
 	// Загрузим доступы юзера
 	$user['access'] = array();
