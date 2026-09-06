@@ -58,9 +58,10 @@
 (исключаются авторы `ignored_soft` + `vanished`):
 - меню — `api/include/functions-channels.php`, `getChannels()`;
 - каталог — `api/channels-list.php` (та же логика, одним агрегатным запросом);
-- superstar (счётчик непрочитанных неподписанных) — `api/cron-update-superstars.php`:
-  старый быстрый UPDATE для всех + отдельный тяжёлый для юзеров с записями
-  в `lnk_user_ignore` (включая цели vanish — vanish взаимен).
+- superstar (счётчик непрочитанных неподписанных) — `computeUnreadUnsubscribedChannels()`
+  в `api/include/functions-user.php`, вызывается из `buildUser()` при логине:
+  быстрый вариант без игноров, а для юзеров с непустыми `ignored_soft`/`vanished` —
+  вариант с EXISTS по новым сообщениям не от исключённых авторов.
 
 Анонимные сообщения (`id_user IS NULL`) всегда звездят канал.
 
@@ -86,9 +87,12 @@
 **Звёздочки каналов рисуются только по серверному флагу** (`channel.star`),
 сравнения дат `time_changed > time_viewed` в шаблонах больше нет
 (main-menu.component.html, channels-page). При открытии канала звёздочка гасится
-локально сразу (`channel.service.ts`, `getChannel`). Superstar на клиенте
-(channels-page.component.ts, `updateSuperstar`) считается по тем же серверным флагам —
-клиент и крон больше не затирают друг друга.
+локально сразу (`channel.service.ts`, `getChannel`). Superstar считается на сервере
+при логине и гасится при входе на /channels (channels-page.component.ts,
+`clearSuperstar` — юзер увидел каталог, счётчик своё дело сделал; ноль уходит
+на сервер через `superstar-set.php`). В каталоге при этом первой идёт категория
+«Обновившиеся» (перед «Основные») — звезданутые неподписанные каналы по тем же
+серверным флагам; каналы дублируются, оставаясь и в своих категориях ниже.
 
 **Скрытие vanish** — `Utils.filterVanishedMessages()` (utils.ts): на сырых данных
 до построения деревьев выбрасывает сообщения с `van:1` и всех потомков вниз по `pid`.

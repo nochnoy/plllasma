@@ -50,6 +50,59 @@ function loadUserIgnoreLists() {
 	}
 }
 
+// Пересчитывает счётчик непрочитанных неподписанных каналов (суперзвезду)
+// и сохраняет его в tbl_users. Вызывается при логине из buildUser().
+// Канал непрочитан, если у юзера есть к нему доступ (роль непустая и не ROLE_NOBODY),
+// канал не подписан в меню и не игнорится, и в нём есть непросмотренные сообщения
+// (никогда не открытый канал считается непрочитанным).
+function computeUnreadUnsubscribedChannels() {
+	global $mysqli;
+	global $user;
+
+	$idUser = $user['id_user'];
+	$roleNobody = ROLE_NOBODY;
+
+	$baseWhere = 'a.id_user = ? AND a.role IS NOT NULL AND a.role <> ?'
+		.' AND (l.id_place IS NULL OR (l.ignoring = 0 AND l.at_menu = "f" AND l.time_viewed < p.time_changed))';
+
+	// Авторы, чьи новые сообщения не делают канал непрочитанным:
+	// мягко игнорируемые юзеры и юзеры, с которыми взаимно исчезли
+	$excludedAuthors = array_merge($user['ignored_soft'], $user['vanished']);
+
+	if (count($excludedAuthors) == 0) {
+		$sql = 'SELECT COUNT(*) FROM tbl_access a'
+			.' JOIN tbl_places p ON p.id_place = a.id_place'
+			.' LEFT JOIN lnk_user_place l ON l.id_user = a.id_user AND l.id_place = p.id_place'
+			.' WHERE '.$baseWhere;
+	} else {
+		// EXISTS вынесен из условий отбора: derived-таблица дешёво отбирает
+		// каналы-кандидаты по датам, и только для них проверяется,
+		// есть ли новые сообщения не от исключённых авторов
+		$sql = 'SELECT COUNT(*) FROM ('
+			.' SELECT a.id_place, l.time_viewed FROM tbl_access a'
+			.' JOIN tbl_places p ON p.id_place = a.id_place'
+			.' LEFT JOIN lnk_user_place l ON l.id_user = a.id_user AND l.id_place = p.id_place'
+			.' WHERE '.$baseWhere
+			.') cc'
+			.' WHERE EXISTS ('
+			.' SELECT 1 FROM tbl_messages m'
+			.' WHERE m.id_place = cc.id_place'
+			.' AND (cc.time_viewed IS NULL OR m.time_created > cc.time_viewed)'
+			.' AND (m.id_user IS NULL OR m.id_user NOT IN ('.implode(',', $excludedAuthors).'))'
+			.')';
+	}
+
+	$q = $mysqli->prepare($sql);
+	$q->bind_param("ii", $idUser, $roleNobody);
+	$q->execute();
+	$row = $q->get_result()->fetch_array();
+	$user['unread_unsubscribed_channels'] = intval($row[0]);
+
+	$q = $mysqli->prepare('UPDATE tbl_users SET unread_unsubscribed_channels = ? WHERE id_user = ?');
+	$q->bind_param("ii", $user['unread_unsubscribed_channels'], $idUser);
+	$q->execute();
+}
+
 // Пробуем восстановить юзерские данные из сессии
 function loadUserFromSession() {
 	global $mysqli;
@@ -200,6 +253,9 @@ function buildUser($rec) {
 
 	// Списки игнорируемых уродов
 	loadUserIgnoreLists();
+
+	// Суперзвезда (счётчик непрочитанных неподписанных каналов) пересчитывается при логине
+	computeUnreadUnsubscribedChannels();
 
 	// Загрузим доступы юзера
 	$user['access'] = array();

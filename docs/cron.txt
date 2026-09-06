@@ -1,7 +1,8 @@
-Добавляешь два задания в IspManager/Cron:
-
-Каждый час (обновляет звёздочку на ссылке "каналы"):
-wget -O - -q https://plllasma.ru/api/cron-update-unread-unsubscribed-channels.php
+Добавляешь одно задание в IspManager/Cron:
 
 Каждый день в 5 утра (обновляет статы юзеров):
 wget -O - -q https://plllasma.ru/api/cron-user-stats.php
+
+Суперзвезда (счётчик непрочитанных неподписанных каналов) кроном больше не
+обновляется: пересчитывается при логине (buildUser в api/include/functions-user.php)
+и при заходе на /channels (клиент шлёт пересчитанное значение в api/superstar-set.php).

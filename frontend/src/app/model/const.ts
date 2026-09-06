@@ -2,6 +2,7 @@ import {IChannelSection} from "./app-model";
 
 export class Const {
   static defaultChannelId = 1;
+  static weChannelId = 46; // Канал "Мы" - на фронте вырезан из бокового меню
 
   static focusIconSize = 42; // Должна быть равна переменной --focus-icon-size
   static focusIconMargin = 8; // Должна быть равна переменной --focus-icon-margin

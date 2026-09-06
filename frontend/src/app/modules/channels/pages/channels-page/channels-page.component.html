@@ -20,7 +20,17 @@
 
         <ng-container *ngIf="!searchPhrase">
 
+          <div class="district" *ngIf="updatedChannels.length">
+            <label>Обновились</label>
+            <div class="channels">
+              <ng-container *ngFor="let channel of updatedChannels">
+                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
+              </ng-container>
+            </div>
+          </div>
+
           <div class="district">
+            <label>Основные</label>
             <div class="channels">
               <ng-container *ngFor="let channel of channelsFlex">
                 <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
@@ -132,7 +142,6 @@
      [class.channel-closed]="!channel.role || channel.role === 9"
      [class.channel-subscribed]="channel.at_menu === 't'"
      [class.channel-ignored]="channel.ignoring === 1"
-     (click)="onChannelClick(channel)"
      [class.star]="!(!channel.role || channel.role === 9) && channel.ignoring !== 1 && channel.at_menu !== 't' && channel.star"
      [routerLink]="'/channel/' + channel.id_place">
        {{channel.shortName}}

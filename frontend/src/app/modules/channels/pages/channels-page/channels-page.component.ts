@@ -41,8 +41,10 @@ export class ChannelsPageComponent implements OnInit {
   channelsMen: IChannelLink[] = [];
   channelsAmazonia: IChannelLink[] = [];
   channelsAdmin: IChannelLink[] = [];
+  updatedChannels: IChannelLink[] = []; // Категория "Обновившиеся" перед "Основные"
 
   ngOnInit(): void {
+    this.clearSuperstar();
     this.load();
     this.checkHalloween();
     this.getHereAndNow();
@@ -90,7 +92,12 @@ export class ChannelsPageComponent implements OnInit {
         this.channelsAdmin = this.channelsAll.filter((c) => c.id_section === Const.channelSectionAdmin);
 
         this.updateChannelsToShow();
-        this.updateSuperstar(result || []);
+
+        // Категория "Обновившиеся": звезданутые неподписанные каналы, по свежести.
+        // Каналы при этом остаются и в своих категориях ниже - списки независимы.
+        this.updatedChannels = this.channelsAll
+          .filter((channel) => this.isChannelUpdated(channel))
+          .sort((a, b) => a.time_changed < b.time_changed ? 1 : (a.time_changed > b.time_changed ? -1 : 0));
       }),
       untilDestroyed(this)
     ).subscribe();
@@ -104,24 +111,22 @@ export class ChannelsPageComponent implements OnInit {
     }
   }
 
-  isChannelAffectingSuperstar(channel: IChannelLink): boolean {
-    // Звёздочка серверная (_STAR_) - уже посчитана с учётом игнорируемых и исчезнувших юзеров
+  // Канал попадает в раздел "Обновились": есть серверная звёздочка (_STAR_,
+  // уже посчитана с учётом игнорируемых и исчезнувших юзеров), канал неподписан,
+  // не игнорируется и читаем
+  isChannelUpdated(channel: IChannelLink): boolean {
     return !!channel.star
-      && channel.ignoring === 0
+      && channel.ignoring !== 1
       && channel.at_menu !== 't'
       && (!!channel.role && channel.role !== RoleEnum.nobody);
   }
 
-  updateSuperstar(channels: IChannelLink[]): void {
-    let newSuperstar = 0;
-    channels.forEach((channel) => {
-      if (this.isChannelAffectingSuperstar(channel)) {
-        newSuperstar++;
-      }
-    });
-    if (this.userService.user.superstar !== newSuperstar) {
-      this.userService.user.superstar = newSuperstar;
-      this.httpService.setSuperstar$(newSuperstar).pipe(
+  // Суперзвезда гаснет при заходе на страницу каталога:
+  // юзер увидел список обновившихся каналов - счётчик своё дело сделал
+  clearSuperstar(): void {
+    if (this.userService.user.superstar) {
+      this.userService.user.superstar = 0;
+      this.httpService.setSuperstar$(0).pipe(
         untilDestroyed(this)
       ).subscribe();
     }
@@ -152,24 +157,6 @@ export class ChannelsPageComponent implements OnInit {
       tap((users) => this.hereAndNowUsers = users),
       untilDestroyed(this)
     ).subscribe();
-  }
-
-  onChannelClick(channel: IChannelLink): void {
-    if (this.isChannelAffectingSuperstar(channel)) {
-      let newSuperstar = this.userService.user.superstar || 0;
-      newSuperstar--;
-      if (newSuperstar < 0) {
-        newSuperstar = 0;
-      }
-      if (this.userService.user.superstar !== newSuperstar) {
-        this.userService.user.superstar = newSuperstar;
-
-        // Без untilDestroyed т.к. должен отработать после того как мы уйдём со страницы!
-        this.httpService.setSuperstar$(newSuperstar).subscribe();
-        // Без untilDestroyed т.к. должен отработать после того как мы уйдём со страницы!
-        //this.channelService.loadChannels$().subscribe();
-      }
-    }
   }
 }
 

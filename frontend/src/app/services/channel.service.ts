@@ -37,7 +37,7 @@ export class ChannelService {
         this.menuChannels = channels as IChannelLink[];
 
         // Вырежем канал "Мы"
-        this.menuChannels = this.menuChannels.filter((channel) => channel.id_place !== 46);
+        this.menuChannels = this.menuChannels.filter((channel) => channel.id_place !== Const.weChannelId);
 
         // Построим города
 
