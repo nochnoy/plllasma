@@ -49,6 +49,10 @@ services:
     build:
       context: .
       dockerfile: docker/garden.Dockerfile
+    environment:
+      # Дверь сайта о токенах (garden-backend спрашивает её при каждом входе): изнутри сети compose
+      # это соседний контейнер web, а не публичный домен
+      GARDEN_AUTH_URL: http://web/api/user-by-token.php
     ports:
       - "127.0.0.1:8080:8080"      # сюда дев-сервер garden/frontend проксирует /api (vite.config.ts)
     volumes:

@@ -39,7 +39,12 @@ docker compose exec -T mysql mysql --default-character-set=utf8mb4 -uroot -proot
 ```
 
 **Игра garden** (`garden/frontend/`): `npm install && npm run dev` — vite поднимет
-страницу на http://localhost:5173 и сам проксирует `/api` на garden-контейнер (:8080).
+страницу на http://localhost:5173, сам проксирует `/api` на garden-контейнер (:8080) и `/i` (юзерпики) —
+на web (:8090). Игра пускает только вошедших на сайт: на :5173 нет куки `contortion_key`, поэтому токен
+дают адресом — `http://localhost:5173/?token=<logkey>` (после логина в клиенте токен виден в базе:
+`docker compose exec mysql mysql -uroot -proot plllasma -e "SELECT logkey FROM tbl_users WHERE login='marat'"`,
+или задайте его сами UPDATE-ом). Сам garden-контейнер уже настроен: `GARDEN_AUTH_URL` в compose указывает
+ему на дверь сайта о токенах.
 
 Проверка, что всё живое:
 
