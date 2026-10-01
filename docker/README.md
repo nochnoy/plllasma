@@ -15,8 +15,31 @@ docker compose ps                # ждать, пока mysql станет healt
 | Что | Адрес |
 | --- | --- |
 | Сайт (api и всё в корне репо) | http://localhost:8090 |
-| MySQL (для GUI-клиента с хоста) | `localhost:3307`, юзер `plllasma` / пароль `dev`, база `plllasma` |
+| MySQL (для GUI-клиента с хоста) | `localhost:3308`, юзер `plllasma` / пароль `dev`, база `plllasma` |
 | garden-сервер (API чата) | http://localhost:8080 |
+| Клиент плазмы (Angular) | https://localhost:4200 — `npm run start:docker` в `frontend/` |
+
+## Клиенты
+
+**Клиент плазмы** (`frontend/`). Обычный `npm start` гоняет его против прода
+(`proxy.conf.js`), против докера — отдельный прокси и скрипт:
+
+```bash
+cd frontend
+npm install          # один раз
+npm run start:docker # https://localhost:4200 (ssl зашит в angular.json, сертификат свой —
+                     # браузер предупредит о самоподписанном)
+```
+
+В базе после засева нет ни одного юзера. Тестовый (пароль в базе лежит открытым
+текстом, `test` / `dev`):
+
+```bash
+docker compose exec -T mysql mysql --default-character-set=utf8mb4 -uroot -proot plllasma -e "INSERT INTO tbl_users (id_user, login, password, nick, logkey, email, country, businesstext, realname, firstnick, profile, profile_changed, profile_visits) VALUES (1, 'test', 'dev', 'ТестЮзер', '', '', '', '', '', '', '', NOW(), 0);"
+```
+
+**Игра garden** (`garden/frontend/`): `npm install && npm run dev` — vite поднимет
+страницу на http://localhost:5173 и сам проксирует `/api` на garden-контейнер (:8080).
 
 Проверка, что всё живое:
 

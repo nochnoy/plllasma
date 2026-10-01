@@ -31,7 +31,7 @@ services:
       MYSQL_USER: plllasma
       MYSQL_PASSWORD: dev          # = $passwordDB в docker/dev-passwords.php
     ports:
-      - "127.0.0.1:3307:3306"      # с хоста GUI-клиентом, если нужен
+      - "127.0.0.1:3308:3306"      # с хоста GUI-клиентом, если нужен (3307 занят старым plllasma_mysql_dev)
     volumes:
       - mysql:/var/lib/mysql
       # Схема засеивается только при ПЕРВОМ старте пустого тома. db/plllasma.sql — снимок
