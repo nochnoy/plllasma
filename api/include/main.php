@@ -18,7 +18,7 @@ if (empty($passwordDB)) {
 
 define("SESSION_NAME", 'plasma');
 define("DOMAIN", isset($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : 'localhost');
-define("DB_HOST", "localhost");
+define("DB_HOST", getenv("DB_HOST") ? getenv("DB_HOST") : "localhost"); // в docker-разработке хост задаёт docker-compose.yml, на проде остаётся localhost
 define("DB_USER", "plllasma");
 define("DB_PASSWORD", $passwordDB);
 define("DB_DB", "plllasma");

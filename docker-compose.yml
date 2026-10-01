@@ -1,0 +1,60 @@
+# Локальная разработка plllasma: PHP-сайт + MySQL + сервер мини-игры garden.
+#
+# На проде докера НЕТ (Apache/MySQL на хосте, IspManager, деплой — git pull): этот файл
+# приезжает на сервер вместе с кодом, но сам ничего не запускает. Подробнее — docker/README.md.
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    ports:
+      - "127.0.0.1:8090:80"        # http://localhost:8090 — сайт (api/, i/, ...)
+    volumes:
+      - .:/var/www/html            # репозиторий целиком: правки PHP видны без пересборки
+      - ./docker/dev-passwords.php:/var/www/plllasma-passwords.php:ro
+      - attachments:/var/www/attachments
+    environment:
+      DB_HOST: mysql               # api/include/main.php читает хост отсюда; на проде env нет -> localhost
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.0               # прод — MySQL 8.0.28 (db/plllasma.sql)
+    # PHP 7.4, как на проде, не знаком с плагином авторизации caching_sha2_password,
+    # дефолтным в MySQL 8: оставляем классический
+    command: ["--default-authentication-plugin=mysql_native_password"]
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: plllasma
+      MYSQL_USER: plllasma
+      MYSQL_PASSWORD: dev          # = $passwordDB в docker/dev-passwords.php
+    ports:
+      - "127.0.0.1:3307:3306"      # с хоста GUI-клиентом, если нужен
+    volumes:
+      - mysql:/var/lib/mysql
+      # Схема засеивается только при ПЕРВОМ старте пустого тома. db/plllasma.sql — снимок
+      # текущего состояния прода, уже ВКЛЮЧАЯ применённые миграции из db/migrations/
+      # (проверено: idx_place_time и lnk_user_ignore в дампе есть). Появилась миграция
+      # новее снимка — смонтируйте её следом, отдельной строкой с номером 02 и далее.
+      - ./db/plllasma.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  garden:
+    build:
+      context: .
+      dockerfile: docker/garden.Dockerfile
+    ports:
+      - "127.0.0.1:8080:8080"      # сюда дев-сервер garden/frontend проксирует /api (vite.config.ts)
+    volumes:
+      - garden-data:/data          # SQLite (garden.db) живёт в томе — деплоями и git не трогается
+
+volumes:
+  mysql:
+  attachments:
+  garden-data:

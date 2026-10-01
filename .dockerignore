@@ -1,0 +1,15 @@
+# Не отдаём в docker-контекст сборки (docker compose build): образам нужны только
+# docker/, api/ и garden/backend — остальное лишь замедляет отправку контекста.
+.git
+**/node_modules
+**/dist
+**/tmp*
+garden/tmp*
+i
+logs
+attachments
+scripts/out
+youtube-preview
+graphics
+a
+frontend

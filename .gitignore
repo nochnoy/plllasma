@@ -20,6 +20,10 @@ Thumbs.db
 # Состояние сессий агента (ZCode)
 .zcode/
 
+# Рантайм-данные сайта внутри web root (юзерпики и аттачменты пишет сам прод)
+/i/
+/attachments/
+
 # Node modules (если есть)
 node_modules/
 
