@@ -909,3 +909,18 @@ body {
   outline: 2px solid #fff;
   outline-offset: 2px;
 }
+
+/*
+ * The whole page while its player is being signed in (`src/main.ts`, `index.html`): the game is not
+ * there yet and the black is — the same black the hall hangs in — so the one word sits in the middle
+ * of it, at reading size, in the page's own ink. It is also the page's whole answer when signing in
+ * fails, with the word the failure left in its place.
+ */
+.loading {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  font-size: 16px;
+}

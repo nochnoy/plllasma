@@ -4,6 +4,7 @@
 // The doors are these:
 //
 //	GET  /api/health                   a line for a monitor: is anything alive
+//	POST /api/auth                     one token, and the player the site says owns it
 //	GET  /api/recordings               the list, newest first
 //	POST /api/recordings               one run's tape, uploaded whole
 //	POST /api/recordings/live          a run that arrives as it is played
@@ -28,18 +29,22 @@
 // run being played and a playback of the same run uploaded when it was over read
 // the same events.
 //
-// There is no signing in, and nothing about a caller is remembered: a message is
-// signed by whatever nickname it carries (`chat/messages.ts`) — the name the
-// player answered the first question with, or the ghost's — and that signature is
-// the whole of who wrote a line. Nothing is set on the browser and nothing is
-// looked up about it, so a request is answered by what it says and by nothing
-// else.
+// There is no signing in *here*, but nobody is a nickname of their own choosing
+// either: every door but the monitor's takes a token in `X-Auth-Token` — the
+// browser session's own, the `contortion_key` cookie the site's login leaves —
+// and this server asks the site about it (`auth.go`, the site's own
+// `api/user-by-token.php`) rather than taking the caller's word for who they
+// are. What a caller is remembered as is the site's answer: a message is signed
+// by the player the token belongs to (`users` in `internal/store`), whoever
+// their nickname said they were, and the one thing they may still choose for a
+// line of their own is to write it as the ghost. Nothing is set on the browser
+// and the token is not rotated, so the session the token came from goes on
+// working however much the game asks about it.
 //
 // The rules that are about a *request* rather than about the log live here: how
-// big a body may be, what a nickname and a badge may be made of, and how far
-// into a recording a message may be anchored — a line at step 4000 of a run
-// that is 3000 steps long is a mistake rather than a message, because no
-// playback could ever reach it.
+// big a body may be, and how far into a recording a message may be anchored — a
+// line at step 4000 of a run that is 3000 steps long is a mistake rather than a
+// message, because no playback could ever reach it.
 package api
 
 import (
@@ -76,10 +81,9 @@ const (
 	// sending a whole run through the door for slices.
 	maxChunk = 1 << 20
 
-	// A message's own arithmetic: a nickname is short whatever alphabet it is
+	// A message's own arithmetic: a run's name is short whatever alphabet it is
 	// written in, and a body is one line of a chat rather than an essay.
 	maxNick  = 40
-	maxBadge = 200
 	maxParts = 20
 	maxText  = 500
 	maxAlt   = 100
@@ -100,18 +104,23 @@ const (
 // `httptest.NewServer` away from it and a monitor is a `curl`.
 //
 // The router is the server: nothing stands between a request and the door it
-// names (`routes`), because there is nothing to decide about a caller — no
-// session to look up, no cookie to set, no second opinion about who is asking.
+// names (`routes`), because there is nothing to decide about a caller beyond
+// the one question every door asks anyway — whose token is this (`userOf`).
 type Server struct {
 	*http.ServeMux
 	store *store.Store
 	now   func() time.Time
 	newID func() string
+	// who is what a token is worth: the player the site says owns it. The
+	// default asks nothing and answers nothing — a server built without an
+	// auth endpoint refuses every caller, honestly rather than by accident —
+	// and a real one is built by `WithAuthURL` from the site's own door.
+	who func(token string) (User, error)
 }
 
-// Option is one of the two things a test decides for itself: what time it is,
-// and what a new name is. Everything else a test changes, it changes by asking
-// the store.
+// Option is one of the things a test or a main decides for itself: what time it
+// is, what a new name is, and what a token is worth. Everything else a test
+// changes, it changes by asking the store.
 type Option func(*Server)
 
 // WithClock is the server's clock. The default is `time.Now`; a test hands it
@@ -127,9 +136,30 @@ func WithIDs(newID func() string) Option {
 	return func(s *Server) { s.newID = newID }
 }
 
+// WithAuth is what a token is worth, decided by the caller: a test hands it a
+// table of its own players, because a test has no site to ask.
+func WithAuth(who func(token string) (User, error)) Option {
+	return func(s *Server) { s.who = who }
+}
+
+// WithAuthURL is the site's own door about tokens (`api/user-by-token.php`) at
+// the address the site answers it at. It is what a real server runs with; see
+// `auth.go` for the asking and its caching.
+func WithAuthURL(url string) Option {
+	return func(s *Server) { s.who = newSiteAuth(url) }
+}
+
 // New is the API over a store, with every door hung on it.
 func New(st *store.Store, options ...Option) *Server {
-	s := &Server{ServeMux: http.NewServeMux(), store: st, now: time.Now, newID: newToken}
+	s := &Server{
+		ServeMux: http.NewServeMux(),
+		store:    st,
+		now:      time.Now,
+		newID:    newToken,
+		who: func(string) (User, error) {
+			return User{}, errors.New("no auth endpoint is configured: start with -auth-url")
+		},
+	}
 	for _, option := range options {
 		option(s)
 	}
@@ -142,6 +172,7 @@ func New(st *store.Store, options ...Option) *Server {
 // rather than falling through to something else.
 func (s *Server) routes() {
 	s.HandleFunc("GET /api/health", s.health)
+	s.HandleFunc("POST /api/auth", s.auth)
 	s.HandleFunc("GET /api/recordings", s.recordings)
 	s.HandleFunc("POST /api/recordings", s.upload)
 	s.HandleFunc("POST /api/recordings/live", s.open)
@@ -212,10 +243,52 @@ func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 }
 
+// userOf is the one question every door but the monitor's asks: whose token is
+// this. It has already answered — with a refusal in the caller's own hand —
+// when it answers false, which is why a handler that gets past it need not
+// think about a caller it does not know the name of.
+func (s *Server) userOf(w http.ResponseWriter, r *http.Request) (User, bool) {
+	user, err := s.who(tokenOf(r))
+	switch {
+	case err == nil:
+		return user, true
+	case errors.Is(err, errNoAuth):
+		fail(w, http.StatusUnauthorized, "auth")
+		return User{}, false
+	default:
+		// The site being unreachable is not the caller's fault, but it is not
+		// this server's to forgive either: the token cannot be asked about, so
+		// the door stays shut and the sentence says whose end of the wire it
+		// shut on.
+		fail(w, http.StatusBadGateway, "%v", err)
+		return User{}, false
+	}
+}
+
+// auth is the door a page comes to first: the token out of the site's cookie,
+// and the player the site says owns it. It is the handshake the page waits out
+// on its black screen, and the one place a player's row is written down
+// (`UpsertUser`) — every door after it takes the token for granted and asks
+// about it only as often as the cache does (`auth.go`).
+func (s *Server) auth(w http.ResponseWriter, r *http.Request) {
+	user, ok := s.userOf(w, r)
+	if !ok {
+		return
+	}
+	if err := s.store.UpsertUser(user.ID, user.Nick, user.Icon, s.now().UnixMilli()); err != nil {
+		fail(w, http.StatusInternalServerError, "%v", err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"user": user})
+}
+
 // recordings is the list the window draws: every run this server holds, newest
 // first, each with the numbers a list needs to show (how long it lasts, how big
 // it is, whether it is still being played) and without the tapes themselves.
 func (s *Server) recordings(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.userOf(w, r); !ok {
+		return
+	}
 	list, err := s.store.Recordings(s.now().UnixMilli())
 	if err != nil {
 		fail(w, http.StatusInternalServerError, "the recordings could not be read: %v", err)
@@ -307,25 +380,19 @@ func (s *Server) readHead(raw json.RawMessage) (tapeHeader, error) {
 	return header, nil
 }
 
-// cleanRun is a run's name and its author off the wire, checked as they are
-// read: a run needs a name, and one that arrived without an author is anonymous.
-// Both are as short as a nickname, for the same reason a nickname is.
-func cleanRun(name, author string) (cleanName, cleanAuthor string, err error) {
+// cleanRun is a run's name off the wire, checked as it is read: a run needs a
+// name, as short as a nickname for the same reason a nickname is. Who played it
+// is not the wire's to say — the token is, and it has already been answered for
+// (`userOf`).
+func cleanRun(name string) (cleanName string, err error) {
 	cleanName = strings.TrimSpace(name)
 	if cleanName == "" {
-		return "", "", errors.New("a recording needs a name")
+		return "", errors.New("a recording needs a name")
 	}
 	if len(cleanName) > maxNick {
-		return "", "", fmt.Errorf("the name is %d characters; this server takes %d", len(cleanName), maxNick)
+		return "", fmt.Errorf("the name is %d characters; this server takes %d", len(cleanName), maxNick)
 	}
-	cleanAuthor = strings.TrimSpace(author)
-	if cleanAuthor == "" {
-		cleanAuthor = "Аноним"
-	}
-	if len(cleanAuthor) > maxNick {
-		return "", "", fmt.Errorf("the author is %d characters; this server takes %d", len(cleanAuthor), maxNick)
-	}
-	return cleanName, cleanAuthor, nil
+	return cleanName, nil
 }
 
 // readChunk is one slice of a live run off the wire, checked as it is read.
@@ -377,14 +444,22 @@ func list(raw json.RawMessage) (json.RawMessage, error) {
 	return json.RawMessage(trimmed), nil
 }
 
-// upload takes one run: the name it was given, the nickname it was played under,
-// when it was recorded, and the tape itself as the game wrote it. The answer is
-// the recording as the list will show it — which is where the window learns the
-// id a playback of it will be asked for by.
+// upload takes one run: the name it was given, when it was recorded, and the
+// tape itself as the game wrote it — played, like everything else here, by
+// whoever the token says is asking. The answer is the recording as the list
+// will show it — which is where the window learns the id a playback of it will
+// be asked for by.
 func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
+	user, ok := s.userOf(w, r)
+	if !ok {
+		return
+	}
+	if err := s.store.UpsertUser(user.ID, user.Nick, user.Icon, s.now().UnixMilli()); err != nil {
+		fail(w, http.StatusInternalServerError, "%v", err)
+		return
+	}
 	var body struct {
 		Name       string          `json:"name"`
-		Author     string          `json:"author"`
 		RecordedMs int64           `json:"recorded_ms"`
 		Tape       json.RawMessage `json:"tape"`
 	}
@@ -397,7 +472,7 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "%v", err)
 		return
 	}
-	name, author, err := cleanRun(body.Name, body.Author)
+	name, err := cleanRun(body.Name)
 	if err != nil {
 		fail(w, http.StatusBadRequest, "%v", err)
 		return
@@ -405,7 +480,8 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 	recording := store.Recording{
 		ID:         s.newID(),
 		Name:       name,
-		Author:     author,
+		AuthorID:   user.ID,
+		Author:     user.Nick,
 		Steps:      header.Steps,
 		StepMs:     header.Step,
 		Seed:       header.Seed,
@@ -420,18 +496,25 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, map[string]any{"recording": recording})
 }
 
-// open starts a run that is to be sent in as it is played: the name and the
-// nickname a list shows, when it started, and the head of the tape it will be.
-// The answer is the run as the list shows it, carrying the id its slices are
-// sent to.
+// open starts a run that is to be sent in as it is played: the name a list
+// shows, when it started, and the head of the tape it will be — played by the
+// caller the token names. The answer is the run as the list shows it, carrying
+// the id its slices are sent to.
 //
 // Nothing is played here and nothing is stored but the head: a live run has no
 // steps until its first slice arrives, and a run whose player closed the window
 // before sending one is a run with nothing in it.
 func (s *Server) open(w http.ResponseWriter, r *http.Request) {
+	user, ok := s.userOf(w, r)
+	if !ok {
+		return
+	}
+	if err := s.store.UpsertUser(user.ID, user.Nick, user.Icon, s.now().UnixMilli()); err != nil {
+		fail(w, http.StatusInternalServerError, "%v", err)
+		return
+	}
 	var body struct {
 		Name       string          `json:"name"`
-		Author     string          `json:"author"`
 		RecordedMs int64           `json:"recorded_ms"`
 		Head       json.RawMessage `json:"head"`
 	}
@@ -444,7 +527,7 @@ func (s *Server) open(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "%v", err)
 		return
 	}
-	name, author, err := cleanRun(body.Name, body.Author)
+	name, err := cleanRun(body.Name)
 	if err != nil {
 		fail(w, http.StatusBadRequest, "%v", err)
 		return
@@ -453,7 +536,8 @@ func (s *Server) open(w http.ResponseWriter, r *http.Request) {
 	recording := store.Recording{
 		ID:         s.newID(),
 		Name:       name,
-		Author:     author,
+		AuthorID:   user.ID,
+		Author:     user.Nick,
 		StepMs:     header.Step,
 		Seed:       header.Seed,
 		RecordedMs: body.RecordedMs,
@@ -477,6 +561,9 @@ func (s *Server) open(w http.ResponseWriter, r *http.Request) {
 // has ended — or of one that was uploaded whole, which was over before it
 // arrived — is a 409: the run is the right one and it takes no more.
 func (s *Server) appendChunk(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.userOf(w, r); !ok {
+		return
+	}
 	id := r.PathValue("id")
 	var body struct {
 		Seq    *int            `json:"seq"`
@@ -518,6 +605,9 @@ func (s *Server) appendChunk(w http.ResponseWriter, r *http.Request) {
 // has; without it every slice the run has is answered, which is how a run that
 // began before somebody arrived is watched from its own beginning.
 func (s *Server) chunks(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.userOf(w, r); !ok {
+		return
+	}
 	id := r.PathValue("id")
 	after := -1
 	if raw := strings.TrimSpace(r.URL.Query().Get("after")); raw != "" {
@@ -550,6 +640,9 @@ func (s *Server) chunks(w http.ResponseWriter, r *http.Request) {
 // its slices are answered as one tape (`store.Tape`), so a playback of a run
 // that is still being played is a playback of the run so far.
 func (s *Server) tape(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.userOf(w, r); !ok {
+		return
+	}
 	id := r.PathValue("id")
 	body, err := s.store.Tape(id)
 	if errors.Is(err, store.ErrNotFound) {
@@ -572,6 +665,9 @@ func (s *Server) tape(w http.ResponseWriter, r *http.Request) {
 // about a line twice. What comes back is the tail of it — the newest fifty
 // lines (`store.messageLimit`) — because a conversation is read, not archived.
 func (s *Server) messages(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.userOf(w, r); !ok {
+		return
+	}
 	query := r.URL.Query()
 	after := int64(0)
 	if raw := strings.TrimSpace(query.Get("after")); raw != "" {
@@ -605,20 +701,27 @@ func (s *Server) messages(w http.ResponseWriter, r *http.Request) {
 }
 
 // post writes one line: into the lobby, onto a recording, or anchored at a step
-// of one.
+// of one — as the player the token names, which is the only byline a line
+// carries any more.
 //
 // The anchor is the part that needs checking rather than reading. A playback can
-// only ever reach the steps of the run it is playing, so a line at step 4000 of
-// a run 3000 steps long is a mistake rather than a message — it would be a line
+// only ever reach the steps of the run it is playing, so a line at step 4000 of a
+// run 3000 steps long is a mistake rather than a message — it would be a line
 // no playback ever showed, and every window would have to decide for itself what
 // to do with it. The lobby has no timeline at all, so a line in it is about the
 // lobby.
 func (s *Server) post(w http.ResponseWriter, r *http.Request) {
+	user, ok := s.userOf(w, r)
+	if !ok {
+		return
+	}
+	if err := s.store.UpsertUser(user.ID, user.Nick, user.Icon, s.now().UnixMilli()); err != nil {
+		fail(w, http.StatusInternalServerError, "%v", err)
+		return
+	}
 	var body struct {
 		Tape   string       `json:"tape"`
 		AtStep *int         `json:"at_step"`
-		Nick   string       `json:"nick"`
-		Badge  string       `json:"badge"`
 		Ghost  bool         `json:"ghost"`
 		Parts  []store.Part `json:"parts"`
 	}
@@ -647,16 +750,6 @@ func (s *Server) post(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	nick := strings.TrimSpace(body.Nick)
-	if nick == "" || len(nick) > maxNick {
-		fail(w, http.StatusBadRequest, "a nickname is between 1 and %d characters", maxNick)
-		return
-	}
-	badge := strings.TrimSpace(body.Badge)
-	if len(badge) > maxBadge {
-		fail(w, http.StatusBadRequest, "that badge is %d characters; this server takes %d", len(badge), maxBadge)
-		return
-	}
 	parts, err := cleanParts(body.Parts)
 	if err != nil {
 		fail(w, http.StatusBadRequest, "%v", err)
@@ -665,8 +758,9 @@ func (s *Server) post(w http.ResponseWriter, r *http.Request) {
 	message := store.Message{
 		Tape:   tape,
 		AtStep: body.AtStep,
-		Nick:   nick,
-		Badge:  badge,
+		UserID: user.ID,
+		Nick:   user.Nick,
+		Icon:   user.Icon,
 		Ghost:  body.Ghost,
 		Parts:  parts,
 		SentMs: s.now().UnixMilli(),

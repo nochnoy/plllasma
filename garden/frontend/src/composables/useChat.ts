@@ -5,14 +5,13 @@ import {
   lastMessages,
   LOBBY,
   playerMessage,
-  PLAYER_NICK,
   PENDING,
   reachedAt,
-  speakerFor,
   TICKER_LINES,
   WINDOW_LINES,
   type ChatMessage,
   type Place,
+  type Speaker,
 } from '../chat/messages';
 
 /**
@@ -32,10 +31,10 @@ export interface ChatOptions {
   /** The wire the chat speaks on (`chat/api.ts`): the real one, unless a test brings its own. */
   wire?: ChatWire;
   /**
-   * The name the player is playing under, as the auth dialog answered it (`NickDialog`); '' is a player who
-   * gave none, who speaks as the ghost. Defaults to the name the chat has always had for them.
+   * Who the player is, as the page's handshake answered for them (`main.ts` calls `auth()` and hands
+   * the player on): a line is signed by this speaker, or by the ghost while the field says so.
    */
-  nick?: string;
+  speaker: Speaker;
   /** How often to catch up on what has been written, in milliseconds; 0 never does, which a test wants. */
   every?: number;
 }
@@ -54,7 +53,7 @@ function atTheLobby(): Place {
   return { tape: LOBBY, step: 0 };
 }
 
-export function useChat(place: () => Place = atTheLobby, options: ChatOptions = {}) {
+export function useChat(place: () => Place = atTheLobby, options: ChatOptions) {
   const wire = options.wire ?? chatApi();
   const every = options.every ?? CATCH_UP_MS;
 
@@ -73,16 +72,11 @@ export function useChat(place: () => Place = atTheLobby, options: ChatOptions = 
   const sending = ref(false);
 
   /**
-   * The name the player is playing under. It is not `anonymous`: that switch is the field's own, and this
-   * is what the auth dialog answered with — a name of the player's own, or nothing at all for the ghost's.
+   * Who the next line will be sent as, and who the field is showing: the ghost while the field says so,
+   * and otherwise the player as the site named them — the one name they did not choose for themselves
+   * here, and the one face of their own the whole site already knows them by.
    */
-  const nick = ref(options.nick ?? PLAYER_NICK);
-
-  /**
-   * Who the next line will be sent as, and who the field is showing: the ghost while the field says so, and
-   * otherwise the player under whatever name the chat has for them ({@link speakerFor}).
-   */
-  const speaker = computed(() => (anonymous.value ? GHOST : speakerFor(nick.value)));
+  const speaker = computed(() => (anonymous.value ? GHOST : options.speaker));
 
   /**
    * What this moment of the place shows — which is the whole of what both views draw.
@@ -175,8 +169,6 @@ export function useChat(place: () => Place = atTheLobby, options: ChatOptions = 
     const draft: Draft = {
       tape: where.tape,
       atStep: where.tape === LOBBY ? null : where.step,
-      nick: speaker.value.nick,
-      badge: speaker.value.badge,
       ghost: anonymous.value,
       parts: [{ kind: 'text', text: trimmed }],
     };
@@ -227,8 +219,6 @@ export function useChat(place: () => Place = atTheLobby, options: ChatOptions = 
     ticker,
     open,
     anonymous,
-    /** The name the player is playing under, '' for the ghost's own: what the field's left end shows. */
-    nick,
     speaker,
     error,
     sending,
@@ -241,15 +231,6 @@ export function useChat(place: () => Place = atTheLobby, options: ChatOptions = 
     /** The field's own switch: the player as themselves, or the player as the ghost. */
     toggleAnonymous: () => {
       anonymous.value = !anonymous.value;
-    },
-    /**
-     * The auth dialog's answer (`NickDialog`): the name this page plays under from here on, and — for an
-     * empty one — the ghost's, which is what the chat calls somebody who gave no name at all. What has
-     * already been said is left alone: only the lines sent from now on wear the new name.
-     */
-    setNick: (chosen: string) => {
-      nick.value = chosen.trim();
-      anonymous.value = nick.value === '';
     },
     /** What the player sent: `true` once the server has it, which is what clears the field. */
     send,

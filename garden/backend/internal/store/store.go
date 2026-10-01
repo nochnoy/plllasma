@@ -70,7 +70,14 @@ type Recording struct {
 	ID string `json:"id"`
 	// Name is what the player called the run.
 	Name string `json:"name"`
-	// Author is the nickname the run was recorded under.
+	// AuthorID is who played the run: one of the site's own players, as this
+	// server came to know them at the door (`UpsertUser`). The list reads the
+	// nickname rather than the number, which is what `Author` is for.
+	AuthorID int64 `json:"-"`
+	// Author is the nickname the run was recorded under, read from the row the
+	// player's own auth keeps current (`users`) rather than copied down at
+	// upload time — a player the site has renamed is renamed here too, the
+	// next time anybody lists a run of theirs.
 	Author string `json:"author"`
 	// Steps is how long the run is, in the tape's own steps.
 	Steps int `json:"steps"`
@@ -118,13 +125,19 @@ type Message struct {
 	Tape string `json:"tape,omitempty"`
 	// AtStep is the moment of that recording it is about, or nil for a line
 	// about the run itself.
-	AtStep *int   `json:"at_step,omitempty"`
+	AtStep *int `json:"at_step,omitempty"`
+	// UserID is who wrote it: one of the site's own players, as their token was
+	// answered for at the door (`users`). Nick and Icon are the same player as
+	// the window reads them — filled from that row on the way out (`Messages`),
+	// and by the caller on the way in (`AddMessage`) so that the answer to a
+	// line just written is shaped like the line the log will answer with.
+	UserID int64  `json:"user_id"`
 	Nick   string `json:"nick"`
-	Badge  string `json:"badge"`
+	Icon   string `json:"icon"`
 	// Ghost says the line was written as the ghost rather than as the player
-	// (`frontend/src/chat/messages.ts`): a nickname and a badge are the
-	// client's to choose, and the flag is what lets the window say which of the
-	// two the author picked for themselves.
+	// (`frontend/src/chat/messages.ts`): the author is still who the token says
+	// wrote it, and the flag is what lets the window draw the ghost's own name
+	// and face over the player's.
 	Ghost  bool   `json:"ghost"`
 	Parts  []Part `json:"parts"`
 	SentMs int64  `json:"sent_ms"`
@@ -135,16 +148,22 @@ type Store struct {
 	db *sql.DB
 }
 
-// schema is the whole of the database: three tables, written as one list of
+// schema is the whole of the database: four tables, written as one list of
 // statements so that a fresh file and an old one come out of the same list.
 //
+//   - `users` is the site's own players as this server has met them: a row per
+//     player, written at the door (`UpsertUser`) from what the site answered
+//     about their token, and kept current by every asking after it. It is a
+//     cache of the site's names rather than a copy of its people — the id is
+//     the site's own, and the nick and the icon are what the site says today.
 //   - `recordings` is the tapes themselves, verbatim, plus the header a list
 //     shows. The tape is stored as it was sent rather than as columns of its
 //     own: it is the game's file format, and the game's decoder is what reads
 //     it (`decodeTape`) — a table of its events would be this server's second
 //     opinion about a run. `tape` is empty for a run that arrived in slices:
 //     such a run keeps the *head* of its tape instead (`head`), and whether it
-//     is still being played (`live`, `ended_ms`).
+//     is still being played (`live`, `ended_ms`). Who played it is `author_id`,
+//     one of the users above.
 //   - `chunks` is one slice of a live run: a row per few seconds of play, in
 //     the order they were played (`seq`). A run's tape is its head and these
 //     rows pasted together (`Tape`), which is also why a slice is stored as the
@@ -152,12 +171,22 @@ type Store struct {
 //     shape of.
 //   - `messages` is the log. `tape` is null in the lobby and the recording's id
 //     otherwise, so that one table holds both conversations and one query
-//     answers either; `at_step` is null for a line about a run as a whole.
+//     answers either; `at_step` is null for a line about a run as a whole. Who
+//     wrote it is `user_id`, never a nickname carried on the wire: the wire
+//     carries a token, the token is answered for at the door, and the answer is
+//     this table's own row.
 const schema = `
+CREATE TABLE IF NOT EXISTS users (
+  id      INTEGER PRIMARY KEY,
+  nick    TEXT NOT NULL,
+  icon    TEXT NOT NULL,
+  seen_ms INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS recordings (
   id          TEXT PRIMARY KEY,
   name        TEXT NOT NULL,
-  author      TEXT NOT NULL,
+  author_id   INTEGER NOT NULL REFERENCES users(id),
   steps       INTEGER NOT NULL,
   step_ms     INTEGER NOT NULL,
   seed        INTEGER NOT NULL,
@@ -174,8 +203,7 @@ CREATE TABLE IF NOT EXISTS messages (
   id      INTEGER PRIMARY KEY AUTOINCREMENT,
   tape    TEXT REFERENCES recordings(id) ON DELETE CASCADE,
   at_step INTEGER,
-  nick    TEXT NOT NULL,
-  badge   TEXT NOT NULL,
+  user_id INTEGER NOT NULL REFERENCES users(id),
   ghost   INTEGER NOT NULL DEFAULT 0,
   parts   TEXT NOT NULL,
   sent_ms INTEGER NOT NULL
@@ -204,7 +232,13 @@ CREATE TABLE IF NOT EXISTS chunks (
 // said about them, and brought up to the schema empty (`purge`). That is the one
 // break the store makes on purpose — the alternative would be keeping a second
 // codec alive for the sake of files nobody can watch.
-const schemaVersion = 2
+//
+// Version 3 is the site's own players: a message and a recording belong to a
+// `user_id` the token was answered for, and the nicknames and badges they used
+// to arrive with are gone from the wire. The old lines are nobody's now that
+// nobody's token says them, so the clearing the version always does is the
+// whole of the change here too.
+const schemaVersion = 3
 
 // purge is what a database of an older shape is brought forward with: the tables
 // of the old runs are dropped rather than emptied, because their chunks held the
@@ -214,6 +248,7 @@ const purge = `
 DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS chunks;
 DROP TABLE IF EXISTS recordings;
+DROP TABLE IF EXISTS users;
 ` + schema
 
 // Open opens the database at path — the file is made if it is not there — and
@@ -272,6 +307,27 @@ func Open(path string) (*Store, error) {
 // committed before its recording is answered — so there is nothing else to do.
 func (s *Store) Close() error { return s.db.Close() }
 
+// UpsertUser writes down what the site answered about a token: one row per
+// player, replaced by every asking after it, so that the nick and the icon a
+// window reads beside a line are the site's own words for its author however
+// long ago the line was written. `seen` is the asking's own moment, for whoever
+// wants to know when this server last heard the site say the player's name.
+//
+// It is called at the door rather than on every write that hangs off a player:
+// the row has to be there before the first message of theirs (the reference
+// below insists on it), and the door is the one place every player passes
+// through.
+func (s *Store) UpsertUser(id int64, nick, icon string, seen int64) error {
+	_, err := s.db.Exec(`
+		INSERT INTO users (id, nick, icon, seen_ms) VALUES (?, ?, ?, ?)
+		ON CONFLICT(id) DO UPDATE SET nick = excluded.nick, icon = excluded.icon, seen_ms = excluded.seen_ms`,
+		id, nick, icon, seen)
+	if err != nil {
+		return fmt.Errorf("write the player down: %w", err)
+	}
+	return nil
+}
+
 // SaveRecording writes a whole run down, tape and all, and answers with the row
 // as the list would show it. The id is the caller's, so that a recording can be
 // named before it is written, and so that a test's recordings are named rather
@@ -288,9 +344,9 @@ func (s *Store) SaveRecording(r Recording, tape string) (Recording, error) {
 		r.EndedMs = r.UploadedMs
 	}
 	_, err := s.db.Exec(`
-		INSERT INTO recordings (id, name, author, steps, step_ms, seed, bytes, recorded_ms, uploaded_ms, tape, head, live, ended_ms)
+		INSERT INTO recordings (id, name, author_id, steps, step_ms, seed, bytes, recorded_ms, uploaded_ms, tape, head, live, ended_ms)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', 0, ?)`,
-		r.ID, r.Name, r.Author, r.Steps, r.StepMs, r.Seed, r.Bytes, r.RecordedMs, r.UploadedMs, tape, r.EndedMs)
+		r.ID, r.Name, r.AuthorID, r.Steps, r.StepMs, r.Seed, r.Bytes, r.RecordedMs, r.UploadedMs, tape, r.EndedMs)
 	if err != nil {
 		return Recording{}, fmt.Errorf("save recording %s: %w", r.ID, err)
 	}
@@ -304,7 +360,8 @@ func (s *Store) SaveRecording(r Recording, tape string) (Recording, error) {
 // live run is still being played is a judgement about time (`playing`).
 func (s *Store) Recordings(now int64) ([]Recording, error) {
 	rows, err := s.db.Query(`SELECT ` + recordingColumns + `
-		FROM recordings ORDER BY uploaded_ms DESC, id`)
+		FROM recordings r LEFT JOIN users u ON u.id = r.author_id
+		ORDER BY r.uploaded_ms DESC, r.id`)
 	if err != nil {
 		return nil, fmt.Errorf("recordings: %w", err)
 	}
@@ -372,8 +429,11 @@ type Stream struct {
 const liveGraceMs = 2 * 60 * 1000
 
 // recordingColumns is the row of a run as both `Recordings` and `readRecording`
-// read it, in the order `scanRecording` expects.
-const recordingColumns = `id, name, author, steps, step_ms, seed, bytes, recorded_ms, uploaded_ms, live, ended_ms`
+// read it, in the order `scanRecording` expects. The author is the player's own
+// row joined in (`users`), which is what keeps a run's byline as current as the
+// site's own word for its player.
+const recordingColumns = `r.id, r.name, COALESCE(u.nick, ''), r.steps, r.step_ms, r.seed, r.bytes,
+	r.recorded_ms, r.uploaded_ms, r.live, r.ended_ms`
 
 // rower is what reading one row needs of a database, or of a transaction inside
 // one: both answer `QueryRow`, so `readRecording` serves either.
@@ -406,7 +466,8 @@ func scanRecording(scan func(...any) error, now int64) (Recording, error) {
 
 // readRecording is one run's row, as the list would show it, or `ErrNotFound`.
 func readRecording(q rower, id string, now int64) (Recording, error) {
-	r, err := scanRecording(q.QueryRow(`SELECT `+recordingColumns+` FROM recordings WHERE id = ?`, id).Scan, now)
+	r, err := scanRecording(q.QueryRow(`SELECT `+recordingColumns+`
+		FROM recordings r LEFT JOIN users u ON u.id = r.author_id WHERE r.id = ?`, id).Scan, now)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Recording{}, fmt.Errorf("recording %s: %w", id, ErrNotFound)
 	}
@@ -553,9 +614,9 @@ func trimArray(text string) string {
 func (s *Store) OpenRecording(r Recording, head string, now int64) (Recording, error) {
 	r.Steps, r.Bytes, r.Live, r.EndedMs = 0, len(head), true, now
 	_, err := s.db.Exec(`
-		INSERT INTO recordings (id, name, author, steps, step_ms, seed, bytes, recorded_ms, uploaded_ms, tape, head, live, ended_ms)
+		INSERT INTO recordings (id, name, author_id, steps, step_ms, seed, bytes, recorded_ms, uploaded_ms, tape, head, live, ended_ms)
 		VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?, '', ?, 1, ?)`,
-		r.ID, r.Name, r.Author, r.StepMs, r.Seed, r.Bytes, r.RecordedMs, r.UploadedMs, head, now)
+		r.ID, r.Name, r.AuthorID, r.StepMs, r.Seed, r.Bytes, r.RecordedMs, r.UploadedMs, head, now)
 	if err != nil {
 		return Recording{}, fmt.Errorf("open recording %s: %w", r.ID, err)
 	}
@@ -669,8 +730,9 @@ func (s *Store) Messages(tape string, after int64) ([]Message, error) {
 	// than the head; the list is turned around before it is answered, because
 	// the order it is read in is the order it was said in.
 	rows, err := s.db.Query(`
-		SELECT m.id, COALESCE(m.tape, ''), m.at_step, m.nick, m.badge, m.ghost, m.parts, m.sent_ms
-		FROM messages m
+		SELECT m.id, COALESCE(m.tape, ''), m.at_step, m.user_id,
+			COALESCE(u.nick, ''), COALESCE(u.icon, '-'), m.ghost, m.parts, m.sent_ms
+		FROM messages m LEFT JOIN users u ON u.id = m.user_id
 		WHERE COALESCE(m.tape, '') = ? AND m.id > ?
 		ORDER BY m.id DESC
 		LIMIT ?`, tape, after, messageLimit)
@@ -685,7 +747,7 @@ func (s *Store) Messages(tape string, after int64) ([]Message, error) {
 			step sql.NullInt64
 			body string
 		)
-		if err := rows.Scan(&m.ID, &m.Tape, &step, &m.Nick, &m.Badge, &m.Ghost, &body, &m.SentMs); err != nil {
+		if err := rows.Scan(&m.ID, &m.Tape, &step, &m.UserID, &m.Nick, &m.Icon, &m.Ghost, &body, &m.SentMs); err != nil {
 			return nil, fmt.Errorf("messages: %w", err)
 		}
 		if step.Valid {
@@ -720,9 +782,9 @@ func (s *Store) AddMessage(m Message) (Message, error) {
 		tape = m.Tape
 	}
 	result, err := s.db.Exec(`
-		INSERT INTO messages (tape, at_step, nick, badge, ghost, parts, sent_ms)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		tape, m.AtStep, m.Nick, m.Badge, m.Ghost, string(parts), m.SentMs)
+		INSERT INTO messages (tape, at_step, user_id, ghost, parts, sent_ms)
+		VALUES (?, ?, ?, ?, ?, ?)`,
+		tape, m.AtStep, m.UserID, m.Ghost, string(parts), m.SentMs)
 	if err != nil {
 		return Message{}, fmt.Errorf("add message: %w", err)
 	}

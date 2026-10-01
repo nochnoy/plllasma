@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import type { ChatMessage, Speaker } from '../chat/messages';
-import { badgeSrc } from '../chat/messages';
 import { SIDEBAR_RUNS, type Run } from '../chat/runs';
 import ChatLine from './ChatLine.vue';
 import RunsDialog from './RunsDialog.vue';
@@ -156,7 +155,7 @@ function pick(run: Run): void {
             :aria-label="anonymous ? 'Писать от своего имени' : 'Писать от имени Привидения'"
             @click="emit('toggleSpeaker')"
           >
-            <img class="chat-card__badge" :src="badgeSrc(speaker.badge)" alt="" width="16" height="16" />
+            <img class="chat-card__badge" :src="speaker.face" alt="" width="16" height="16" />
             <b class="chat-card__nick">{{ speaker.nick }}</b>
             <!-- The combobox's own triangle, pointing down while the player is themselves and up
                  while they are the ghost. -->

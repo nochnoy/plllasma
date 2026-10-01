@@ -51,8 +51,12 @@ interface Rule {
 function fakeWire(rule: Rule = {}) {
   const asked = { runs: 0, tape: [] as string[] };
   const wire: ChatWire = {
-    // The two doors of the chat's own log, which this list never opens: they are here because they are
-    // part of what a wire is, and a list that asked about them would be a list that had gone wrong.
+    // The page's own handshake, and the two doors of the chat's own log, which this list never opens:
+    // they are here because they are part of what a wire is, and a list that asked about them would be
+    // a list that had gone wrong.
+    async auth() {
+      throw new Refused(0, 'the list does not sign anybody in');
+    },
     async log() {
       throw new Refused(0, 'the list does not read the log');
     },

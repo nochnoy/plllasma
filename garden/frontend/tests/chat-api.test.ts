@@ -47,11 +47,12 @@ function posted(asked: Asked): Record<string, unknown> {
   return JSON.parse(String(asked.init?.body)) as Record<string, unknown>;
 }
 
-/** A line as the server writes one: a line of the lobby. */
+/** A line as the server writes one: a line of the lobby, by the player the token named. */
 const WIRE_LINE = {
   id: 12,
+  user_id: 9,
   nick: 'Марго',
-  badge: 'badge-margo.gif',
+  icon: '-',
   parts: [{ kind: 'text', text: 'привет' }],
   sent_ms: 1750000000000,
 };
@@ -106,7 +107,6 @@ describe('the log of one place', () => {
             ...WIRE_LINE,
             tape: 'run-1',
             at_step: 42,
-            ghost: true,
           },
         ],
       },
@@ -116,12 +116,24 @@ describe('the log of one place', () => {
       id: 12,
       tape: 'run-1',
       atStep: 42,
+      userId: 9,
       nick: 'Марго',
-      badge: 'badge-margo.gif',
-      ghost: true,
+      face: '/i/-.gif',
+      ghost: false,
       parts: [{ kind: 'text', text: 'привет' }],
       sentMs: 1750000000000,
     });
+  });
+
+  it('reads a ghost\'s line as the ghost, over whoever the token named', async () => {
+    // The flag is a costume the writer put on: the server still knows whose line it is, and the page
+    // still draws the ghost's own name and face rather than the writer's.
+    const server = fakeServer({ body: { messages: [{ ...WIRE_LINE, ghost: true }] } });
+    const [read] = await chatApi('/api', server.take).log(LOBBY, 0);
+    expect(read.nick).toBe('Привидение');
+    expect(read.face).toContain('badge-ghost.gif');
+    expect(read.ghost).toBe(true);
+    expect(read.userId).toBe(9);
   });
 
   it('gives a line of the lobby no step to speak of', async () => {
@@ -154,23 +166,18 @@ describe('sending a line', () => {
   const DRAFT: Draft = {
     tape: LOBBY,
     atStep: null,
-    nick: 'Ты',
-    badge: 'badge-player.gif',
     ghost: false,
     parts: [{ kind: 'text', text: 'привет' }],
   };
 
-  it('posts the line under the server\'s own names', async () => {
+  it('posts the line under the server\'s own names, saying nothing about who wrote it', async () => {
     const server = fakeServer({ body: { message: { ...WIRE_LINE, id: 13 } } });
     await chatApi('/api', server.take).send(DRAFT);
     expect(server.asked[0].url).toBe('/api/messages');
     expect(server.asked[0].init?.method).toBe('POST');
-    expect(server.asked[0].init?.headers).toEqual({ 'content-type': 'application/json' });
     expect(posted(server.asked[0])).toEqual({
       tape: LOBBY,
       at_step: null,
-      nick: 'Ты',
-      badge: 'badge-player.gif',
       ghost: false,
       parts: [{ kind: 'text', text: 'привет' }],
     });
@@ -191,12 +198,57 @@ describe('sending a line', () => {
   });
 });
 
+describe('the handshake', () => {
+  it('posts nothing but the token, which is the header it always is', async () => {
+    const server = fakeServer({ body: { user: { id: 2, nick: 'Марат', icon: '2', icons_path: 'https://plllasma.ru/i/' } } });
+    const who = await chatApi('/api', server.take, 'token-of-marat').auth();
+    expect(server.asked[0].url).toBe('/api/auth');
+    expect(server.asked[0].init?.method).toBe('POST');
+    expect(new Headers(server.asked[0].init?.headers).get('x-auth-token')).toBe('token-of-marat');
+    // The door that asks what a token is worth has nothing else to say for itself: no body at all.
+    expect(server.asked[0].init?.body).toBeUndefined();
+    expect(who).toEqual({ id: 2, nick: 'Марат', icon: '2' });
+  });
+
+  it('is a refusal carrying the site\'s own word when the token is nobody\'s', async () => {
+    const server = fakeServer({ status: 401, statusText: 'Unauthorized', body: { error: 'auth' } });
+    const refused = (await chatApi('/api', server.take, 'somebody-else\'s').auth().catch((err: unknown) => err)) as Refused;
+    expect(refused).toBeInstanceOf(Refused);
+    expect(refused.status).toBe(401);
+  });
+
+  it('refuses a handshake the server answered without naming a player', async () => {
+    const wire = chatApi('/api', fakeServer({ body: {} }).take);
+    await expect(wire.auth()).rejects.toThrow(Refused);
+  });
+});
+
+describe('the token on every door', () => {
+  it('rides each call in the one header the server takes it from', async () => {
+    const server = fakeServer({ body: { messages: [] } });
+    await chatApi('/api', server.take, 'token-of-marat').log(LOBBY, 0);
+    expect(server.asked[0].init?.headers).toBeInstanceOf(Headers);
+    expect(new Headers(server.asked[0].init?.headers).get('x-auth-token')).toBe('token-of-marat');
+  });
+
+  it('is not sent at all when the page has none', async () => {
+    // A page with no token is a page whose handshake has not happened yet: its calls carry nothing they
+    // cannot back up, and the server's own refusal is the answer.
+    const server = fakeServer({ body: { messages: [] } });
+    await chatApi('/api', server.take, '').log(LOBBY, 0);
+    expect(new Headers(server.asked[0].init?.headers).get('x-auth-token')).toBeNull();
+  });
+});
+
 describe('the list of runs the window draws', () => {
   it('is asked for at the recordings, and about no run of it in particular', async () => {
     const server = fakeServer({ body: { recordings: [] } });
     await chatApi('/api', server.take).runs();
     expect(server.asked[0].url).toBe('/api/recordings');
-    expect(server.asked[0].init).toBeUndefined();
+    // A read is still a read: no method of its own, and nothing in its body — the only thing the
+    // crossing itself adds is the header every call wears.
+    expect(server.asked[0].init?.method).toBeUndefined();
+    expect(server.asked[0].init?.body).toBeUndefined();
   });
 
   it('reads the numbers a row is drawn from, and nothing else the server said about it', async () => {
@@ -232,7 +284,8 @@ describe('one run\'s own tape', () => {
     const server = fakeServer({ body: '{"format":"garden-tape/1"}' });
     await chatApi('/api', server.take).tape('run-2');
     expect(server.asked[0].url).toBe('/api/recordings/run-2');
-    expect(server.asked[0].init).toBeUndefined();
+    expect(server.asked[0].init?.method).toBeUndefined();
+    expect(server.asked[0].init?.body).toBeUndefined();
   });
 
   it('is asked for under a name escaped, whatever the run was named', async () => {

@@ -54,15 +54,24 @@ export interface Place {
  */
 export interface ChatMessage {
   id: number;
-  /** The recording it hangs on, or {@link LOBBY}. */
+  /** The recording it hangs on, or {@link LOBBY} for none. */
   tape: string;
   /** The step of that recording it is about, or null when it is about the run as a whole. */
   atStep: number | null;
-  /** Who wrote it. */
+  /** The site's own id for whoever wrote it — the one identity a line carries, whatever it is drawn as. */
+  userId: number;
+  /**
+   * Who wrote it, as it is read: the nickname the site calls them, or the ghost's own name for a
+   * line written as the ghost. The conversion is the wire's (`chat/api.ts`), so that every line the
+   * interface draws has one shape whether it just arrived or was just sent.
+   */
   nick: string;
-  /** Their badge, 16×16 on screen: the file's own name, under `assets/chat` ({@link badgeSrc}). */
-  badge: string;
-  /** Whether it was written as the ghost: the name is the field's business, this is what says so. */
+  /**
+   * The face drawn before the name, 16×16 on screen: a ready `src` — the writer's userpic the site
+   * keeps (`userpic`), or the ghost's badge for a line written as the ghost.
+   */
+  face: string;
+  /** Whether it was written as the ghost: the field's own switch, and what the face and name answer to. */
   ghost: boolean;
   /** What they wrote. */
   parts: readonly MessagePart[];
@@ -84,21 +93,22 @@ export const TICKER_LINES = 4;
 export const WINDOW_LINES = 50;
 
 /**
- * Who is speaking: a nickname and the badge that goes with it.
+ * Who is speaking: a nickname and the face that goes with it.
  *
  * The two travel together wherever one of them is drawn — a message wears both, and so does the
- * player's own field — which is why they are one thing here rather than two arguments everywhere.
+ * player's own field — which is why they are one thing here rather than two arguments everywhere. The
+ * face is a ready `src` (a userpic the site keeps, or the ghost's own badge), so that whoever draws a
+ * speaker draws one string and asks nothing further about where pictures live.
  */
 export interface Speaker {
+  /** The site's own id for the player, 0 for the ghost — who is nobody and says so. */
+  id: number;
   nick: string;
-  badge: string;
+  face: string;
 }
 
-/** Who the player speaks as. There is no signing in, so the chat is one more nickname in the list. */
-export const PLAYER_NICK = 'Ты';
-
 /**
- * Who the player speaks as when the chat is anonymous: a name and a badge of their own, and the only
+ * Who the player speaks as when the chat is anonymous: a name and a face of their own, and the only
  * speaker here that is not a person. Nobody's messages change when it is picked — what changes is who
  * the next one is signed by.
  */
@@ -116,29 +126,19 @@ export function badgeSrc(badge: string): string {
   return `${import.meta.env.BASE_URL}assets/chat/${badge}`;
 }
 
-/** The two badges the field switches between. */
-export const PLAYER_BADGE = 'badge-player.gif';
+/** The badge the ghost wears: the app's own picture, the one speaker that is not a person. */
 export const GHOST_BADGE = 'badge-ghost.gif';
 
-/** The player as themselves, and the player as the ghost: the two the field switches between. */
-export const PLAYER: Speaker = { nick: PLAYER_NICK, badge: PLAYER_BADGE };
-export const GHOST: Speaker = { nick: GHOST_NICK, badge: GHOST_BADGE };
+/** The ghost as a speaker: the name and the face the field switches to. */
+export const GHOST: Speaker = { id: 0, nick: GHOST_NICK, face: badgeSrc(GHOST_BADGE) };
 
 /**
- * Who speaks under a name: the player under a name of their own, or the ghost when there is no name at all
- * — which is what the auth dialog's empty field leaves behind, and what a page whose question was never
- * answered is.
- *
- * The two fixed speakers are handed back as they are rather than rebuilt from their parts, so that a line
- * is signed by the player's own name or by the ghost's and never by a third one that merely looks like
- * both: `useChat` holds what is left of the log by identity in places, and two equal nicknames are not
- * the same speaker.
+ * One of the site's userpics, as the page reads it: an origin-absolute path, because the game lives
+ * under the same site as the folder does — `/i/2.gif` is the same file from any page of plllasma.ru.
+ * A development server proxies the folder to the site (`vite.config.ts`).
  */
-export function speakerFor(nick: string): Speaker {
-  const trimmed = nick.trim();
-  if (trimmed === PLAYER_NICK) return PLAYER;
-  if (!trimmed) return GHOST;
-  return { nick: trimmed, badge: PLAYER_BADGE };
+export function userpic(icon: string): string {
+  return `/i/${icon}.gif`;
 }
 
 /** The last `count` messages, oldest first: what the strip shows, and the order a chat reads in. */
@@ -163,9 +163,10 @@ export function reachedAt(messages: readonly ChatMessage[], step: number): ChatM
  * come from the list of them the field offers — and {@link PENDING} for an id, which is what tells
  * `useChat` to replace this line rather than to draw it beside the server's own one.
  *
- * It hangs where the player is: on the run that is loaded and at the step the playhead is standing on,
- * or on the lobby, where there is no step to speak of. That is what makes a line written during a
- * playback point at the moment it was written about.
+ * Who it is signed by is the speaker the page authenticated as (`useChat`), or the ghost when the
+ * field says so — the ghost's own name and face, over the player's, for however long the switch is
+ * on. It hangs where the player is: on the run that is loaded and at the step the playhead is
+ * standing on, or on the lobby, where there is no step to speak of.
  */
 export function playerMessage(
   typed: string,
@@ -177,8 +178,9 @@ export function playerMessage(
     id: PENDING,
     tape: place.tape,
     atStep: place.tape === LOBBY ? null : place.step,
-    nick: speaker.nick,
-    badge: speaker.badge,
+    userId: speaker.id,
+    nick: ghost ? GHOST_NICK : speaker.nick,
+    face: ghost ? GHOST.face : speaker.face,
     ghost,
     parts: [{ kind: 'text', text: typed }],
     sentMs: Date.now(),

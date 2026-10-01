@@ -7,9 +7,10 @@ import {
   GHOST_NICK,
   LOBBY,
   PENDING,
-  PLAYER,
+  userpic,
   type ChatMessage,
   type Place,
+  type Speaker,
 } from '../src/chat/messages';
 
 /**
@@ -19,11 +20,16 @@ import {
  *
  * No server and no browser are under these tests: the wire is a parameter of the composable
  * (`ChatOptions.wire`) and the timer is turned off (`every: 0`), which leaves the whole of the reading and
- * the writing to be checked against what the chat asks and what it does with each answer. The claims no
- * other test can make are the ones these are really about: that a line the player has typed is on screen
- * before the server has seen it, and that a slow answer for a place they have left is not the conversation
- * they are reading now.
+ * the writing to be checked against what the chat asks and what it does with each answer. The player is a
+ * speaker handed in from above (`ChatOptions.speaker`), the way the page hands the handshake's answer
+ * (`main.ts`): these tests are what the chat does with a player, not how the player was signed in. The
+ * claims no other test can make are the ones these are really about: that a line the player has typed is
+ * on screen before the server has seen it, and that a slow answer for a place they have left is not the
+ * conversation they are reading now.
  */
+
+/** A player as the handshake would have named them: the site's own id, nick and userpic. */
+const MARAT: Speaker = { id: 2, nick: 'Марат', face: userpic('2') };
 
 /** A line of the log with nothing in it but what the chat wonders about: an id and its place. */
 function line(id: number, atStep: number | null = null): ChatMessage {
@@ -31,8 +37,9 @@ function line(id: number, atStep: number | null = null): ChatMessage {
     id,
     tape: atStep === null ? LOBBY : 'run-1',
     atStep,
+    userId: 9,
     nick: 'Марго',
-    badge: 'badge-margo.gif',
+    face: userpic('-'),
     ghost: false,
     parts: [{ kind: 'text', text: `строка ${id}` }],
     sentMs: 1000 + id,
@@ -52,6 +59,11 @@ function fakeWire(rule: Rule = {}) {
     send: [] as Draft[],
   };
   const wire: ChatWire = {
+    async auth() {
+      // The handshake is the page's own first act (`main.ts`), done before a chat is ever made: a chat
+      // that was asked to sign its player in would be one asking a question already answered.
+      throw new Refused(0, 'the chat does not sign its player in');
+    },
     async log(tape, after) {
       asked.log.push({ tape, after });
       return (await rule.log?.(tape, after)) ?? [];
@@ -97,7 +109,7 @@ const AT_THE_LOBBY: Place = { tape: LOBBY, step: 0 };
 describe('the log the chat reads when it opens', () => {
   it('reads the whole log of the place the player is in', async () => {
     const { wire, asked } = fakeWire({ log: () => [line(1), line(2)] });
-    const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0 });
+    const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0, speaker: MARAT });
     await settled();
     expect(asked.log).toEqual([{ tape: LOBBY, after: 0 }]);
     expect(chat.log.value.map((message) => message.id)).toEqual([1, 2]);
@@ -106,7 +118,7 @@ describe('the log the chat reads when it opens', () => {
 
   it('reads a recording\'s own conversation when a run is loaded', async () => {
     const { wire, asked } = fakeWire({ log: () => [line(7, 3)] });
-    const chat = useChat(() => ({ tape: 'run-1', step: 0 }), { wire, every: 0 });
+    const chat = useChat(() => ({ tape: 'run-1', step: 0 }), { wire, every: 0, speaker: MARAT });
     await settled();
     expect(asked.log).toEqual([{ tape: 'run-1', after: 0 }]);
     expect(chat.log.value.map((message) => message.id)).toEqual([7]);
@@ -115,7 +127,7 @@ describe('the log the chat reads when it opens', () => {
   it('shows what the playhead has reached, and the strip is the last four lines of it', async () => {
     const { wire } = fakeWire({ log: () => [line(1), line(2), line(3), line(4), line(5), line(6), line(7, 9)] });
     const at = ref(4);
-    const chat = useChat(() => ({ tape: 'run-1', step: at.value }), { wire, every: 0 });
+    const chat = useChat(() => ({ tape: 'run-1', step: at.value }), { wire, every: 0, speaker: MARAT });
     await settled();
     expect(chat.messages.value.map((message) => message.id)).toEqual([1, 2, 3, 4, 5, 6]);
     expect(chat.ticker.value.map((message) => message.id)).toEqual([3, 4, 5, 6]);
@@ -129,7 +141,7 @@ describe('the log the chat reads when it opens', () => {
     // per frame, and what a moment of the run shows moves by itself.
     const { wire, asked } = fakeWire({ log: () => [line(1)] });
     const at = ref(0);
-    const chat = useChat(() => ({ tape: 'run-1', step: at.value }), { wire, every: 0 });
+    const chat = useChat(() => ({ tape: 'run-1', step: at.value }), { wire, every: 0, speaker: MARAT });
     await settled();
     at.value = 1;
     at.value = 2;
@@ -142,7 +154,7 @@ describe('the log the chat reads when it opens', () => {
 describe('catching up on what other people wrote', () => {
   it('asks only for what was written after the last line it has', async () => {
     const { wire, asked } = fakeWire({ log: () => [line(1), line(2)] });
-    const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0 });
+    const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0, speaker: MARAT });
     await settled();
     await chat.catchUp();
     expect(asked.log).toEqual([
@@ -154,7 +166,7 @@ describe('catching up on what other people wrote', () => {
   it('adds the new lines to the log', async () => {
     const answers: ChatMessage[][] = [[line(1)], [line(2), line(3)]];
     const { wire } = fakeWire({ log: () => answers.shift() ?? [] });
-    const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0 });
+    const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0, speaker: MARAT });
     await settled();
     await chat.catchUp();
     expect(chat.log.value.map((message) => message.id)).toEqual([1, 2, 3]);
@@ -164,7 +176,7 @@ describe('catching up on what other people wrote', () => {
     // A line of the player's own comes back from a catch-up as well as from the send that wrote it.
     const answers: ChatMessage[][] = [[line(1)], [line(1), line(2)]];
     const { wire } = fakeWire({ log: () => answers.shift() ?? [] });
-    const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0 });
+    const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0, speaker: MARAT });
     await settled();
     await chat.catchUp();
     expect(chat.log.value.map((message) => message.id)).toEqual([1, 2]);
@@ -173,7 +185,7 @@ describe('catching up on what other people wrote', () => {
   it('leaves the log alone when the answer has nothing new in it', async () => {
     const answers: ChatMessage[][] = [[line(1)], []];
     const { wire } = fakeWire({ log: () => answers.shift() ?? [] });
-    const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0 });
+    const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0, speaker: MARAT });
     await settled();
     const before = chat.log.value;
     await chat.catchUp();
@@ -183,7 +195,7 @@ describe('catching up on what other people wrote', () => {
   it('asks for the whole log when it has nothing yet', async () => {
     const answers: ChatMessage[][] = [[], [line(1)]];
     const { wire, asked } = fakeWire({ log: () => answers.shift() ?? [] });
-    const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0 });
+    const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0, speaker: MARAT });
     await settled();
     await chat.catchUp();
     expect(asked.log[1]).toEqual({ tape: LOBBY, after: 0 });
@@ -205,7 +217,7 @@ describe('a server the chat could not reach', () => {
           throw new Refused(0, 'Failed to fetch');
         },
       });
-      const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0 });
+      const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0, speaker: MARAT });
       await settled();
       expect(chat.error.value).toBe('Чат не дозвонился до сервера.');
       expect(chat.log.value).toEqual([]);
@@ -223,7 +235,7 @@ describe('a server the chat could not reach', () => {
           throw new Refused(500, 'the store fell over');
         },
       });
-      const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0 });
+      const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0, speaker: MARAT });
       await settled();
       expect(chat.error.value).toBe('Сервер не принял это: попробуйте ещё раз.');
     } finally {
@@ -242,7 +254,7 @@ describe('a server the chat could not reach', () => {
           return answer;
         },
       });
-      const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0 });
+      const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0, speaker: MARAT });
       await settled();
       expect(chat.error.value).not.toBeNull();
       answers.push([line(1)]);
@@ -259,7 +271,7 @@ describe('a line the player sends', () => {
   /** A chat of the lobby that has read its log, with the send door answering by rule. */
   async function open(rule: Rule) {
     const made = fakeWire(rule);
-    const chat = useChat(() => AT_THE_LOBBY, { wire: made.wire, every: 0 });
+    const chat = useChat(() => AT_THE_LOBBY, { wire: made.wire, every: 0, speaker: MARAT });
     await settled();
     return { chat, ...made };
   }
@@ -281,14 +293,14 @@ describe('a line the player sends', () => {
     expect(chat.sending.value).toBe(false);
   });
 
-  it('goes out under the player\'s own name, trimmed, with the lobby as its place', async () => {
+  it('goes out under the player\'s own token, trimmed, with the lobby as its place', async () => {
     const { chat, asked } = await open({ send: () => line(9) });
     await chat.send('  привет  ');
+    // Who the line is by is nothing the line itself says any more: the wire carries the where and the
+    // what, and the token — the same one the handshake settled — carries the who.
     expect(asked.send[0]).toEqual({
       tape: LOBBY,
       atStep: null,
-      nick: PLAYER.nick,
-      badge: PLAYER.badge,
       ghost: false,
       parts: [{ kind: 'text', text: 'привет' }],
     });
@@ -296,7 +308,7 @@ describe('a line the player sends', () => {
 
   it('goes out anchored at the step of a run, which is what makes it about that moment', async () => {
     const { wire, asked } = fakeWire({ send: (draft) => line(9, draft.atStep) });
-    const chat = useChat(() => ({ tape: 'run-1', step: 42 }), { wire, every: 0 });
+    const chat = useChat(() => ({ tape: 'run-1', step: 42 }), { wire, every: 0, speaker: MARAT });
     await settled();
     await chat.send('привет');
     expect(asked.send[0].tape).toBe('run-1');
@@ -304,40 +316,36 @@ describe('a line the player sends', () => {
     expect(chat.log.value[0].atStep).toBe(42);
   });
 
+  it('is the player as the site named them, pending under their own face', async () => {
+    const onItsWay = held<ChatMessage>();
+    const { chat } = await open({ send: () => onItsWay.promise });
+    expect(chat.speaker.value).toBe(MARAT);
+    const sending = chat.send('привет');
+    // The pending line is the player as the site named them, face and all, before the server has had
+    // its own word about it.
+    const sent = chat.log.value[0];
+    expect(sent.nick).toBe('Марат');
+    expect(sent.face).toBe(userpic('2'));
+    expect(sent.userId).toBe(2);
+    expect(sent.ghost).toBe(false);
+    onItsWay.land(line(9));
+    await sending;
+  });
+
   it('goes out as the ghost once the field has been switched', async () => {
-    const { chat, asked } = await open({ send: () => line(9) });
-    expect(chat.speaker.value).toBe(PLAYER);
+    const onItsWay = held<ChatMessage>();
+    const { chat, asked } = await open({ send: () => onItsWay.promise });
+    expect(chat.speaker.value).toBe(MARAT);
     chat.toggleAnonymous();
     expect(chat.speaker.value).toBe(GHOST);
-    await chat.send('привет');
+    const sending = chat.send('привет');
     expect(asked.send[0].ghost).toBe(true);
-    expect(asked.send[0].nick).toBe(GHOST.nick);
-    expect(asked.send[0].badge).toBe(GHOST.badge);
-  });
-
-  it('goes out under the name the auth dialog answered with', async () => {
-    // What the dialog says is the whole of the name: the field's own nickname and badge are the player's,
-    // and only the name is theirs to choose.
-    const { chat, asked } = await open({ send: () => line(9) });
-    chat.setNick('  Аня  ');
-    expect(chat.nick.value).toBe('Аня');
-    expect(chat.speaker.value).toEqual({ nick: 'Аня', badge: PLAYER.badge });
-    await chat.send('привет');
-    expect(asked.send[0].nick).toBe('Аня');
-    expect(asked.send[0].badge).toBe(PLAYER.badge);
-    expect(asked.send[0].ghost).toBe(false);
-  });
-
-  it('answers a name left empty with the ghost\'s own', async () => {
-    // An empty field is an answer like any other — the one the chat already has a name for — so the game
-    // is never gated on a question about a name: the speaker is the ghost and the lines are signed by it.
-    const { chat, asked } = await open({ send: () => line(9) });
-    chat.setNick('   ');
-    expect(chat.nick.value).toBe('');
-    expect(chat.speaker.value).toBe(GHOST);
-    await chat.send('привет');
-    expect(asked.send[0].nick).toBe(GHOST_NICK);
-    expect(asked.send[0].ghost).toBe(true);
+    // The costume is drawn over the player, not sent in their place: the flag is all that changes on
+    // the wire, and the ghost's own name and face are what the pending line wears.
+    expect(chat.log.value[0].nick).toBe(GHOST_NICK);
+    expect(chat.log.value[0].face).toBe(GHOST.face);
+    onItsWay.land(line(9));
+    await sending;
   });
 
   it('sends nothing at all when the field was left empty', async () => {
@@ -364,7 +372,7 @@ describe('a line the player sends', () => {
     try {
       const { chat } = await open({
         send: () => {
-          throw new Refused(400, 'ник не может быть пустым');
+          throw new Refused(400, 'the run is 3000 steps long, so step 4000 is a moment no playback reaches');
         },
       });
       expect(await chat.send('привет')).toBe(false);
@@ -381,7 +389,7 @@ describe('the place the chat belongs to', () => {
   it('reads the new conversation when a run is put on the tape', async () => {
     const { wire, asked } = fakeWire({ log: (tape) => (tape === LOBBY ? [line(1)] : [line(7, 3)]) });
     const place = ref<Place>(AT_THE_LOBBY);
-    const chat = useChat(() => place.value, { wire, every: 0 });
+    const chat = useChat(() => place.value, { wire, every: 0, speaker: MARAT });
     await settled();
     expect(chat.log.value.map((message) => message.id)).toEqual([1]);
 
@@ -395,7 +403,7 @@ describe('the place the chat belongs to', () => {
     const slow = held<ChatMessage[]>();
     const { wire } = fakeWire({ log: (tape) => (tape === LOBBY ? slow.promise : [line(7, 3)]) });
     const place = ref<Place>(AT_THE_LOBBY);
-    const chat = useChat(() => place.value, { wire, every: 0 });
+    const chat = useChat(() => place.value, { wire, every: 0, speaker: MARAT });
 
     place.value = { tape: 'run-1', step: 0 };
     await settled();
@@ -411,7 +419,7 @@ describe('the place the chat belongs to', () => {
     vi.useFakeTimers();
     try {
       const { wire, asked } = fakeWire({ log: () => [line(1)] });
-      const chat = useChat(() => AT_THE_LOBBY, { wire, every: 20 });
+      const chat = useChat(() => AT_THE_LOBBY, { wire, every: 20, speaker: MARAT });
       await vi.advanceTimersByTimeAsync(0);
       // The read on opening, and then three catch-ups, each asking from the last line it read.
       expect(asked.log).toEqual([{ tape: LOBBY, after: 0 }]);

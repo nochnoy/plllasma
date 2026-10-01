@@ -21,7 +21,10 @@
     <title>Сад с привидениями</title>
   </head>
   <body>
-    <div id="app"></div>
+    <!-- What the page is until its player is signed in: the handshake runs before anything is mounted
+         (`src/main.ts`), and this word is the whole of the wait — black screen, one line, the game
+         nowhere yet. -->
+    <div id="app"><p class="loading">Loading...</p></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

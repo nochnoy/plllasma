@@ -1,3 +1,4 @@
+import { siteToken } from '../auth';
 import { Refused, apiBase, crossing } from '../chat/api';
 import { asRun, type Run, type WireRun } from '../chat/runs';
 import type { TapeEdit, TapeFrame, TapeHead, TapeSlice } from '../game/tape';
@@ -40,12 +41,12 @@ interface WireAnswer {
   chunks?: WireSlice[] | null;
 }
 
-/** What a run is opened with besides its head: the two things a list draws about it. */
+/** What a run is opened with besides its head: the one thing a list draws about it. Who played it is
+ * nobody the wire's to say — the token carrying the call is, and the server answers for it at its own
+ * door. */
 export interface LiveRunDraft {
   /** What the run was called when it was written down. A list reads it and does not draw it. */
   name: string;
-  /** The nickname it was recorded under, which is who the row of a list is signed by. */
-  author: string;
   /** When the run started, in milliseconds since the epoch: the row's own `recorded_ms`. */
   recordedMs: number;
 }
@@ -131,11 +132,12 @@ export interface LiveWire {
 }
 
 /**
- * The wire as the page uses it: `base` is where the API is (`apiBase`), and `take` is `fetch` except in a
- * test, which brings its own.
+ * The wire as the page uses it: `base` is where the API is (`apiBase`), `take` is `fetch` except in a
+ * test, which brings its own, and the token is the session's own (`siteToken`) — the recorder is as
+ * signed in as the talker is, and the run it sends is by whoever the token says is playing.
  */
-export function liveApi(base: string = apiBase(), take: typeof fetch = fetch): LiveWire {
-  const fetchText = crossing(base, take);
+export function liveApi(base: string = apiBase(), take: typeof fetch = fetch, token: string = siteToken()): LiveWire {
+  const fetchText = crossing(base, take, token);
 
   /** One door that answers with JSON, as the value it answered: the recording side has no other kind. */
   async function ask(path: string, init?: RequestInit): Promise<WireAnswer | null> {
@@ -172,7 +174,7 @@ export function liveApi(base: string = apiBase(), take: typeof fetch = fetch): L
         await ask('/recordings/live', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ name: run.name, author: run.author, recorded_ms: run.recordedMs, head }),
+          body: JSON.stringify({ name: run.name, recorded_ms: run.recordedMs, head }),
         }),
       );
     },

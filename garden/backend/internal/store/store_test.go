@@ -32,12 +32,29 @@ func open(t *testing.T) *Store {
 	return st
 }
 
-// recording is one run, named and of a known length, on the store it is given.
+// player writes one of the site's own players down, the way the door does
+// (`UpsertUser`): these tests' players are Марго (id 9, no userpic — the minus
+// file) and Аня (id 7, userpic 7.gif).
+func player(t *testing.T, st *Store, id int64, nick, icon string) {
+	t.Helper()
+	if err := st.UpsertUser(id, nick, icon, 1_700_000_000_000); err != nil {
+		t.Fatalf("write %s down: %v", nick, err)
+	}
+}
+
+// margo and anya are the two players the tests below play as.
+func margo(t *testing.T, st *Store) { player(t, st, 9, "Марго", "-") }
+func anya(t *testing.T, st *Store)  { player(t, st, 7, "Аня", "7") }
+
+// recording is one run, named and of a known length, played by Марго on the
+// store it is given.
 func recording(t *testing.T, st *Store, id string, steps int) Recording {
 	t.Helper()
+	margo(t, st)
 	saved, err := st.SaveRecording(Recording{
 		ID:         id,
 		Name:       "Прогон " + id,
+		AuthorID:   9,
 		Author:     "Марго",
 		Steps:      steps,
 		StepMs:     20,
@@ -58,13 +75,15 @@ func head() string {
 	return `{"format":"garden-tape/2","step":20,"seed":42,"stage":{"doll":"marionette"}}`
 }
 
-// live is a run that is being played, opened on the store it is given: a name, an
-// author and a head, and no steps until a slice arrives.
+// live is a run that is being played, opened on the store it is given by Марго:
+// a name and a head, and no steps until a slice arrives.
 func live(t *testing.T, st *Store, id string, at int64) Recording {
 	t.Helper()
+	margo(t, st)
 	opened, err := st.OpenRecording(Recording{
 		ID:         id,
 		Name:       "Прогон " + id,
+		AuthorID:   9,
 		Author:     "Марго",
 		StepMs:     20,
 		Seed:       42,
@@ -119,8 +138,9 @@ func TestRecordingsAreNewestFirst(t *testing.T) {
 		t.Fatalf("an empty hall: %v, %d recordings, want none and no error", err, len(list))
 	}
 	recording(t, st, "old", 10)
+	anya(t, st)
 	saved, err := st.SaveRecording(Recording{
-		ID: "new", Name: "Последний", Author: "Аня", Steps: 300, StepMs: 20,
+		ID: "new", Name: "Последний", AuthorID: 7, Author: "Аня", Steps: 300, StepMs: 20,
 		Seed: 7, Bytes: 12, RecordedMs: 1_700_000_200_000, UploadedMs: 1_700_000_200_000,
 	}, `{"a":1}`)
 	if err != nil {
@@ -155,12 +175,13 @@ func say(t *testing.T, st *Store, m Message) Message {
 func TestMessagesAreOneLogPerConversation(t *testing.T) {
 	st := open(t)
 	recording(t, st, "run-1", 150)
+	anya(t, st)
 
-	lobby := say(t, st, Message{Nick: "Аня", Parts: []Part{{Kind: "text", Text: "кто на сцене?"}}, SentMs: 1})
-	onRun := say(t, st, Message{Tape: "run-1", Nick: "Марго",
+	lobby := say(t, st, Message{UserID: 7, Parts: []Part{{Kind: "text", Text: "кто на сцене?"}}, SentMs: 1})
+	onRun := say(t, st, Message{Tape: "run-1", UserID: 9,
 		Parts: []Part{{Kind: "text", Text: "я"}}, SentMs: 2})
 	step := 90
-	atStep := say(t, st, Message{Tape: "run-1", AtStep: &step, Nick: "Марго",
+	atStep := say(t, st, Message{Tape: "run-1", AtStep: &step, UserID: 9,
 		Parts: []Part{{Kind: "gif", File: "assets/chat/heart.gif", Alt: "сердечко"}}, SentMs: 3})
 
 	if onRun.ID <= lobby.ID || atStep.ID <= onRun.ID {
@@ -172,8 +193,21 @@ func TestMessagesAreOneLogPerConversation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("the lobby: %v", err)
 	}
-	if len(lobbyLines) != 1 || lobbyLines[0].Nick != "Аня" {
-		t.Fatalf("the lobby holds %d lines, want Аня's one", len(lobbyLines))
+	if len(lobbyLines) != 1 || lobbyLines[0].Nick != "Аня" || lobbyLines[0].UserID != 7 {
+		t.Fatalf("the lobby holds %d lines, want Аня's one: %+v", len(lobbyLines), lobbyLines)
+	}
+	// The nick beside the line is the player's own row, not anything carried
+	// with the message: a player the site has renamed is renamed here too, the
+	// next time anybody reads a line of theirs.
+	if err := st.UpsertUser(7, "Аня!", "7", 1_700_000_000_500); err != nil {
+		t.Fatalf("rename Аня: %v", err)
+	}
+	renamed, err := st.Messages("", 0)
+	if err != nil {
+		t.Fatalf("the lobby again: %v", err)
+	}
+	if len(renamed) != 1 || renamed[0].Nick != "Аня!" {
+		t.Fatalf("a line by a renamed player reads %+v", renamed[0])
 	}
 	if lobbyLines[0].Tape != "" || lobbyLines[0].AtStep != nil {
 		t.Fatalf("a lobby line came back with a recording: %+v", lobbyLines[0])
@@ -383,7 +417,7 @@ func TestADatabaseOfTheOldTapeIsEmptiedRatherThanCarried(t *testing.T) {
 		if _, err := st.AppendChunk("live-1", slice(0, 60, `[[1,2,3]]`, `[]`), false, 1_700_000_001_000); err != nil {
 			t.Fatalf("slice: %v", err)
 		}
-		say(t, st, Message{Tape: "old", Nick: "Марго", Parts: []Part{{Kind: "text", Text: "старое"}}, SentMs: 1})
+		say(t, st, Message{Tape: "old", UserID: 9, Parts: []Part{{Kind: "text", Text: "старое"}}, SentMs: 1})
 		if err := st.Close(); err != nil {
 			t.Fatalf("close: %v", err)
 		}

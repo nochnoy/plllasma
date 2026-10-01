@@ -13,10 +13,19 @@ export default defineConfig({
   // address, behind a reverse proxy. Without the Go server running, the chat keeps its log empty and says
   // so in the console.
   server: {
-    proxy: { '/api': 'http://127.0.0.1:8080' },
+    proxy: {
+      '/api': 'http://127.0.0.1:8080',
+      // The site's own userpics, read as origin-absolute paths (`userpic` in `chat/messages.ts`): in a
+      // build the game lives under the site and the folder is simply there; here the dev server stands
+      // in for the site, so the folder is proxied to the local one (the docker stack's web, :8090).
+      '/i': 'http://127.0.0.1:8090',
+    },
   },
   preview: {
-    proxy: { '/api': 'http://127.0.0.1:8080' },
+    proxy: {
+      '/api': 'http://127.0.0.1:8080',
+      '/i': 'http://127.0.0.1:8090',
+    },
   },
   build: {
     target: 'es2022',

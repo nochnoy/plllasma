@@ -2,17 +2,29 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import ChatPanel from './components/ChatPanel.vue';
 import ChatTicker from './components/ChatTicker.vue';
-import NickDialog from './components/NickDialog.vue';
 import TapeTimeline from './components/TapeTimeline.vue';
 import { useChat } from './composables/useChat';
 import { useGame } from './composables/useGame';
 import { useLiveRun } from './composables/useLiveRun';
 import { useRuns } from './composables/useRuns';
 import { useTape } from './composables/useTape';
-import { speakerFor } from './chat/messages';
+import type { User } from './auth';
+import type { Speaker } from './chat/messages';
+import { userpic } from './chat/messages';
 import type { Run } from './chat/runs';
 import type { Tape } from './game/tape';
 import type { Tool } from './game/world';
+
+/**
+ * Who is playing, as the site answered for this page's token (`main.ts` waits out the handshake on a
+ * black screen before any of this is mounted). The game has no players of its own: every line sent
+ * and every run recorded is by this one, and the one choice they still have about it is to wear the
+ * ghost's name for a line at a time (`useChat`).
+ */
+const props = defineProps<{ user: User }>();
+
+/** The player as the chat speaks of them: the site's own name and face for them, nothing chosen here. */
+const player: Speaker = { id: props.user.id, nick: props.user.nick, face: userpic(props.user.icon) };
 
 const host = ref<HTMLElement | null>(null);
 /** The frame the bar is measured against: the scene is the stage's own box, and the bar sits in it. */
@@ -105,15 +117,15 @@ watch(
  * reaches, and playing one of them is what `useRuns` does here.
  *
  * Who a line is sent as is the field's own business (`useChat`), which is why the speaker and the
- * anonymity come from here rather than from the window itself — and why the chat's own error is the one
- * aliased below: the engine's is the game's.
+ * anonymity come from here rather than from the window itself — the player as the site named them
+ * (`user`), or the ghost — and why the chat's own error is the one aliased below: the engine's is the
+ * game's.
  */
 const {
   messages,
   ticker,
   open,
   anonymous,
-  nick,
   speaker,
   sending,
   send,
@@ -121,8 +133,7 @@ const {
   openChat,
   closeChat,
   toggleAnonymous,
-  setNick,
-} = useChat();
+} = useChat(undefined, { speaker: player });
 
 /**
  * The runs the window lists beside the conversation, and what picking one does: it goes onto the timeline as
@@ -178,11 +189,11 @@ watch(
  * touch of a doll and is finished when the window goes away. Nothing of it is on screen — what is being
  * written is nobody's playback, and the bar of tools has no button for it any more.
  *
- * The name a run is written under is the name this page plays under: the answer the auth dialog got, and the
- * ghost's own name for an empty one. It is deliberately *not* the field's anonymous switch, which is about
- * the chat's own lines rather than about who played (`useChat`).
+ * Who a run is written under is who the site says is playing: the token carries it, and the server
+ * answers for it at its own door — deliberately *not* the field's anonymous switch, which is about the
+ * chat's own lines rather than about who played (`useChat`).
  */
-const { end: endRun } = useLiveRun(game, tape, { author: () => speakerFor(nick.value).nick });
+const { end: endRun } = useLiveRun(game, tape);
 
 // The window going away is the end of the run. A page put in the back/forward cache is *not* an ending — the
 // player may come back to a world that is still writing its run — and `persisted` is what says which it is.
@@ -191,28 +202,11 @@ function leavePage(event: PageTransitionEvent): void {
 }
 onMounted(() => window.addEventListener('pagehide', leavePage));
 onBeforeUnmount(() => window.removeEventListener('pagehide', leavePage));
-
-/**
- * Whether the player has answered the auth dialog: one question, on the way in, and never again in this
- * page. It is not `nick` itself, because an empty answer is a name too — the ghost's own — and a dialog
- * that stayed open for it would be a question with no way of saying "nobody".
- */
-const named = ref(false);
-
-/** What the dialog answers with: the name the chat signs this page's lines with, and that it was asked. */
-function nameThePlayer(chosen: string): void {
-  setNick(chosen);
-  named.value = true;
-}
 </script>
 
 <template>
   <div ref="scene" class="scene">
     <div ref="host" class="stage" />
-    <!-- The one question the game asks about the player themselves: the name the chat signs this page's
-         lines with from here on. It is the first thing on screen and the only thing over the world until
-         it is answered — the game is already running behind it, and «Играть» is the whole of the answer. -->
-    <NickDialog v-if="!named" @choose="nameThePlayer" />
     <!-- The interface, in the world's own corner: the bar, and the chat's block beside it. The bar is as
          tall as the world — its column runs the whole of the world's left edge, with the chat's own
          button at the foot of it — and the chat's block stands beside that button, so the row is

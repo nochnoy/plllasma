@@ -67,12 +67,20 @@ const said = (text) => ({ kind: 'text', text });
 /** A gif standing in a body. A path rather than a name, because a body is written by a player. */
 const drew = (file, alt) => ({ kind: 'gif', file: `assets/chat/${file}`, alt });
 
-/** One line of the lobby. */
-function lobbyLine(id, nick, badge, parts) {
+/**
+ * The one player this smoke is: the site's answer about the token this page would carry. The page has no
+ * token of its own here — no site to be signed into — so the handshake door below answers for whoever
+ * asks, and this is who: the name and the userpic every line this run sends is signed by.
+ */
+const player = { id: 2, nick: 'Марат', icon: '2' };
+
+/** One line of the lobby, by one of its own: the site's id for them, and the name of their userpic. */
+function lobbyLine(id, userId, nick, icon, parts) {
   return {
     id,
+    user_id: userId,
     nick,
-    badge,
+    icon,
     ghost: false,
     parts,
     sent_ms: CHAT_MS + id * 60_000,
@@ -80,12 +88,12 @@ function lobbyLine(id, nick, badge, parts) {
 }
 
 const chatLog = [
-  lobbyLine(1, 'Марго', 'badge-margo.gif', [said('она полезла на самый верх')]),
-  lobbyLine(2, 'Костя', 'badge-kostya.gif', [said('и без страховки, конечно')]),
-  lobbyLine(3, 'Аня', 'badge-anya.gif', [said('вот это сальто'), drew('laugh.gif', 'смешно')]),
-  lobbyLine(4, 'Марго', 'badge-margo.gif', [said('держитесь, я записываю')]),
-  lobbyLine(5, 'Костя', 'badge-kostya.gif', [said('пятнадцать шагов и всё')]),
-  lobbyLine(6, 'Аня', 'badge-anya.gif', [said('кто на сцене?')]),
+  lobbyLine(1, 9, 'Марго', '9', [said('она полезла на самый верх')]),
+  lobbyLine(2, 4, 'Костя', '4', [said('и без страховки, конечно')]),
+  lobbyLine(3, 7, 'Аня', '7', [said('вот это сальто'), drew('laugh.gif', 'смешно')]),
+  lobbyLine(4, 9, 'Марго', '9', [said('держитесь, я записываю')]),
+  lobbyLine(5, 4, 'Костя', '4', [said('пятнадцать шагов и всё')]),
+  lobbyLine(6, 7, 'Аня', '7', [said('кто на сцене?')]),
 ];
 
 /** What the doors have been asked: the run's own record of it, read again by the report at the foot. */
@@ -155,6 +163,14 @@ async function chatDoor(req, res) {
   const { pathname } = asked;
   const method = req.method ?? 'GET';
 
+  // The page's first call: the handshake. It is answered for this run's one player (`player`), and
+  // slowly — half a second — so that the black screen and its one word the page waits out on are there
+  // to be read before the game is (`main.ts`, `index.html`).
+  if (pathname === '/api/auth' && method === 'POST') {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    return answer(200, { user: player });
+  }
+
   // The log of a place: everything written after `after`, which is the whole of it for a page that has read
   // none of it. A request that names no tape asks for the lobby, which has no name to be asked by.
   if (pathname === '/api/messages' && method === 'GET') {
@@ -163,21 +179,27 @@ async function chatDoor(req, res) {
     return answer(200, { messages: chatLog.filter((line) => (line.tape ?? '') === tape && line.id > after) });
   }
 
-  // A line written: taken down as it came, numbered, and given back with everything the store adds to it.
+  // A line written: taken down as it came, numbered, and given back with everything the store adds to it —
+  // the byline included, which is the player the token belongs to rather than anything the line said
+  // about itself (the real store joins its own `users` row in; this door has the one player).
   if (pathname === '/api/messages' && method === 'POST') {
     const draft = await chatBody(req);
     const line = {
       id: chatNext++,
       ...(draft.tape ? { tape: draft.tape } : {}),
       ...(draft.at_step === null || draft.at_step === undefined ? {} : { at_step: draft.at_step }),
-      nick: draft.nick,
-      badge: draft.badge,
+      user_id: player.id,
+      nick: player.nick,
+      icon: player.icon,
       ghost: Boolean(draft.ghost),
       parts: draft.parts ?? [],
       sent_ms: Date.now(),
     };
     chatLog.push(line);
-    chatAsked.sent.push(line);
+    // What is kept of a send is what the page handed over rather than what the store answered with: the
+    // byline is the door's own stamp (`player`), and the wire is what a line is — and is not — allowed
+    // to say about who wrote it.
+    chatAsked.sent.push(draft);
     return answer(200, { message: line });
   }
 
@@ -195,7 +217,7 @@ async function chatDoor(req, res) {
     const run = {
       id: `live-${chatLive.opened.length + 1}`,
       name: body.name,
-      author: body.author,
+      author: player.nick,
       recordedMs: body.recorded_ms,
       head: body.head,
       slices: [],
@@ -274,9 +296,17 @@ const MIME = {
 };
 const server = createServer(async (req, res) => {
   const url = (req.url ?? '/').split('?')[0];
-  // The chat's own two doors are answered in this process rather than out of the build: the page asks a
+  // The chat's own doors are answered in this process rather than out of the build: the page asks a
   // server for the log and this run has none of its own (`chatDoor` above).
   if (url.startsWith('/api/')) return chatDoor(req, res);
+  // The site's own userpics, read as origin-absolute paths (`userpic` in `frontend/src/chat/messages.ts`):
+  // this run has no site, so every one of them is served the same 16×16 gif — the ghost's own badge out
+  // of the build, which is that size — and all the page asks of a face is that it is there.
+  if (url.startsWith('/i/')) {
+    const file = join(root, 'frontend', 'dist', 'assets', 'chat', 'badge-ghost.gif');
+    res.writeHead(200, { 'content-type': 'image/gif' });
+    return res.end(readFileSync(file));
+  }
   const file = normalize(join(root, 'frontend', 'dist', decodeURIComponent(url === '/' ? '/index.html' : url)));
   if (!existsSync(file) || statSync(file).isDirectory()) {
     if (!/favicon/.test(url)) console.log('404:', url);
@@ -561,135 +591,70 @@ async function pullHead(shot, along, reach) {
 }
 
 await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'load' });
-await page.evaluate(() => new Promise((resolve) => {
-  const tick = () => (window.__garden ? resolve(true) : setTimeout(tick, 20));
-  tick();
-}));
-await wait(60);
 /*
- * The question on the way in, before anything about the world is read.
+ * The handshake on the way in, before anything about the world is read.
  *
- * The first thing the page shows is the chat asking who is playing (`NickDialog.vue`), and every click this
- * run makes after this line is made with it answered. It is the chat's own question in the chat's own card,
- * but it is not the chat's window: no cross, one button, and only as tall as the two lines it has to say. The
- * field takes the focus on its own, because the answer is the whole of what the question is for — and an
- * empty field is an answer too (the ghost's own name), which is why nothing here is refused and the game is
- * one press of «Играть» away either way.
+ * The first thing the page is, until its player is signed in, is the black screen it always was with one
+ * word on it (`index.html`): the game's server is asked about the token — and this run's server answers
+ * half a second late, so the waiting itself is something to read rather than a flash. There is no hall
+ * behind the word and no question over it: nothing is mounted until the player is known (`main.ts`),
+ * because there is nobody to sign a line for until then.
  *
- * Two readings say what the player is looking at. A click reaches whatever is top-most under it, so the
- * middle of the page is the question's card while the question stands and the hall once it has been
- * answered — the world is not asked to wait, it is *behind* the veil. And one pixel of the hall's own art,
- * at the picture's right foot, is read with the question up and again with it answered: a veil of
- * `rgba(0, 0, 0, 0.6)` leaves 40% of what is under it, so the same pixel has to come out dimmed rather than
- * replaced (measured: this pixel of the hall, rgb(245,195,163), reads rgb(98,78,65) under the card).
+ * The word is read where it stands — the middle of the page, at reading size, in the page's own ink on the
+ * page's own black — and then the player lands and the hall takes the page back, which is what the middle
+ * of the page says next.
  */
 const middleOfPage = () =>
   page.evaluate(() => {
     const at = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
     return { tag: at?.tagName ?? null, className: String(at?.className ?? '') };
   });
-const asking = await page.evaluate(() => {
-  const overlay = document.querySelector('.chat-window');
-  const card = document.querySelector('.chat-card--asking');
-  const field = card?.querySelector('.chat-card__input') ?? null;
-  const style = overlay ? getComputedStyle(overlay) : null;
-  const box = card?.getBoundingClientRect() ?? { width: 0, height: 0 };
+const loading = await page.evaluate(() => {
+  const word = document.querySelector('.loading');
+  const box = word?.getBoundingClientRect() ?? { left: 0, top: 0, width: 0, height: 0 };
+  const style = word ? getComputedStyle(word) : null;
   return {
-    overlay: {
-      position: style?.position ?? null,
-      inset: style ? [style.top, style.right, style.bottom, style.left].join(' ') : null,
-      background: style?.backgroundColor ?? null,
-      // The world is under the question rather than gone with it: the renderer's own canvas is still on the
-      // page while the card stands over it.
-      canvas: document.querySelector('canvas')?.tagName ?? null,
-    },
-    question: card?.querySelector('.chat-card__nick')?.textContent ?? null,
-    hint: card?.querySelector('small')?.textContent ?? null,
-    button: card?.querySelector('.chat-card__send')?.textContent ?? null,
-    focused: field !== null && document.activeElement === field,
-    buttons: card?.querySelectorAll('button').length ?? -1,
-    close: card?.querySelector('.chat-card__close') !== null,
-    // The window's own card is 520x560 whatever it has to say, with the two columns in it; the question is
-    // the chat's card and neither of those.
-    width: Math.round(box.width),
-    height: Math.round(box.height),
-    columns: card?.querySelectorAll('.chat-card__columns').length ?? -1,
+    text: word?.textContent ?? null,
+    // Nothing is mounted while the page waits: no canvas, no interface — the word is the whole of the page.
+    canvas: document.querySelector('canvas')?.tagName ?? null,
+    centre: [Math.round(box.left + box.width / 2), Math.round(box.top + box.height / 2)],
+    size: style?.fontSize ?? null,
   };
 });
-asking.middle = await middleOfPage();
-summary.asking = asking;
-await page.screenshot({ path: join(outDir, '00-question.png') });
-// The pixel the veil is read against: the hall's own art at the right foot of the picture, well clear of
-// her — she lies in the middle of it — and of the interface's own boxes, in the bottom left corner and
-// along the foot.
-summary.asking.veiled = pixelOf(decodePng(readFileSync(join(outDir, '00-question.png'))), 840, 640);
-// The answer is typed into the field the focus is already in — nothing here clicks it first, and «Играть»
-// submits the one form of the card, as a player's own Enter would. The name is one of this run's own rather
-// than the chat's own default («Ты»), so that what comes off the field later is unmistakably the answer.
-const answered = 'Вера';
-await page.keyboard.type(answered);
-summary.asking.typed = await page.evaluate(() => document.querySelector('.chat-card__input')?.value ?? null);
-await page.click('.chat-card--asking .chat-card__send');
-await wait(120);
-await page.screenshot({ path: join(outDir, '00-answered.png') });
-summary.asking.after = {
-  gone: await page.evaluate(() => document.querySelector('.chat-window') === null),
+loading.middle = await middleOfPage();
+summary.handshake = loading;
+await page.screenshot({ path: join(outDir, '00-loading.png') });
+// The server answers, the player lands, and the hall takes the page: the word goes and the world is what
+// the middle of the page is made of now. Every click this run makes after this line is made as that player.
+await page.evaluate(() => new Promise((resolve) => {
+  const tick = () => (window.__garden ? resolve(true) : setTimeout(tick, 20));
+  tick();
+}));
+await wait(60);
+summary.handshake.after = {
+  gone: await page.evaluate(() => document.querySelector('.loading') === null),
   middle: await middleOfPage(),
-  hall: pixelOf(decodePng(readFileSync(join(outDir, '00-answered.png'))), 840, 640),
 };
-// What the page said on the way in, read as the one question it is.
-if (asking.overlay.position !== 'fixed' || asking.overlay.inset !== '0px 0px 0px 0px') {
-  problems.push(`the question stands ${asking.overlay.position} at ${asking.overlay.inset}, not over the whole page`);
+await page.screenshot({ path: join(outDir, '00-playing.png') });
+// What the page said on the way in, read as the one wait it is.
+if (loading.text !== 'Loading...') problems.push(`the page waits on "${loading.text}", not "Loading..."`);
+if (loading.canvas !== null) {
+  problems.push('the hall is already there while the page is still waiting for its player');
 }
-if (asking.overlay.background !== 'rgba(0, 0, 0, 0.6)') {
-  problems.push(`the page behind the question is veiled ${asking.overlay.background}`);
+if (loading.middle.tag !== 'P' || !loading.middle.className.includes('loading')) {
+  problems.push(`the middle of the waiting page is ${loading.middle.tag}.${loading.middle.className}`);
 }
-if (asking.overlay.canvas !== 'CANVAS') {
-  problems.push('there is no hall under the question: the page has no canvas');
+// The word sits in the middle of the page: the viewport is 900x700, and a word centred on it is at 450,350.
+if (Math.abs(loading.centre[0] - 450) > 2 || Math.abs(loading.centre[1] - 350) > 2) {
+  problems.push(`the page waits at ${loading.centre.join(',')} rather than in the middle of it`);
 }
-if (asking.question !== 'Как вас зовут?' || asking.hint !== 'Пустое поле — играть как Привидение.') {
-  problems.push(`the question reads "${asking.question}" with "${asking.hint}" under it`);
-}
-if (asking.button !== 'Играть') problems.push(`the question's own button says "${asking.button}"`);
-if (!asking.focused) problems.push('the question does not put the cursor in its own field');
-if (asking.close) problems.push('the question has a cross on it and can be dismissed without an answer');
-if (asking.buttons !== 1) {
-  problems.push(`the question's card holds ${asking.buttons} buttons where the answer is the only one`);
-}
-if (asking.columns !== 0) {
-  problems.push('the question is drawn as the chat window, with the list of runs beside the conversation');
-}
-if (asking.height >= 300) {
-  problems.push(`the question's card is ${asking.height} px tall, a window rather than a question`);
-}
-if (!asking.middle.className.includes('chat-card')) {
-  problems.push(`the middle of the page under the question is ${asking.middle.tag}.${asking.middle.className}`);
-}
-if (asking.typed !== answered) {
-  problems.push(`the question's field took "${asking.typed}" for the name "${answered}"`);
-}
-if (!asking.after.gone) problems.push('the question stayed up after its button was pressed');
-if (asking.after.middle.tag !== 'CANVAS') {
+if (loading.size !== '16px') problems.push(`the page waits at ${loading.size}, not at reading size`);
+if (!summary.handshake.after.gone) problems.push('the waiting word stayed up after the player landed');
+if (summary.handshake.after.middle.tag !== 'CANVAS') {
   problems.push(
-    `the middle of the page after the question is ${asking.after.middle.tag}.${asking.after.middle.className}, ` +
-      'so the hall does not have the page back',
+    `the middle of the page after the handshake is ${summary.handshake.after.middle.tag}` +
+      `.${summary.handshake.after.middle.className}, so the hall does not have the page back`,
   );
-}
-// The same pixel of the hall, with the question up and with it answered. A sample dark enough to be 40% of
-// anything says nothing about a veil, so it is read for being the hall's own art before the veil is judged.
-if (Math.max(...asking.after.hall) < 120) {
-  problems.push(`the pixel the veil is read at is rgb(${asking.after.hall.join(',')}), too dark to read a veil against`);
-} else {
-  for (const [channel, colour] of ['red', 'green', 'blue'].entries()) {
-    const under = asking.after.hall[channel] * 0.4;
-    if (Math.abs(asking.veiled[channel] - under) > 2) {
-      problems.push(
-        `the hall's own ${colour} under the question is ${asking.veiled[channel]} where 40% of it is ` +
-          `${under.toFixed(1)}: the veil is not the 0.6 of black it says it is`,
-      );
-      break;
-    }
-  }
 }
 // The strip in the world's own bottom right corner is up from the first frame: one card, and the calm
 // portrait — she is lying on the floor of the hall, put down there before the first frame by the port's
@@ -1334,7 +1299,7 @@ summary.chat.window = await page.evaluate(() => {
     // recorded a run at this point in the run, so there is nothing for the list to draw (`chatRuns`, which
     // the section at the foot fills in once there is a tape to serve a row's own name with).
     columns: card.querySelectorAll('.chat-card__columns').length,
-    chat: card.querySelector('.chat-card__chat') !== null,
+    chat: card.querySelector('.chat-card__log') !== null,
     list: card.querySelector('.chat-card__runs') !== null,
     none: card.querySelector('.chat-runs__none')?.textContent?.trim() ?? '',
     listError: card.querySelector('.chat-card__runs .chat-card__error') !== null,
@@ -1475,7 +1440,7 @@ if (chatStrip.gifs !== 1) problems.push(`the strip drew ${chatStrip.gifs} of the
 if (chatWindow.background !== 'rgb(215, 202, 187)' || chatWindow.colour !== 'rgb(0, 0, 0)') {
   problems.push(`the chat window is ${chatWindow.background} with ${chatWindow.colour} on it`);
 }
-if (chatWindow.parts.join() !== 'chat-card__close,chat-card__columns') {
+if (chatWindow.parts.join() !== 'chat-card__head,chat-card__body,chat-card__form') {
   problems.push(`the chat window's own parts are ${chatWindow.parts.join(', ')}`);
 }
 if (chatWindow.columns !== 1 || !chatWindow.chat || !chatWindow.list) {
@@ -1510,11 +1475,11 @@ if (chatWindow.fieldHeight !== chatWindow.sendHeight) {
   );
 }
 // The field's own left end says who is speaking, and that is the whole of what switches between the
-// player and the ghost: the name the question was answered with — the chat's own default is «Ты», and this
-// run gave it another one, so what stands here is the answer coming out at the other end of the page — with
-// the same badge the next line will be signed by, and the triangle of a combobox, pointing down for the
-// player and up for the ghost.
-if (chatWindow.speaker !== answered || chatWindow.speakerBadge !== '16x16' || !chatWindow.speakerIcon.endsWith('badge-player.gif')) {
+// player and the ghost: the name the site answered the handshake with — not «Ты» and not anything chosen
+// here, so what stands here is the site's own word for this player coming out at the other end of the page
+// — with their own userpic the next line will be signed by, and the triangle of a combobox, pointing down
+// for the player and up for the ghost.
+if (chatWindow.speaker !== player.nick || chatWindow.speakerBadge !== '16x16' || !chatWindow.speakerIcon.endsWith('/i/2.gif')) {
   problems.push(
     `the chat's field opens as "${chatWindow.speaker}" with a ${chatWindow.speakerBadge} badge ` +
       `(${chatWindow.speakerIcon})`,
@@ -1542,12 +1507,14 @@ if (!(chatSent.log.at(-1) ?? '').startsWith(chatGhost.nick)) {
 if (chatSent.badge !== '16x16' || !chatSent.icon.endsWith('badge-ghost.gif')) {
   problems.push(`a line sent anonymously wears a ${chatSent.badge} badge (${chatSent.icon})`);
 }
-// What went out on the wire for it: the line as it was written, signed by the ghost, and addressed to the
-// lobby — the lobby being the place with no name, whose lines carry no `tape` and no anchor at all.
-if (chatSent.took.nick !== chatGhost.nick || chatSent.took.badge !== 'badge-ghost.gif' || chatSent.took.ghost !== true) {
+// What went out on the wire for it: the line as it was written — the ghost's flag and the body, nothing
+// else — and addressed to the lobby, the place with no name, whose lines carry no `tape` and no anchor at
+// all. Who it is by is not the line's to say any more: the token carries that, and this run's server
+// answers for it in its own tally (`nick` and `icon` in `chatAsked.sent`).
+if (chatSent.took.ghost !== true || 'nick' in chatSent.took || 'badge' in chatSent.took) {
   problems.push(`the server was handed ${JSON.stringify(chatSent.took)} for a line sent as the ghost`);
 }
-if ('tape' in chatSent.took || 'at_step' in chatSent.took) {
+if ((chatSent.took.tape ?? '') !== '' || (chatSent.took.at_step ?? null) !== null) {
   problems.push(`a line sent in the lobby went out addressed as ${JSON.stringify(chatSent.took)}`);
 }
 if (JSON.stringify(chatSent.took.parts) !== JSON.stringify([{ kind: 'text', text: sender }])) {
@@ -2798,7 +2765,7 @@ if (!live) {
 } else {
   const head = Object.keys(live.head ?? {}).sort().join();
   if (head !== 'format,seed,stage,step') problems.push(`the run was opened with "${head}" in its head`);
-  if (live.author !== answered) problems.push(`the run was opened as "${live.author}"`);
+  if (live.author !== player.nick) problems.push(`the run was opened as "${live.author}"`);
   if (!live.slices.length) problems.push('the run arrived with no slices at all');
   // The one slice that may be empty is the last: the ending goes out whatever it has to carry, and a page
   // closed a moment after its final second sends nothing but the word (`useLiveRun.end`).
@@ -3241,7 +3208,8 @@ const runList = await page.evaluate(() => {
   const column = document.querySelector('.chat-card__runs');
   const row = column.querySelector('.chat-run');
   return {
-    title: column.querySelector('.chat-runs__title')?.textContent?.trim() ?? '',
+    // The column's own name: it is said to readers of it rather than drawn in it (`aria-label`).
+    title: column.getAttribute('aria-label') ?? '',
     rows: column.querySelectorAll('.chat-run').length,
     nick: row.querySelector('.chat-run__nick').textContent.trim(),
     reading: row.querySelector('.chat-run__reading').textContent.trim(),
@@ -3254,7 +3222,7 @@ const runList = await page.evaluate(() => {
     error: column.querySelector('.chat-card__error') !== null,
     // The window's own two columns, at last with something in the list: the conversation is the width and
     // the list is the narrower column beside it, both of them inside the window's own paper.
-    chat: box(document.querySelector('.chat-card__chat')),
+    chat: box(document.querySelector('.chat-card__log')),
     list: box(column),
     card: box(document.querySelector('.chat-card')),
   };
@@ -3420,10 +3388,13 @@ foreignRun = {
   slices: sliced(recordedTape, 50).map((slice, seq) => ({ ...slice, seq })),
   asked: [],
   began: Date.now(),
-  // How much of the run has happened: the first second of it at once — a window that arrives watches the run
-  // from its own beginning — and one more second for every second since, up to the whole of it.
+  // How much of the run has happened: the first slice of it at once — a window that arrives watches the
+  // run from its own beginning — and one more slice for every second and a half since, up to the whole of
+  // it. The run this smoke hands out is a few seconds long and so only a few slices; a slice a second
+  // would finish it before the readings below were done, and a run that is over is nobody's test of one
+  // that is still going.
   arrived() {
-    return Math.min(this.slices.length, Math.floor((Date.now() - this.began) / 1000) + 1);
+    return Math.min(this.slices.length, Math.floor((Date.now() - this.began) / 1500) + 1);
   },
 };
 chatRuns.push({ ...foreignRun.row, steps: 0 });
@@ -3732,24 +3703,12 @@ const errors = logs.filter(
     !line.includes('GPU stall'),
 );
 console.log(
-  'asked:',
-  `«${summary.asking.question}» (${summary.asking.hint}) as`,
-  `«${summary.asking.button}»`,
-  '| over the page:',
-  `${summary.asking.overlay.position} at ${summary.asking.overlay.inset}, ${summary.asking.overlay.background}`,
-  '| field focused:',
-  `${summary.asking.focused}`,
-  'with',
-  `${summary.asking.buttons} button(s) on a card`,
-  `${summary.asking.width}x${summary.asking.height}`,
-  '| the middle of the page:',
-  `${summary.asking.middle.tag}.${summary.asking.middle.className}`,
+  'signed in:',
+  `waited on «${summary.handshake.text}» at ${summary.handshake.centre.join(',')} ` +
+    `(${summary.handshake.size}, ${summary.handshake.middle.tag}.${summary.handshake.middle.className})`,
   '->',
-  `${summary.asking.after.middle.tag}.${summary.asking.after.middle.className}`,
-  '| typed',
-  `"${summary.asking.typed}"`,
-  '| the hall under the question\'s veil:',
-  `rgb(${summary.asking.veiled.join(',')}) -> rgb(${summary.asking.after.hall.join(',')})`,
+  `${summary.handshake.after.middle.tag}.${summary.handshake.after.middle.className}`,
+  summary.handshake.after.gone ? 'with the waiting word gone' : 'with the waiting word still up',
 );
 
 console.log('steps:', summary.steps.map((s) => `${s.step}:comY=${s.state.centreOfMassY}`).join(' '));

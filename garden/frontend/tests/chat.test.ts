@@ -6,13 +6,13 @@ import {
   lastMessages,
   LOBBY,
   playerMessage,
-  PLAYER,
-  PLAYER_NICK,
   PENDING,
   reachedAt,
   TICKER_LINES,
+  userpic,
   type ChatMessage,
   type Place,
+  type Speaker,
 } from '../src/chat/messages';
 import { LIVE, runLength, runReading, type Run } from '../src/chat/runs';
 import { TAPE_STEP_MS } from '../src/game/tape';
@@ -27,14 +27,18 @@ import { TAPE_STEP_MS } from '../src/game/tape';
  * below is about the whole of what the interface draws.
  */
 
+/** A player as the handshake would have named them: the site's own id, nick and userpic. */
+const MARAT: Speaker = { id: 2, nick: 'Марат', face: userpic('2') };
+
 /** A message with nothing in it but an id and its place. */
 function fake(id: number, atStep: number | null = null): ChatMessage {
   return {
     id,
     tape: atStep === null ? LOBBY : 'run-1',
     atStep,
+    userId: id + 10,
     nick: `ник${id}`,
-    badge: 'badge-margo.gif',
+    face: userpic(`${id + 10}`),
     ghost: false,
     parts: [{ kind: 'text', text: `текст${id}` }],
     sentMs: 1000 + id,
@@ -100,9 +104,10 @@ describe('a line the player has just typed', () => {
   /** Where the game is when there is nothing on the tape: no run to anchor a line to. */
   const AT_THE_LOBBY: Place = { tape: LOBBY, step: 0 };
 
-  it('is the whole of what they typed, under their own nickname', () => {
-    const sent = playerMessage('привет', PLAYER, AT_THE_LOBBY, false);
-    expect(sent.nick).toBe(PLAYER_NICK);
+  it('is the whole of what they typed, under the name the site knows them by', () => {
+    const sent = playerMessage('привет', MARAT, AT_THE_LOBBY, false);
+    expect(sent.nick).toBe('Марат');
+    expect(sent.userId).toBe(2);
     expect(sent.parts).toEqual([{ kind: 'text', text: 'привет' }]);
   });
 
@@ -110,50 +115,50 @@ describe('a line the player has just typed', () => {
     const ghost = playerMessage('привет', GHOST, AT_THE_LOBBY, true);
     expect(ghost.nick).toBe(GHOST_NICK);
     expect(ghost.ghost).toBe(true);
-    expect(playerMessage('привет', PLAYER, AT_THE_LOBBY, false).ghost).toBe(false);
+    expect(playerMessage('привет', MARAT, AT_THE_LOBBY, false).ghost).toBe(false);
   });
 
-  it('wears that speaker\'s own badge, and the other one is never worn by mistake', () => {
-    expect(playerMessage('привет', PLAYER, AT_THE_LOBBY, false).badge).toBe(PLAYER.badge);
-    expect(playerMessage('привет', GHOST, AT_THE_LOBBY, true).badge).toBe(GHOST.badge);
-    expect(GHOST.badge).toContain('badge-ghost.gif');
-    expect(PLAYER.badge).not.toBe(GHOST.badge);
+  it('wears that speaker\'s own face, and the other one is never worn by mistake', () => {
+    expect(playerMessage('привет', MARAT, AT_THE_LOBBY, false).face).toBe(MARAT.face);
+    expect(playerMessage('привет', GHOST, AT_THE_LOBBY, true).face).toBe(GHOST.face);
+    expect(GHOST.face).toContain('badge-ghost.gif');
+    expect(MARAT.face).not.toBe(GHOST.face);
   });
 
   it('waits for an id of its own, and is nobody\'s yet', () => {
-    const sent = playerMessage('привет', PLAYER, AT_THE_LOBBY, false);
+    const sent = playerMessage('привет', MARAT, AT_THE_LOBBY, false);
     expect(sent.id).toBe(PENDING);
     expect(sent.sentMs).toBeGreaterThan(0);
   });
 
   it('is anchored at the step the playhead is standing on', () => {
-    const sent = playerMessage('привет', PLAYER, ON_A_RUN, false);
+    const sent = playerMessage('привет', MARAT, ON_A_RUN, false);
     expect(sent.tape).toBe('run-1');
     expect(sent.atStep).toBe(42);
   });
 
   it('hangs on the lobby, where there is no step to sit at', () => {
     // A step would be refused there, and the lobby is read whole (`reachedAt`).
-    const sent = playerMessage('привет', PLAYER, { tape: LOBBY, step: 7 }, false);
+    const sent = playerMessage('привет', MARAT, { tape: LOBBY, step: 7 }, false);
     expect(sent.tape).toBe(LOBBY);
     expect(sent.atStep).toBeNull();
   });
 });
 
-describe('the badge a message wears', () => {
-  it('is read under the app\'s own base, out of the chat\'s own folder', () => {
-    const src = badgeSrc(PLAYER.badge);
-    expect(src.startsWith(import.meta.env.BASE_URL)).toBe(true);
-    expect(src.endsWith('assets/chat/badge-player.gif')).toBe(true);
+describe('the face a message wears', () => {
+  it('is one of the site\'s userpics, read from the root of the site itself', () => {
+    // The game lives under the site the folder belongs to, whatever sub-directory the build was dropped
+    // into: the path is the origin's own rather than the build's.
+    expect(userpic('2')).toBe('/i/2.gif');
+    expect(userpic('-')).toBe('/i/-.gif');
   });
 
-  it('is a path rather than the name the server sent', () => {
-    // The name is the same in every build of the port and the base is not, which is why it is built here.
-    expect(badgeSrc(GHOST.badge)).not.toBe(GHOST.badge);
-  });
-
-  it('is the same path the game builds its own assets off', () => {
-    expect(badgeSrc('laugh.gif')).toBe(`${import.meta.env.BASE_URL}assets/chat/laugh.gif`);
+  it('is a path rather than the name the server sent, except for the ghost\'s own badge', () => {
+    // The ghost's badge is the app's own picture, under the build's own base (`badgeSrc`); a player's
+    // userpic is the site's, and the two are built by different rules on purpose.
+    expect(badgeSrc('badge-ghost.gif')).toBe(`${import.meta.env.BASE_URL}assets/chat/badge-ghost.gif`);
+    expect(GHOST.face).toBe(badgeSrc('badge-ghost.gif'));
+    expect(MARAT.face).not.toBe(badgeSrc(MARAT.face));
   });
 });
 

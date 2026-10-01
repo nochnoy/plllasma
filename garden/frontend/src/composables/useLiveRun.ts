@@ -22,8 +22,6 @@ export interface LiveRunOptions {
   wire?: LiveWire;
   /** How often the run is asked what it has written, in milliseconds: the slice's own second by default. */
   every?: number;
-  /** The nickname this page plays under: who the run is written under, read once when it begins. */
-  author: () => string;
   /** The clock, for a run's own name and its own `recorded_ms`. A test brings its own. */
   now?: () => number;
 }
@@ -38,7 +36,7 @@ export interface LiveRunOptions {
  */
 const ASK_MS = 1000;
 
-export function useLiveRun(game: Ref<Game | null>, tape: Ref<TapeReport>, options: LiveRunOptions) {
+export function useLiveRun(game: Ref<Game | null>, tape: Ref<TapeReport>, options: LiveRunOptions = {}) {
   const wire = options.wire ?? liveApi();
   const every = options.every ?? ASK_MS;
   const now = options.now ?? (() => Date.now());
@@ -85,7 +83,7 @@ export function useLiveRun(game: Ref<Game | null>, tape: Ref<TapeReport>, option
     const head = game.value?.liveHead() ?? null;
     if (!head) return;
     const at = now();
-    id = await wire.open(head, { name: nameFor(at), author: options.author(), recordedMs: at });
+    id = await wire.open(head, { name: nameFor(at), recordedMs: at });
     seq = 0;
   }
 

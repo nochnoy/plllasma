@@ -4,10 +4,11 @@
 //
 // It is one binary and one file on purpose. The game is a page of static files
 // that any web server can hand out; the only thing a page cannot do for itself
-// is remember what other players said, and that is what this is. So it holds no
-// state outside its database, needs nothing beside it, and is run as:
+// is remember what other players said, and that is what this is. So it needs
+// nothing beside its database but the site it belongs to, and is run as:
 //
-//	garden-server -addr :8080 -db data/garden.db
+//	garden-server -addr :8080 -db data/garden.db \
+//		-auth-url https://plllasma.ru/api/user-by-token.php
 //
 // Behind a reverse proxy it wants nothing of its own: no TLS here, no domain
 // here — the proxy terminates both, and this server speaks plain HTTP to a
@@ -15,6 +16,12 @@
 // are the JSON body of a tape and the body of a message, and both are capped
 // (`internal/api`), so a proxy's own body limit is a second lock rather than
 // the only one.
+//
+// The auth URL is the one thing it cannot run without: every door but the
+// monitor's takes a token — the site's own browser session — and asks that
+// address whose it is (`internal/api/auth.go`). The flag reads the
+// `GARDEN_AUTH_URL` environment variable as its default, which is how the
+// docker development stack hands one over without a flag at all.
 package main
 
 import (
@@ -27,6 +34,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -37,7 +45,19 @@ import (
 func main() {
 	addr := flag.String("addr", ":8080", "the address to listen on")
 	path := flag.String("db", filepath.Join("data", "garden.db"), "the SQLite file to keep everything in")
+	authURL := flag.String("auth-url", os.Getenv("GARDEN_AUTH_URL"),
+		"the site's own api/user-by-token.php, the door every token is asked about at")
 	flag.Parse()
+
+	// A server that cannot ask the site about a token cannot answer for anybody,
+	// and every door but the monitor's needs it: refusing to start, with a
+	// sentence that says what is missing, beats running as a hall nobody can
+	// talk their way into.
+	if strings.TrimSpace(*authURL) == "" {
+		log.Fatal("garden-server: -auth-url (or GARDEN_AUTH_URL) is required — " +
+			"the address of the site's api/user-by-token.php")
+	}
+	options := []api.Option{api.WithAuthURL(*authURL)}
 
 	// The database's directory is the server's business: a first run on a
 	// fresh machine has no `data/` yet, and a server that refuses to start
@@ -56,7 +76,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:    *addr,
-		Handler: api.New(db),
+		Handler: api.New(db, options...),
 		// A header that never finishes arriving is the cheapest way to hold a
 		// connection open, and this server has one thread of attention per
 		// connection; the timeouts are what it costs to keep that true.

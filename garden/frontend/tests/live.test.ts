@@ -286,7 +286,6 @@ describe('the page that hands a run over', () => {
     const { wire, opened, sent } = wireOf();
     const live = useLiveRun(engineOf(recorder), ref(report(false)), {
       wire,
-      author: () => 'Ты',
       now: () => at,
     });
     await vi.advanceTimersByTimeAsync(5000);
@@ -301,7 +300,6 @@ describe('the page that hands a run over', () => {
     const { wire, opened, sent } = wireOf();
     const live = useLiveRun(engineOf(recorder), ref(report(true)), {
       wire,
-      author: () => 'Ты',
       now: () => at,
     });
     await vi.advanceTimersByTimeAsync(0);
@@ -309,7 +307,7 @@ describe('the page that hands a run over', () => {
     // A head is the four things a tape says about itself, and nothing that has happened yet: the server
     // refuses a head that carries a length, frames or edits (`readHead` in `internal/api`).
     expect(Object.keys(opened[0].head).sort()).toEqual(['format', 'seed', 'stage', 'step']);
-    expect(opened[0].run).toEqual({ name: runName, author: 'Ты', recordedMs: at });
+    expect(opened[0].run).toEqual({ name: runName, recordedMs: at });
 
     drag(world, recorder, TAPE_SLICE_STEPS);
     await vi.advanceTimersByTimeAsync(1000);
@@ -329,7 +327,6 @@ describe('the page that hands a run over', () => {
     const { wire, sent } = wireOf(1);
     const live = useLiveRun(engineOf(recorder), ref(report(true)), {
       wire,
-      author: () => 'Ты',
       now: () => at,
     });
     await vi.advanceTimersByTimeAsync(0);
@@ -349,7 +346,6 @@ describe('the page that hands a run over', () => {
     const { wire, ended } = wireOf();
     const live = useLiveRun(engineOf(recorder), ref(report(true)), {
       wire,
-      author: () => 'Ты',
       now: () => at,
     });
     await vi.advanceTimersByTimeAsync(0);
@@ -369,7 +365,6 @@ describe('the page that hands a run over', () => {
     const { wire, ended } = wireOf();
     const live = useLiveRun(engineOf(recorder), ref(report(true)), {
       wire,
-      author: () => 'Ты',
       now: () => at,
     });
     await vi.advanceTimersByTimeAsync(0);
@@ -395,7 +390,6 @@ describe('the page that hands a run over', () => {
     const tape = ref(report(true));
     const live = useLiveRun(engineOf(recorder), tape, {
       wire,
-      author: () => 'Ты',
       now: () => at,
     });
     await vi.advanceTimersByTimeAsync(0);
@@ -420,7 +414,6 @@ describe('the page that hands a run over', () => {
     // tape ref never turns over here — which is the whole of what the uploader knows about a watch.
     const live = useLiveRun(engineOf(recorder), ref(report(true)), {
       wire,
-      author: () => 'Ты',
       now: () => at,
     });
     await vi.advanceTimersByTimeAsync(0);

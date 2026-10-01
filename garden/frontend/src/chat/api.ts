@@ -13,7 +13,8 @@
  * the `Wire*` types below so that the conversion happens once here rather than in every component that
  * reads a message.
  */
-import { LOBBY, type ChatMessage, type MessagePart } from './messages';
+import { siteToken, type User } from '../auth';
+import { GHOST, LOBBY, userpic, type ChatMessage, type MessagePart } from './messages';
 import { asRun, type Run, type WireRun } from './runs';
 
 /**
@@ -41,14 +42,17 @@ export class Refused extends Error {
 
 /**
  * A line on the wire, with the server's own omissions: a lobby line has no `tape` at all, and an
- * unanchored one has no `at_step`.
+ * unanchored one has no `at_step`. Who wrote it is the `user_id` the server answered the writer's
+ * token with, and the `nick` and `icon` are that player's own row — never anything the line itself
+ * claimed, which is why a line on its way out carries no name at all.
  */
 interface WireMessage {
   id: number;
   tape?: string;
   at_step?: number | null;
+  user_id: number;
   nick: string;
-  badge: string;
+  icon: string;
   ghost?: boolean;
   parts?: MessagePart[];
   sent_ms?: number;
@@ -58,17 +62,21 @@ interface WireMessage {
 export interface Draft {
   tape: string;
   atStep: number | null;
-  nick: string;
-  badge: string;
   ghost: boolean;
   parts: readonly MessagePart[];
 }
 
 /**
- * The whole of what the chat asks the server for, in four calls — which is the point of it: what the
+ * The whole of what the chat asks the server for, in five calls — which is the point of it: what the
  * window and the strip see is one interface, so a test can be a fake wire rather than a fake server.
  */
 export interface ChatWire {
+  /**
+   * The page's first call: the session's own token, and the player the site says owns it. It is the
+   * handshake the page waits out on its black screen (`main.ts`), and the one call that has to come
+   * before any other — every door of the server takes the token this call settles.
+   */
+  auth(): Promise<User>;
   /** The log of one place: everything written after `after`, which is 0 for the whole of it. */
   log(tape: string, after: number): Promise<ChatMessage[]>;
   /** One line, as the server took it down. */
@@ -102,15 +110,16 @@ export function apiBase(): string {
 }
 
 /**
- * The doors, as `fetch` against a base.
+ * The doors, as `fetch` against a base, speaking for a token.
  *
- * The fetch itself is a parameter because a test has no server and a page has no choice: everything this
- * client does — the query it builds, the body it sends, the answer it reads — is worth holding on to,
- * and the call itself is the one part that is not.
+ * The token is a parameter with a default (`siteToken`) because a test brings its own and a page has
+ * no choice; the fetch itself is a parameter for the same reason: everything this client does — the
+ * query it builds, the body it sends, the answer it reads — is worth holding on to, and the call
+ * itself is the one part that is not.
  */
-export function chatApi(base: string = apiBase(), take: typeof fetch = fetch): ChatWire {
+export function chatApi(base: string = apiBase(), take: typeof fetch = fetch, token: string = siteToken()): ChatWire {
   /** One request, as the text the server answered: the crossing itself is the module's own (`crossing`). */
-  const fetchText = crossing(base, take);
+  const fetchText = crossing(base, take, token);
 
   /** The same, as a value: every door but the tape's answers with one JSON value. */
   async function ask(path: string, init?: RequestInit): Promise<unknown> {
@@ -118,6 +127,16 @@ export function chatApi(base: string = apiBase(), take: typeof fetch = fetch): C
   }
 
   return {
+    async auth() {
+      // The body is nothing and the token is the header it always is: this is the door that decides
+      // what the header is worth, not one that carries anything of its own.
+      const answer = (await ask('/auth', { method: 'POST' })) as { user?: Omit<User, 'id'> & { id?: number } } | null;
+      if (!answer?.user || typeof answer.user.id !== 'number' || !answer.user.nick) {
+        throw new Refused(0, 'the server answered a handshake without naming a player');
+      }
+      return { id: answer.user.id, nick: answer.user.nick, icon: answer.user.icon || '-' };
+    },
+
     async log(tape, after) {
       const query = new URLSearchParams();
       // An absent `tape` is the lobby on the server's side, which is the one place a request may say
@@ -138,8 +157,6 @@ export function chatApi(base: string = apiBase(), take: typeof fetch = fetch): C
         body: JSON.stringify({
           tape: draft.tape,
           at_step: draft.atStep,
-          nick: draft.nick,
-          badge: draft.badge,
           ghost: draft.ghost,
           parts: draft.parts,
         }),
@@ -161,14 +178,20 @@ export function chatApi(base: string = apiBase(), take: typeof fetch = fetch): C
   };
 }
 
-/** A line as the interface reads it: the server's names turned into `messages.ts`'s, omissions and all. */
+/**
+ * A line as the interface reads it: the server's names turned into `messages.ts`'s, omissions and
+ * all. The costume is put on here too — a ghost's line wears the ghost's own name and face over
+ * whatever the server knows its writer by — so that no view ever has to ask what a `ghost` flag
+ * means for the name and the picture beside it.
+ */
 function line(wire: WireMessage): ChatMessage {
   return {
     id: wire.id,
     tape: wire.tape ?? LOBBY,
     atStep: wire.at_step ?? null,
-    nick: wire.nick,
-    badge: wire.badge,
+    userId: wire.user_id,
+    nick: wire.ghost ? GHOST.nick : wire.nick,
+    face: wire.ghost ? GHOST.face : userpic(wire.icon),
     ghost: wire.ghost ?? false,
     parts: wire.parts ?? [],
     sentMs: wire.sent_ms ?? 0,
@@ -182,16 +205,22 @@ function line(wire: WireMessage): ChatMessage {
  * The text rather than a value, because one of these doors — a run's own tape — answers with the game's
  * own file rather than with JSON, and that file goes on to `decodeTape` exactly as it arrived.
  *
+ * Every call carries the token, in the one header the server takes it from — the door that has not
+ * been opened yet (`chatApi.auth`) is the door that asks what the token is worth, and it is a POST
+ * with nothing else to say for exactly that reason.
+ *
  * It is exported because this server has more than one wire: the chat's (`chatApi`, above) and the
  * recording side's (`frontend/src/live/api.ts`). A refusal is one thing whoever asked for what, and the
  * sentence the server writes is the same sentence in either console. `take` is `fetch`, except in a test,
  * which brings its own.
  */
-export function crossing(base: string, take: typeof fetch): (path: string, init?: RequestInit) => Promise<string> {
+export function crossing(base: string, take: typeof fetch, token: string = siteToken()): (path: string, init?: RequestInit) => Promise<string> {
   return async (path, init) => {
     let answer: Response;
     try {
-      answer = await take(`${base}${path}`, init);
+      const headers = new Headers(init?.headers);
+      if (token) headers.set('x-auth-token', token);
+      answer = await take(`${base}${path}`, { ...init, headers });
     } catch (err) {
       throw new Refused(0, err instanceof Error ? err.message : String(err));
     }
