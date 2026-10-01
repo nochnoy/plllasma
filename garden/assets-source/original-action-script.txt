@@ -1,0 +1,3245 @@
+// ================================================================
+// DoAction[0]: 699 bytes, 26 pool strings, 111 instructions
+// ================================================================
+// pool: ["quality","low","skinDescription","Object","items","p1","arm1","p2","hand1","mc","hand","push","neck","arm","pants","knee2","thigh","foot2","leg","stomach","chest","head","knee1","foot1","arm2","hand2"]
+push c0="quality", c1="low"
+setVariable
+push c2="skinDescription", 0, c3="Object"
+newObject
+setVariable
+push c2="skinDescription"
+getVariable
+push c4="items", 0
+initArray
+setMember
+push c5="p1", c6="arm1", c7="p2", c8="hand1", c9="mc", c10="hand", 3
+initObject
+push 1, c2="skinDescription"
+getVariable
+push c4="items"
+getMember
+push c11="push"
+callMethod
+pop
+push c5="p1", c12="neck", c7="p2", c6="arm1", c9="mc", c13="arm", 3
+initObject
+push 1, c2="skinDescription"
+getVariable
+push c4="items"
+getMember
+push c11="push"
+callMethod
+pop
+push c5="p1", c14="pants", c7="p2", c15="knee2", c9="mc", c16="thigh", 3
+initObject
+push 1, c2="skinDescription"
+getVariable
+push c4="items"
+getMember
+push c11="push"
+callMethod
+pop
+push c5="p1", c15="knee2", c7="p2", c17="foot2", c9="mc", c18="leg", 3
+initObject
+push 1, c2="skinDescription"
+getVariable
+push c4="items"
+getMember
+push c11="push"
+callMethod
+pop
+push c5="p1", c19="stomach", c7="p2", c12="neck", c9="mc", c20="chest", 3
+initObject
+push 1, c2="skinDescription"
+getVariable
+push c4="items"
+getMember
+push c11="push"
+callMethod
+pop
+push c5="p1", c12="neck", c7="p2", c21="head", c9="mc", c21="head", 3
+initObject
+push 1, c2="skinDescription"
+getVariable
+push c4="items"
+getMember
+push c11="push"
+callMethod
+pop
+push c5="p1", c19="stomach", c7="p2", c14="pants", c9="mc", c19="stomach", 3
+initObject
+push 1, c2="skinDescription"
+getVariable
+push c4="items"
+getMember
+push c11="push"
+callMethod
+pop
+push c5="p1", c22="knee1", c7="p2", c23="foot1", c9="mc", c18="leg", 3
+initObject
+push 1, c2="skinDescription"
+getVariable
+push c4="items"
+getMember
+push c11="push"
+callMethod
+pop
+push c5="p1", c14="pants", c7="p2", c22="knee1", c9="mc", c16="thigh", 3
+initObject
+push 1, c2="skinDescription"
+getVariable
+push c4="items"
+getMember
+push c11="push"
+callMethod
+pop
+push c5="p1", c12="neck", c7="p2", c24="arm2", c9="mc", c13="arm", 3
+initObject
+push 1, c2="skinDescription"
+getVariable
+push c4="items"
+getMember
+push c11="push"
+callMethod
+pop
+push c5="p1", c24="arm2", c7="p2", c25="hand2", c9="mc", c10="hand", 3
+initObject
+push 1, c2="skinDescription"
+getVariable
+push c4="items"
+getMember
+push c11="push"
+callMethod
+pop
+end
+
+// ================================================================
+// DoAction[1]: 470 bytes, 14 pool strings, 96 instructions
+// ================================================================
+// pool: ["p1","p2","mc","parts","Skin","prototype","draw","x","y","Math","atan2","_x","_y","_rotation"]
+function Part(p1:r4, p2:r3, mc:r2) (regs=5, flags=0x29) {
+  push r1, c0="p1", r4
+  setMember
+  push r1, c1="p2", r3
+  setMember
+  push r1, c2="mc", r2
+  setMember
+}
+function Skin() (regs=2, flags=0x29) {
+  push r1, c3="parts", 0
+  initArray
+  setMember
+}
+push c4="Skin"
+getVariable
+push c5="prototype"
+getMember
+push c6="draw"
+function () (regs=9, flags=0x29) {
+  push r1, c3="parts"
+  getMember
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L1 // +256
+  push r0
+  storeRegister 8
+  pop
+  push r1, c3="parts"
+  getMember
+  push r8
+  getMember
+  push c0="p1"
+  getMember
+  storeRegister 3
+  pop
+  push r1, c3="parts"
+  getMember
+  push r8
+  getMember
+  push c1="p2"
+  getMember
+  storeRegister 2
+  pop
+  push r1, c3="parts"
+  getMember
+  push r8
+  getMember
+  push c2="mc"
+  getMember
+  storeRegister 4
+  pop
+  push r3, c7="x"
+  getMember
+  push r2, c7="x"
+  getMember
+  add2
+  push 0.5
+  multiply
+  storeRegister 6
+  pop
+  push r3, c8="y"
+  getMember
+  push r2, c8="y"
+  getMember
+  add2
+  push 0.5
+  multiply
+  storeRegister 5
+  pop
+  push r3, c7="x"
+  getMember
+  push r2, c7="x"
+  getMember
+  subtract
+  push r3, c8="y"
+  getMember
+  push r2, c8="y"
+  getMember
+  subtract
+  push 2, c9="Math"
+  getVariable
+  push c10="atan2"
+  callMethod
+  storeRegister 7
+  pop
+  push r4, c11="_x", r6
+  setMember
+  push r4, c12="_y", r5
+  setMember
+  push r4, c13="_rotation", r7, 57.29578
+  multiply
+  setMember
+  jump L2 // -270
+}
+L1:
+setMember
+end
+
+// ================================================================
+// DoAction[2]: 956 bytes, 26 pool strings, 191 instructions
+// ================================================================
+// pool: ["balls","mc","createEmptyMovieClip","_root","_xscale","_yscale","Track","prototype","create","ba","ball","attachMovie","x","_x","Stage","width","y","_y","height","rad","_width","_height","push","update","PEng","particles"]
+function Track() (regs=3, flags=0x69) {
+  push r1, c0="balls", 0
+  initArray
+  setMember
+  push r1, c1="mc", 50, c0="balls", 2, r2, c2="createEmptyMovieClip"
+  callMethod
+  setMember
+}
+push c3="_root"
+getVariable
+push c4="_xscale", c3="_root"
+getVariable
+push c5="_yscale", 80
+storeRegister 0
+setMember
+push r0
+setMember
+push c6="Track"
+getVariable
+push c7="prototype"
+getMember
+push c8="create"
+function () (regs=4, flags=0x29) {
+  push 0
+  storeRegister 3
+  pop
+  push r3, 30
+  less2
+  not
+  if L1 // +268
+  push r3, 1
+  add2
+  push c9="ba", r3
+  add2
+  push c10="ball", 3, r1, c1="mc"
+  getMember
+  push c11="attachMovie"
+  callMethod
+  storeRegister 2
+  pop
+  push r2, c12="x", r2, c13="_x", c14="Stage"
+  getVariable
+  push c15="width"
+  getMember
+  push 4
+  multiply
+  randomNumber
+  push c14="Stage"
+  getVariable
+  push c15="width"
+  getMember
+  push 2
+  divide
+  subtract
+  storeRegister 0
+  setMember
+  push r0
+  setMember
+  push r2, c16="y", r2, c17="_y", c14="Stage"
+  getVariable
+  push c18="height"
+  getMember
+  push 4
+  multiply
+  randomNumber
+  push c14="Stage"
+  getVariable
+  push c18="height"
+  getMember
+  push 2
+  divide
+  subtract
+  storeRegister 0
+  setMember
+  push r0
+  setMember
+  push r2, c19="rad", 100
+  randomNumber
+  push 30
+  add2
+  setMember
+  push r2, c20="_width", r2, c21="_height", r2, c19="rad"
+  getMember
+  push 2
+  multiply
+  storeRegister 0
+  setMember
+  push r0
+  setMember
+  push r2, 1, r1, c0="balls"
+  getMember
+  push c22="push"
+  callMethod
+  pop
+  push r3
+  increment
+  storeRegister 3
+  pop
+  jump L2 // -285
+}
+L1:
+setMember
+push c6="Track"
+getVariable
+push c7="prototype"
+getMember
+push c23="update"
+function () (regs=6, flags=0x69) {
+  push r2, c24="PEng"
+  getMember
+  push c25="particles"
+  getMember
+  push 0
+  getMember
+  push c16="y"
+  getMember
+  push 500
+  subtract
+  storeRegister 4
+  pop
+  push r1, c0="balls"
+  getMember
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L3 // +256
+  push r0
+  storeRegister 5
+  pop
+  push r1, c0="balls"
+  getMember
+  push r5
+  getMember
+  storeRegister 3
+  pop
+  push r3, c16="y"
+  getMember
+  push r4
+  less2
+  not
+  if L4 // +202
+  push r3, c17="_y", r3, c16="y", r2, c24="PEng"
+  getMember
+  push c25="particles"
+  getMember
+  push 0
+  getMember
+  push c16="y"
+  getMember
+  push 500
+  add2
+  push 700
+  randomNumber
+  add2
+  storeRegister 0
+  setMember
+  push r0
+  setMember
+  push r3, c13="_x", r3, c12="x", r2, c24="PEng"
+  getMember
+  push c25="particles"
+  getMember
+  push 0
+  getMember
+  push c12="x"
+  getMember
+  push 1000
+  randomNumber
+  add2
+  push 1000
+  randomNumber
+  subtract
+  storeRegister 0
+  setMember
+  push r0
+  setMember
+  push r3, c19="rad", 100
+  randomNumber
+  push 30
+  add2
+  setMember
+  push r3, c20="_width", r3, c21="_height", r3, c19="rad"
+  getMember
+  push 2
+  multiply
+  storeRegister 0
+  setMember
+  push r0
+  setMember
+  L4:
+  jump L5 // -270
+}
+L3:
+setMember
+end
+
+// ================================================================
+// DoAction[3]: 104 bytes, 0 pool strings, 10 instructions
+// ================================================================
+function Muscle(p1:r5, p2:r4, restLength:r2, power:r3) (regs=6, flags=0x29) {
+  push r1, "p1", r5
+  setMember
+  push r1, "p2", r4
+  setMember
+  push r1, "restLength", r2
+  setMember
+  push r1, "power", r3
+  setMember
+}
+end
+
+// ================================================================
+// DoAction[4]: 2509 bytes, 54 pool strings, 494 instructions
+// ================================================================
+// pool: ["particles","constraints","skin","mc","createEmptyMovieClip","Function","prototype","extend","__proto__","__constructor__","ASSetPropFlags","Extractor","extract","extractParticles","extractConstraints","skinDescription","extractSkin","removeMovieClip","Skin","items","p1","p2","orgMC","_name","attachMovie","Part","parts","push","movieclip","is","particle","_x","_y","Particle2D","mass","constraint","angledConstraint","_rotation","_xscale","Math","cos","sin","findParticle","getDist","p3","maxang","minang","AngledConstraint","inversed","Constraint","extractMC","x","y","sqrt"]
+function Extractor() (regs=3, flags=0x69) {
+  push r1, c0="particles", null
+  setMember
+  push r1, c1="constraints", null
+  setMember
+  push r1, c2="skin", null
+  setMember
+  push r1, c3="mc", 2, c2="skin", 2, r2, c4="createEmptyMovieClip"
+  callMethod
+  setMember
+}
+push c5="Function"
+getVariable
+push c6="prototype"
+getMember
+push c7="extend"
+function (superClass:r2) (regs=3, flags=0x29) {
+  push r1, c6="prototype"
+  getMember
+  push c8="__proto__", r2, c6="prototype"
+  getMember
+  setMember
+  push r1, c6="prototype"
+  getMember
+  push c9="__constructor__", r2
+  setMember
+  push 1, c9="__constructor__", 1
+  initArray
+  push r1, c6="prototype"
+  getMember
+  push 3, c10="ASSetPropFlags"
+  callFunction
+  pop
+}
+setMember
+push 1, c7="extend", 1
+initArray
+push c5="Function"
+getVariable
+push c6="prototype"
+getMember
+push 3, c10="ASSetPropFlags"
+callFunction
+pop
+push c11="Extractor"
+getVariable
+push c6="prototype"
+getMember
+push c12="extract"
+function (mc:r3) (regs=4, flags=0x69) {
+  push r1, c0="particles", r3, 1, r1, c13="extractParticles"
+  callMethod
+  setMember
+  push r1, c1="constraints", r1, c0="particles"
+  getMember
+  push r3, 2, r1, c14="extractConstraints"
+  callMethod
+  setMember
+  push r1, c2="skin", r2, c15="skinDescription"
+  getMember
+  push r3, 2, r1, c16="extractSkin"
+  callMethod
+  setMember
+  push 0, r3, c17="removeMovieClip"
+  callMethod
+  pop
+}
+setMember
+push c11="Extractor"
+getVariable
+push c6="prototype"
+getMember
+push c16="extractSkin"
+function (mc:r8, d:r11) (regs=14, flags=0x29) {
+  push 0, c18="Skin"
+  newObject
+  storeRegister 12
+  pop
+  push 0
+  storeRegister 10
+  pop
+  push r11, c19="items"
+  getMember
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L1 // +307
+  push r0
+  storeRegister 13
+  pop
+  push r11, c19="items"
+  getMember
+  push r13
+  getMember
+  storeRegister 3
+  pop
+  push r3, c20="p1"
+  getMember
+  storeRegister 7
+  pop
+  push r3, c21="p2"
+  getMember
+  storeRegister 6
+  pop
+  push null
+  storeRegister 4
+  pop
+  push null
+  storeRegister 5
+  pop
+  push r1, c0="particles"
+  getMember
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L2 // +106
+  push r0
+  storeRegister 13
+  pop
+  push r1, c0="particles"
+  getMember
+  push r13
+  getMember
+  storeRegister 2
+  pop
+  push r2, c22="orgMC"
+  getMember
+  push c23="_name"
+  getMember
+  push r7
+  equals2
+  not
+  if L3 // +10
+  push r2
+  storeRegister 4
+  pop
+  L3:
+  push r2, c22="orgMC"
+  getMember
+  push c23="_name"
+  getMember
+  push r6
+  equals2
+  not
+  if L4 // +10
+  push r2
+  storeRegister 5
+  pop
+  L4:
+  jump L5 // -120
+  L2:
+  push r10
+  increment
+  storeRegister 10
+  push r3, c3="mc"
+  getMember
+  push r10
+  add2
+  push r3, c3="mc"
+  getMember
+  push 3, r1, c3="mc"
+  getMember
+  push c24="attachMovie"
+  callMethod
+  storeRegister 8
+  pop
+  push r8, r5, r4, 3, c25="Part"
+  newObject
+  storeRegister 9
+  pop
+  push r9, 1, r12, c26="parts"
+  getMember
+  push c27="push"
+  callMethod
+  pop
+  jump L6 // -321
+  L1:
+  push r12
+  return
+}
+setMember
+push c11="Extractor"
+getVariable
+push c6="prototype"
+getMember
+push c13="extractParticles"
+function (mc:r3) (regs=8, flags=0x2a) {
+  push 0
+  initArray
+  storeRegister 6
+  pop
+  push r3
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L7 // +192
+  push r0
+  storeRegister 7
+  pop
+  push r3, r7
+  getMember
+  typeof
+  push c28="movieclip"
+  equals2
+  not
+  if L8 // +156
+  push r3, r7
+  getMember
+  push c29="is"
+  getMember
+  push c30="particle"
+  equals2
+  not
+  if L8 // +130
+  push r3, r7
+  getMember
+  storeRegister 1
+  pop
+  push r1, c31="_x"
+  getMember
+  storeRegister 5
+  pop
+  push r1, c32="_y"
+  getMember
+  storeRegister 4
+  pop
+  push r4, r5, 2, c33="Particle2D"
+  newObject
+  storeRegister 2
+  pop
+  push r1, c34="mass"
+  getMember
+  not
+  if L9 // +18
+  push r2, c34="mass", r1, c34="mass"
+  getMember
+  setMember
+  jump L10 // +13
+  L9:
+  push r2, c34="mass", 1
+  setMember
+  L10:
+  push r2, c22="orgMC", r1
+  setMember
+  push r2, 1, r6, c27="push"
+  callMethod
+  pop
+  L8:
+  jump L11 // -206
+  L7:
+  push r6
+  return
+}
+setMember
+push c11="Extractor"
+getVariable
+push c6="prototype"
+getMember
+push c14="extractConstraints"
+function (mc:r3, parray:r14) (regs=18, flags=0x29) {
+  push 0
+  initArray
+  storeRegister 16
+  pop
+  push r3
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L12 // +487
+  push r0
+  storeRegister 17
+  pop
+  push r3, r17
+  getMember
+  typeof
+  push c28="movieclip"
+  equals2
+  not
+  if L13 // +451
+  push r3, r17
+  getMember
+  push c29="is"
+  getMember
+  push c35="constraint"
+  equals2
+  pushDuplicate
+  if L14 // +21
+  pop
+  push r3, r17
+  getMember
+  push c29="is"
+  getMember
+  push c36="angledConstraint"
+  equals2
+  L14:
+  not
+  if L13 // +398
+  push r3, r17
+  getMember
+  storeRegister 2
+  pop
+  push r2, c31="_x"
+  getMember
+  storeRegister 9
+  pop
+  push r2, c32="_y"
+  getMember
+  storeRegister 7
+  pop
+  push r2, c37="_rotation"
+  getMember
+  push 57.29578
+  divide
+  storeRegister 11
+  pop
+  push r2, c38="_xscale"
+  getMember
+  storeRegister 8
+  pop
+  push r9, r11, 1, c39="Math"
+  getVariable
+  push c40="cos"
+  callMethod
+  push r8
+  multiply
+  add2
+  storeRegister 13
+  pop
+  push r7, r11, 1, c39="Math"
+  getVariable
+  push c41="sin"
+  callMethod
+  push r8
+  multiply
+  add2
+  storeRegister 12
+  pop
+  push r14, r7, r9, 3, r1, c42="findParticle"
+  callMethod
+  storeRegister 5
+  pop
+  push r14, r12, r13, 3, r1, c42="findParticle"
+  callMethod
+  storeRegister 4
+  pop
+  push r4, r5, 2, r1, c43="getDist"
+  callMethod
+  storeRegister 10
+  pop
+  push r2, c29="is"
+  getMember
+  push c36="angledConstraint"
+  equals2
+  not
+  if L15 // +133
+  push r14, r2, c44="p3"
+  getMember
+  push c32="_y"
+  getMember
+  push r2, c44="p3"
+  getMember
+  push c31="_x"
+  getMember
+  push 3, r1, c42="findParticle"
+  callMethod
+  storeRegister 15
+  pop
+  push r2, c45="maxang"
+  getMember
+  push r2, c46="minang"
+  getMember
+  push r15, r10, r4, r5, 6, c47="AngledConstraint"
+  newObject
+  storeRegister 6
+  pop
+  push r2, c48="inversed"
+  getMember
+  not
+  if L16 // +10
+  push r6, c48="inversed", true
+  setMember
+  L16:
+  push r6, 1, r16, c27="push"
+  callMethod
+  pop
+  jump L13 // +31
+  L15:
+  push r10, r4, r5, 3, c49="Constraint"
+  newObject
+  push 1, r16, c27="push"
+  callMethod
+  pop
+  L13:
+  jump L17 // -501
+  L12:
+  push r16
+  return
+}
+setMember
+push c11="Extractor"
+getVariable
+push c6="prototype"
+getMember
+push c50="extractMC"
+function (mc:r2) (regs=3, flags=0x29) {
+  push r1, c0="particles", r2, 1, r1, c13="extractParticles"
+  callMethod
+  setMember
+  push r1, c1="constraints", r1, c0="particles"
+  getMember
+  push r2, 2, r1, c14="extractConstraints"
+  callMethod
+  setMember
+  push 0, r2, c17="removeMovieClip"
+  callMethod
+  pop
+}
+setMember
+push c11="Extractor"
+getVariable
+push c6="prototype"
+getMember
+push c43="getDist"
+function (p1:r5, p2:r4) (regs=6, flags=0x2a) {
+  push r5, c51="x"
+  getMember
+  push r4, c51="x"
+  getMember
+  subtract
+  storeRegister 1
+  pop
+  push r5, c52="y"
+  getMember
+  push r4, c52="y"
+  getMember
+  subtract
+  storeRegister 2
+  pop
+  push r1, r1
+  multiply
+  push r2, r2
+  multiply
+  add2
+  push 1, c39="Math"
+  getVariable
+  push c53="sqrt"
+  callMethod
+  storeRegister 3
+  pop
+  push r3
+  return
+}
+setMember
+push c11="Extractor"
+getVariable
+push c6="prototype"
+getMember
+push c42="findParticle"
+function (x:r10, y:r9, ar:r6) (regs=11, flags=0x2a) {
+  push 10000000000
+  storeRegister 5
+  pop
+  push null
+  storeRegister 7
+  pop
+  push r6
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L18 // +116
+  push r0
+  storeRegister 8
+  pop
+  push r6, r8
+  getMember
+  storeRegister 1
+  pop
+  push r10, r1, c51="x"
+  getMember
+  subtract
+  storeRegister 2
+  pop
+  push r9, r1, c52="y"
+  getMember
+  subtract
+  storeRegister 4
+  pop
+  push r2, r2
+  multiply
+  push r4, r4
+  multiply
+  add2
+  storeRegister 3
+  pop
+  push r3, r5
+  less2
+  not
+  if L19 // +20
+  push r3
+  storeRegister 5
+  pop
+  push r1
+  storeRegister 7
+  pop
+  L19:
+  jump L20 // -130
+  L18:
+  push r7
+  return
+}
+setMember
+end
+
+// ================================================================
+// DoAction[5]: 222 bytes, 6 pool strings, 41 instructions
+// ================================================================
+// pool: ["MovieClip","prototype","getMC","lastDepth","Instance","attachMovie"]
+push c0="MovieClip"
+getVariable
+push c1="prototype"
+getMember
+push c2="getMC"
+function (id:r4) (regs=5, flags=0x29) {
+  push r1, c3="lastDepth"
+  getMember
+  not
+  if L1 // +19
+  push r1, c3="lastDepth", r1, c3="lastDepth"
+  getMember
+  increment
+  setMember
+  jump L2 // +13
+  L1:
+  push r1, c3="lastDepth", 1
+  setMember
+  L2:
+  push r4, c4="Instance"
+  add2
+  push r1, c3="lastDepth"
+  getMember
+  add2
+  storeRegister 3
+  pop
+  push r1, c3="lastDepth"
+  getMember
+  push r3, r4, 3, r1, c5="attachMovie"
+  callMethod
+  storeRegister 2
+  pop
+  push r2
+  not
+  if L3 // +11
+  push r2
+  return
+  jump L4 // +6
+  L3:
+  push false
+  return
+}
+L4:
+setMember
+end
+
+// ================================================================
+// DoAction[6]: 257 bytes, 7 pool strings, 24 instructions
+// ================================================================
+// pool: ["p1","p2","restLength","p3","minang","maxang","isAngled"]
+function Constraint(p1:r4, p2:r3, restLength:r2) (regs=5, flags=0x29) {
+  push r1, c0="p1", r4
+  setMember
+  push r1, c1="p2", r3
+  setMember
+  push r1, c2="restLength", r2
+  setMember
+}
+function AngledConstraint(p1:r7, p2:r6, restLength:r3, p3:r5, minang:r4, maxang:r2) (regs=8, flags=0x29) {
+  push r1, c0="p1", r7
+  setMember
+  push r1, c1="p2", r6
+  setMember
+  push r1, c2="restLength", r3
+  setMember
+  push r1, c3="p3", r5
+  setMember
+  push r1, c4="minang", r4
+  setMember
+  push r1, c5="maxang", r2
+  setMember
+  push r1, c6="isAngled", true
+  setMember
+}
+end
+
+// ================================================================
+// DoAction[7]: 230 bytes, 10 pool strings, 23 instructions
+// ================================================================
+// pool: ["p1","p2","p3","dst12","dst23","minang","maxang","c1","Constraint","c2"]
+function Joint(p1:r4, p2:r2, p3:r3, dst12:r6, dst23:r5, minang:r8, maxang:r7) (regs=9, flags=0x29) {
+  push r1, c0="p1", r4
+  setMember
+  push r1, c1="p2", r2
+  setMember
+  push r1, c2="p3", r3
+  setMember
+  push r1, c3="dst12", r6
+  setMember
+  push r1, c4="dst23", r5
+  setMember
+  push r1, c5="minang", r8
+  setMember
+  push r1, c6="maxang", r7
+  setMember
+  push r1, c7="c1", r6, r2, r4, 3, c8="Constraint"
+  newObject
+  setMember
+  push r1, c9="c2", r5, r3, r2, 3, c8="Constraint"
+  newObject
+  setMember
+}
+end
+
+// ================================================================
+// DoAction[8]: 283 bytes, 0 pool strings, 33 instructions
+// ================================================================
+function Particle2D(x:r3, y:r2) (regs=4, flags=0x29) {
+  push r1, "x", r3
+  setMember
+  push r1, "y", r2
+  setMember
+  push r1, "xf", 0
+  setMember
+  push r1, "yf", 0
+  setMember
+  push r1, "oldx", r3
+  setMember
+  push r1, "oldy", r2
+  setMember
+  push r1, "rad", 1
+  setMember
+  push r1, "mass", 1
+  setMember
+}
+function MCParticle(x:r5, y:r4, mc:r3) (regs=6, flags=0x19) {
+  push r4, r5, 2, r2, undefined
+  callMethod
+  pop
+  push r1, "mc", r3
+  setMember
+  push r1, "defaultSize", 100
+  setMember
+}
+push "Particle2D"
+getVariable
+push 1, "MCParticle"
+getVariable
+push "extend"
+callMethod
+pop
+end
+
+// ================================================================
+// DoAction[9]: 3541 bytes, 66 pool strings, 770 instructions
+// ================================================================
+// pool: ["MAXPARTICLES","oldTime","speed","particles","mc","pdepth","gravity","fric","minx","Stage","width","miny","height","maxx","maxy","onHold","constraints","angledConstraints","muscles","PEngine2D","prototype","addConstraint","push","addAngledConstraint","addParticle","length","removeParticle","removeMovieClip","splice","verlet","timeFactor","Math","pow","x","y","oldx","oldy","constrain","satisfyAngConstraint","satisfyConstraint","p1","p2","restLength","sqrt","mass","rl2","collision","track","balls","rad","update","getTimeFactor","hold","_xmouse","_ymouse","forces","paint","_x","_y","paintLines","clear","lineStyle","moveTo","lineTo","shake","random"]
+function PEngine2D() (regs=3, flags=0x69) {
+  push r1, c0="MAXPARTICLES", 256
+  setMember
+  push r1, c1="oldTime"
+  getTime
+  setMember
+  push r1, c2="speed", 1
+  setMember
+  push r1, c3="particles", 0
+  initArray
+  setMember
+  push r1, c4="mc", r2
+  setMember
+  push r1, c5="pdepth", 0
+  setMember
+  push r1, c6="gravity", 0.0011
+  setMember
+  push r1, c7="fric", 0.9993
+  setMember
+  push r1, c8="minx", 0, c9="Stage"
+  getVariable
+  push c10="width"
+  getMember
+  subtract
+  push 2
+  divide
+  setMember
+  push r1, c11="miny", 0, c9="Stage"
+  getVariable
+  push c12="height"
+  getMember
+  subtract
+  push 2
+  divide
+  setMember
+  push r1, c13="maxx", c9="Stage"
+  getVariable
+  push c10="width"
+  getMember
+  push 2
+  divide
+  setMember
+  push r1, c14="maxy", c9="Stage"
+  getVariable
+  push c12="height"
+  getMember
+  push 2
+  divide
+  setMember
+  push r1, c15="onHold", null
+  setMember
+  push r1, c16="constraints", 0
+  initArray
+  setMember
+  push r1, c17="angledConstraints", 0
+  initArray
+  setMember
+  push r1, c18="muscles", 0
+  initArray
+  setMember
+}
+push c19="PEngine2D"
+getVariable
+push c20="prototype"
+getMember
+push c21="addConstraint"
+function (c:r2) (regs=3, flags=0x29) {
+  push r2, 1, r1, c16="constraints"
+  getMember
+  push c22="push"
+  callMethod
+  pop
+}
+setMember
+push c19="PEngine2D"
+getVariable
+push c20="prototype"
+getMember
+push c23="addAngledConstraint"
+function (c:r2) (regs=3, flags=0x29) {
+  push r2, 1, r1, c17="angledConstraints"
+  getMember
+  push c22="push"
+  callMethod
+  pop
+}
+setMember
+push c19="PEngine2D"
+getVariable
+push c20="prototype"
+getMember
+push c24="addParticle"
+function (p:r2) (regs=3, flags=0x29) {
+  push r1, c3="particles"
+  getMember
+  push c25="length"
+  getMember
+  push r1, c0="MAXPARTICLES"
+  getMember
+  greater
+  not
+  if L1 // +23
+  push 0, 1, r1, c26="removeParticle"
+  callMethod
+  pop
+  L1:
+  push r2, 1, r1, c3="particles"
+  getMember
+  push c22="push"
+  callMethod
+  pop
+}
+setMember
+push c19="PEngine2D"
+getVariable
+push c20="prototype"
+getMember
+push c26="removeParticle"
+function (index:r3) (regs=4, flags=0x29) {
+  push r1, c3="particles"
+  getMember
+  push r3
+  getMember
+  storeRegister 2
+  pop
+  push 0, r2, c4="mc"
+  getMember
+  push c27="removeMovieClip"
+  callMethod
+  pop
+  push false
+  pop
+  push 1, r3, 2, r1, c3="particles"
+  getMember
+  push c28="splice"
+  callMethod
+  pop
+}
+setMember
+push c19="PEngine2D"
+getVariable
+push c20="prototype"
+getMember
+push c29="verlet"
+function () (regs=9, flags=0x29) {
+  push r1, c30="timeFactor"
+  getMember
+  storeRegister 5
+  pop
+  push r1, c3="particles"
+  getMember
+  storeRegister 6
+  pop
+  push r5, r1, c7="fric"
+  getMember
+  push 2, c31="Math"
+  getVariable
+  push c32="pow"
+  callMethod
+  storeRegister 7
+  pop
+  push r6
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L2 // +169
+  push r0
+  storeRegister 8
+  pop
+  push r6, r8
+  getMember
+  storeRegister 2
+  pop
+  push r2, c33="x"
+  getMember
+  storeRegister 3
+  pop
+  push r2, c34="y"
+  getMember
+  storeRegister 4
+  pop
+  push r2, c33="x", r2, c33="x"
+  getMember
+  push r2, c33="x"
+  getMember
+  push r2, c35="oldx"
+  getMember
+  subtract
+  push r7
+  multiply
+  add2
+  setMember
+  push r2, c34="y", r2, c34="y"
+  getMember
+  push r2, c34="y"
+  getMember
+  push r2, c36="oldy"
+  getMember
+  subtract
+  push r7
+  multiply
+  push r1, c6="gravity"
+  getMember
+  push r5
+  multiply
+  push r5
+  multiply
+  add2
+  add2
+  setMember
+  push r2, c35="oldx", r3
+  setMember
+  push r2, c36="oldy", r4
+  setMember
+  jump L3 // -183
+}
+L2:
+setMember
+push c19="PEngine2D"
+getVariable
+push c20="prototype"
+getMember
+push c37="constrain"
+function () (regs=5, flags=0x29) {
+  push r1, c16="constraints"
+  getMember
+  storeRegister 2
+  pop
+  push r1, c17="angledConstraints"
+  getMember
+  storeRegister 3
+  pop
+  push r3
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L4 // +37
+  push r0
+  storeRegister 4
+  pop
+  push r3, r4
+  getMember
+  push 1, r1, c38="satisfyAngConstraint"
+  callMethod
+  pop
+  jump L5 // -51
+  L4:
+  push r2
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L6 // +37
+  push r0
+  storeRegister 4
+  pop
+  push r2, r4
+  getMember
+  push 1, r1, c39="satisfyConstraint"
+  callMethod
+  pop
+  jump L7 // -51
+}
+L6:
+setMember
+push c19="PEngine2D"
+getVariable
+push c20="prototype"
+getMember
+push c39="satisfyConstraint"
+function (c:r11) (regs=14, flags=0x2a) {
+  push r11, c40="p1"
+  getMember
+  storeRegister 2
+  pop
+  push r11, c41="p2"
+  getMember
+  storeRegister 1
+  pop
+  push r11, c42="restLength"
+  getMember
+  storeRegister 10
+  pop
+  push r2, c33="x"
+  getMember
+  push r1, c33="x"
+  getMember
+  subtract
+  storeRegister 3
+  pop
+  push r2, c34="y"
+  getMember
+  push r1, c34="y"
+  getMember
+  subtract
+  storeRegister 5
+  pop
+  push r3, r3
+  multiply
+  push r5, r5
+  multiply
+  add2
+  push 1, c31="Math"
+  getVariable
+  push c43="sqrt"
+  callMethod
+  storeRegister 4
+  pop
+  push r2, c44="mass"
+  getMember
+  push r1, c44="mass"
+  getMember
+  add2
+  storeRegister 6
+  pop
+  push r2, c44="mass"
+  getMember
+  push r6
+  divide
+  storeRegister 13
+  pop
+  push r1, c44="mass"
+  getMember
+  push r6
+  divide
+  storeRegister 12
+  pop
+  push c45="rl2", r4, r10, r4
+  subtract
+  push 1
+  multiply
+  add2
+  setVariable
+  push r4, c45="rl2"
+  getVariable
+  subtract
+  push r4
+  divide
+  push 0.5
+  multiply
+  storeRegister 7
+  pop
+  push r7, r13
+  multiply
+  storeRegister 9
+  pop
+  push r7, r12
+  multiply
+  storeRegister 8
+  pop
+  push r2, c33="x", r2, c33="x"
+  getMember
+  push r3, r8
+  multiply
+  subtract
+  setMember
+  push r2, c34="y", r2, c34="y"
+  getMember
+  push r5, r8
+  multiply
+  subtract
+  setMember
+  push r1, c33="x", r1, c33="x"
+  getMember
+  push r3, r9
+  multiply
+  add2
+  setMember
+  push r1, c34="y", r1, c34="y"
+  getMember
+  push r5, r9
+  multiply
+  add2
+  setMember
+}
+setMember
+push c19="PEngine2D"
+getVariable
+push c20="prototype"
+getMember
+push c46="collision"
+function () (regs=11, flags=0x29) {
+  push r1, c3="particles"
+  getMember
+  storeRegister 9
+  pop
+  push r1, c47="track"
+  getMember
+  push c48="balls"
+  getMember
+  storeRegister 8
+  pop
+  push r9
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L8 // +265
+  push r0
+  storeRegister 10
+  pop
+  push r9, r10
+  getMember
+  storeRegister 5
+  pop
+  push r8
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L9 // +217
+  push r0
+  storeRegister 10
+  pop
+  push r8, r10
+  getMember
+  storeRegister 2
+  pop
+  push r5, c33="x"
+  getMember
+  push r2, c33="x"
+  getMember
+  subtract
+  storeRegister 3
+  pop
+  push r5, c34="y"
+  getMember
+  push r2, c34="y"
+  getMember
+  subtract
+  storeRegister 4
+  pop
+  push r3, r3
+  multiply
+  push r4, r4
+  multiply
+  add2
+  push 1, c31="Math"
+  getVariable
+  push c43="sqrt"
+  callMethod
+  storeRegister 6
+  pop
+  push r2, c49="rad"
+  getMember
+  push r5, c49="rad"
+  getMember
+  add2
+  storeRegister 7
+  pop
+  push r6, r7
+  less2
+  not
+  if L10 // +70
+  push r3, r6
+  divide
+  storeRegister 3
+  pop
+  push r4, r6
+  divide
+  storeRegister 4
+  pop
+  push r5, c33="x", r2, c33="x"
+  getMember
+  push r3, r7
+  multiply
+  add2
+  setMember
+  push r5, c34="y", r2, c34="y"
+  getMember
+  push r4, r7
+  multiply
+  add2
+  setMember
+  L10:
+  jump L11 // -231
+  L9:
+  jump L12 // -279
+}
+L8:
+setMember
+push c19="PEngine2D"
+getVariable
+push c20="prototype"
+getMember
+push c50="update"
+function () (regs=3, flags=0x29) {
+  push r1, c30="timeFactor", 0, r1, c51="getTimeFactor"
+  callMethod
+  setMember
+  push 0, r1, c29="verlet"
+  callMethod
+  pop
+  push 0, r1, c52="hold"
+  callMethod
+  pop
+  push 0
+  storeRegister 2
+  pop
+  push r2, 2
+  less2
+  not
+  if L13 // +52
+  push 0, r1, c37="constrain"
+  callMethod
+  pop
+  push 0, r1, c46="collision"
+  callMethod
+  pop
+  push r2
+  increment
+  storeRegister 2
+  pop
+  jump L14 // -69
+}
+L13:
+setMember
+push c19="PEngine2D"
+getVariable
+push c20="prototype"
+getMember
+push c52="hold"
+function () (regs=5, flags=0x69) {
+  push r1, c15="onHold"
+  getMember
+  push null
+  equals2
+  not
+  not
+  if L15 // +145
+  push r1, c15="onHold"
+  getMember
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L15 // +122
+  push r0
+  storeRegister 4
+  pop
+  push r1, c15="onHold"
+  getMember
+  push r4
+  getMember
+  storeRegister 3
+  pop
+  push r3, c33="x", r3, c33="x"
+  getMember
+  push r2, c53="_xmouse"
+  getMember
+  push r3, c33="x"
+  getMember
+  subtract
+  push 0.3
+  multiply
+  add2
+  setMember
+  push r3, c34="y", r3, c34="y"
+  getMember
+  push r2, c54="_ymouse"
+  getMember
+  push r3, c34="y"
+  getMember
+  subtract
+  push 0.3
+  multiply
+  add2
+  setMember
+  jump L16 // -136
+}
+L15:
+setMember
+push c19="PEngine2D"
+getVariable
+push c20="prototype"
+getMember
+push c55="forces"
+function () (regs=4, flags=0x29) {
+  push r1, c3="particles"
+  getMember
+  storeRegister 2
+  pop
+  push r2
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L17 // +15
+  push r0
+  storeRegister 3
+  pop
+  jump L18 // -29
+}
+L17:
+setMember
+push c19="PEngine2D"
+getVariable
+push c20="prototype"
+getMember
+push c51="getTimeFactor"
+function () (regs=4, flags=0x29) {
+  getTime
+  storeRegister 3
+  pop
+  push r3, r1, c1="oldTime"
+  getMember
+  subtract
+  storeRegister 2
+  pop
+  push r1, c1="oldTime", r3
+  setMember
+  push r2, 40
+  greater
+  not
+  if L19 // +13
+  push 40
+  storeRegister 2
+  pop
+  L19:
+  push r2, r1, c2="speed"
+  getMember
+  multiply
+  return
+}
+setMember
+push c19="PEngine2D"
+getVariable
+push c20="prototype"
+getMember
+push c56="paint"
+function () (regs=5, flags=0x29) {
+  push r1, c3="particles"
+  getMember
+  storeRegister 3
+  pop
+  push r3
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L20 // +66
+  push r0
+  storeRegister 4
+  pop
+  push r3, r4
+  getMember
+  storeRegister 2
+  pop
+  push r2, c4="mc"
+  getMember
+  push c57="_x", r2, c33="x"
+  getMember
+  setMember
+  push r2, c4="mc"
+  getMember
+  push c58="_y", r2, c34="y"
+  getMember
+  setMember
+  jump L21 // -80
+}
+L20:
+setMember
+push c19="PEngine2D"
+getVariable
+push c20="prototype"
+getMember
+push c59="paintLines"
+function () (regs=12, flags=0x69) {
+  push r1, c17="angledConstraints"
+  getMember
+  storeRegister 5
+  pop
+  push r2
+  storeRegister 10
+  pop
+  push 0, r10, c60="clear"
+  callMethod
+  pop
+  push 30, 16711680, 20, 3, r10, c61="lineStyle"
+  callMethod
+  pop
+  push r5
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L22 // +141
+  push r0
+  storeRegister 11
+  pop
+  push r5, r11
+  getMember
+  push c40="p1"
+  getMember
+  storeRegister 4
+  pop
+  push r5, r11
+  getMember
+  push c41="p2"
+  getMember
+  storeRegister 3
+  pop
+  push r4, c33="x"
+  getMember
+  storeRegister 9
+  pop
+  push r4, c34="y"
+  getMember
+  storeRegister 7
+  pop
+  push r3, c33="x"
+  getMember
+  storeRegister 8
+  pop
+  push r3, c34="y"
+  getMember
+  storeRegister 6
+  pop
+  push r7, r9, 2, r10, c62="moveTo"
+  callMethod
+  pop
+  push r6, r8, 2, r10, c63="lineTo"
+  callMethod
+  pop
+  jump L23 // -155
+}
+L22:
+setMember
+push c19="PEngine2D"
+getVariable
+push c20="prototype"
+getMember
+push c64="shake"
+function () (regs=3, flags=0x29) {
+  push r1, c3="particles"
+  getMember
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L24 // +204
+  push r0
+  storeRegister 2
+  pop
+  push r1, c3="particles"
+  getMember
+  push r2
+  getMember
+  push c33="x", r1, c3="particles"
+  getMember
+  push r2
+  getMember
+  push c33="x"
+  getMember
+  push 0, c31="Math"
+  getVariable
+  push c65="random"
+  callMethod
+  push 0, c31="Math"
+  getVariable
+  push c65="random"
+  callMethod
+  subtract
+  push 45
+  multiply
+  add2
+  setMember
+  push r1, c3="particles"
+  getMember
+  push r2
+  getMember
+  push c34="y", r1, c3="particles"
+  getMember
+  push r2
+  getMember
+  push c34="y"
+  getMember
+  push 0, c31="Math"
+  getVariable
+  push c65="random"
+  callMethod
+  push 0, c31="Math"
+  getVariable
+  push c65="random"
+  callMethod
+  subtract
+  push 25
+  multiply
+  push 25
+  subtract
+  add2
+  setMember
+  jump L25 // -218
+}
+L24:
+setMember
+end
+
+// ================================================================
+// DoAction[10]: 2864 bytes, 21 pool strings, 722 instructions
+// ================================================================
+// pool: ["PEngine2D","prototype","satisfyAngConstraint","p1","p2","p3","x","y","Math","atan2","restLength","mass","maxang","minang","inversed","cos","sin","useMuscle","power","hackContraint","maxy"]
+push c0="PEngine2D"
+getVariable
+push c1="prototype"
+getMember
+push c2="satisfyAngConstraint"
+function (c:r3) (regs=20, flags=0x2a) {
+  push r3, c3="p1"
+  getMember
+  storeRegister 5
+  pop
+  push r3, c4="p2"
+  getMember
+  storeRegister 4
+  pop
+  push r3, c5="p3"
+  getMember
+  storeRegister 15
+  pop
+  push r4, c6="x"
+  getMember
+  push r5, c6="x"
+  getMember
+  subtract
+  push r4, c7="y"
+  getMember
+  push r5, c7="y"
+  getMember
+  subtract
+  push 2, c8="Math"
+  getVariable
+  push c9="atan2"
+  callMethod
+  storeRegister 12
+  pop
+  push r15, c6="x"
+  getMember
+  push r4, c6="x"
+  getMember
+  subtract
+  push r15, c7="y"
+  getMember
+  push r4, c7="y"
+  getMember
+  subtract
+  push 2, c8="Math"
+  getVariable
+  push c9="atan2"
+  callMethod
+  storeRegister 18
+  pop
+  push r12, r18
+  subtract
+  storeRegister 1
+  pop
+  push r1, 3.141593
+  greater
+  not
+  if L1 // +25
+  push r1, 6.283185
+  subtract
+  storeRegister 1
+  pop
+  jump L2 // -46
+  L1:
+  push r1, -3.141593
+  less2
+  not
+  if L3 // +25
+  push r1, 6.283185
+  add2
+  storeRegister 1
+  pop
+  jump L1 // -46
+  L3:
+  push r3, c10="restLength"
+  getMember
+  storeRegister 6
+  pop
+  push r5, c11="mass"
+  getMember
+  push r4, c11="mass"
+  getMember
+  add2
+  storeRegister 13
+  pop
+  push r5, c11="mass"
+  getMember
+  push r13
+  divide
+  storeRegister 14
+  pop
+  push r4, c11="mass"
+  getMember
+  push r13
+  divide
+  storeRegister 7
+  pop
+  push 0
+  storeRegister 16
+  pop
+  push r3, c12="maxang"
+  getMember
+  push r3, c13="minang"
+  getMember
+  add2
+  push 2
+  divide
+  storeRegister 17
+  pop
+  push r3, c14="inversed"
+  getMember
+  not
+  if L4 // +109
+  push r1, r3, c13="minang"
+  getMember
+  greater
+  pushDuplicate
+  not
+  if L5 // +9
+  pop
+  push r1, r17
+  less2
+  L5:
+  not
+  if L6 // +19
+  push r3, c13="minang"
+  getMember
+  push r1
+  subtract
+  storeRegister 16
+  pop
+  L6:
+  push r1, r3, c12="maxang"
+  getMember
+  less2
+  pushDuplicate
+  not
+  if L7 // +9
+  pop
+  push r1, r17
+  greater
+  L7:
+  not
+  if L8 // +19
+  push r3, c12="maxang"
+  getMember
+  push r1
+  subtract
+  storeRegister 16
+  pop
+  L8:
+  jump L9 // +258
+  L4:
+  push r3, c12="maxang"
+  getMember
+  push r3, c13="minang"
+  getMember
+  subtract
+  push 2
+  divide
+  storeRegister 8
+  pop
+  push r3, c12="maxang"
+  getMember
+  push r3, c13="minang"
+  getMember
+  add2
+  push 2
+  divide
+  storeRegister 19
+  pop
+  push r19, r1
+  subtract
+  storeRegister 2
+  pop
+  push r2, 3.141593
+  greater
+  not
+  if L10 // +25
+  push r2, 6.283185
+  subtract
+  storeRegister 2
+  pop
+  jump L11 // -46
+  L10:
+  push r2, -3.141593
+  less2
+  not
+  if L12 // +25
+  push r2, 6.283185
+  add2
+  storeRegister 2
+  pop
+  jump L10 // -46
+  L12:
+  push r2, r8
+  greater
+  not
+  if L13 // +18
+  push r2, r8
+  subtract
+  storeRegister 16
+  pop
+  jump L9 // +59
+  L13:
+  push r2, 0, r8
+  subtract
+  less2
+  not
+  if L14 // +18
+  push r2, r8
+  add2
+  storeRegister 16
+  pop
+  jump L9 // +17
+  L14:
+  push 0
+  storeRegister 16
+  pop
+  L9:
+  push r16, 0.3
+  multiply
+  push r12
+  add2
+  storeRegister 9
+  pop
+  push r5, c6="x"
+  getMember
+  push r4, c6="x"
+  getMember
+  push r5, c6="x"
+  getMember
+  subtract
+  push r7
+  multiply
+  add2
+  storeRegister 11
+  pop
+  push r5, c7="y"
+  getMember
+  push r4, c7="y"
+  getMember
+  push r5, c7="y"
+  getMember
+  subtract
+  push r7
+  multiply
+  add2
+  storeRegister 10
+  pop
+  push r5, c6="x", r11, r9, 3.141593
+  add2
+  push 1, c8="Math"
+  getVariable
+  push c15="cos"
+  callMethod
+  push r6
+  multiply
+  push r7
+  multiply
+  add2
+  setMember
+  push r5, c7="y", r10, r9, 3.141593
+  add2
+  push 1, c8="Math"
+  getVariable
+  push c16="sin"
+  callMethod
+  push r6
+  multiply
+  push r7
+  multiply
+  add2
+  setMember
+  push r4, c6="x", r11, r9, 1, c8="Math"
+  getVariable
+  push c15="cos"
+  callMethod
+  push r6
+  multiply
+  push r14
+  multiply
+  add2
+  setMember
+  push r4, c7="y", r10, r9, 1, c8="Math"
+  getVariable
+  push c16="sin"
+  callMethod
+  push r6
+  multiply
+  push r14
+  multiply
+  add2
+  setMember
+}
+setMember
+push c0="PEngine2D"
+getVariable
+push c1="prototype"
+getMember
+push c17="useMuscle"
+function (c:r4) (regs=15, flags=0x2a) {
+  push r4, c3="p1"
+  getMember
+  storeRegister 1
+  pop
+  push r4, c4="p2"
+  getMember
+  storeRegister 2
+  pop
+  push r2, c6="x"
+  getMember
+  push r1, c6="x"
+  getMember
+  subtract
+  storeRegister 11
+  pop
+  push r2, c7="y"
+  getMember
+  push r1, c7="y"
+  getMember
+  subtract
+  storeRegister 13
+  pop
+  push r11, r13, 2, c8="Math"
+  getVariable
+  push c9="atan2"
+  callMethod
+  storeRegister 12
+  pop
+  push r1, c11="mass"
+  getMember
+  push r2, c11="mass"
+  getMember
+  add2
+  storeRegister 8
+  pop
+  push r1, c11="mass"
+  getMember
+  push r8
+  divide
+  storeRegister 14
+  pop
+  push r2, c11="mass"
+  getMember
+  push r8
+  divide
+  storeRegister 5
+  pop
+  push r5, r4, c10="restLength"
+  getMember
+  multiply
+  storeRegister 10
+  pop
+  push r14, r4, c10="restLength"
+  getMember
+  multiply
+  storeRegister 9
+  pop
+  push r1, c6="x"
+  getMember
+  push r2, c6="x"
+  getMember
+  push r1, c6="x"
+  getMember
+  subtract
+  push r5
+  multiply
+  add2
+  storeRegister 7
+  pop
+  push r1, c7="y"
+  getMember
+  push r2, c7="y"
+  getMember
+  push r1, c7="y"
+  getMember
+  subtract
+  push r5
+  multiply
+  add2
+  storeRegister 6
+  pop
+  push r4, c18="power"
+  getMember
+  push r12
+  add2
+  storeRegister 3
+  pop
+  push r1, c6="x", r7, r3, 3.141593
+  add2
+  push 1, c8="Math"
+  getVariable
+  push c15="cos"
+  callMethod
+  push r10
+  multiply
+  add2
+  setMember
+  push r1, c7="y", r6, r3, 3.141593
+  add2
+  push 1, c8="Math"
+  getVariable
+  push c16="sin"
+  callMethod
+  push r10
+  multiply
+  add2
+  setMember
+  push r2, c6="x", r7, r3, 1, c8="Math"
+  getVariable
+  push c15="cos"
+  callMethod
+  push r9
+  multiply
+  add2
+  setMember
+  push r2, c7="y", r6, r3, 1, c8="Math"
+  getVariable
+  push c16="sin"
+  callMethod
+  push r9
+  multiply
+  add2
+  setMember
+}
+setMember
+push c0="PEngine2D"
+getVariable
+push c1="prototype"
+getMember
+push c19="hackContraint"
+function (c:r4) (regs=21, flags=0x29) {
+  push r4, c3="p1"
+  getMember
+  storeRegister 6
+  pop
+  push r4, c4="p2"
+  getMember
+  storeRegister 5
+  pop
+  push r4, c5="p3"
+  getMember
+  storeRegister 16
+  pop
+  push r5, c6="x"
+  getMember
+  push r6, c6="x"
+  getMember
+  subtract
+  push r5, c7="y"
+  getMember
+  push r6, c7="y"
+  getMember
+  subtract
+  push 2, c8="Math"
+  getVariable
+  push c9="atan2"
+  callMethod
+  storeRegister 13
+  pop
+  push r16, c6="x"
+  getMember
+  push r5, c6="x"
+  getMember
+  subtract
+  push r16, c7="y"
+  getMember
+  push r5, c7="y"
+  getMember
+  subtract
+  push 2, c8="Math"
+  getVariable
+  push c9="atan2"
+  callMethod
+  storeRegister 19
+  pop
+  push r13, r19
+  subtract
+  storeRegister 2
+  pop
+  push r2, 3.141593
+  greater
+  not
+  if L15 // +25
+  push r2, 6.283185
+  subtract
+  storeRegister 2
+  pop
+  jump L16 // -46
+  L15:
+  push r2, -3.141593
+  less2
+  not
+  if L17 // +25
+  push r2, 6.283185
+  add2
+  storeRegister 2
+  pop
+  jump L15 // -46
+  L17:
+  push r4, c10="restLength"
+  getMember
+  storeRegister 7
+  pop
+  push r6, c11="mass"
+  getMember
+  push r5, c11="mass"
+  getMember
+  add2
+  storeRegister 14
+  pop
+  push r6, c11="mass"
+  getMember
+  push r14
+  divide
+  storeRegister 15
+  pop
+  push r5, c11="mass"
+  getMember
+  push r14
+  divide
+  storeRegister 8
+  pop
+  push 0
+  storeRegister 17
+  pop
+  push r4, c12="maxang"
+  getMember
+  push r4, c13="minang"
+  getMember
+  add2
+  push 2
+  divide
+  storeRegister 18
+  pop
+  push r4, c14="inversed"
+  getMember
+  not
+  if L18 // +109
+  push r2, r4, c13="minang"
+  getMember
+  greater
+  pushDuplicate
+  not
+  if L19 // +9
+  pop
+  push r2, r18
+  less2
+  L19:
+  not
+  if L20 // +19
+  push r4, c13="minang"
+  getMember
+  push r2
+  subtract
+  storeRegister 17
+  pop
+  L20:
+  push r2, r4, c12="maxang"
+  getMember
+  less2
+  pushDuplicate
+  not
+  if L21 // +9
+  pop
+  push r2, r18
+  greater
+  L21:
+  not
+  if L22 // +19
+  push r4, c12="maxang"
+  getMember
+  push r2
+  subtract
+  storeRegister 17
+  pop
+  L22:
+  jump L23 // +258
+  L18:
+  push r4, c12="maxang"
+  getMember
+  push r4, c13="minang"
+  getMember
+  subtract
+  push 2
+  divide
+  storeRegister 9
+  pop
+  push r4, c12="maxang"
+  getMember
+  push r4, c13="minang"
+  getMember
+  add2
+  push 2
+  divide
+  storeRegister 20
+  pop
+  push r20, r2
+  subtract
+  storeRegister 3
+  pop
+  push r3, 3.141593
+  greater
+  not
+  if L24 // +25
+  push r3, 6.283185
+  subtract
+  storeRegister 3
+  pop
+  jump L25 // -46
+  L24:
+  push r3, -3.141593
+  less2
+  not
+  if L26 // +25
+  push r3, 6.283185
+  add2
+  storeRegister 3
+  pop
+  jump L24 // -46
+  L26:
+  push r3, r9
+  greater
+  not
+  if L27 // +18
+  push r3, r9
+  subtract
+  storeRegister 17
+  pop
+  jump L23 // +59
+  L27:
+  push r3, 0, r9
+  subtract
+  less2
+  not
+  if L28 // +18
+  push r3, r9
+  add2
+  storeRegister 17
+  pop
+  jump L23 // +17
+  L28:
+  push 0
+  storeRegister 17
+  pop
+  L23:
+  push r17, 0.3
+  multiply
+  push r13
+  add2
+  storeRegister 10
+  pop
+  push r6, c6="x"
+  getMember
+  push r5, c6="x"
+  getMember
+  push r6, c6="x"
+  getMember
+  subtract
+  push r8
+  multiply
+  add2
+  storeRegister 12
+  pop
+  push r6, c7="y"
+  getMember
+  push r5, c7="y"
+  getMember
+  push r6, c7="y"
+  getMember
+  subtract
+  push r8
+  multiply
+  add2
+  storeRegister 11
+  pop
+  push r6, c6="x", r12, r10, 3.141593
+  add2
+  push 1, c8="Math"
+  getVariable
+  push c15="cos"
+  callMethod
+  push r7
+  multiply
+  push r8
+  multiply
+  add2
+  setMember
+  push r6, c7="y", r11, r10, 3.141593
+  add2
+  push 1, c8="Math"
+  getVariable
+  push c16="sin"
+  callMethod
+  push r7
+  multiply
+  push r8
+  multiply
+  add2
+  setMember
+  push r6, c7="y", r6, c7="y"
+  getMember
+  push r1, c20="maxy"
+  getMember
+  greater
+  if L29 // +13
+  push r6, c7="y"
+  getMember
+  jump L30 // +8
+  L29:
+  push r1, c20="maxy"
+  getMember
+  L30:
+  setMember
+  push r5, c6="x", r12, r10, 1, c8="Math"
+  getVariable
+  push c15="cos"
+  callMethod
+  push r7
+  multiply
+  push r15
+  multiply
+  add2
+  setMember
+  push r5, c7="y", r11, r10, 1, c8="Math"
+  getVariable
+  push c16="sin"
+  callMethod
+  push r7
+  multiply
+  push r15
+  multiply
+  add2
+  setMember
+  push r5, c7="y", r5, c7="y"
+  getMember
+  push r1, c20="maxy"
+  getMember
+  greater
+  if L31 // +13
+  push r5, c7="y"
+  getMember
+  jump L32 // +8
+  L31:
+  push r1, c20="maxy"
+  getMember
+  L32:
+  setMember
+}
+setMember
+end
+
+// ================================================================
+// DoAction[11]: 148 bytes, 8 pool strings, 25 instructions
+// ================================================================
+// pool: ["guy","_root","attachMovie","_x","Stage","width","_y","height"]
+push 1, c0="guy", c0="guy", 3, c1="_root"
+getVariable
+push c2="attachMovie"
+callMethod
+pop
+push c1="_root"
+getVariable
+push c3="_x", c4="Stage"
+getVariable
+push c5="width"
+getMember
+push 0.5
+multiply
+setMember
+push c1="_root"
+getVariable
+push c6="_y", c4="Stage"
+getVariable
+push c7="height"
+getMember
+push 0.5
+multiply
+setMember
+end
+
+// ================================================================
+// DoAction[12]: 2357 bytes, 65 pool strings, 531 instructions
+// ================================================================
+// pool: ["PEng","PEngine2D","E","Extractor","_root","guy","extract","ukko","createEmptyMovieClip","particles","i","pa","mc","ball","getMC","p","y","x","MCParticle","matchingParticle","mass","_xscale","_yscale","rad","addParticle","skin","parts","p1","p2","constraints","c","isAngled","nc","maxang","minang","p3","restLength","AngledConstraint","inversed","addAngledConstraint","Constraint","addConstraint","track","Track","create","xv","yv","onEnterFrame","update","draw","onHold","length","Stage","width","_x","height","_y","Key","isDown","speed","onMouseDown","_xmouse","_ymouse","push","onMouseUp"]
+push c0="PEng", 0, c1="PEngine2D"
+newObject
+setVariable
+push c2="E", 0, c3="Extractor"
+newObject
+setVariable
+push c4="_root"
+getVariable
+push c5="guy"
+getMember
+push 1, c2="E"
+getVariable
+push c6="extract"
+callMethod
+pop
+push c7="ukko", 1, c7="ukko", 2, c4="_root"
+getVariable
+push c8="createEmptyMovieClip"
+callMethod
+defineLocal
+push c2="E"
+getVariable
+push c9="particles"
+getMember
+enumerate2
+storeRegister 0
+push null
+equals2
+if L1 // +251
+push c10="i", r0
+defineLocal
+push c11="pa", c2="E"
+getVariable
+push c9="particles"
+getMember
+push c10="i"
+getVariable
+getMember
+defineLocal
+push c12="mc", c13="ball", 1, c7="ukko"
+getVariable
+push c14="getMC"
+callMethod
+defineLocal
+push c15="p", c12="mc"
+getVariable
+push c11="pa"
+getVariable
+push c16="y"
+getMember
+push c11="pa"
+getVariable
+push c17="x"
+getMember
+push 3, c18="MCParticle"
+newObject
+defineLocal
+push c11="pa"
+getVariable
+push c19="matchingParticle", c15="p"
+getVariable
+setMember
+push c15="p"
+getVariable
+push c20="mass", c11="pa"
+getVariable
+push c20="mass"
+getMember
+setMember
+push c15="p"
+getVariable
+push c12="mc"
+getMember
+push c21="_xscale", c15="p"
+getVariable
+push c12="mc"
+getMember
+push c22="_yscale", c15="p"
+getVariable
+push c20="mass"
+getMember
+push 100
+multiply
+storeRegister 0
+setMember
+push r0
+setMember
+push c15="p"
+getVariable
+push c23="rad", c15="p"
+getVariable
+push c20="mass"
+getMember
+push 12
+multiply
+setMember
+push c15="p"
+getVariable
+push 1, c0="PEng"
+getVariable
+push c24="addParticle"
+callMethod
+pop
+jump L2 // -265
+L1:
+push c2="E"
+getVariable
+push c25="skin"
+getMember
+push c26="parts"
+getMember
+enumerate2
+storeRegister 0
+push null
+equals2
+if L3 // +95
+push c10="i", r0
+defineLocal
+push c11="pa", c2="E"
+getVariable
+push c25="skin"
+getMember
+push c26="parts"
+getMember
+push c10="i"
+getVariable
+getMember
+defineLocal
+push c11="pa"
+getVariable
+push c27="p1", c11="pa"
+getVariable
+push c27="p1"
+getMember
+push c19="matchingParticle"
+getMember
+setMember
+push c11="pa"
+getVariable
+push c28="p2", c11="pa"
+getVariable
+push c28="p2"
+getMember
+push c19="matchingParticle"
+getMember
+setMember
+jump L4 // -109
+L3:
+push c2="E"
+getVariable
+push c29="constraints"
+getMember
+enumerate2
+storeRegister 0
+push null
+equals2
+if L5 // +310
+push c10="i", r0
+defineLocal
+push c30="c", c2="E"
+getVariable
+push c29="constraints"
+getMember
+push c10="i"
+getVariable
+getMember
+defineLocal
+push c30="c"
+getVariable
+push c31="isAngled"
+getMember
+not
+if L6 // +171
+push c32="nc", c30="c"
+getVariable
+push c33="maxang"
+getMember
+push c30="c"
+getVariable
+push c34="minang"
+getMember
+push c30="c"
+getVariable
+push c35="p3"
+getMember
+push c19="matchingParticle"
+getMember
+push c30="c"
+getVariable
+push c36="restLength"
+getMember
+push c30="c"
+getVariable
+push c28="p2"
+getMember
+push c19="matchingParticle"
+getMember
+push c30="c"
+getVariable
+push c27="p1"
+getMember
+push c19="matchingParticle"
+getMember
+push 6, c37="AngledConstraint"
+newObject
+defineLocal
+push c30="c"
+getVariable
+push c38="inversed"
+getMember
+push true
+equals2
+not
+if L7 // +14
+push c32="nc"
+getVariable
+push c38="inversed", true
+setMember
+L7:
+push c32="nc"
+getVariable
+push 1, c0="PEng"
+getVariable
+push c39="addAngledConstraint"
+callMethod
+pop
+jump L8 // +86
+L6:
+push c32="nc", c30="c"
+getVariable
+push c36="restLength"
+getMember
+push c30="c"
+getVariable
+push c28="p2"
+getMember
+push c19="matchingParticle"
+getMember
+push c30="c"
+getVariable
+push c27="p1"
+getMember
+push c19="matchingParticle"
+getMember
+push 3, c40="Constraint"
+newObject
+defineLocal
+push c32="nc"
+getVariable
+push 1, c0="PEng"
+getVariable
+push c41="addConstraint"
+callMethod
+pop
+L8:
+jump L9 // -324
+L5:
+push c42="track", 0, c43="Track"
+newObject
+defineLocal
+push 0, c42="track"
+getVariable
+push c44="create"
+callMethod
+pop
+push c0="PEng"
+getVariable
+push c42="track", c42="track"
+getVariable
+setMember
+push c45="xv", c46="yv", 0
+storeRegister 0
+setVariable
+push r0
+setVariable
+push c25="skin", c2="E"
+getVariable
+push c25="skin"
+getMember
+defineLocal
+push c4="_root"
+getVariable
+push c47="onEnterFrame"
+function () (regs=2, flags=0x6a) {
+  push 0, c0="PEng"
+  getVariable
+  push c48="update"
+  callMethod
+  pop
+  push 0, c42="track"
+  getVariable
+  push c48="update"
+  callMethod
+  pop
+  push 0, c25="skin"
+  getVariable
+  push c49="draw"
+  callMethod
+  pop
+  push c0="PEng"
+  getVariable
+  push c50="onHold"
+  getMember
+  push null
+  equals2
+  pushDuplicate
+  if L10 // +32
+  pop
+  push c0="PEng"
+  getVariable
+  push c50="onHold"
+  getMember
+  push c51="length"
+  getMember
+  push 0
+  equals2
+  L10:
+  not
+  if L11 // +315
+  push c45="xv", c45="xv"
+  getVariable
+  push c52="Stage"
+  getVariable
+  push c53="width"
+  getMember
+  push 0.5
+  multiply
+  push c0="PEng"
+  getVariable
+  push c9="particles"
+  getMember
+  push 0
+  getMember
+  push c17="x"
+  getMember
+  push r1, c21="_xscale"
+  getMember
+  multiply
+  push 0.01
+  multiply
+  subtract
+  push r1, c54="_x"
+  getMember
+  subtract
+  push 0.05
+  multiply
+  add2
+  setVariable
+  push c46="yv", c46="yv"
+  getVariable
+  push c52="Stage"
+  getVariable
+  push c55="height"
+  getMember
+  push 0.5
+  multiply
+  push c0="PEng"
+  getVariable
+  push c9="particles"
+  getMember
+  push 0
+  getMember
+  push c16="y"
+  getMember
+  push r1, c22="_yscale"
+  getMember
+  multiply
+  push 0.01
+  multiply
+  subtract
+  push 100
+  subtract
+  push r1, c56="_y"
+  getMember
+  subtract
+  push 0.05
+  multiply
+  add2
+  setVariable
+  push c45="xv", c45="xv"
+  getVariable
+  push 0.8
+  multiply
+  setVariable
+  push c46="yv", c46="yv"
+  getVariable
+  push 0.8
+  multiply
+  setVariable
+  push r1, c54="_x", r1, c54="_x"
+  getMember
+  push c45="xv"
+  getVariable
+  add2
+  setMember
+  push r1, c56="_y", r1, c56="_y"
+  getMember
+  push c46="yv"
+  getVariable
+  add2
+  setMember
+  L11:
+  push 39, 1, c57="Key"
+  getVariable
+  push c58="isDown"
+  callMethod
+  not
+  if L12 // +94
+  push c0="PEng"
+  getVariable
+  push c59="speed", c0="PEng"
+  getVariable
+  push c59="speed"
+  getMember
+  push 0.01
+  add2
+  setMember
+  push c0="PEng"
+  getVariable
+  push c59="speed", c0="PEng"
+  getVariable
+  push c59="speed"
+  getMember
+  push 3
+  greater
+  if L13 // +17
+  push c0="PEng"
+  getVariable
+  push c59="speed"
+  getMember
+  jump L14 // +8
+  L13:
+  push 3
+  L14:
+  setMember
+  L12:
+  push 37, 1, c57="Key"
+  getVariable
+  push c58="isDown"
+  callMethod
+  not
+  if L15 // +81
+  push c0="PEng"
+  getVariable
+  push c59="speed", c0="PEng"
+  getVariable
+  push c59="speed"
+  getMember
+  push 0.01
+  subtract
+  setMember
+  push c0="PEng"
+  getVariable
+  push c59="speed", c0="PEng"
+  getVariable
+  push c59="speed"
+  getMember
+  push c0="PEng"
+  getVariable
+  push c59="speed"
+  getMember
+  push 0
+  greater
+  multiply
+  setMember
+}
+L15:
+setMember
+stop
+push c4="_root"
+getVariable
+push c60="onMouseDown"
+function () (regs=9, flags=0x6a) {
+  push 0
+  initArray
+  storeRegister 5
+  pop
+  push r1, c61="_xmouse"
+  getMember
+  storeRegister 6
+  pop
+  push r1, c62="_ymouse"
+  getMember
+  storeRegister 7
+  pop
+  push c0="PEng"
+  getVariable
+  push c9="particles"
+  getMember
+  enumerate2
+  storeRegister 0
+  push null
+  equals2
+  if L16 // +118
+  push r0
+  storeRegister 8
+  pop
+  push c0="PEng"
+  getVariable
+  push c9="particles"
+  getMember
+  push r8
+  getMember
+  storeRegister 2
+  pop
+  push r6, r2, c17="x"
+  getMember
+  subtract
+  storeRegister 3
+  pop
+  push r7, r2, c16="y"
+  getMember
+  subtract
+  storeRegister 4
+  pop
+  push r3, r3
+  multiply
+  push r4, r4
+  multiply
+  add2
+  push 1500
+  less2
+  not
+  if L17 // +16
+  push r2, 1, r5, c63="push"
+  callMethod
+  pop
+  L17:
+  jump L18 // -132
+  L16:
+  push c0="PEng"
+  getVariable
+  push c50="onHold", r5
+  setMember
+}
+setMember
+push c4="_root"
+getVariable
+push c64="onMouseUp"
+function () {
+  push c0="PEng"
+  getVariable
+  push c50="onHold", null
+  setMember
+}
+setMember
+end

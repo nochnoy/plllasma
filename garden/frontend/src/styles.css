@@ -1,0 +1,911 @@
+:root {
+  --ink: #1d3346;
+  /*
+   * The wood the interface over the hall is drawn in — the squares of the bar's tools and of the
+   * tape's own bar, their drawings and their edges — the colour of the hall's own timber rather
+   * than a grey that belongs to no part of the room. Nothing brightens under the pointer: a button
+   * answers a press and nothing else.
+   */
+  --wood: #C4B8AA;
+  --font: 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font);
+  color: var(--ink);
+  /* Black, and kept in sync with the colour the renderer clears the canvas to: everything outside
+     the world — the movie's own 20% and the letterbox the window's own fit leaves around the stage —
+     is this one colour, so the hall reads as a picture hanging in the dark. */
+  background: #000;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  /* A finger on the stage is the game's, not the page's: no text selection to drag along, no grey
+     flash over what was tapped, and no double-tap zoom to wait for. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  /* A finger resting on the picture is a hand on the doll, not a question about the picture: without
+     this iOS offers to save or copy it after a long press, which ends the drag. */
+  -webkit-touch-callout: none;
+}
+
+.stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * The interface's own corner: the bar of tools with the chat's block beside it — or, while a run is on the
+ * tape, the tape's own bar along the foot of the world.
+ *
+ * Both of those are put *inside* the world's own top left corner — the corner of the box the hall is drawn
+ * in — and scaled to whatever the world has room for: the renderer measures it (see `Scene.hud`) and `App.vue`
+ * writes it in, so the interface sits in the hall's corner whatever the window is doing and never out on the
+ * black. Both numbers in the fallback are only what the frame has before there is a world to measure, when it
+ * is not shown at all.
+ *
+ * Its own size is the world's, less the two insets, in the interface's own pixels — the world with its scale
+ * divided back out — so that the frame ends exactly at the bottom right corner of the hall once the transform
+ * has shrunk it back down: the bar's column reaches the world's own foot, and the tape's bar, which is laid
+ * out as a fraction of this frame, is centred on the *world* rather than on the window.
+ */
+.hud {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 0;
+  height: 0;
+  transform-origin: top left;
+  /* One child, the whole of the frame either way: the row the bar and the chat share, or the tape's own bar
+     along the foot of the world. */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  /* The interface lies over the stage, but only the buttons, the chat's own block and the tape's bar take
+     clicks. */
+  pointer-events: none;
+}
+
+/*
+ * The row the bar and the chat share: the bar's column down the world's left edge, with the chat's block
+ * beside its *last* button, level with that button's own bottom edge — it grows upwards from the foot of the
+ * column rather than pushing the button down.
+ *
+ * It is the whole height of the frame while it is there, and while the tape's own bar is up it is not on the
+ * page at all (`App.vue`): the frame's one child is then that bar, which takes the foot of the world and is
+ * centred on it. A tape on the timeline is a run being *watched*, and the tools are not what a player wants in
+ * front of it.
+ */
+.hud__row {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toolbar {
+  /* The buttons are tapped as readily as they are clicked: no panning that takes the tap away, and no
+     300 ms of waiting to find out whether it was a double tap. The drag itself belongs to the stage
+     under the bar, which takes no pointer events of its own where the buttons are not. */
+  touch-action: manipulation;
+  display: flex;
+  /*
+   * A column the whole height of the world: the three tools at the top of the world's own left edge and
+   * the chat's button at the foot of it, in the bottom left corner of the picture. What is visible of
+   * the column is the buttons — nothing is drawn along it — and, being narrow and along the edge, it
+   * stays out of the way of whatever falls past it.
+   */
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  /* Stretched to the world's own height, which is what `.hud` is given (see `Scene.hud`): the chat's
+     block beside it hangs off the bottom of this column rather than off the top of the world. */
+  align-self: stretch;
+  /* The bar is an overlay on the stage, but only the buttons themselves take clicks. */
+  pointer-events: none;
+}
+
+/*
+ * The chat's own button: a tool like the other three, but it stands at the foot of the column rather
+ * than under the bin, so that the way into the chat is in the world's bottom left corner. The space
+ * above it is the column's own (the world's height), so the button is pushed down it.
+ */
+.tool--chat {
+  margin-top: auto;
+}
+
+/*
+ * One tool: a black square with a drawing the colour of the hall's own wood in it, since the bar lies
+ * over the hall rather than over the page — the dark square is what tells a button from the picture
+ * under it, and the wood is what tells the bar from the black around the picture. The square is
+ * edged with the same wood as the drawing, which is what makes the column read as a row of buttons
+ * on the hall rather than as three drawings floating over it. Nothing happens to it under the
+ * pointer: the press is the whole of a button's answer.
+ *
+ * The tool the player is holding is the same square the other way round: wood with a dark drawing
+ * and a dark edge, so which one is picked reads at a glance and without a colour of its own.
+ */
+.tool {
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid var(--wood);
+  border-radius: 13px;
+  background: #000;
+  color: var(--wood);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+
+.tool:active {
+  transform: scale(0.94);
+}
+
+.tool:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.tool.is-active {
+  background: var(--wood);
+  border-color: #000;
+  color: #000;
+}
+
+/*
+ * A button with nothing to do: the playback, until there is a tape on the timeline to walk. It keeps its shape
+ * and loses its light — dimmed rather than hidden, so the bar stays a bar of the same length and the button
+ * does not appear the moment a run is recorded and shove the others about.
+ */
+.tool:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.icon {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon--solid {
+  fill: currentColor;
+  stroke: none;
+}
+
+/*
+ * The cord of the rope tool's own icon: the one line among the bar's drawings rather than a shape, and
+ * the one number the pictogram does not take from the stage — it hangs a little between its two knots,
+ * and thinner than a faithful copy of `ROPE_THICKNESS` would be (see `App.vue`).
+ */
+.icon--solid .cord {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+}
+
+.error {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+}
+
+/*
+ * The chat, in two pieces: the strip of the last few messages beside the bar's own chat button — at the
+ * foot of the bar's column, in the world's own bottom left corner — and the window that button opens.
+ * Neither belongs to the hall — the chat is the player's, not the hall's — and neither is anything the
+ * renderer knows about, but they hang off different things: the strip is part of the interface standing
+ * in the world's corner (see `.hud`), while the window is a dialog over the page and keeps its own size
+ * however the hall is scaled.
+ *
+ * The strip is a block of 300 px that never wraps, so a long message runs on past the block; what stops
+ * it is the mask — the last rem of the block is nothing, and a line that reaches it dissolves rather
+ * than being cut off by an edge that is not there. A mask rather than a black gradient laid over the end
+ * of the strip, because what is behind the strip is the hall, and the hall is not black.
+ */
+.chat-strip {
+  flex: none;
+  width: 300px;
+  /* The block is a button as well as a block of text: a click anywhere on the lines opens the chat. */
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #d7cabb;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  mask-image: linear-gradient(to right, #000 calc(100% - 1rem), transparent);
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 1rem), transparent);
+}
+
+/* On the stage a message is one line whatever its length: the block is 300 px, not the sentence. */
+.chat-strip .chat-line {
+  white-space: nowrap;
+}
+
+/* The block is a control as well as a block of text, and these are the two things that say so: the
+   pointer, and the brightening its own colour answers a hover with — the strip is the chat's own
+   text, not a button of the bar's, and the chat says things its own way. */
+.chat-strip:hover {
+  color: #fff;
+}
+
+.chat-strip:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+/*
+ * One message: badge, nickname, colon, body — the same drawing in the strip and in the window. A line is
+ * a `span` rather than a paragraph, because the strip it is drawn in is a button and a button may hold
+ * nothing but text and pictures; it is laid out as a block all the same.
+ */
+.chat-line {
+  display: block;
+  margin: 0;
+}
+
+.chat-line__badge,
+.chat-line__gif {
+  width: 16px;
+  height: 16px;
+  /* Sitting on the line rather than floating over it, the way a gif in a paragraph does. */
+  vertical-align: -0.22em;
+}
+
+/* A message in the window's log, as one block: the space after a line is the space after the whole of
+ * it, and a line is hovered as one thing. */
+.chat-entry {
+  display: block;
+}
+
+/*
+ * The window the chat opens: the whole log over the game, on the chat's own paper colour with black
+ * on it, so that it reads as the one thing on the page that is not the hall. A heading and a cross, the
+ * log growing downwards with the newest line at its bottom, and the field and its button at the other end
+ * of it. Text wraps here, unlike in the strip: the window is where a message is meant to be read whole.
+ *
+ * The margin around it is the inset the world's own row is drawn with (`Scene.hud`): the window is the
+ * page rather than a card in the middle of it, and what is left round it is the same slack the picture
+ * gets, so that opening the chat does not feel like leaving the hall.
+ */
+.chat-window {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.chat-card {
+  display: flex;
+  flex-direction: column;
+  width: min(520px, 100%);
+  height: min(560px, 100%);
+  border-radius: 16px;
+  background: #d7cabb;
+  color: #000;
+  overflow: hidden;
+}
+
+/*
+ * The auth dialog's card (`NickDialog.vue`): the same card as the window's, because the question is the
+ * chat's own, but only as tall as the two lines it has to say — a name is asked for, not conversed about.
+ */
+.chat-card--asking {
+  height: auto;
+}
+
+/*
+ * The chat's own window (`ChatPanel.vue`): the whole page, less the margin it was laid out in. A window
+ * 520 px wide has no room for the runs beside the conversation, and the two are read together — one does
+ * not send a player to another screen to find out what there is to watch.
+ */
+.chat-card--full {
+  width: 100%;
+  height: 100%;
+}
+
+/*
+ * The whole list of runs in a window of its own (`RunsDialog.vue`): the same card, conversation-sized,
+ * with nothing in it but the rows and the way out — the chat's own window is what «Ещё...» was pressed
+ * in, and this one stands over it rather than in it.
+ */
+.chat-card--runs {
+  width: min(420px, 100%);
+  height: min(560px, 100%);
+}
+
+/* The rows in that window start a card's own slack in from its edge, the way a conversation does. */
+.chat-card--runs .chat-card__body {
+  padding: 0 8px;
+}
+
+/*
+ * The window's own heading: the name of the place on the left, the way out on the right, and nothing
+ * between them. The name is said once here rather than as a label on a column — the columns say what they
+ * are by what is in them.
+ */
+.chat-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 8px 0;
+}
+
+.chat-card__title {
+  margin: 0;
+  padding: 6px 4px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/*
+ * The window's one scroll, carrying the log and the runs together: the conversation is read to its end and
+ * the rows are as many as other people's playing, and a scrollbar apiece would be two places to look for
+ * the end of either. The heading above and the field below stay where they are — they are the parts of the
+ * window that are reached rather than read.
+ *
+ * The gutter is stable so that a line arriving past the bottom of the window does not rewrap the ones
+ * above it to make room for a scrollbar that was not there, and nothing scrolls sideways: the columns
+ * give way each in their own way (the conversation wraps, the list's nicks shrink and then go) rather
+ * than the window growing wide.
+ */
+.chat-card__body {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+/*
+ * The two columns: the conversation, and the runs beside it. The conversation is the width — a chat is
+ * read in lines rather than in a column — and the list is a fifth of it, which is a nickname and a length
+ * per row with room to spare (see the grid of the window's own row: 4:1 is the same shape the strip and
+ * the bar have).
+ *
+ * The list's own floor is 7.5 rem (see the column itself, `.chat-card__runs`): below it the column stops
+ * giving way whatever the window does, and it is the conversation that shrinks — a line wraps, a row
+ * does not.
+ */
+.chat-card__columns {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(7.5rem, 1fr);
+  gap: 4px;
+  align-items: start;
+  padding: 0 12px;
+}
+
+/* The log: the conversation's own column, one block after another with the newest at the bottom. */
+.chat-card__log {
+  padding: 4px 8px 16px;
+}
+
+/* The way out, at the right end of the heading: the whole of it is the button. */
+.chat-card__close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: #000;
+  cursor: pointer;
+}
+
+.chat-card__close .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.chat-card__close:hover {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* One message and the buttons under it: the space after a line is the space after the whole of it. */
+.chat-card__log .chat-entry {
+  margin-bottom: 6px;
+}
+
+/*
+ * The other column: the runs the server holds, one row each and newest first — a row being the tape, the
+ * nickname it was played under, and how long it is (or that it is still being played). It does not scroll
+ * of its own: the window's one scroll carries it with the conversation (`.chat-card__body`), and there is
+ * no line down its left — the two are read together, and the gap says as much without saying more.
+ *
+ * It is a container of its own inline size, which is what lets a row give up its nickname by itself
+ * (`.chat-run__nick`): the column is what is asked about rather than the window, because the window's
+ * width says nothing about what a row has room for once the conversation has had its share.
+ *
+ * The floor of 7.5 rem is the room a row's unshakeable parts take — the column's own padding (0.5 rem), a
+ * row's padding, cassette, gaps and clock (5 rem), and a little over for the window's own scrollbar, which
+ * arrives at this end of the columns when the log is long (2 rem). Below it the column does not go, and
+ * there is never anything to scroll sideways for: a cassette and a clock are always there to read.
+ */
+.chat-card__runs {
+  container-type: inline-size;
+  min-width: 7.5rem;
+  padding: 4px 4px 16px;
+}
+
+/*
+ * One run: its tape's own pictogram, who played it, and its reading. The whole row is the button — a
+ * length is not a target to aim at — and it answers the pointer the way the bar's own tools do.
+ */
+.chat-run {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: #000;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chat-run:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* A cassette, drawn: a pictogram the size of a badge, since a row is a line and not a panel. */
+.chat-run__icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+/*
+ * The nickname gives way rather than the reading, and it gives way alone: a long one is cut off at the end
+ * of its row, and a narrow one is gone altogether rather than a letter wide (see the column's own query
+ * below). The clock and the cassette do not move — they are what a row is found by once the names are not
+ * there.
+ */
+.chat-run__nick {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * A run's length, at the end of its row: dimmed, since the nickname is what a row is looked up by, and of
+ * one width whatever the reading is — a column of runs reads as one, and the width is one of the numbers
+ * the column's floor and its query are counted from (`.chat-card__runs`).
+ */
+.chat-run__reading {
+  flex: none;
+  min-width: 3rem;
+  font-size: 13px;
+  opacity: 0.75;
+  text-align: right;
+}
+
+/*
+ * When the column cannot spare two rem for a nickname, the nicknames go: a row of a cassette and a clock
+ * is still a way into a run, while a column of single letters is a guessing game. The threshold is the
+ * column's own arithmetic — a row's padding, cassette, gaps and clock (6 rem) beside the nickname's least
+ * (2 rem) — which is why it is asked of the column and not of the window: the column's own padding is
+ * already outside the width a container query measures.
+ */
+@container (max-width: 8rem) {
+  .chat-run__nick {
+    display: none;
+  }
+}
+
+/* A clock in the row's own corner, of one width whatever the digits do — a column of runs reads as one. */
+.chat-run:not(.is-live) .chat-run__reading {
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Still being played: the one reading on the list that is not a clock, and it is said the way a broadcast
+ * says it rather than in the player's own language — the word is a reading of a state, like the clock it
+ * stands in the place of, and it is the same word in every language the game is read in.
+ */
+.chat-run.is-live .chat-run__reading {
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  opacity: 0.9;
+  text-transform: uppercase;
+}
+
+/* The tape of that run is on its way down: the row goes quiet where it stands rather than going away. */
+.chat-run.is-opening {
+  opacity: 0.55;
+}
+
+/* Nothing written down yet: what an empty list says, in the list's own voice. */
+.chat-runs__none {
+  margin: 6px 8px;
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 13px;
+}
+
+/*
+ * The door on the rest of the list: the column shows the runs there is column for (`SIDEBAR_RUNS`), and the
+ * rest are one press away in a window of their own (`RunsDialog.vue`). A link rather than a row, because
+ * it goes somewhere rather than playing something.
+ */
+.chat-runs__more {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 6px 8px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+.chat-runs__more:hover,
+.chat-runs__more:focus-visible {
+  opacity: 1;
+}
+
+/*
+ * What the chat could not do, between the log and the field: it is about what the player has just tried,
+ * so it stands beside the field rather than up in the log among other people's messages. The list's own
+ * failures wear the same line, inside the column they belong to.
+ */
+.chat-card__error {
+  margin: 0;
+  padding: 8px 16px 0;
+  color: #7a1c1c;
+  font-size: 13px;
+}
+
+.chat-card__runs .chat-card__error {
+  padding: 8px 8px 0;
+}
+
+
+/* The field and the button beside it are one row of one height: a control the size of a control. There is
+   no line over it — the slack above it and the scroll ending at the field's own frame say where the log
+   stops. */
+.chat-card__form {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 12px 16px;
+}
+
+/*
+ * The field: one frame around the whole of it, the speaker included, with the text box inside it that
+ * has neither a frame nor a fill of its own — two boxes around the same piece of paper read as a box in
+ * a box. The frame is what says where the field is, so it is also what takes the focus, and its ring is
+ * drawn *inside* itself (a 2 px outline over its 1 px border) rather than around the text alone. The
+ * speaker's own button is left to draw its own, or one field would show two rings.
+ */
+.chat-card__field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.chat-card__field:has(.chat-card__input:focus) {
+  outline: 2px solid #000;
+  outline-offset: -1px;
+}
+
+/*
+ * The speaker: the badge and the nickname the next line will be signed by, and the triangle of a
+ * combobox — down while it is the player's own name, up while it is the ghost's. Pressing any part of it
+ * is what switches between the two, so the whole of it is the button.
+ *
+ * Half the field is as much as it ever takes: a nickname longer than that is cut short rather than left
+ * to push the text box out of the frame.
+ */
+.chat-card__speaker {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  max-width: 50%;
+  overflow: hidden;
+  padding: 0 2px 0 6px;
+  border: 0;
+  border-radius: 8px 0 0 8px;
+  background: none;
+  color: #000;
+  font: inherit;
+  cursor: pointer;
+}
+
+.chat-card__speaker:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.chat-card__badge {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.chat-card__nick {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-card__caret {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+  stroke: none;
+}
+
+.chat-card__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 10px 0 4px;
+  border: 0;
+  border-radius: 0 8px 8px 0;
+  background: none;
+  color: #000;
+  font: inherit;
+  /* The field's frame is the whole of what says where the box is: the text box adds nothing to it. */
+  outline: none;
+}
+
+.chat-card__send {
+  flex: none;
+  height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  background: #000;
+  color: #d7cabb;
+  font: inherit;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.chat-card__send:hover {
+  background: var(--ink);
+}
+
+/* One line at a time is all the server is ever asked for: the button is out while one is on its way. */
+.chat-card__send:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.chat-card__speaker:focus-visible,
+.chat-card__send:focus-visible,
+.chat-card__close:focus-visible,
+.chat-run:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: -2px;
+}
+
+/*
+ * The tape's own bar: the way along a run, along the foot of the world and centred on it.
+ *
+ * It is the whole of the interface while a run is on the tape (`App.vue`): the row above is not on the page
+ * then, so this bar has the foot of the world to itself and is centred on *the world* rather than on the
+ * window — the frame it is laid out in is the world's own box (`Scene.hud`), so a fraction of that frame is a
+ * fraction of the picture whatever the window is doing.
+ *
+ * It is a button tall, since the play button in it *is* one, and it is deliberately not as wide as the world:
+ * the strip of portraits stands on the world's own feet (`Scene.syncPortraits`), so the bar keeps a card's
+ * worth of room clear at either end of itself — two cards' widths in all, one at each end — and shrinks on a
+ * narrow window rather than covering one. It has no box of its own: black with a wood edge is what
+ * each of its three pieces wears, the way a tool does, since the bar lies over the hall and the dark is what
+ * tells it from the picture under it.
+ *
+ * The slider is the run's own steps rather than seconds: what a drag asks for is a step of the world (`seek`).
+ * What it reads out — where the playhead is, and how long the run is — is a clock, and the clock is not drawn
+ * anywhere: it is what the slider *says* rather than shows (`aria-valuetext` in `TapeTimeline.vue`), because a
+ * player does not read a run in seconds while there is a way along it to put their hand on, and what a run is
+ * measured *by* is the debug panel's (`DebugPanel.vue`). The one thing that moves on its own while a run is
+ * being watched is the slider's own value, which comes back from the engine (`onTapeChange`), so the bar never
+ * runs ahead of the world it is showing.
+ */
+.tape {
+  /* The frame is a column (`App.vue`) and this is its last child: pushed to the foot of it, centred across it. */
+  align-self: center;
+  margin-top: auto;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  height: 44px;
+  /*
+   * Two cards are 240 px wide (`PORTRAIT_WIDTH`), and those two ends are what the bar stays clear of; the floor
+   * is what the three pieces of it need at their smallest — the play button, a slider still worth dragging, and
+   * the word the way out is written with — and the ceiling is what keeps it a bar along the foot of the picture
+   * rather than a second toolbar across it. `100%` is the world's own width, less the two insets: the frame.
+   */
+  width: max(220px, min(420px, 100% - 240px));
+  color: var(--wood);
+  font-size: 14px;
+  pointer-events: auto;
+}
+
+/* A playback being wound forward rather than watched reads brighter. It used to be the clock that said so; with
+   the clock gone it is the frame the run is drawn in that lightens — the same reading, on the thing it is about.
+   This is a state of the playback and not a hover: the pointer resting on anything of the bar does nothing. */
+.tape.is-seeking .tape__track {
+  border-color: #fff;
+}
+
+/*
+ * Play and stop: one button, since a run is either walking or standing still and there is no third thing to do
+ * with it. It is a tool's own square — the same 44 px, the same black, the same wood edge, the same
+ * rounding — because a finger on the bar of tools and a finger here are doing the same kind of thing, and it
+ * reads pressed while the run is walking: wood with a dark drawing, which is the state the picked tool wears
+ * too.
+ */
+.tape__play {
+  flex: none;
+  box-sizing: border-box;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 2px solid var(--wood);
+  border-radius: 13px;
+  background: #000;
+  color: var(--wood);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+
+.tape__play:active {
+  transform: scale(0.94);
+}
+
+.tape__play:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.tape__play[aria-pressed='true'] {
+  background: var(--wood);
+  border-color: #000;
+  color: #000;
+}
+
+/*
+ * The way along the run, in a frame of its own: the slider is the browser's own control and is not drawn by
+ * anything here, so what makes the three pieces of the bar read as one instrument — rather than as a control
+ * that fell in between two buttons — is that all three wear the same black and the same edge.
+ */
+.tape__track {
+  /* The middle of the bar: as wide as the two buttons at its ends leave it. */
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 2px solid var(--wood);
+  border-radius: 13px;
+  background: #000;
+}
+
+.tape__slider {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 16px;
+  /* The browser's own slider, told the two colours the bar is drawn with rather than rebuilt from parts: a
+     range input is a control the player already knows, and this one only has to look like it belongs here. */
+  accent-color: var(--wood);
+  cursor: pointer;
+}
+
+.tape__slider:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/*
+ * The way out of the tape: the last button of the bar, at the other end of it from the run's own, and the one
+ * that brings the game's tools and the chat's block back (`App.vue`). A word rather than a cross, because what
+ * it ends is not a box but the *mode* the bar is for — a timeline is up while a run is loaded on it — and a
+ * cross at the end of a bar reads as closing a window. Rounded at both ends rather than squared like a tool,
+ * since it is not one of the bar's controls: it is the way out of them.
+ */
+.tape__close {
+  flex: none;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 0 16px;
+  border: 2px solid var(--wood);
+  border-radius: 999px;
+  background: #000;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+
+.tape__close:active {
+  transform: scale(0.96);
+}
+
+.tape__close:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}

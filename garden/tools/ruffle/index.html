@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ruffle harness</title></title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #d7e7f4;
+        overflow: hidden;
+      }
+      #player {
+        width: 550px;
+        height: 400px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="player"></div>
+    <script src="/node_modules/@ruffle-rs/ruffle/ruffle.js"></script>
+    <script>
+      window.RufflePlayer = window.RufflePlayer || {};
+      window.RufflePlayer.config = {
+        autoplay: 'on',
+        unmuteOverlay: 'hidden',
+        letterbox: 'on',
+        warnOnUnsupportedContent: false,
+        logLevel: 'info',
+        allowScriptAccess: true,
+        scale: 'showAll',
+        quality: 'high',
+        splashScreen: false,
+        openUrlMode: 'deny',
+      };
+      const holder = document.getElementById('player');
+      // ?swf=/path/to/file.swf lets a test run a copy of the movie (see the patch experiment).
+      const swf = new URLSearchParams(location.search).get('swf') || '/assets-source/free-falling-girl.swf';
+      const ruffle = window.RufflePlayer.newest();
+      const player = ruffle.createPlayer();
+      player.id = 'ruffle';
+      holder.appendChild(player);
+      window.__player = player;
+      window.__ready = player
+        .ruffle()
+        .load({ url: swf })
+        .then(() => 'loaded')
+        .catch((error) => 'failed: ' + error);
+    </script>
+  </body>
+</html>

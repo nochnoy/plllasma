@@ -1,0 +1,29 @@
+# Air's own file: `air` in this folder builds the server into `tmp/`, runs it, and rebuilds it on
+# every change to its Go. The server holds no state outside its database, so a restart costs
+# nothing but a fresh listener — and the database is WAL, so even the hard kill Windows gives a
+# restarting process leaves it whole.
+#
+# `data/` is excluded on purpose: it is the chat's SQLite, which changes on every message, and
+# `tmp/` holds the binary air itself has just written — neither is the server's source.
+
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o ./tmp/garden-server.exe ."
+entrypoint = ["tmp/garden-server.exe"]
+include_ext = ["go"]
+exclude_dir = ["data", "tmp", "vendor", "testdata"]
+exclude_regex = ["_test.go"]
+delay = 1000
+log = "build-errors.log"
+
+[misc]
+clean_on_exit = true
+
+[log]
+time = false
+
+[screen]
+clear_on_rebuild = false
+keep_scroll = true

@@ -1,0 +1,27 @@
+{
+  "name": "garden",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Vue 3 + PixiJS ragdoll clone of the Flash game \"Free Falling Girl\"",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc --noEmit -p tsconfig.json && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "assets:prepare": "node ../tools/prepare-assets.mjs"
+  },
+  "dependencies": {
+    "pixi.js": "^8.21.0",
+    "vue": "^3.5.43"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.9",
+    "jpeg-js": "^0.4.4",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1",
+    "vue-tsc": "^3.3.11"
+  }
+}

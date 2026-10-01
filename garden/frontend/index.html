@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <!-- The page the game hangs in is black (see `src/styles.css`), so the browser's own chrome is too. -->
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Free Falling Girl — ремейк флеш-игры на Vue 3 и PixiJS: тряпичная кукла, бесконечное падение и упругие шары."
+    />
+    <!--
+      The page's own icon: the ghost of `assets-source/ghost.gif`, baked into one `.ico` at 16, 32 and
+      48 px by `tools/prepare-icon.mjs` (see §11 of `docs/assets.md`). Relative rather than absolute,
+      since the build can be dropped into any sub-directory (`base` in `vite.config.ts`).
+    -->
+    <link rel="icon" type="image/x-icon" href="./favicon.ico" sizes="16x16 32x32 48x48" />
+    <title>Сад с привидениями</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,78 @@
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# The repository is laid out as `frontend/` (the Vue + PixiJS game, which Vite builds and Vitest tests),
+# `backend/` (the Go server that holds the chat and the tapes), `docs/`, `tools/`, and `assets-source/`:
+# everything in this file is a path inside one of those.
+
+# Compiled output
+/frontend/dist
+/tmp
+/tmp-smoke*
+/tmp-compare*
+/tmp-probe*
+/tmp-patch*
+
+# Scratch a session leaves at the root — a dump it read once, a conversion script, a tar of what it
+# dumped: nothing of it is anybody's source, and a session should not have to think about it before
+# committing (`tmp-smoke*/`, `tmp-probe*/` and the like are already above).
+/tmp-*
+
+# The server's own build, and whatever its database and tapes are pointed at: a running server's chat is
+# a SQLite file and a tape is a file per session, and neither is anybody's source.
+/backend/garden-server
+/backend/garden-server.exe
+/backend/tmp
+/backend/data
+/data
+
+# Scratch images dumped into the served assets under their own hash, which is nobody's asset:
+# `bg.png`, `box/box.png` and the character folders are the only things that belong there.
+/frontend/public/assets/[0-9a-f][0-9a-f][0-9a-f]*.png
+
+# Recordings saved from the game's own debug panel, which land in `frontend/tests/records/`: half a minute of a run is a
+# few hundred kilobytes of JSON, and nine tenths of it is the two debug tracks. `frontend/tests/records/README.md` says how
+# they are read and stays tracked, so the folder is there in a fresh clone and says what it is for; `git add -f`
+# takes one recording in if it is ever wanted.
+/frontend/tests/records/*
+!/frontend/tests/records/README.md
+
+# Node
+# The game's own dependencies live beside its `package.json`; the tools at the repository's root
+# (`tools/smoke.mjs`, `tools/check-textures.mjs`, the `ruffle-*` and `probe-*` scripts) resolve `puppeteer`
+# and Ruffle from a root `node_modules`, which is where `npm i --no-save puppeteer @ruffle-rs/ruffle` puts them.
+/node_modules
+/frontend/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# The coding agent's own per-session state (ZCode)
+.zcode/
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
