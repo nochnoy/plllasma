@@ -23,8 +23,21 @@ services:
   mysql:
     image: mysql:8.0               # прод — MySQL 8.0.28 (db/plllasma.sql)
     # PHP 7.4, как на проде, не знаком с плагином авторизации caching_sha2_password,
-    # дефолтным в MySQL 8: оставляем классический
-    command: ["--default-authentication-plugin=mysql_native_password"]
+    # дефолтным в MySQL 8: оставляем классический. Второй параметр — sql_mode: он
+    # мягче дефолтного и совпадает по духу с продом, из него снято два момента.
+    #  * NO_ZERO_DATE/NO_ZERO_IN_DATE: боевые данные (залитый прод-дамп) полны дат
+    #    '0000-00-00 00:00:00' (tbl_users.time_joined, tbl_log.time_created,
+    #    lnk_user_place.time_viewed и др.). С дефолтным режимом локально падает даже
+    #    миграция db/migrations/2026-09-03-ignore-redesign.sql (индекс по datetime-
+    #    колонке с нулевыми датами), хотя на проде она прошла.
+    #  * ONLY_FULL_GROUP_BY: старый код писал запросы вроде `SELECT DISTINCT
+    #    p.id_place, ... FROM tbl_places p ... ORDER BY p.weight`, где p.weight не в
+    #    списке выборки (см. api/include/functions-channels.php) — с этим режимом
+    #    такой запрос падает с ошибкой 3065, а на проде режим не включён (иначе
+    #    список каналов не работал бы и там).
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --sql-mode=STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: plllasma
@@ -34,10 +47,13 @@ services:
       - "127.0.0.1:3308:3306"      # с хоста GUI-клиентом, если нужен (3307 занят старым plllasma_mysql_dev)
     volumes:
       - mysql:/var/lib/mysql
-      # Схема засеивается только при ПЕРВОМ старте пустого тома. db/plllasma.sql — снимок
-      # текущего состояния прода, уже ВКЛЮЧАЯ применённые миграции из db/migrations/
-      # (проверено: idx_place_time и lnk_user_ignore в дампе есть). Появилась миграция
-      # новее снимка — смонтируйте её следом, отдельной строкой с номером 02 и далее.
+      # Схема засеивается только при ПЕРВОМ старте пустого тома. db/plllasma.sql —
+      # ТОЛЬКО структура нужных сайту таблиц боевой базы (таблицы соседних проектов
+      # не включены): ни одной строки данных, база поднимается пустой, но уже с
+      # применёнными миграциями из db/migrations/ (idx_place_time, lnk_user_ignore).
+      # Данные боевого дампа заливаются поверх: docker/db-restore.ps1.
+      # Появилась миграция новее снимка — смонтируйте её следом, отдельной строкой
+      # с номером 02 и далее.
       - ./db/plllasma.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]

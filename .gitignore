@@ -31,6 +31,12 @@ node_modules/
 *.bak
 *.backup
 
+# Дампы локальной docker-базы (docker/db-backup.ps1) — это данные, не код
+db/backups/
+
+# Боевые дампы MySQL (снимки прода вида db/20260522.sql, сотни МБ) — тоже данные
+db/20??????.sql
+
 # Конфиденциальные файлы
 *passwords.php
 *config.php
