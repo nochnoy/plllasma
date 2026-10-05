@@ -7,12 +7,12 @@ function getChannels() {
 	global $mysqli;
 
 	$sql =
-		'SELECT DISTINCT p.id_place, p.parent, p.first_parent, p.name, p.description, p.time_changed, p.path, p.typ, l.weight, l.time_viewed, l.ignoring'.
+		'SELECT DISTINCT p.id_place, p.parent, p.first_parent, p.name, p.description, p.time_changed, p.path, p.typ, l.weight, l.time_viewed, l.ignoring, p.weight AS place_weight'.
 		' FROM tbl_places p'.
 		' LEFT JOIN tbl_access a ON a.id_place = p.id_place AND a.id_user = '.$user['id_user'].
 		' LEFT JOIN lnk_user_place l ON l.id_place = a.id_place AND l.id_user = '.$user['id_user'].
 		' WHERE l.at_menu="t"'.
-		' ORDER BY p.parent, p.weight'; // это нужно чтоб первыми создавались города а потом в них совались их дети
+		' ORDER BY p.parent, p.weight'; // это нужно чтоб первыми создавались города а потом в них совались их дети; p.weight взят в список выборки как place_weight, иначе DISTINCT + ORDER BY по невыбранной колонке падает в ONLY_FULL_GROUP_BY (ошибка 3065), а без алиаса ключ weight от p перезаписал бы l.weight в mysqli_fetch_assoc
 	$result = mysqli_query($mysqli, $sql);
 
 	// Перегоняем результат в массив, чтобы записи можно было дополнять полем STAR

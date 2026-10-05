@@ -199,6 +199,12 @@ function saveUserToSession() {
 }
 
 // Создаёт и сохраняет в куках токен авторизации
+//
+// Путь куки - корень сайта, как и у сессионной (см. main.php). Куку читает не только сам
+// сайт (он ходит в /api и получает её от браузера сам, заголовком), но и страница мини-игры
+// garden: она живёт по своему адресу (/garden/) и достаёт токен из document.cookie, куда
+// кука с чужим путём не попадает. Путь когда-то не задавали вовсе, и браузер привязывал
+// куку к каталогу того запроса, что её поставил, - то есть к /api.
 function createToken() {
 	global $mysqli;
 	global $user;
@@ -206,7 +212,13 @@ function createToken() {
 	$userId = $user['id_user'];
     $oneWeek = (3600 * (24 * 7));
     $key = guid();
-    setcookie(COOKIE_KEY_CODE, $key, time() + $oneWeek, '', DOMAIN);
+    setcookie(COOKIE_KEY_CODE, $key, time() + $oneWeek, '/', DOMAIN);
+
+	// Снести куку прежней области видимости. Одноимённые куки браузер отдаёт заголовком
+	// длинным путём вперёд, а PHP читает из них первую - старая кука заслонила бы новую,
+	// и сайт с игрой увидели бы в ней протухший токен (сайт меняет его каждый запрос).
+	// Строчку можно снять, когда последняя такая кука переживёт свой срок - неделю.
+	setcookie(COOKIE_KEY_CODE, '', time() - 3600, '/api', DOMAIN);
 
 	$q = $mysqli->prepare('UPDATE tbl_users SET logkey=?, time_logged=NOW() WHERE id_user=? LIMIT 1');
 	$q->bind_param("si", $key, $userId);
@@ -227,7 +239,8 @@ function getToken() {
 
 // Удаляет из кук токен авторизации
 function clearToken() {
-    setcookie(COOKIE_KEY_CODE, "", time() - 3600, '', DOMAIN);
+    setcookie(COOKIE_KEY_CODE, "", time() - 3600, '/', DOMAIN);
+    setcookie(COOKIE_KEY_CODE, "", time() - 3600, '/api', DOMAIN); // и куку прежней области видимости, см. createToken
 }
 
 // Вливает запись из таблицы в БД в глобальную переменную $user
