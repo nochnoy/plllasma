@@ -680,3 +680,112 @@ func TestASliceThatIsNotASlice(t *testing.T) {
 		t.Fatalf("after=soon: %d, want 400", c.status)
 	}
 }
+
+// The run's own line in the chat, both halves of the pairing: a message that
+// links a run by a part, and the run that points back at the message and says
+// what the line draws. The page that plays a run writes the line and binds it
+// in one breath; the tests below are the whole of that breath, and of the two
+// ways it can go wrong — a line that links a run nobody holds, and a player
+// trying to say what somebody else's run's line says.
+func TestTheRunsOwnLineInTheChat(t *testing.T) {
+	h := newHall(t)
+	client := h.client
+
+	// Аня begins a run: it is opened live, the line is posted into the lobby
+	// with a part that links the run, and the run is told which line it owns
+	// and what the line says — "Начал игру", which is what every run's line
+	// starts by saying.
+	opening := h.do(client, "anya", "POST", "/api/recordings/live", headBody("Анин"))
+	if opening.status != http.StatusCreated {
+		t.Fatalf("open a live run: %d %s, want 201", opening.status, opening.body)
+	}
+	opened := read[recordingAnswer](t, opening).Recording
+	line := h.do(client, "anya", "POST", "/api/messages", messageBody{
+		Parts: []store.Part{{Kind: "run", Run: opened.ID}},
+	})
+	if line.status != http.StatusCreated {
+		t.Fatalf("post the run's line: %d %s, want 201", line.status, line.body)
+	}
+	written := read[messageAnswer](t, line).Message
+	if len(written.Parts) != 1 || written.Parts[0].Run != opened.ID {
+		t.Fatalf("the line came back as %+v", written.Parts)
+	}
+	binding := map[string]any{"message": written.ID, "label": "Начал игру"}
+	if c := h.do(client, "anya", "POST", "/api/recordings/"+opened.ID+"/chat", binding); c.status != http.StatusOK {
+		t.Fatalf("bind the run's line: %d %s, want 200", c.status, c.body)
+	} else if bound := read[recordingAnswer](t, c).Recording; bound.MessageID != written.ID || bound.Label != "Начал игру" {
+		t.Fatalf("the bound run came back as %+v", bound)
+	}
+
+	// What the run goes on to say is a rewrite of the same words and nothing
+	// else: the line itself never changes, and the run's row is what the
+	// windows that show the line read.
+	if c := h.do(client, "anya", "POST", "/api/recordings/"+opened.ID+"/chat",
+		map[string]any{"label": "Сделал перешпагат"}); c.status != http.StatusOK {
+		t.Fatalf("rewrite the words: %d %s, want 200", c.status, c.body)
+	} else if said := read[recordingAnswer](t, c).Recording; said.Label != "Сделал перешпагат" || said.MessageID != written.ID {
+		t.Fatalf("the run after its words changed: %+v", said)
+	}
+
+	// The chat's own asking: the ids of the runs its lines link, answered with
+	// exactly those rows — the one asked for and not the other, and not an
+	// error for the one this server does not hold.
+	other := h.uploaded(client)
+	byID := read[recordings](t, h.do(client, "anya", "GET",
+		"/api/recordings?ids="+opened.ID+",nobody,"+other.ID, nil)).Recordings
+	if len(byID) != 2 || byID[0].ID != opened.ID || byID[1].ID != other.ID {
+		t.Fatalf("the rows of the runs asked for: %+v", byID)
+	}
+	if byID[0].Label != "Сделал перешпагат" || !byID[0].Live {
+		t.Fatalf("the run as the chat reads it: %+v", byID[0])
+	}
+}
+
+// The run's line is its own player's to say: Марго cannot rewrite what Аня's
+// run is saying, however right her token is.
+func TestTheRunsLineIsItsOwnPlayersToSay(t *testing.T) {
+	h := newHall(t)
+	client := h.client
+
+	// Марго's run, and Аня's hand on its line: the token is right, the run is
+	// not hers, and the door says whose the words are.
+	opened := h.live(client)
+	if c := h.do(client, "anya", "POST", "/api/recordings/"+opened.ID+"/chat",
+		map[string]any{"label": "Начал игру"}); c.status != http.StatusForbidden {
+		t.Fatalf("somebody else's run's line: %d %s, want 403", c.status, c.body)
+	}
+	// A request that says neither which line the run's is nor what it says is
+	// a mistake rather than a no-op, and a run nobody holds is a 404.
+	if c := h.do(client, "margo", "POST", "/api/recordings/"+opened.ID+"/chat", map[string]any{}); c.status != http.StatusBadRequest {
+		t.Fatalf("saying nothing: %d %s, want 400", c.status, c.body)
+	}
+	if c := h.do(client, "margo", "POST", "/api/recordings/nobody/chat",
+		map[string]any{"label": "Начал игру"}); c.status != http.StatusNotFound {
+		t.Fatalf("a run nobody holds: %d %s, want 404", c.status, c.body)
+	}
+}
+
+// A line that links a run links a run this server holds: the part carries the
+// id, and the id is asked about at the door rather than trusted, because a
+// link that opens nothing is a line that will 404 whoever follows it.
+func TestALineThatLinksARunNobodyHoldsIsRefused(t *testing.T) {
+	h := newHall(t)
+	client := h.client
+
+	if c := h.do(client, "anya", "POST", "/api/messages", messageBody{
+		Parts: []store.Part{{Kind: "run", Run: "nobody"}},
+	}); c.status != http.StatusNotFound {
+		t.Fatalf("a line linking a run nobody holds: %d %s, want 404", c.status, c.body)
+	}
+	// An empty id and a part of no kind at all are the door's own refusals.
+	if c := h.do(client, "anya", "POST", "/api/messages", messageBody{
+		Parts: []store.Part{{Kind: "run"}},
+	}); c.status != http.StatusBadRequest {
+		t.Fatalf("a link with no run in it: %d %s, want 400", c.status, c.body)
+	}
+	if c := h.do(client, "anya", "POST", "/api/messages", messageBody{
+		Parts: []store.Part{{Kind: "shrug"}},
+	}); c.status != http.StatusBadRequest {
+		t.Fatalf("a part of no kind: %d %s, want 400", c.status, c.body)
+	}
+}

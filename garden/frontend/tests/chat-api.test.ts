@@ -256,7 +256,7 @@ describe('the list of runs the window draws', () => {
     // list that kept a field it had no use for would be claiming a shape this client does not know.
     const server = fakeServer({ body: { recordings: [{ ...WIRE_RUN, live: true }] } });
     expect(await chatApi('/api', server.take).runs()).toEqual([
-      { id: 'run-2', name: 'второй прогон', author: 'Марго', steps: 250, stepMs: 20, live: true },
+      { id: 'run-2', name: 'второй прогон', author: 'Марго', steps: 250, stepMs: 20, live: true, label: '' },
     ]);
   });
 
@@ -346,5 +346,29 @@ describe('a door that did not open', () => {
     const refused = (await chatApi('/api', take).log(LOBBY, 0).catch((err: unknown) => err)) as Refused;
     expect(refused.status).toBe(0);
     expect(refused.sentence).toBe('Failed to fetch');
+  });
+});
+
+describe("the rows of the runs the chat's lines link", () => {
+  it('is asked for by their own ids, in one ask, and read as the list is', async () => {
+    const server = fakeServer({ body: { recordings: [{ ...WIRE_RUN, label: 'Сделал перешпагат' }] } });
+    expect(await chatApi('/api', server.take).runsByIds(['run-2', 'run-3'])).toEqual([
+      { id: 'run-2', name: 'второй прогон', author: 'Марго', steps: 250, stepMs: 20, live: false, label: 'Сделал перешпагат' },
+    ]);
+    expect(server.asked[0].url).toBe('/api/recordings?ids=run-2,run-3');
+  });
+
+  it('asks for nothing at all when there is nothing to ask about', async () => {
+    // The chat asks with the ids its lines link, and a log with no links in it is a chat that asks
+    // nothing: a request that carries no question is a request nobody needs to make.
+    const server = fakeServer({ body: { recordings: [] } });
+    expect(await chatApi('/api', server.take).runsByIds([])).toEqual([]);
+    expect(server.asked).toHaveLength(0);
+  });
+
+  it('takes a run the server does not hold as simply absent, the way the list does', async () => {
+    // Which is the whole of why the chat can ask without fear: a link to a run that is gone is a link
+    // that draws its first word for a while, not an error in the log.
+    expect(await chatApi('/api', fakeServer({ body: {} }).take).runsByIds(['gone'])).toEqual([]);
   });
 });

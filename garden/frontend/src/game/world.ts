@@ -381,11 +381,14 @@ export class World {
    * The *ends* of a rope are not the rope's: a press near one is a press on the knot hanging there, which is
    * something the player can take hold of and carry, so those stay the knot's own (see `Rope.middleDistance`).
    * In the rope tool's own hand a burn comes first even while a rope is only half drawn: the draft stays
-   * open for its second click, and the press spent itself on the rope under it.
+   * open for its second click, and the press spent itself on the rope under it. A knot comes second, to the
+   * same effect: a press near an end of a rope already tied takes hold of that end instead of laying a new
+   * rope's start, and a draft that was open stays open — the rope being drawn keeps waiting for its second
+   * click while the knot is carried and dropped.
    *
    * It belongs to the world rather than to the game because everything a press *does* is the world's own: the
-   * tools, the picking, the hold, and the taking away. What the game adds is only where the pointer is, which is
-   * a screen point brought into the world — and that is the one part of a press a tape can carry directly, so a
+   * tools, the picking, the hold, and the taking away. What the game adds is only where the pointer is, which
+   * is a screen point brought into the world — and that is the one part of a press a tape can carry directly, so a
    * playback presses through this same door (`Game.replay`).
    *
    * Returns the rope the press took off the stage, so that the renderer can burst it where it stood, or null
@@ -398,6 +401,7 @@ export class World {
     if (this.tool === 'rope') {
       const burned = this.burnRopeAt(x, y);
       if (burned) return burned;
+      if (this.grabAnchor(x, y)) return null;
       if (this.draft) this.finishRope(x, y);
       else this.startRope(x, y);
       return null;
@@ -444,8 +448,9 @@ export class World {
 
   /**
    * The knot under a point, if the point is close enough to one — the ends of the ropes, in drawing
-   * order. Both ends of every rope are pickable, tied or nailed: the arrow tool takes hold of one
-   * here, and {@link dropAnchor} puts it down again.
+   * order. Both ends of every rope are pickable, tied or nailed: either tool takes hold of one here —
+   * the arrow on its way to the doll, the rope tool before it draws — and {@link dropAnchor} puts it
+   * down again.
    */
   pickAnchor(x: number, y: number): Anchor | null {
     let best: Anchor | null = null;
@@ -463,8 +468,9 @@ export class World {
   }
 
   /**
-   * The arrow tool pressing on a knot: from here the knot follows the mouse (as far as its rope
-   * allows) instead of the pointer grabbing the doll. Returns whether a knot was taken hold of.
+   * A press on a knot, whichever tool made it: from here the knot follows the mouse (as far as its
+   * rope allows) instead of the pointer starting a rope or grabbing the doll. Returns whether a knot
+   * was taken hold of.
    */
   grabAnchor(x: number, y: number): boolean {
     const anchor = this.pickAnchor(x, y);
@@ -505,10 +511,13 @@ export class World {
     if (rope) this.settleRope(rope);
   }
 
-  /** The knot the renderer should light up: the one in hand, or the one the arrow tool could take. */
+  /**
+   * The knot the renderer should light up: the one in hand, or the one under the pointer that a press
+   * would take — offered by either tool, since either can take it (`World.press`).
+   */
   hoverAnchor(): Anchor | null {
     if (this.dragged) return this.dragged;
-    if (this.tool !== 'drag') return null;
+    if (this.tool !== 'drag' && this.tool !== 'rope') return null;
     return this.pickAnchor(this.engine.mouseX, this.engine.mouseY);
   }
 

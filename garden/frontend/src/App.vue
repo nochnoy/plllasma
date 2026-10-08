@@ -6,11 +6,12 @@ import TapeTimeline from './components/TapeTimeline.vue';
 import { useChat } from './composables/useChat';
 import { useGame } from './composables/useGame';
 import { useLiveRun } from './composables/useLiveRun';
+import { useRunStates } from './composables/useRunStates';
 import { useRuns } from './composables/useRuns';
 import { useTape } from './composables/useTape';
 import type { User } from './auth';
 import type { Speaker } from './chat/messages';
-import { userpic } from './chat/messages';
+import { linkedRuns, userpic } from './chat/messages';
 import type { Run } from './chat/runs';
 import type { Tape } from './game/tape';
 import type { Tool } from './game/world';
@@ -226,20 +227,21 @@ const {
   speaker,
   sending,
   send,
+  announce,
   error: chatError,
   toggleAnonymous,
 } = useChat(undefined, { speaker: player });
 
 /**
  * Whether the player is at the chat *and the pan that brought them there is over* — the moment the
- * screen's own arrival work happens: the runs' list is read (`useRuns`), the scroll settles at the
- * newest line and the field takes focus (`ChatPanel`). Being there is not enough — arriving is a
- * two-part thing, the travel and the work, and this is the boundary between them.
+ * screen's own arrival work happens: the scroll settles at the newest line and the field takes focus
+ * (`ChatPanel`). Being there is not enough — arriving is a two-part thing, the travel and the work,
+ * and this is the boundary between them.
  */
 const atChat = computed(() => location.value === 3 && settled.value);
 
 /**
- * Whether the chat's screen paints its contents at all: the log, the runs, the field — everything
+ * Whether the chat's screen paints its contents at all: the log, the field — everything
  * but the scenery. It comes on with `atChat`, once the pan is over, and goes off only once a *later*
  * move has finished — so the screen slides in bare (nothing of the chat to carry or to paint while
  * it moves) and slides away still looking like the place it was, emptying only after it is out of
@@ -255,42 +257,58 @@ watch(settled, (still) => {
 });
 
 /**
- * The runs the screen lists beside the conversation, and what picking one does: it goes onto the timeline as
- * the game's own run, which is what makes somebody else's run a run this page watches (`useRuns`).
- *
- * The list is read while the player is at the chat and not before, and the chat is left on the way in: a
- * playback is not something to read a chat over, and the world's own row — the bar of tools and the chat's
- * strip — comes back with the tape's own bar when the run is put away (`TapeTimeline.vue`). A run that is
- * still being played goes on arriving after that, and what stops it is the tape's own report rather than
- * the screen (`stopWatching`, below).
+ * The runs the chat's lines link, as the chat knows them: their words and whether they are still
+ * being played, fetched for exactly the ids the log is showing (`useRunStates`). This is what makes
+ * a line that links a run a living thing rather than a dead one — the run's own label changes as the
+ * play goes on, and the line changes underneath it without the log ever being rewritten.
  */
-const { runs, error: runsError, opening: runOpening, choose: chooseRun, stop: stopWatching } = useRuns(atChat, {
+const { rows: runRows } = useRunStates(() => linkedRuns(messages.value));
+
+/**
+ * What following a run is, and what it does: it goes onto the timeline as the game's own run, which
+ * is what makes somebody else's run a run this page watches (`useRuns`).
+ *
+ * The way in is a link in the chat or the page's own address (`?run=`) — there is no list to pick
+ * from, the chat's lines are the list. The chat is left on the way in either way: a playback is not
+ * something to read a chat over, and the world's own row — the bar of tools and the chat's strip —
+ * comes back with the tape's own bar when the run is put away (`TapeTimeline.vue`). A run that is
+ * still being played goes on arriving after that, and what stops it is the tape's own report rather
+ * than the screen (`stopWatching`, below).
+ */
+const { open: openRun, stop: stopWatching } = useRuns({
   play: playRun,
   grow: growRun,
 });
 
+/** What a link in the chat is followed by: the run it names, onto the timeline and walking. */
+function followTheLink(id: string): void {
+  void openRun(id);
+}
+
 /**
- * A run picked off that list, walking: `loadTape` is the game's own reading of the run the server handed over
+ * A run asked for, walking: `loadTape` is the game's own reading of the run the server handed over
  * — one file for a run that is over, and the head and the slices a run that is still being played has so far
  * (`useRuns`), which are a tape before they are a file — and the playhead starts at the beginning, so what the
  * player watches is that run rather than wherever the world had been left.
  *
- * And the player is brought back to the stage to watch it: picking a run is the one thing the chat's own
- * screen does that is the game's, and what it opens onto is the run.
+ * And the player is brought to the stage to watch it — following a link is the one thing the chat does
+ * that is the game's, and what it opens onto is the run. The address is told the run as well, so that
+ * what the player is watching is what the player can hand to somebody else (`setRunInUrl`).
  */
-function playRun(_run: Run, tapeFile: string): void {
+function playRun(id: string, tapeFile: string): void {
   const engine = game.value;
   if (!engine) return;
   engine.loadTape(tapeFile);
   engine.play();
   location.value = 2;
+  setRunInUrl(id);
 }
 
 /**
  * A run that was being watched has more of itself: the tape the page has pasted together goes to the engine,
- * which puts it under the walk (`Game.growTape`) — and with it the row the server last wrote about the run,
- * because whether the run is still being played is what decides whether a walk at the end of the tape waits
- * there for the rest of it or stops there (`playFrame`).
+ * which puts it under the walk (`Game.growTape`) — and with it whether the run is still being
+ * played, because that is what decides whether a walk at the end of the tape waits there for the rest
+ * of it or stops there (`playFrame`).
  */
 function growRun(run: Run, tape: Tape): void {
   game.value?.growTape(tape, run.live);
@@ -298,11 +316,15 @@ function growRun(run: Run, tape: Tape): void {
 
 // A run that is not on the timeline any more is a run nobody is watching: the tape's own report says so
 // (`useTape`), and what takes a tape off is its own bar's «Закрыть» — which is also the door the player
-// comes back through, to their own scene and their own interrupted run (`Game.unload`).
+// comes back through, to their own scene and their own interrupted run (`Game.unload`). The address is
+// told too: a page no longer watching a run is a page whose address should not say it is.
 watch(
   () => tape.value.loaded,
   (loaded) => {
-    if (!loaded) stopWatching();
+    if (!loaded) {
+      stopWatching();
+      setRunInUrl(null);
+    }
   },
 );
 
@@ -311,11 +333,16 @@ watch(
  * touch of a doll and is finished when the window goes away. Nothing of it is on screen — what is being
  * written is nobody's playback, and the bar of tools has no button for it any more.
  *
+ * What *is* on screen is its saying: the moment the run opens, a line goes up in the chat linking it —
+ * «Начал игру» — and the run is bound to that line, so that what it goes on to do can be said in the
+ * same place (`announce` is how the saying reaches the log, and the engine's own word for a feat is
+ * wired to it from inside the composable).
+ *
  * Who a run is written under is who the site says is playing: the token carries it, and the server
  * answers for it at its own door — deliberately *not* the field's anonymous switch, which is about the
  * chat's own lines rather than about who played (`useChat`).
  */
-const { end: endRun } = useLiveRun(game, tape);
+const { end: endRun } = useLiveRun(game, tape, { say: announce });
 
 // The window going away is the end of the run. A page put in the back/forward cache is *not* an ending — the
 // player may come back to a world that is still writing its run — and `persisted` is what says which it is.
@@ -324,6 +351,47 @@ function leavePage(event: PageTransitionEvent): void {
 }
 onMounted(() => window.addEventListener('pagehide', leavePage));
 onBeforeUnmount(() => window.removeEventListener('pagehide', leavePage));
+
+/** The address's own name for a run: what a link's id is said by when the player hands the address to somebody. */
+const RUN_PARAM = 'run';
+
+/**
+ * The run the address was opened on, or null when it was not: a link handed to another player, or to
+ * the same one on another day. It survives the handshake untouched — the address is the page's own
+ * business, and `?token=` beside it (`auth.ts`) is read the same way this is.
+ */
+function runInUrl(): string | null {
+  const id = new URLSearchParams(window.location.search).get(RUN_PARAM);
+  return id && id.trim() ? id.trim() : null;
+}
+
+/**
+ * Puts a run into the address, or takes it out — without moving the page: `replaceState`, because
+ * following a link is not a place the player went to and the way back is not the way out of it. What
+ * it is *for* is the copying: a player watching a run is a player holding an address that opens it,
+ * and everything else the address carries (`?token=`, whatever comes next) is kept as it stood.
+ */
+function setRunInUrl(id: string | null): void {
+  const params = new URLSearchParams(window.location.search);
+  if (id) params.set(RUN_PARAM, id);
+  else params.delete(RUN_PARAM);
+  const asked = params.toString();
+  window.history.replaceState(window.history.state, '', `${window.location.pathname}${asked ? `?${asked}` : ''}`);
+}
+
+/**
+ * An address opened on a run is a page opened on the run: not the threshold the garden starts at but
+ * the stage, with the run already walking on it. It happens once — the engine arriving is late enough
+ * for it (`useGame`), and anything the player goes on to do is their own going-on, not the address's.
+ */
+let openedTheAddress = false;
+watch(game, (engine) => {
+  const id = engine && !openedTheAddress ? runInUrl() : null;
+  if (!id) return;
+  openedTheAddress = true;
+  location.value = 2;
+  void openRun(id);
+});
 </script>
 
 <template>
@@ -459,7 +527,7 @@ onBeforeUnmount(() => window.removeEventListener('pagehide', leavePage));
           <!-- The chat's own four lines, under the bar and against the same left edge: the block hangs
                off the column rather than off the chat's screen, so it stands in the hall's own corner,
                at the world's own scale, while the game is what the player is looking at. -->
-          <ChatTicker :messages="ticker" @open="location = 3" />
+          <ChatTicker :messages="ticker" :runs="runRows" @open="location = 3" />
           </div>
 
       <!-- The tape's own bar, along the foot of the world and centred on it: it is up while a run is loaded
@@ -490,15 +558,13 @@ onBeforeUnmount(() => window.removeEventListener('pagehide', leavePage));
         v-show="chatShown"
         :open="atChat"
         :messages="messages"
+        :runs="runRows"
         :speaker="speaker"
         :anonymous="anonymous"
         :error="chatError"
         :sending="sending"
         :send="send"
-        :runs="runs"
-        :opening="runOpening"
-        :runs-error="runsError"
-        :choose="chooseRun"
+        :open-run="followTheLink"
         @close="location = 2"
         @toggle-speaker="toggleAnonymous"
       />

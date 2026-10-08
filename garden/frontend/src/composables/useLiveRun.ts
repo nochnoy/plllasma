@@ -1,5 +1,6 @@
 import { getCurrentInstance, onBeforeUnmount, watch, type Ref } from 'vue';
 import { liveApi, type LiveWire } from '../live/api';
+import { RUN_STARTED, type ChatMessage, type MessagePart } from '../chat/messages';
 import type { TapeSlice } from '../game/tape';
 import type { Game, TapeReport } from '../game/game';
 
@@ -16,6 +17,10 @@ import type { Game, TapeReport } from '../game/game';
  * (`useRuns`); a run the server never heard of is a run nobody watched, which is nobody's business but this
  * one's — so a failure here is one line in the console and nothing else, and the game the player is playing
  * is not the recording's.
+ *
+ * A run is also *said*: the moment it opens, a line goes up in the chat linking it — «Начал игру» — and the
+ * run is bound to that line, so that its words can be rewritten as the play goes on ({@link say} and the
+ * engine's own word for a feat, `Game.onFeat`).
  */
 export interface LiveRunOptions {
   /** The wire the run goes over (`live/api.ts`): the real one, unless a test brings its own. */
@@ -24,6 +29,12 @@ export interface LiveRunOptions {
   every?: number;
   /** The clock, for a run's own name and its own `recorded_ms`. A test brings its own. */
   now?: () => number;
+  /**
+   * How the run says itself in the chat: a line posted through the chat's own composable
+   * (`useChat.announce`), answered with the line the server took — whose id is what binds the run to
+   * its words. Absent in a test that has no chat, and the run simply goes unsaid.
+   */
+  say?: (parts: readonly MessagePart[]) => Promise<ChatMessage | null>;
 }
 
 /**
@@ -40,6 +51,7 @@ export function useLiveRun(game: Ref<Game | null>, tape: Ref<TapeReport>, option
   const wire = options.wire ?? liveApi();
   const every = options.every ?? ASK_MS;
   const now = options.now ?? (() => Date.now());
+  const say = options.say ?? null;
 
   /** The run the server knows about, or null while there is none: what slices are sent to. */
   let id: string | null = null;
@@ -78,6 +90,11 @@ export function useLiveRun(game: Ref<Game | null>, tape: Ref<TapeReport>, option
    * what crosses to the server is the shape a tape has before it has a step in it. A run that cannot be
    * opened is a run that is tried again on the next ask — a server that is not there yet is a server that may
    * be there in a second — and the name and `recorded_ms` it is opened with are the moment it began.
+   *
+   * The moment it *is* opened is also the moment it is said: a line goes up in the chat linking the run,
+   * and the run is bound to that line with its first words on it (`said`). A line that would not go up is
+   * a run nobody can click to — which costs the chat its door and nothing else, so the failure is said in
+   * the console and the run goes on.
    */
   async function open(): Promise<void> {
     const head = game.value?.liveHead() ?? null;
@@ -85,6 +102,39 @@ export function useLiveRun(game: Ref<Game | null>, tape: Ref<TapeReport>, option
     const at = now();
     id = await wire.open(head, { name: nameFor(at), recordedMs: at });
     seq = 0;
+    await said();
+    listenForFeats();
+  }
+
+  /**
+   * The run's own line in the chat: posted with the link in it, and bound — the line's id against the
+   * run, the run's first words against the line — so that everything the run goes on to say has a
+   * place to be said in.
+   */
+  async function said(): Promise<void> {
+    const run = id;
+    if (run === null || !say) return;
+    try {
+      const line = await say([{ kind: 'run', run }]);
+      if (line) await wire.chat(run, { message: line.id, label: RUN_STARTED });
+    } catch (err) {
+      blame(err);
+    }
+  }
+
+  /**
+   * The engine's own word for what the play is doing, put in the run's mouth: each feat the world
+   * reports (`Game.onFeat`) rewrites the line's words, so a run that hauls her into an oversplit says
+   * so in the chat for as long as it goes on saying it.
+   */
+  function listenForFeats(): void {
+    const engine = game.value;
+    if (!engine) return;
+    engine.onFeat = (label) => {
+      const run = id;
+      if (run === null) return;
+      void wire.chat(run, { label }).catch(blame);
+    };
   }
 
   /**
@@ -172,6 +222,9 @@ export function useLiveRun(game: Ref<Game | null>, tape: Ref<TapeReport>, option
   function stop(): void {
     if (timer !== null) clearInterval(timer);
     timer = null;
+    // Whatever the run went on to say, it has said: the line keeps its last words, and the engine's
+    // word for a feat is not this page's to give any more.
+    if (game.value) game.value.onFeat = null;
   }
 
   // The run belongs to the engine's own report: a run that has begun is opened and asked about, and a run

@@ -27,8 +27,23 @@ export interface TextPart {
   text: string;
 }
 
+/**
+ * A link that opens a recording: the game's own announcement of itself.
+ *
+ * A part like this is never typed — the field writes text and gifs — it is written by the page the
+ * moment a run begins ({@link RUN_STARTED}), and what it draws is not in the message at all: the
+ * run's own row says what its line is saying right now (`label` in `runs.ts`), so the line can change
+ * as the play goes on without the log ever being rewritten. The chat holds the rows of the runs its
+ * lines link (`useRunStates`) and hands them to whoever draws the line.
+ */
+export interface RunPart {
+  kind: 'run';
+  /** The recording the link opens: its id on the server. */
+  run: string;
+}
+
 /** What a message body is made of, in order. */
-export type MessagePart = GifPart | TextPart;
+export type MessagePart = GifPart | TextPart | RunPart;
 
 /** The lobby: the conversation of a place with no recording under it. */
 export const LOBBY = '';
@@ -91,6 +106,52 @@ export const TICKER_LINES = 4;
  * than archived, and a page left open for hours holds the same fifty a page just opened is sent.
  */
 export const WINDOW_LINES = 50;
+
+/**
+ * What a run's own line in the chat starts by saying: written the moment the run begins, and replaced
+ * by the run's own word for itself as the play goes on (`Game.onFeat`).
+ */
+export const RUN_STARTED = 'Начал игру';
+
+/**
+ * What the link of a run's line wears when the run's row has not arrived (or is not there to arrive):
+ * the word the first label made the link of, so a line that says nothing yet still reads as the thing
+ * it is.
+ */
+export const RUN_WORD = 'игру';
+
+/**
+ * What a run's line wears beside its words while the run is still being played: the row says `live`,
+ * and the line says so — the reader knows to come back, because the end of the run is not in it yet.
+ */
+export const RUN_LIVE = '(Идёт стрим)';
+
+/**
+ * A run's label as it is drawn: the words, and which of them is the link — the last one, so «Начал
+ * игру» links its **игру** and «Сделал перешпагат» its **перешпагат**, the noun rather than the verb
+ * that merely reports it. A label of one word is a link the whole of itself.
+ */
+export function labelWords(label: string): { said: string; word: string } {
+  const trimmed = label.trim();
+  const cut = trimmed.lastIndexOf(' ');
+  if (cut < 0) return { said: '', word: trimmed || RUN_WORD };
+  return { said: trimmed.slice(0, cut + 1), word: trimmed.slice(cut + 1) };
+}
+
+/**
+ * The runs the given lines link, each once, in the order they were first met: the chat's own list of
+ * the recordings it is interested in — the ones whose words and liveness its window is drawing right
+ * now (`useRunStates` asks the server about exactly these).
+ */
+export function linkedRuns(messages: readonly ChatMessage[]): string[] {
+  const seen: string[] = [];
+  for (const message of messages) {
+    for (const part of message.parts) {
+      if (part.kind === 'run' && !seen.includes(part.run)) seen.push(part.run);
+    }
+  }
+  return seen;
+}
 
 /**
  * Who is speaking: a nickname and the face that goes with it.

@@ -10,6 +10,7 @@ import {
   TICKER_LINES,
   WINDOW_LINES,
   type ChatMessage,
+  type MessagePart,
   type Place,
   type Speaker,
 } from '../chat/messages';
@@ -197,6 +198,29 @@ export function useChat(place: () => Place = atTheLobby, options: ChatOptions) {
     }
   }
 
+  /**
+   * A line the game itself writes, rather than the player: the announcement a run begins with, whose
+   * body is a link to the run rather than words anybody typed ({@link RunPart}).
+   *
+   * It is always the player's own byline and never the ghost's — a run is played by a person,
+   * whoever they sometimes write as — and it always stands in the lobby: it is about a run, and the
+   * link in it is what carries that, so there is nothing to anchor and no conversation to put it in
+   * but the one everybody reads. What comes back is the line as the server took it — its id is what
+   * the run is bound by (`LiveWire.chat`) — or null when the server would not take it, which the
+   * run goes on without: the game is not the recording's, and it is not the chat's either.
+   */
+  async function announce(parts: readonly MessagePart[]): Promise<ChatMessage | null> {
+    const draft: Draft = { tape: LOBBY, atStep: null, ghost: false, parts };
+    try {
+      const written = await wire.send(draft);
+      log.value = lastMessages([...log.value, written], WINDOW_LINES);
+      return written;
+    } catch (err) {
+      blame(err);
+      return null;
+    }
+  }
+
   let timer: ReturnType<typeof setInterval> | null = null;
 
   /** Reads the log where the player is, and starts asking about it again on a timer. */
@@ -243,6 +267,8 @@ export function useChat(place: () => Place = atTheLobby, options: ChatOptions) {
     },
     /** What the player sent: `true` once the server has it, which is what clears the field. */
     send,
+    /** A line the game itself writes: the announcement a run begins with, link and all. */
+    announce,
     /** Reads the log again from the beginning: what a caller reaches for when it suspects a gap. */
     refresh: load,
     /** Asks what has been written since the last line read, without being on a timer to do it. */

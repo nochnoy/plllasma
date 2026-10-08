@@ -1,33 +1,22 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue';
+import { nextTick, ref, watch } from 'vue';
 import type { ChatMessage, Speaker } from '../chat/messages';
-import { SIDEBAR_RUNS, type Run } from '../chat/runs';
+import type { Run } from '../chat/runs';
 import ChatLine from './ChatLine.vue';
-import RunsDialog from './RunsDialog.vue';
-import RunsList from './RunsList.vue';
 
 /**
  * The chat's own screen — the third of the garden's three locations, arrived over the world from the
- * right (`App.vue`): a heading, the log and the runs under one scroll, and the field at the foot.
+ * right (`App.vue`): a heading, the log under one scroll, and the field at the foot.
  * Messages are read from the top down, so the newest one is at the bottom and the scroll keeps itself
  * there; the field is where the eye already is, so the text in it takes the focus when the screen
  * arrives and again after every line sent.
  *
  * The screen is transparent — the world stands behind every line of it, and its words are the chat's
- * own colour — and under its one scroll it is two columns: the conversation takes the width, and the
- * runs the server holds — one row each, newest first — take a narrower column on the right. One scroll
- * for both, because the two are read together: the rows are as long as other people's playing, and a
- * scrollbar of their own would be a second place to look for the end of a conversation. The field
- * stays where it is whatever has been said — it is the one part of the screen that has to be reached,
- * not read.
- *
- * A row is a way into a run rather than something to read: pressing one brings that run's own tape down
- * and walks it (`useRuns`), which is the one thing the chat has to do with a recording that the
- * conversation itself cannot say — and the way it leaves is the way back to the stage, which is the
- * player's to watch it on. The column shows the first {@link SIDEBAR_RUNS} of the runs; when there are
- * more, the «Ещё...» under them opens the whole list in a window of its own (`RunsDialog.vue`) — a list
- * of a hundred rows beside a chat would be the taller of the two things, and the chat is what the screen
- * is for.
+ * own colour — and its one scroll carries the conversation alone: the runs are not a list beside it
+ * any more but links inside it, one line per run, drawn from the run's own row (`useRunStates`) and
+ * followed wherever the page was told they go (`open`, which is the tape coming down and the garden
+ * panning to the stage). What a link says is what its run is saying — «Начал игру», «Сделал
+ * перешпагат» — and a run still being played says so beside its words.
  *
  * The field's own left end says who is speaking: the badge the next line will wear, the nickname, and a
  * triangle like the one on a combobox. Pressing any part of that swaps the player for the ghost and back
@@ -37,9 +26,9 @@ import RunsList from './RunsList.vue';
  * Sending is a function rather than an event because the field has to wait for its answer: the line
  * stands in the log at once (`useChat`, which is why the field is emptied on the spot — the screen
  * answers the finger rather than a round trip), and the text is put back if the server turned out not to
- * take it. A refusal then costs the player nothing but the reading of the error line. Picking a run is a
- * function for the same reason, with nothing to wait for but the row itself: the tape coming down is
- * `useRuns`'s own business, and this component only draws the result of it.
+ * take it. A refusal then costs the player nothing but the reading of the error line. Following a link
+ * is a function for the same reason, with nothing to wait for but the link itself: the tape coming down
+ * is `useRuns`' own business, and this component only hands the id on.
  */
 const props = defineProps<{
   /**
@@ -49,6 +38,8 @@ const props = defineProps<{
    */
   open: boolean;
   messages: readonly ChatMessage[];
+  /** The rows of the runs the log links, by id: what a link draws itself from (`useRunStates`). */
+  runs: ReadonlyMap<string, Run>;
   speaker: Speaker;
   anonymous: boolean;
   /** Why the last thing the chat tried did not happen, or null while nothing has gone wrong. */
@@ -56,14 +47,8 @@ const props = defineProps<{
   /** Whether a line is already on its way: one at a time is all the server is ever asked for. */
   sending: boolean;
   send: (typed: string) => Promise<boolean>;
-  /** The runs the window keeps, newest first: the rows of the column, and of the whole list's window (`useRuns`). */
-  runs: readonly Run[];
-  /** The run whose tape is on its way down, or null: the row that is waiting for its own answer. */
-  opening: string | null;
-  /** Why the list of runs is empty or out of date, in the player's own language, or null. */
-  runsError: string | null;
-  /** A row pressed: that run, whose tape is asked for and handed to the engine (`useRuns`). */
-  choose: (run: Run) => void;
+  /** What following a link to a run does: the page's own door onto a playback (`App.vue`). */
+  openRun: (id: string) => void;
 }>();
 const emit = defineEmits<{
   close: [];
@@ -71,16 +56,10 @@ const emit = defineEmits<{
 }>();
 
 const typed = ref('');
-/** The screen's own scroll: the one that carries the log and the runs together. */
+/** The screen's own scroll: the one that carries the log. */
 const scroll = ref<HTMLElement | null>(null);
+/** The field the screen's lines are written in. */
 const field = ref<HTMLInputElement | null>(null);
-/** Whether the whole list of runs is on screen in its own window (`RunsDialog.vue`). */
-const wholeList = ref(false);
-
-/** What the column beside the conversation shows: the first of the runs, and only as many as a column is tall for. */
-const listed = computed(() => props.runs.slice(0, SIDEBAR_RUNS));
-/** Whether there are runs the column does not show, which is what «Ещё...» is the door on. */
-const unlisted = computed(() => props.runs.length > listed.value.length);
 
 /** The newest message is the one to read: keep the screen's own scroll at its bottom. */
 function toBottom(): void {
@@ -104,10 +83,6 @@ watch(
   { immediate: true },
 );
 watch(() => props.messages.length, toBottom);
-// The runs are read off the server on the same arrival as the field's focus (`useRuns`), and their
-// column can be the taller of the two under the one scroll — so the scroll settles again when they
-// land, or the bottom it was put at is the bottom of half the screen.
-watch(() => props.runs.length, toBottom);
 
 async function submit(): Promise<void> {
   const text = typed.value.trim();
@@ -115,12 +90,6 @@ async function submit(): Promise<void> {
   typed.value = '';
   field.value?.focus();
   if (!(await props.send(text))) typed.value = text;
-}
-
-/** A row pressed, in the column or in the whole list's window: the window of the whole list goes with it. */
-function pick(run: Run): void {
-  wholeList.value = false;
-  props.choose(run);
 }
 </script>
 
@@ -138,31 +107,17 @@ function pick(run: Run): void {
       </button>
       <h2 class="chat-card__title">Чат с привидениями</h2>
     </header>
-      <!-- The one scroll of the window, carrying both columns: the conversation and the runs are read
-           together, and neither has a scrollbar of its own to hunt for the end of the other in. -->
+      <!-- The one scroll of the window, carrying the conversation: the runs are links in it rather
+           than a list beside it, so there is nothing else to read and no second scrollbar to hunt
+           for the end of one in. -->
       <div ref="scroll" class="chat-card__body">
-        <!-- Two columns: the conversation, and the runs beside it. The conversation is the whole of what the
-             chat is for, so it takes the width; the list is a column rather than a row of buttons so that a
-             run's own reading stands at the end of a line the eye can follow. -->
-        <div class="chat-card__columns">
-          <div class="chat-card__log">
-            <!-- One message, one block: the space after a line is the space after the whole of it, and a
-                 line is hovered as one thing. -->
-            <div v-for="message in messages" :key="message.id" class="chat-entry">
-              <ChatLine :message="message" />
-            </div>
-          </div>
-          <aside class="chat-card__runs" aria-label="Прогоны">
-            <RunsList :runs="listed" :opening="opening" @choose="pick" />
-            <!-- The rest of the list, one press away: fifty rows is what a column beside a conversation is
-                 for, and the whole of it is a window of its own. -->
-            <button v-if="unlisted" type="button" class="chat-runs__more" @click="wholeList = true">
-              Ещё...
-            </button>
-            <!-- The list's own failures, which are not the conversation's: said in the column they belong to. -->
-            <p v-if="runsError" class="chat-card__error" role="alert">{{ runsError }}</p>
-          </aside>
+        <div class="chat-card__log">
+        <!-- One message, one block: the space after a line is the space after the whole of it, and a
+             line is hovered as one thing. -->
+        <div v-for="message in messages" :key="message.id" class="chat-entry">
+          <ChatLine :message="message" :runs="runs" :open="openRun" />
         </div>
+      </div>
       </div>
       <!-- What the chat could not do, in the player's own language: the server says it in English and
            about the request, which is for whoever reads logs rather than for whoever is playing. It stands
@@ -195,17 +150,4 @@ function pick(run: Run): void {
         <button type="submit" class="chat-card__send" :disabled="sending">Отправить</button>
       </form>
     </section>
-    <!-- The whole list of runs, when «Ещё...» has been pressed: the same rows in a window of their own,
-         over the screen rather than in it. It is carried out of the screen to the body first, because a
-         window fixed to the page inside the panes the garden moves about would be fixed to the *pane*
-         — a transformed ancestor is a fixed descendant's containing block — and dragged along with it. -->
-    <Teleport to="body">
-      <RunsDialog
-        v-if="wholeList"
-        :runs="runs"
-        :opening="opening"
-        :choose="choose"
-        @close="wholeList = false"
-      />
-    </Teleport>
-  </template>
+</template>

@@ -50,16 +50,23 @@ var ErrNotFound = errors.New("not found")
 // 404.
 var ErrSealed = errors.New("the recording takes no more slices")
 
+// ErrForbidden is what a change to a run answered for by the wrong player
+// answers with: a run's own line in the chat is its player's to say, and a
+// handler turns this into a 403 rather than letting somebody else rewrite what
+// the log will show for a run they did not play.
+var ErrForbidden = errors.New("the run is not this player's")
+
 // Part is one run of a message's body: `text`, a stretch of what the player
-// typed, or `gif`, a picture standing in the middle of it
-// (`frontend/src/chat/messages.ts`). The store does not care which — a body is a
-// list of parts rather than a string, and that is the whole of what it has to
-// know about one.
+// typed, `gif`, a picture standing in the middle of it, or `run`, a link that
+// opens a recording (`frontend/src/chat/messages.ts`). The store does not care
+// which — a body is a list of parts rather than a string, and that is the whole
+// of what it has to know about one.
 type Part struct {
 	Kind string `json:"kind"`
 	Text string `json:"text,omitempty"`
 	File string `json:"file,omitempty"`
 	Alt  string `json:"alt,omitempty"`
+	Run  string `json:"run,omitempty"`
 }
 
 // Recording is a run of the game as its file, plus what a list of recordings
@@ -102,6 +109,20 @@ type Recording struct {
 	// a run that was uploaded whole, the moment it was uploaded: made equal to
 	// UploadedMs rather than left at zero, so that every run has an end.
 	EndedMs int64 `json:"ended_ms"`
+	// Label is what the run's own line in the chat says: written by the page
+	// that played the run, changed by it as the play goes on (`SetChat`), and
+	// read by every window that shows the line the run's message is — the
+	// message stores the link, the run stores the words, and what the chat
+	// draws is the two read together. Empty until the run's player has said
+	// anything, which the window draws its own word for.
+	Label string `json:"label"`
+	// MessageID is the run's own line in the log: the id of the message that
+	// carries the link to this run. It is the back half of the pairing — the
+	// message points at the run by its part, the run points at the message by
+	// this — and what it is for is whoever wants to ask about the line rather
+	// than about the run: to say where the words are said, or to find the one
+	// message that is a run's own. Zero until the line is written.
+	MessageID int64 `json:"message_id"`
 }
 
 // Seconds is how long the run lasts, which is what a list of recordings shows
@@ -196,7 +217,9 @@ CREATE TABLE IF NOT EXISTS recordings (
   tape        TEXT NOT NULL,
   head        TEXT NOT NULL DEFAULT '',
   live        INTEGER NOT NULL DEFAULT 0,
-  ended_ms    INTEGER NOT NULL DEFAULT 0
+  ended_ms    INTEGER NOT NULL DEFAULT 0,
+  label       TEXT NOT NULL DEFAULT '',
+  message_id  INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -281,6 +304,23 @@ func Open(path string) (*Store, error) {
 		db.Close()
 		return nil, fmt.Errorf("bring %s up to the schema: %w", path, err)
 	}
+	// A file written before a column was added does not have it, and
+	// `CREATE TABLE IF NOT EXISTS` will not put it there: each column that has
+	// ever been added to a standing table is added here, with the error for a
+	// column that is already there treated as the success it means. Unlike the
+	// version's own clearing this keeps what the file holds — a new column is
+	// a new fact about the same runs, not a new shape of run.
+	for _, added := range [][2]string{
+		{"label", "TEXT NOT NULL DEFAULT ''"},
+		{"message_id", "INTEGER NOT NULL DEFAULT 0"},
+	} {
+		if _, err := db.Exec(fmt.Sprintf("ALTER TABLE recordings ADD COLUMN %s %s", added[0], added[1])); err != nil {
+			if !strings.Contains(err.Error(), "duplicate column name") {
+				db.Close()
+				return nil, fmt.Errorf("bring %s up to the schema: %w", path, err)
+			}
+		}
+	}
 	// A file written by an older shape of this server holds runs of a codec this
 	// build refuses to play, and is emptied out once — the version in the file
 	// itself says whether that has happened, and a file that says so is left
@@ -344,9 +384,9 @@ func (s *Store) SaveRecording(r Recording, tape string) (Recording, error) {
 		r.EndedMs = r.UploadedMs
 	}
 	_, err := s.db.Exec(`
-		INSERT INTO recordings (id, name, author_id, steps, step_ms, seed, bytes, recorded_ms, uploaded_ms, tape, head, live, ended_ms)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', 0, ?)`,
-		r.ID, r.Name, r.AuthorID, r.Steps, r.StepMs, r.Seed, r.Bytes, r.RecordedMs, r.UploadedMs, tape, r.EndedMs)
+		INSERT INTO recordings (id, name, author_id, steps, step_ms, seed, bytes, recorded_ms, uploaded_ms, tape, head, live, ended_ms, label, message_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', 0, ?, ?, ?)`,
+		r.ID, r.Name, r.AuthorID, r.Steps, r.StepMs, r.Seed, r.Bytes, r.RecordedMs, r.UploadedMs, tape, r.EndedMs, r.Label, r.MessageID)
 	if err != nil {
 		return Recording{}, fmt.Errorf("save recording %s: %w", r.ID, err)
 	}
@@ -375,6 +415,61 @@ func (s *Store) Recordings(now int64) ([]Recording, error) {
 		list = append(list, r)
 	}
 	return list, rows.Err()
+}
+
+// RecordingsByID is the rows of exactly these runs, in the order asked for and
+// without the ones this server does not hold: what the chat asks with — its
+// window shows lines that link runs, and what those lines say is the runs' own
+// labels, which are the runs' business rather than the log's. A list of ids is
+// a list of things a reader is already looking at, so a run that is not there
+// is simply absent from the answer rather than an error in it.
+func (s *Store) RecordingsByID(ids []string, now int64) ([]Recording, error) {
+	list := make([]Recording, 0, len(ids))
+	for _, id := range ids {
+		r, err := readRecording(s.db, id, now)
+		if errors.Is(err, ErrNotFound) {
+			continue
+		}
+		if err != nil {
+			return nil, fmt.Errorf("recordings by id: %w", err)
+		}
+		list = append(list, r)
+	}
+	return list, nil
+}
+
+// SetChat says the run's own things about its line in the chat: which line is
+// the run's (`MessageID`), and what that line says as the play goes on
+// (`Label`) — either may be left alone, and both together are the one call a
+// page makes when its run begins, the line after it having just been written.
+//
+// Only the run's own player may say them: the line is what the log will draw
+// for the run, and a label anybody could rewrite is a chat anybody could speak
+// in somebody else's name. The caller is the author the token was answered
+// for, and the wrong one is `ErrForbidden` rather than a quiet success.
+func (s *Store) SetChat(id string, author int64, message *int64, label *string, now int64) (Recording, error) {
+	var whose int64
+	err := s.db.QueryRow(`SELECT author_id FROM recordings WHERE id = ?`, id).Scan(&whose)
+	if errors.Is(err, sql.ErrNoRows) {
+		return Recording{}, fmt.Errorf("recording %s: %w", id, ErrNotFound)
+	}
+	if err != nil {
+		return Recording{}, fmt.Errorf("recording %s: %w", id, err)
+	}
+	if whose != author {
+		return Recording{}, fmt.Errorf("recording %s: %w", id, ErrForbidden)
+	}
+	if message != nil {
+		if _, err := s.db.Exec(`UPDATE recordings SET message_id = ? WHERE id = ?`, *message, id); err != nil {
+			return Recording{}, fmt.Errorf("recording %s: %w", id, err)
+		}
+	}
+	if label != nil {
+		if _, err := s.db.Exec(`UPDATE recordings SET label = ? WHERE id = ?`, *label, id); err != nil {
+			return Recording{}, fmt.Errorf("recording %s: %w", id, err)
+		}
+	}
+	return readRecording(s.db, id, now)
 }
 
 // Chunk is one slice of a live run: the steps it covers, and what was written
@@ -433,7 +528,7 @@ const liveGraceMs = 2 * 60 * 1000
 // row joined in (`users`), which is what keeps a run's byline as current as the
 // site's own word for its player.
 const recordingColumns = `r.id, r.name, COALESCE(u.nick, ''), r.steps, r.step_ms, r.seed, r.bytes,
-	r.recorded_ms, r.uploaded_ms, r.live, r.ended_ms`
+	r.recorded_ms, r.uploaded_ms, r.live, r.ended_ms, r.label, r.message_id`
 
 // rower is what reading one row needs of a database, or of a transaction inside
 // one: both answer `QueryRow`, so `readRecording` serves either.
@@ -457,7 +552,7 @@ func scanRecording(scan func(...any) error, now int64) (Recording, error) {
 		live bool
 	)
 	if err := scan(&r.ID, &r.Name, &r.Author, &r.Steps, &r.StepMs, &r.Seed, &r.Bytes,
-		&r.RecordedMs, &r.UploadedMs, &live, &r.EndedMs); err != nil {
+		&r.RecordedMs, &r.UploadedMs, &live, &r.EndedMs, &r.Label, &r.MessageID); err != nil {
 		return Recording{}, err
 	}
 	r.Live = playing(live, r.EndedMs, now)
@@ -614,8 +709,8 @@ func trimArray(text string) string {
 func (s *Store) OpenRecording(r Recording, head string, now int64) (Recording, error) {
 	r.Steps, r.Bytes, r.Live, r.EndedMs = 0, len(head), true, now
 	_, err := s.db.Exec(`
-		INSERT INTO recordings (id, name, author_id, steps, step_ms, seed, bytes, recorded_ms, uploaded_ms, tape, head, live, ended_ms)
-		VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?, '', ?, 1, ?)`,
+		INSERT INTO recordings (id, name, author_id, steps, step_ms, seed, bytes, recorded_ms, uploaded_ms, tape, head, live, ended_ms, label, message_id)
+		VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?, '', ?, 1, ?, '', 0)`,
 		r.ID, r.Name, r.AuthorID, r.StepMs, r.Seed, r.Bytes, r.RecordedMs, r.UploadedMs, head, now)
 	if err != nil {
 		return Recording{}, fmt.Errorf("open recording %s: %w", r.ID, err)

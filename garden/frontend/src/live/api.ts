@@ -129,6 +129,14 @@ export interface LiveWire {
    * has just arrived asks for.
    */
   stream(id: string, after: number): Promise<LiveStream>;
+  /**
+   * The run's own word in the chat: which line of the log is the run's, and what that line says. A page
+   * writes both at once, the moment its run begins — the line having just been posted with a link to the
+   * run in it — and rewrites the words as the play goes on, so the link says what the run is doing rather
+   * than what it did. Either half may be left alone; the server takes the words from the run's own player
+   * and nobody else (`ErrForbidden` in `backend/internal/store`).
+   */
+  chat(id: string, note: { message?: number; label?: string }): Promise<void>;
 }
 
 /**
@@ -203,6 +211,14 @@ export function liveApi(base: string = apiBase(), take: typeof fetch = fetch, to
           edits: one.edits,
         })),
       };
+    },
+
+    async chat(id, note) {
+      await ask(`/recordings/${encodeURIComponent(id)}/chat`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(note),
+      });
     },
   };
 }

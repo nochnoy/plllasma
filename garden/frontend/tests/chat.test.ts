@@ -14,8 +14,7 @@ import {
   type Place,
   type Speaker,
 } from '../src/chat/messages';
-import { LIVE, runLength, runReading, type Run } from '../src/chat/runs';
-import { TAPE_STEP_MS } from '../src/game/tape';
+import { labelWords, linkedRuns, RUN_WORD } from '../src/chat/messages';
 
 /**
  * The chat's own rules — as opposed to its wire (`chat-api.test.ts`) and to what it keeps between two
@@ -163,45 +162,34 @@ describe('the face a message wears', () => {
   });
 });
 
-describe('the reading a row of the runs wears', () => {
-  /** A run with nothing in it but what a reading is made of: a length, and whether it is still going. */
-  function recorded(steps: number, live = false): Run {
-    return { id: 'run-1', name: 'второй прогон', author: 'Марго', steps, stepMs: TAPE_STEP_MS, live };
+describe('the words a run\'s link wears', () => {
+  it('are the label\'s own, with the last word as the link', () => {
+    // «Начал игру» links its игру and «Сделал перешпагат» its перешпагат: the noun rather than the verb
+    // that merely reports it, so the link is the thing rather than the telling of it.
+    expect(labelWords('Начал игру')).toEqual({ said: 'Начал ', word: 'игру' });
+    expect(labelWords('Сделал перешпагат')).toEqual({ said: 'Сделал ', word: 'перешпагат' });
+  });
+
+  it('are one word whole when the label is one word, and never empty', () => {
+    expect(labelWords('Стрим')).toEqual({ said: '', word: 'Стрим' });
+    // A run whose row has not arrived — or whose label was never said — still reads as the thing it is:
+    // the word the first label made the link of.
+    expect(labelWords('')).toEqual({ said: '', word: RUN_WORD });
+    expect(labelWords('  ')).toEqual({ said: '', word: RUN_WORD });
+  });
+});
+
+describe('the runs the chat is interested in', () => {
+  const AT_THE_LOBBY: Place = { tape: LOBBY, step: 0 };
+
+  /** A line with a run's link in it, carrying nothing else. */
+  function linked(id: string, nick = 'Марго'): ChatMessage {
+    return { ...playerMessage('ничего', MARAT, AT_THE_LOBBY, false), nick, parts: [{ kind: 'run', run: id }] };
   }
 
-  it('is the run\'s own length as a clock, to a tenth of a second', () => {
-    expect(runLength(recorded(250))).toBe('0:05.0');
-    expect(runLength(recorded(3))).toBe('0:00.1');
-    expect(runLength(recorded(0))).toBe('0:00.0');
-  });
-
-  it('fills the seconds out to two digits, so that a column of runs reads as one', () => {
-    expect(runLength(recorded(1))).toBe('0:00.0');
-    expect(runLength(recorded(75))).toBe('0:01.5');
-    expect(runLength(recorded(2995))).toBe('0:59.9');
-  });
-
-  it('counts in minutes once a run is longer than one, with no sixtieth second', () => {
-    // The tenth it is rounded to before it is split is what keeps a run a hair under a minute from reading
-    // `0:60.0`: the reading is a clock rather than a number of seconds.
-    expect(runLength(recorded(2999))).toBe('1:00.0');
-    expect(runLength(recorded(3000))).toBe('1:00.0');
-    expect(runLength(recorded(3120))).toBe('1:02.4');
-    expect(runLength(recorded(9000))).toBe('3:00.0');
-  });
-
-  it('is the run\'s own steps at its own step length, not this build\'s', () => {
-    // The step comes off the run the server described (`step_ms`, which is `store.Recording.StepMs`): a
-    // tape counted in another step is still a length, and this is arithmetic rather than a lookup of what
-    // this build happens to write its own tapes in (`TAPE_STEP_MS`).
-    expect(runLength({ ...recorded(100), stepMs: 10 })).toBe('0:01.0');
-    expect(runLength({ ...recorded(100), stepMs: 40 })).toBe('0:04.0');
-  });
-
-  it('is the word for a run still being played, not a length that is still growing', () => {
-    // The one reading on the list that is not a clock: a live run's own length would be out of date before
-    // it was read, so the row says what the server said about it (`live`, `LIVE`) instead.
-    expect(runReading(recorded(250, true))).toBe(LIVE);
-    expect(runReading(recorded(250))).toBe(runLength(recorded(250)));
+  it('are the ones its lines link, each once, in the order they were first met', () => {
+    const lines = [linked('b'), playerMessage('просто слова', MARAT, AT_THE_LOBBY, false), linked('a'), linked('b')];
+    expect(linkedRuns(lines)).toEqual(['b', 'a']);
+    expect(linkedRuns([])).toEqual([]);
   });
 });

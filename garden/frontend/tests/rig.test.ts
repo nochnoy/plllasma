@@ -4,6 +4,7 @@ import { AngledConstraint } from '../src/game/vm/constraint';
 import { Extractor, SKIN_TABLE } from '../src/game/vm/extractor';
 import { PEngine2D } from '../src/game/vm/engine';
 import { Particle2D } from '../src/game/vm/particle';
+import { World } from '../src/game/world';
 
 /**
  * The movie's own stage, which is also the size of its physics world. The port's room is larger —
@@ -276,5 +277,65 @@ describe('engine', () => {
     const da = Math.atan2(p2.y - p1.y, p2.x - p1.x) - Math.atan2(p3.y - p2.y, p3.x - p2.x);
     const inRange = da > c.minang && da < c.maxang;
     expect(inRange).toBe(false);
+  });
+});
+
+describe('the angle her thighs make', () => {
+  /** A doll stood on the stage, with her joints where a test put them rather than where a step left them. */
+  function posed() {
+    const world = new World();
+    const doll = world.addDoll({ x: 0, y: 0 });
+    if (!doll) throw new Error('the rig could not be built');
+    return doll;
+  }
+
+  it('is measured off her pelvis and knees, as the joints are drawn', () => {
+    const doll = posed();
+    const pants = doll.joint('pants');
+    const knee1 = doll.joint('knee1');
+    const knee2 = doll.joint('knee2');
+    if (!pants || !knee1 || !knee2) throw new Error('the rig is missing a leg');
+
+    // Straight down together: no angle between her thighs at all.
+    pants.x = 0;
+    pants.y = 0;
+    knee1.x = 0;
+    knee1.y = 90;
+    knee2.x = 0;
+    knee2.y = 90;
+    expect(doll.thighAngle()).toBe(0);
+
+    // Apart, symmetric: half of a full split each way, which is what the reading says.
+    knee1.x = -90;
+    knee1.y = 0;
+    knee2.x = 90;
+    knee2.y = 0;
+    expect(doll.thighAngle()).toBe(180);
+
+    // However she is turned: the angle is between the thighs themselves, not against the world, so a
+    // thigh pointing along and one pointing across read as the quarter turn apart that they are.
+    knee1.x = 90;
+    knee1.y = 90;
+    knee2.x = 180;
+    knee2.y = 0;
+    expect(doll.thighAngle()).toBe(45);
+  });
+
+  it('is the number the run\u2019s own line is told about, past a split and once per run', () => {
+    // The wiring itself is the page\u2019s (`useLiveRun`), and what is checked here is the number it is
+    // given: 150 of the 180 a full split takes is a pose nobody lands in by falling.
+    const doll = posed();
+    const pants = doll.joint('pants');
+    const knee1 = doll.joint('knee1');
+    const knee2 = doll.joint('knee2');
+    if (!pants || !knee1 || !knee2) throw new Error('the rig is missing a leg');
+    pants.x = 0;
+    pants.y = 0;
+    const half = ((150 / 2) / 180) * Math.PI;
+    knee1.x = -Math.sin(half) * 90;
+    knee1.y = Math.cos(half) * 90;
+    knee2.x = Math.sin(half) * 90;
+    knee2.y = Math.cos(half) * 90;
+    expect(doll.thighAngle()).toBeCloseTo(150, 6);
   });
 });

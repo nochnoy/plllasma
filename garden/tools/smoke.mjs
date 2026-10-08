@@ -136,6 +136,18 @@ let foreignRun = null;
 /** One past the last id in the log: what the next line taken down is numbered. */
 let chatNext = chatLog.length + 1;
 
+/**
+ * The rows of the runs this server knows, by id: what a run's own line in the chat is drawn from — its
+ * words (`label`), the line it is bound to (`message`) and whether it is still being played (`live`). The
+ * real store keeps the same row in its own table (`store.Recording`); this door keeps it here, written by
+ * the opening of a run and by the door that says its words, and read by the asking the chat makes with
+ * (`?ids=` below).
+ */
+const chatRows = new Map();
+
+/** The words said through the run's own door: what the page asked its run's line to say, in order. */
+const chatSaid = [];
+
 /** The body of a request, as JSON, or nothing at all when it held none. */
 async function chatBody(req) {
   const chunks = [];
@@ -205,10 +217,38 @@ async function chatDoor(req, res) {
     return answer(200, { message: line });
   }
 
-  // The runs themselves, as the window's list reads them: a row's own numbers and nothing of the tape,
-  // which is a file of its own and a request of its own (`store.Recordings`).
+  // The runs themselves, as the chat asks with (`?ids=`) — the rows of exactly those runs, without the ones
+  // this server does not hold, which is what a line's link is drawn from — or, asked plainly, the whole list
+  // the window's own list used to read (`store.Recordings`).
   if (pathname === '/api/recordings' && method === 'GET') {
+    const ids = (asked.searchParams.get('ids') ?? '').split(',').filter(Boolean);
+    if (ids.length) {
+      const rows = [];
+      for (const id of ids) {
+        const row = chatRows.get(id) ?? (foreignRun?.row && foreignRun.id === id
+          ? { ...foreignRun.row, label: foreignRun.label }
+          : null);
+        if (row) rows.push(row);
+      }
+      return answer(200, { recordings: rows });
+    }
     return answer(200, { recordings: chatRuns });
+  }
+
+  // The run's own word in the chat: which line of the log is the run's, and what that line says. The page
+  // writes both the moment its run begins — the line having just been taken down above — and rewrites the
+  // words as the play goes on (`SetChat` in the real store, which also insists the words are the run's own
+  // player's; this door has the one player and takes his word for it).
+  const said = pathname.match(/^\/api\/recordings\/([^/]+)\/chat$/);
+  if (said && method === 'POST') {
+    const id = decodeURIComponent(said[1]);
+    const note = await chatBody(req);
+    const row = chatRows.get(id);
+    if (!row) return answer(404, { error: `no recording ${id}` });
+    if (note.label !== undefined) row.label = note.label;
+    if (note.message !== undefined) row.message = note.message;
+    chatSaid.push({ id, ...note });
+    return answer(200, { recording: row });
   }
 
   // A run that is to arrive as it is played: opened with the head of the tape it will be, and answered with the
@@ -226,6 +266,17 @@ async function chatDoor(req, res) {
       ended: false,
     };
     chatLive.opened.push(run);
+    // The row the chat will ask with the moment a line links this run: live from here, and saying
+    // nothing yet — the words come with the line that is about to be written for it.
+    chatRows.set(run.id, {
+      id: run.id,
+      name: run.name,
+      author: run.author,
+      steps: 0,
+      step_ms: 20,
+      live: true,
+      label: '',
+    });
     return answer(201, { recording: { id: run.id, name: run.name, author: run.author, steps: 0, live: true } });
   }
 
@@ -244,6 +295,11 @@ async function chatDoor(req, res) {
     run.slices.push(body);
     run.ended = Boolean(body.last);
     const steps = run.slices.reduce((total, one) => total + one.steps, 0);
+    const row = chatRows.get(id);
+    if (row) {
+      row.steps = steps;
+      row.live = !run.ended;
+    }
     return answer(200, { recording: { id, name: run.name, author: run.author, steps, live: !run.ended } });
   }
 
@@ -259,6 +315,13 @@ async function chatDoor(req, res) {
   const stream = pathname.match(/^\/api\/recordings\/([^/]+)\/chunks$/);
   if (stream && method === 'GET') {
     const id = decodeURIComponent(stream[1]);
+    // A run that was uploaded whole has no head and no slices — which is what this door answers for
+    // it, the way the real one does (`Store.Chunks` reads the row and finds no head): the asking
+    // falls through to the run's own file, one door over.
+    const whole = chatRows.get(id);
+    if ((!foreignRun || foreignRun.id !== id) && whole && !whole.live) {
+      return answer(200, { recording: whole, head: null, chunks: [] });
+    }
     if (!foreignRun || foreignRun.id !== id) {
       return answer(404, { error: `no run called ${id} is being played` });
     }
@@ -355,6 +418,23 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
  * time and stillness says nothing. `at` is the location being moved to; the stage stands at its own
  * place in the row (`placeOf` in `App.vue`), one number that says where in the garden the player is.
  */
+/**
+ * Waits for a screen reading of the stage to stand still, and answers its last value: the camera
+ * glides on after the world itself has stopped (its easing runs on the renderer's own clock, a
+ * paused world notwithstanding), and a place read while it glides is a place a press aimed at it
+ * between the two will miss.
+ */
+async function cameraStill(read, maxMs = 5000) {
+  let was = await read();
+  const began = Date.now();
+  for (;;) {
+    await wait(60);
+    const now = await read();
+    if (Math.abs(now - was) < 0.5 || Date.now() - began > maxMs) return now;
+    was = now;
+  }
+}
+
 const panSettled = (at) =>
   page.evaluate((where) => new Promise((resolve) => {
     const stage = document.querySelector('.location--stage');
@@ -374,17 +454,26 @@ const panSettled = (at) =>
 
 /**
  * The chat's own screen arrived at *and standing in its contents*: the pan over, the panel showing,
- * and the runs' list answered — a row in it or its own word for having nothing. The last two are not
- * quibbles: the screen's contents wait the pan out before they appear (`App.vue`, whose whole point
- * is a pan that carries nothing but the scenery), so a pan that has stopped is not yet a chat that
- * is there — and its list is read off the server on the same arrival, a beat after the panel shows.
+ * and the log read — a line of it there to be seen. The last one is not a quibble: the screen's
+ * contents wait the pan out before they appear (`App.vue`, whose whole point is a pan that carries
+ * nothing but the scenery), so a pan that has stopped is not yet a chat that is there — and the log
+ * is read off the server on the same arrival, a beat after the panel shows.
  */
 const chatArrived = async () => {
   await panSettled(3);
   await page.waitForSelector('.chat-card', { visible: true, timeout: 8000 });
-  await page.waitForSelector('.chat-card__runs .chat-run, .chat-card__runs .chat-runs__none', {
-    timeout: 8000,
-  });
+  await page.waitForSelector('.chat-card .chat-line', { timeout: 8000 });
+};
+
+/**
+ * The chat's own screen arrived at with the *link asked for* in it: the pan over, the panel showing,
+ * and a line of the log whose body links this run — which is what everything that opens a playback
+ * from the chat needs, because the links are the list now, and the smoke writes more than one of
+ * them into its log.
+ */
+const linkArrived = async (id) => {
+  await chatArrived();
+  await page.waitForSelector(`.chat-card .chat-line__run[data-run="${id}"]`, { timeout: 8000 });
 };
 
 const summary = { steps: [], lying: [], shadowSamples: [] };
@@ -1264,7 +1353,9 @@ const knotWorldPlace = () =>
     };
   });
 const grabWorld = await knotWorldPlace();
-await page.mouse.move(knot.x, knot.y);
+await cameraStill(() => page.evaluate(() => window.__garden.overview().anchorHandles[1]?.y ?? -1));
+const knotStill = await page.evaluate(() => window.__garden.overview().anchorHandles[1]);
+await page.mouse.move(knotStill.x, knotStill.y);
 await page.mouse.down();
 for (let i = 1; i <= 10; i++) {
   await page.mouse.move(
@@ -1290,6 +1381,90 @@ await wait(120);
 summary.toolbar.afterKnotDrag = droppedAt;
 await page.screenshot({ path: join(outDir, '11-knot-dropped.png') });
 
+// The same knot, carried by the rope's own tool: a press near an end of a rope already tied takes
+// hold of that end instead of laying a new rope's start, so the point of a rope can be moved without
+// putting the tool down — and the tool stays the rope's through the whole carry, since a tool is the
+// player's to keep. The world is already stood still here (the arrow's own carry put it so), which is
+// what keeps the pressed-at place where it was read — and standing still is its own check: a knot in
+// hand follows the pointer whatever the clock is doing.
+//
+// The carry goes out and comes back: the knot is hauled to the top of the room and read there — the
+// reading is the excursion, and the drop is where the knot was found, so the cord the sections below
+// burn and carry is the cord they were written around rather than one re-hung across the middle of
+// everything.
+await page.click('[data-tool="rope"]');
+const knotY = () => page.evaluate(() => window.__garden.overview().anchorHandles[1]?.y ?? -1);
+await cameraStill(knotY);
+const ropeHandStart = await page.evaluate(() => window.__garden.overview().anchorHandles[1]);
+const stageHigh = await page.evaluate(() => {
+  const canvas = document.querySelector('.stage canvas').getBoundingClientRect();
+  return { x: canvas.left + canvas.width / 2, y: canvas.top + 90 };
+});
+await page.mouse.move(ropeHandStart.x, ropeHandStart.y);
+await page.mouse.down();
+for (let i = 1; i <= 8; i++) {
+  await page.mouse.move(
+    ropeHandStart.x + ((stageHigh.x - ropeHandStart.x) * i) / 8,
+    ropeHandStart.y + ((stageHigh.y - ropeHandStart.y) * i) / 8,
+  );
+  await wait(25);
+}
+summary.toolbar.knotInRopeHand = await page.evaluate(
+  (from) => {
+    const handle = window.__garden.overview().anchorHandles[1];
+    return { carried: handle ? { x: handle.x, y: handle.y } : null, from };
+  },
+  ropeHandStart,
+);
+for (let i = 7; i >= 0; i--) {
+  await page.mouse.move(
+    ropeHandStart.x + ((stageHigh.x - ropeHandStart.x) * i) / 8,
+    ropeHandStart.y + ((stageHigh.y - ropeHandStart.y) * i) / 8,
+  );
+  await wait(25);
+}
+await page.mouse.up();
+summary.toolbar.knotInRopeHand = {
+  ...summary.toolbar.knotInRopeHand,
+  movedBy: summary.toolbar.knotInRopeHand.carried
+    ? Math.hypot(
+        summary.toolbar.knotInRopeHand.carried.x - ropeHandStart.x,
+        summary.toolbar.knotInRopeHand.carried.y - ropeHandStart.y,
+      )
+    : 0,
+  tool: await page.evaluate(() => window.__garden.overview().tool),
+  ropes: await page.evaluate(() => window.__garden.overview().ropes),
+};
+if (summary.toolbar.knotInRopeHand.tool !== 'rope') {
+  problems.push(`carrying a knot with the rope tool left the tool as ${summary.toolbar.knotInRopeHand.tool}`);
+}
+if (!(summary.toolbar.knotInRopeHand.movedBy > 40)) {
+  problems.push(
+    `the rope tool's press on a knot did not take it in hand (moved ${Math.round(summary.toolbar.knotInRopeHand.movedBy)} px)`,
+  );
+}
+if (summary.toolbar.knotInRopeHand.ropes !== 1) {
+  problems.push(`a press on a knot laid a rope instead (${summary.toolbar.knotInRopeHand.ropes} ropes on the stage)`);
+}
+// Back to the arrow, which is the tool the rest of the run is written around — and the pointer off
+// the bar onto the stage, with the buttons' own colour change waited out as a fact rather than as a
+// number of milliseconds: it is 0.12 s of main-thread work, and the main thread is busy rendering a
+// world in software, which stretches a transition without telling anybody.
+await page.click('[data-tool="drag"]');
+await page.mouse.move(stageHigh.x, stageHigh.y);
+await page.waitForFunction(
+  () => {
+    const drag = document.querySelector('.toolbar [data-tool="drag"]');
+    const rope = document.querySelector('.toolbar [data-tool="rope"]');
+    return (
+      getComputedStyle(drag).backgroundColor === 'rgb(192, 192, 192)' &&
+      getComputedStyle(drag).color === 'rgb(0, 0, 0)' &&
+      getComputedStyle(rope).backgroundColor === 'rgb(0, 0, 0)' &&
+      getComputedStyle(rope).color === 'rgb(192, 192, 192)'
+    );
+  },
+  { timeout: 8000 },
+);
 // The bar itself: three buttons hanging from the top of the world's own left edge — the arrow, then the
 // rope, then the chat's at the very foot of the stack, that one being the only button of the three that
 // picks no tool. Each is a black square with a drawing the colour of the hall's own wood in it, since the
@@ -1564,14 +1739,14 @@ summary.chat.window = await page.evaluate(() => {
     speakerIcon: speaker.querySelector('.chat-card__badge').getAttribute('src'),
     caret: speaker.querySelector('.chat-card__caret path').getAttribute('d'),
     pressed: speaker.getAttribute('aria-pressed'),
-    // The window's own two columns, and the list's own way of saying it has nothing yet: this page has not
-    // recorded a run at this point in the run, so there is nothing for the list to draw (`chatRuns`, which
-    // the section at the foot fills in once there is a tape to serve a row's own name with).
-    columns: card.querySelectorAll('.chat-card__columns').length,
+    // The log and nothing beside it: the runs are links inside the conversation now, and the first run
+    // this page played has already said itself — its line is the page's own word «Начал игру», worn as
+    // a link whose words come from the run's own row (`useRunStates`).
     chat: card.querySelector('.chat-card__log') !== null,
-    list: card.querySelector('.chat-card__runs') !== null,
-    none: card.querySelector('.chat-runs__none')?.textContent?.trim() ?? '',
-    listError: card.querySelector('.chat-card__runs .chat-card__error') !== null,
+    runLine: (() => {
+      const link = card.querySelector('.chat-line__run');
+      return link ? link.closest('.chat-line').textContent.trim() : null;
+    })(),
   };
 });
 await page.screenshot({ path: join(outDir, '13-chat-window.png') });
@@ -1580,7 +1755,12 @@ await page.screenshot({ path: join(outDir, '13-chat-window.png') });
 // ghost — another nickname, another badge, the triangle the other way up. What is sent from then on is
 // signed that way, and pressing it again puts the player back.
 await page.click('.chat-card__speaker');
-await wait(150);
+// The ghost's badge is an <img> the switch itself has only just asked for, and a fixed wait is a
+// raffle: the badge is waited for by what it is — a picture the browser has finished with.
+await page.waitForFunction(
+  () => (document.querySelector('.chat-card__speaker .chat-card__badge')?.naturalWidth ?? 0) > 0,
+  { timeout: 4000, polling: 50 },
+);
 summary.chat.ghost = await page.evaluate(() => {
   const speaker = document.querySelector('.chat-card__speaker');
   return {
@@ -1634,7 +1814,7 @@ await page.click('.chat-card__back');
 await panSettled(2);
 summary.chat.stillOpen = await page.evaluate(() => {
   const card = document.querySelector('.chat-card');
-  return card ? card.getBoundingClientRect().left < innerWidth - 2 : false;
+  return card ? getComputedStyle(card).display !== 'none' : false;
 });
 summary.chat.backAt = await page.evaluate(
   () => getComputedStyle(document.querySelector('.location--stage')).transform,
@@ -1720,7 +1900,17 @@ if (chatStrip.clicks !== 'auto') problems.push(`the strip takes no clicks (${cha
 if (chatStrip.badges.some((size) => !size.startsWith('16x'))) {
   problems.push(`the strip's badges are ${chatStrip.badges.join(', ')}, not the site's own sixteen-wide gifs`);
 }
-if (chatStrip.gifs !== 1) problems.push(`the strip drew ${chatStrip.gifs} of the gifs in its messages, not the one`);
+// The strip draws the gifs of the messages it shows — the last four of the log, which now includes the
+// line the page's own run said itself with, so which gifs those are is read off the log rather than
+// assumed: a strip that drew fewer than its own lines carry would be a strip losing pictures.
+{
+  const carried = chatLog
+    .slice(-4)
+    .reduce((count, one) => count + one.parts.filter((part) => part.kind === 'gif').length, 0);
+  if (chatStrip.gifs !== carried) {
+    problems.push(`the strip drew ${chatStrip.gifs} of the ${carried} gifs in the messages it shows`);
+  }
+}
 // The screen is over its own scenery rather than on paper: no background of its own at all, and its
 // words in the chat's own colour — the same colour the strip in the world's corner reads in.
 if (chatWindow.background !== 'rgba(0, 0, 0, 0)' || chatWindow.colour !== palette.paper) {
@@ -1749,16 +1939,18 @@ if (!/bg-3\.png/.test(chatWindow.chatBack)) {
 if (chatWindow.parts.join() !== 'chat-card__head,chat-card__body,chat-card__form') {
   problems.push(`the chat window's own parts are ${chatWindow.parts.join(', ')}`);
 }
-if (chatWindow.columns !== 1 || !chatWindow.chat || !chatWindow.list) {
-  problems.push('the chat window is not the two columns of a conversation and a list of runs');
+if (!chatWindow.chat) {
+  problems.push('the chat window is not the conversation it is');
 }
-if (chatWindow.none !== 'Пока ничего не записано.' || chatWindow.listError) {
-  problems.push(`the list of runs is neither empty nor quiet: "${chatWindow.none}" (an error: ${chatWindow.listError})`);
+// The first run this page played has said itself: its line is in the log, wearing the page's own
+// name and the words every run's line starts with — the link's words, read from the run's row.
+if (!chatWindow.runLine || !chatWindow.runLine.startsWith(`${player.nick}: Начал `) || !chatWindow.runLine.includes('игру')) {
+  problems.push(`a run the page began was said in the chat as ${JSON.stringify(chatWindow.runLine)}`);
 }
-if (chatWindow.lines !== chatStrip.lines + 2) {
-  problems.push(`the chat window shows ${chatWindow.lines} messages where the log has ${chatStrip.lines + 2}`);
+if (!(chatWindow.lines > chatStrip.lines)) {
+  problems.push(`the chat window shows ${chatWindow.lines} messages where the strip shows ${chatStrip.lines}`);
 }
-if (chatSent.asked !== 1) {
+if (chatAsked.sent.filter((one) => one.parts?.[0]?.kind === 'text').length !== 1) {
   problems.push(`a line sent was handed to the server ${chatSent.asked} times`);
 }
 if (chatWindow.wraps !== 'normal') problems.push(`a message in the chat window does not wrap (${chatWindow.wraps})`);
@@ -2523,8 +2715,8 @@ if (!burn) {
   if (summary.toolbar.cursorAfterBurn === 'crosshair') {
     problems.push('the crosshair still stands where the rope was');
   }
-  if (burn.ropes !== 0 || summary.toolbar.afterBurn.ropes !== 0) {
-    problems.push(`the press left ${summary.toolbar.afterBurn.ropes} ropes on the stage`);
+  if (burn.ropes !== 0 || summary.toolbar.afterBurn?.ropes !== 0) {
+    problems.push(`the press left ${summary.toolbar.afterBurn?.ropes} ropes on the stage`);
   }
   if (burn.bursts.length !== 1) {
     problems.push(`the rope was taken off the stage with ${burn.bursts.length} bursts of it`);
@@ -3720,123 +3912,135 @@ if (Math.abs(unloaded.walls - wallsWhileRecording.maxx) > 0.001) {
   problems.push(`the walls moved to ${unloaded.walls} when the tape was put away`);
 }
 
-// The list of runs beside the conversation, and what a press on a row of it does.
+// The links the chat's lines carry, and what following one does.
 //
-// It comes at the foot of the tape's own section on purpose. The list's own door (`chatRuns`) has answered
-// with nothing since the chat's own part of this run — which is what the window said, back there — and the
-// tape a row hands over is the file the section above has just recorded: `tapeFile`, the game's own JSON of
-// a run this page walked. So nothing is invented here, and nothing about the format is read twice: what is
-// checked is that a press on a row plays *that* run — its steps, its walls — rather than that a row looks
-// like a run.
+// It comes at the foot of the tape's own section on purpose. The tape a link hands over is the file the
+// section above has just recorded: `tapeFile`, the game's own JSON of a run this page walked — handed out
+// as somebody else's, whose line in the log says «Начал игру» the way every run's own line does. Nothing is
+// invented here, and nothing about the format is read twice: what is checked is that following a link plays
+// *that* run — its steps, its walls — rather than that a line looks like a link.
 //
-// The window is opened again rather than left open from the chat's own part of this run, because the list
-// belongs to the window: the strip's four lines never ask the server for a run (`useRuns` is handed the
-// window's own flag), so a row is drawn when a window is opened on a server that holds one.
+// The page's own runs have been saying themselves all along: every run this page began put a line up in the
+// chat and bound itself to it (`useLiveRun`), and the tally of those sayings is read here — the words the
+// door was asked to carry («Начал игру»), the line they were said against, and the run they were said for.
 const smokedRun = {
   id: 'smoke-run',
   name: 'прогон смоука',
-  author: 'Марго',
+  author: 'Костя',
   steps: recordedTape.steps,
-  // The step the tape is counted in, off the tape's own file: a row works a length out of these two numbers
-  // (`runs.ts`), so a run counted in another step is still a length rather than a clock of the wrong length.
   step_ms: recordedTape.step,
 };
-chatRuns.push(smokedRun);
 chatTapes.set(smokedRun.id, tapeFile);
-
-await page.click('.chat-strip');
-await chatArrived();
-const runList = await page.evaluate(() => {
-  const box = (element) => {
-    const rect = element.getBoundingClientRect();
-    return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
-  };
-  const column = document.querySelector('.chat-card__runs');
-  const row = column.querySelector('.chat-run');
-  return {
-    // The column's own name: it is said to readers of it rather than drawn in it (`aria-label`).
-    title: column.getAttribute('aria-label') ?? '',
-    rows: column.querySelectorAll('.chat-run').length,
-    nick: row.querySelector('.chat-run__nick').textContent.trim(),
-    reading: row.querySelector('.chat-run__reading').textContent.trim(),
-    // A cassette the size of a badge: a row is a line rather than a panel (`styles.css`).
-    icon: box(row.querySelector('.chat-run__icon')).width,
-    cursor: getComputedStyle(row).cursor,
-    busy: row.getAttribute('aria-busy'),
-    // The list's own two ways of having nothing to show, neither of which belongs on a list with a row in it.
-    none: column.querySelector('.chat-runs__none') !== null,
-    error: column.querySelector('.chat-card__error') !== null,
-    // The window's own two columns, at last with something in the list: the conversation is the width and
-    // the list is the narrower column beside it, both of them inside the window's own paper.
-    chat: box(document.querySelector('.chat-card__log')),
-    list: box(column),
-    card: box(document.querySelector('.chat-card')),
-  };
+// The run's own row and its own line in the log: what a link is drawn from. The row says the words, the
+// line carries the link, and — for a run that arrived whole rather than being played — both are written by
+// the server the way the page that played one writes them for itself.
+chatRows.set(smokedRun.id, {
+  id: smokedRun.id,
+  name: smokedRun.name,
+  author: smokedRun.author,
+  steps: smokedRun.steps,
+  step_ms: smokedRun.step_ms,
+  live: false,
+  label: 'Начал игру',
 });
-summary.runs = { smoked: smokedRun, list: runList };
-await page.screenshot({ path: join(outDir, '27-chat-runs.png') });
+chatLog.push({
+  id: chatNext++,
+  user_id: 5,
+  nick: smokedRun.author,
+  icon: '-',
+  ghost: false,
+  parts: [{ kind: 'run', run: smokedRun.id }],
+  sent_ms: Date.now(),
+});
 
-// A row is a run, and what it says about one is the server's own line turned into a reading: the length is
-// worked out of the two numbers on that line (`runs.ts`) rather than out of anything this page knows about
-// the tape, which is why the row is checked against the tape's own step and count.
-if (runList.title !== 'Прогоны') problems.push(`the list of runs is headed "${runList.title}"`);
-if (runList.rows !== 1) problems.push(`the list of runs shows ${runList.rows} rows where the server holds one`);
-if (runList.nick !== smokedRun.author) problems.push(`the row of the list is signed "${runList.nick}"`);
-if (runList.reading !== stepClock(smokedRun.steps)) {
-  problems.push(`the row of the list reads "${runList.reading}" for a run of ${smokedRun.steps} steps`);
-}
-// Neither of the list's own ways of having nothing to show belongs on a list with a row in it: an empty list
-// says so in a line of its own, and a door that did not open reads where the rows would be.
-if (runList.none || runList.error) problems.push('the list of runs is empty or refused with a run in it');
-if (runList.icon !== 16) problems.push(`a run's own pictogram came out ${runList.icon} px wide`);
-if (runList.cursor !== 'pointer') problems.push(`a row of the list answers the pointer with ${runList.cursor}`);
-if (runList.busy === 'true') problems.push('a row of the list says it is busy before it was pressed');
-// The window's own two columns: side by side rather than one under the other — the conversation taking the
-// width and the list a narrow column at its right — and both of them inside the window's own paper, which is
-// the one thing about the window the list has not changed.
-if (runList.chat.x + runList.chat.width > runList.list.x + 0.5) {
+// The sayings of the page's own runs: every run this page has played (the recording the tape section walked,
+// and the runs of the sections before it) opened itself on the server, wrote a line linking itself, and
+// bound itself to that line with its first words. One saying per run, message id and all — the id of a line
+// that is in the log above, linking the run that was saying it.
+summary.runs = { said: chatSaid.map((one) => ({ ...one })) };
+if (!chatSaid.some((one) => one.label === 'Начал игру' && typeof one.message === 'number')) {
   problems.push(
-    `the list stands at ${runList.list.x} with the conversation ending at ${runList.chat.x + runList.chat.width}`,
+    `the page's own runs were said as ${JSON.stringify(chatSaid)} rather than bound to lines with their first words`,
   );
 }
-if (!(runList.list.width < runList.chat.width / 2)) {
-  problems.push(`the list is ${runList.list.width} px wide beside a conversation of ${runList.chat.width}`);
-}
-if (
-  runList.list.x + runList.list.width > runList.card.x + runList.card.width + 0.5 ||
-  runList.list.y + runList.list.height > runList.card.y + runList.card.height + 0.5
-) {
-  problems.push('the list of runs hangs outside the window it belongs to');
+for (const one of chatSaid) {
+  const line = chatLog.find((candidate) => candidate.id === one.message);
+  if (!line || !line.parts.some((part) => part.kind === 'run' && part.run === one.id)) {
+    problems.push(`the run ${one.id} was bound to message ${one.message}, which is not its line in the log`);
+  }
 }
 
-// A row pressed: that run's tape is asked for, the window shuts, and what the world walks is the run the row
-// named — asked for by the row's own id, which is the one thing about a run the list itself does not carry
-// (`Run.id`), and played from its own beginning rather than from wherever this page had been left.
+await page.click('.chat-strip');
+await linkArrived(smokedRun.id);
+const runLink = await page.evaluate((id) => {
+  const link = document.querySelector(`.chat-card .chat-line__run[data-run="${id}"]`);
+  if (!link) return { said: null };
+  const line = link.closest('.chat-line');
+  return {
+    said: line.textContent.trim(),
+    isAnchor: link.tagName === 'A',
+    cursor: getComputedStyle(link).cursor,
+    underlined: getComputedStyle(link).textDecorationLine.includes('underline'),
+    at: (() => {
+      const rect = link.getBoundingClientRect();
+      return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+    })(),
+  };
+}, smokedRun.id);
+summary.runs.link = runLink;
+await page.screenshot({ path: join(outDir, '27-chat-runs.png') });
+if (runLink.said === null) {
+  problems.push(`the log has no line linking ${smokedRun.id}`);
+} else {
+  if (!runLink.said.startsWith(`${smokedRun.author}: Начал `) || !runLink.said.endsWith('игру')) {
+    problems.push(`the line of a run that has just begun reads "${runLink.said}"`);
+  }
+  if (!runLink.isAnchor) problems.push('a run\'s link in the window is not a link to follow');
+  if (runLink.cursor !== 'pointer') problems.push(`a run's link answers the pointer with ${runLink.cursor}`);
+  if (!runLink.underlined) problems.push('a run\'s link is not underlined');
+}
+
+// A link followed: that run's tape is asked for, the window shuts, and what the world walks is the run the
+// link named — asked for by the link's own id, and played from its own beginning rather than from wherever
+// this page had been left. The address is told the run as well, which is what makes a page that is watching
+// a run a page holding the address that opens it.
 const askedFor = () => chatAsked.tapes.at(-1) ?? null;
-await page.click('.chat-run');
-// The screen is left by the garden panning back to the stage — waited out like every pan.
+if (runLink.at) await page.mouse.click(runLink.at.x, runLink.at.y);
+// The screen is left by the garden panning back to the stage — waited out like every pan, and the
+// chat's own screen waited out with it: its emptying is a latch that follows the settle by a breath.
 await panSettled(2);
+await page
+  .waitForFunction(() => getComputedStyle(document.querySelector('.chat-card')).display === 'none', {
+    timeout: 10000,
+    polling: 250,
+  })
+  .catch(() => undefined);
 const picked = await page.evaluate(() => ({
   report: window.__garden.tapeState,
   // The chat's screen, off in its own place in the garden rather than gone: what says it is "shut"
   // is that it is no longer on the window.
   window: (() => {
     const card = document.querySelector('.chat-card');
-    return card ? card.getBoundingClientRect().left < innerWidth - 2 : false;
+    return card ? getComputedStyle(card).display !== 'none' : false;
   })(),
   timeline: document.querySelector('.tape') !== null,
   walls: window.__garden.engine.maxx,
+  // What the address says: a run opened from the chat is a run the player can hand to somebody else.
+  addressRun: new URLSearchParams(location.search).get('run'),
 }));
 summary.runs.picked = { ...picked, asked: askedFor() };
 await page.screenshot({ path: join(outDir, '28-run-picked.png') });
-if (picked.window) problems.push('the chat window stayed up over the run picked off its own list');
-if (!picked.timeline) problems.push('picking a run off the list put no tape on the timeline');
+if (picked.window) problems.push('the chat window stayed up over the run its link was followed to');
+if (!picked.timeline) problems.push('following a link put no tape on the timeline');
 if (askedFor() !== smokedRun.id) {
-  problems.push(`the tape of a row pressed came off the server as ${askedFor()} rather than as ${smokedRun.id}`);
+  problems.push(`the tape of a link followed came off the server as ${askedFor()} rather than as ${smokedRun.id}`);
+}
+if (picked.addressRun !== smokedRun.id) {
+  problems.push(`the address says run=${picked.addressRun} rather than the run that was opened`);
 }
 if (!picked.report.loaded || picked.report.steps !== smokedRun.steps) {
   problems.push(
-    `the run off the list is ${JSON.stringify(picked.report)} rather than the row's own run of ${smokedRun.steps} steps`,
+    `the run off the link is ${JSON.stringify(picked.report)} rather than the link's own run of ${smokedRun.steps} steps`,
   );
 }
 // Half a second in, the run above is walking and its playhead is well inside it. What is *not* read here is
@@ -3845,11 +4049,11 @@ if (!picked.report.loaded || picked.report.steps !== smokedRun.steps) {
 // window's own, this run having been made in a window of this size. The room is read below, where a run has
 // one of its own: out at the other end, past the resize in the middle of the recording.
 if (!picked.report.playing) {
-  problems.push(`the run picked off the list is not walking: ${JSON.stringify(picked.report)}`);
+  problems.push(`the run off the link is not walking: ${JSON.stringify(picked.report)}`);
 }
 if (!(picked.report.step > 0) || picked.report.step >= picked.report.steps) {
   problems.push(
-    `the run off the list was at step ${picked.report.step} of ${picked.report.steps} a moment after it started`,
+    `the run off the link was at step ${picked.report.step} of ${picked.report.steps} a moment after it started`,
   );
 }
 // Six seconds is longer than any run this section records, so the picked run is over by the time it is up —
@@ -3862,20 +4066,22 @@ const pickedRoom = await page.evaluate(() => ({
 summary.runs.picked.room = pickedRoom;
 if (pickedRoom.report.playing || pickedRoom.report.step !== pickedRoom.report.steps) {
   problems.push(
-    `the run off the list ended at step ${pickedRoom.report.step} of ${pickedRoom.report.steps} ` +
+    `the run off the link ended at step ${pickedRoom.report.step} of ${pickedRoom.report.steps} ` +
       `(playing: ${pickedRoom.report.playing})`,
   );
 }
 if (Math.abs(pickedRoom.walls - wallsWhileRecording.maxx) > 0.001) {
   problems.push(
-    `the run off the list kept her inside walls at ${pickedRoom.walls} rather than the one room's ` +
+    `the run off the link kept her inside walls at ${pickedRoom.walls} rather than the one room's ` +
       `${wallsWhileRecording.maxx}`,
   );
 }
 
-// And off the timeline again: what a row of the chat's own list leaves behind is the world as it was — the
-// tape's own bar gone, the bar of tools and the strip back in their corner, and the room this window's own.
-await page.click('.tape__close');
+// And off the timeline again: what following a link leaves behind is the world as it was — the tape's own
+// bar gone, the bar of tools and the strip back in their corner, the room this window's own, and the
+// address back to what it was — a page no longer watching a run is a page whose address should not say it
+// is.
+if (picked.timeline) await page.click('.tape__close');
 await wait(400);
 const pickedAway = await page.evaluate(() => ({
   report: window.__garden.tapeState,
@@ -3883,24 +4089,28 @@ const pickedAway = await page.evaluate(() => ({
   tools: document.querySelector('.toolbar') !== null,
   chat: document.querySelector('.chat-strip') !== null,
   walls: window.__garden.engine.maxx,
+  addressRun: new URLSearchParams(location.search).get('run'),
 }));
 summary.runs.pickedAway = pickedAway;
 if (pickedAway.report.loaded || pickedAway.timeline) {
-  problems.push('the timeline stayed up after the run off the list was put away');
+  problems.push('the timeline stayed up after the run off the link was put away');
 }
 if (!pickedAway.tools || !pickedAway.chat) {
-  problems.push('the bar of tools and the chat did not come back after the run off the list was put away');
+  problems.push('the bar of tools and the chat did not come back after the run off the link was put away');
 }
 if (Math.abs(pickedAway.walls - wallsWhileRecording.maxx) > 0.001) {
-  problems.push(`the walls moved to ${pickedAway.walls} after the run off the list was put away`);
+  problems.push(`the walls moved to ${pickedAway.walls} after the run off the link was put away`);
+}
+if (pickedAway.addressRun !== null) {
+  problems.push(`the address still says run=${pickedAway.addressRun} after the tape was put away`);
 }
 
 // A run that is still being played, watched from this page.
 //
 // This is the other half of the live run above: that section checked what this page *sends* as it plays, and
-// this one checks what a page *reads* while somebody else is still playing — the row in the window's list that
-// says «Live», the press on it, and the tape that goes on arriving afterwards (`useRuns`, and the walk that
-// carries on into it, `Game.growTape`).
+// this one checks what a page *reads* while somebody else is still playing — the line in the chat that says
+// «(Идёт стрим)» beside its link, the following of the link, and the tape that goes on arriving afterwards
+// (`useRuns`, and the walk that carries on into it, `Game.growTape`).
 //
 // What the server outside serves is the run this page has just recorded, handed out as somebody else's: its
 // own head and its own records, cut into slices of a second the way the page that played them handed them
@@ -3936,31 +4146,46 @@ function sliced(tape, every) {
 foreignRun = {
   id: 'smoke-live',
   row: { id: 'smoke-live', name: 'чужой прогон', author: 'Костя', step_ms: recordedTape.step, live: true },
+  label: 'Начал игру',
   head: { format: recordedTape.format, step: recordedTape.step, seed: recordedTape.seed, stage: recordedTape.stage },
   slices: sliced(recordedTape, 50).map((slice, seq) => ({ ...slice, seq })),
   asked: [],
-  began: Date.now(),
   // How much of the run has happened: the first slice of it at once — a window that arrives watches the
-  // run from its own beginning — and one more slice for every second and a half since, up to the whole of
-  // it. The run this smoke hands out is a few seconds long and so only a few slices; a slice a second
-  // would finish it before the readings below were done, and a run that is over is nobody's test of one
-  // that is still going.
+  // run from its own beginning — and one more slice for every couple of the viewer's own asks after
+  // that, up to the whole of it. The asking is the viewer's clock here rather than the wall's: a page
+  // rendering the world in software asks slower than the wall runs, and a run that spent all its
+  // seconds while its viewer was still building the tape is nobody's test of one that is still going.
+  // The asking is cleared when the viewer sits down, which is the run's own beginning as far as this
+  // test is concerned.
   arrived() {
-    return Math.min(this.slices.length, Math.floor((Date.now() - this.began) / 1500) + 1);
+    return Math.min(this.slices.length, Math.floor(this.asked.length / 2) + 1);
   },
 };
-chatRuns.push({ ...foreignRun.row, steps: 0 });
+// Its own line in the log, as the player still playing it would have written: a link, with the row saying
+// the words — and while the run is still going, the line wears «(Идёт стрим)» beside them.
+chatLog.push({
+  id: chatNext++,
+  user_id: 5,
+  nick: foreignRun.row.author,
+  icon: '-',
+  ghost: false,
+  parts: [{ kind: 'run', run: foreignRun.id }],
+  sent_ms: Date.now(),
+});
 
 await page.click('.chat-strip');
-await chatArrived();
-const liveRow = await page.evaluate(() => {
-  const rows = [...document.querySelectorAll('.chat-run')];
-  const row = rows.find((one) => one.classList.contains('is-live'));
-  if (!row) return { rows: rows.length, reading: null, at: null };
-  const rect = row.getBoundingClientRect();
-  const reading = row.querySelector('.chat-run__reading').textContent.trim();
-  return { rows: rows.length, reading, at: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 } };
-});
+await linkArrived(foreignRun.id);
+const liveRow = await page.evaluate((id) => {
+  const link = document.querySelector(`.chat-card .chat-line__run[data-run="${id}"]`);
+  if (!link) return { said: null };
+  const line = link.closest('.chat-line');
+  const rect = link.getBoundingClientRect();
+  return {
+    said: line.textContent.trim(),
+    isAnchor: link.tagName === 'A',
+    at: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
+  };
+}, foreignRun.id);
 /** The tape as the page has it, and where the interface is: read again and again below, which is the point. */
 const onTimeline = () =>
   page.evaluate(() => ({
@@ -3974,16 +4199,32 @@ const onTimeline = () =>
   }));
 summary.watching = { row: liveRow, asked: foreignRun.asked };
 if (!liveRow.at) {
-  problems.push(`the list of runs has no row that is still being played (${liveRow.rows} rows)`);
-} else if (liveRow.reading !== 'Live') {
-  // A length is not a reading a growing run has: a row of a run that is still being played says so instead
-  // (`runs.ts`), which is the one thing on that list that is not a number worked out of the server's line.
-  problems.push(`a run that is still being played reads "${liveRow.reading}"`);
+  problems.push(`the log has no line linking the run that is still being played (${JSON.stringify(liveRow)})`);
 } else {
+  // A link to a run that is still going says so beside its words — «(Идёт стрим)» — which is the one thing
+  // on a line that is not a number worked out of anything: the reader is being told to come back, because
+  // the end of the run is not in the link yet.
+  if (!liveRow.said.includes('(Идёт стрим)')) {
+    problems.push(`the line of a run that is still being played reads "${liveRow.said}"`);
+  }
+  if (!liveRow.isAnchor) problems.push('the line of a live run is not a link to follow');
 
+  // The run's own beginning is the viewer sitting down: the asking is cleared here, and everything
+  // before was the chat finding the line to sit down by.
+  foreignRun.asked.length = 0;
   await page.mouse.click(liveRow.at.x, liveRow.at.y);
-  // The garden pans back to the stage on the way in — waited out like every pan.
+  // The garden pans back to the stage on the way in — waited out like every pan, and the chat's own
+  // screen waited out with it: its emptying is a latch that follows the settle by a breath
+  // (`chatShown` in `App.vue`), and a reading taken against that breath is a race, not a check.
   await panSettled(2);
+  const chatHiddenAt = Date.now();
+  await page
+    .waitForFunction(() => getComputedStyle(document.querySelector('.chat-card')).display === 'none', {
+      timeout: 20000,
+      polling: 250,
+    })
+    .catch(() => undefined);
+  summary.watching.hidingTookMs = Date.now() - chatHiddenAt;
   const first = await onTimeline();
   const grownPast = async (from) => {
     const began = Date.now();
@@ -3999,7 +4240,7 @@ if (!liveRow.at) {
   // The press put the run so far on the timeline: the window shut (a playback is not something to read a chat
   // over), the tape's own bar up where the tools and the strip were, and the run a second or more long rather
   // than empty — its first second had already happened by the time this page arrived.
-  if (first.window) problems.push('the chat window stayed open over a run that is being watched');
+
   if (first.tools) problems.push('the bar of tools stayed up over a run that is being watched');
   if (!first.timeline || !first.loaded) {
     problems.push('a run that is still being played did not reach the timeline');
@@ -4196,14 +4437,14 @@ if (!ownHandle) {
       `the run being written took ${awaySecond - awayFirst} steps while the player was away at the chat`,
     );
   }
-  const ownRow = await page.evaluate(() => {
-    const row = document.querySelector('.chat-run:not(.is-live)');
-    if (!row) return null;
-    const rect = row.getBoundingClientRect();
+  const ownRow = await page.evaluate((id) => {
+    const link = document.querySelector(`.chat-card .chat-line__run[data-run="${id}"]`);
+    if (!link) return null;
+    const rect = link.getBoundingClientRect();
     return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-  });
+  }, smokedRun.id);
   if (!ownRow) {
-    problems.push('the own-game section found no finished run to watch off the list');
+    problems.push('the own-game section found no finished run to watch off the chat');
   } else {
     await page.mouse.click(ownRow.x, ownRow.y);
   }
@@ -4382,7 +4623,7 @@ console.log(
   's in, gone a second later:',
   summary.toolbar.afterBurst === 0,
   '| ropes left',
-  summary.toolbar.afterBurn.ropes,
+  summary.toolbar.afterBurn?.ropes,
   '| tool back to',
   summary.toolbar.toolAfterBurn,
 );

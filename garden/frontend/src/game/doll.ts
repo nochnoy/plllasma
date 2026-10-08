@@ -116,6 +116,24 @@ export class Doll {
   }
 
   /**
+   * The angle between her two thighs, in degrees, measured off the joints as they are drawn: near zero
+   * with her legs together, 180 in a full split. It is the number a rope and a determined hand move,
+   * and the number the run's own line in the chat is told about when it has been worked past a split
+   * (`Game.noteFeats`) — the same measurement the smoke test reads when it pulls her knees apart.
+   *
+   * Null when her rig is missing a leg, which no rig of ours is: a caller that cannot be told the
+   * angle is a caller that has nothing to say about it.
+   */
+  thighAngle(): number | null {
+    const legs = this.joints('pants', 'knee1', 'knee2');
+    if (!legs) return null;
+    const [pants, knee1, knee2] = legs;
+    const first = { x: knee1.x - pants.x, y: knee1.y - pants.y };
+    const second = { x: knee2.x - pants.x, y: knee2.y - pants.y };
+    return (Math.abs(Math.atan2(first.x * second.y - first.y * second.x, first.x * second.x + first.y * second.y)) * 180) / Math.PI;
+  }
+
+  /**
    * Several joints at once, in the order asked for, or null if the rig is missing any of them — for a
    * caller that lays a whole chain of them out and would otherwise be checking every lookup (`World`).
    * A rig is built from the movie's own display list or not built at all, so the names it knows are

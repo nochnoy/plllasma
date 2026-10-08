@@ -19,6 +19,7 @@ import {
 import { World } from '../src/game/world';
 import { useLiveRun } from '../src/composables/useLiveRun';
 import { Refused } from '../src/chat/api';
+import { LOBBY, RUN_STARTED, type ChatMessage, type MessagePart } from '../src/chat/messages';
 import { liveApi, type LiveRunDraft, type LiveWire } from '../src/live/api';
 import { Game, type TapeReport } from '../src/game/game';
 
@@ -167,10 +168,12 @@ function wireOf(refuseAt = 0): {
   opened: { head: TapeHead; run: LiveRunDraft }[];
   sent: { id: string; seq: number; slice: TapeSlice }[];
   ended: { id: string; seq: number; slice: TapeSlice }[];
+  said: { id: string; note: { message?: number; label?: string } }[];
 } {
   const opened: { head: TapeHead; run: LiveRunDraft }[] = [];
   const sent: { id: string; seq: number; slice: TapeSlice }[] = [];
   const ended: { id: string; seq: number; slice: TapeSlice }[] = [];
+  const said: { id: string; note: { message?: number; label?: string } }[] = [];
   let calls = 0;
   const wire: LiveWire = {
     async open(head, run) {
@@ -185,13 +188,18 @@ function wireOf(refuseAt = 0): {
     async end(id, seq, slice) {
       ended.push({ id, seq, slice });
     },
-    // The door a run is *read* back through, which the page that is writing one never opens: what watches a
-    // run is another window, and a writer that reached for this would be a page that had gone wrong.
+    // The door a run is *read* back through, which the page that is writing one never opens: what watches
+    // a run is another window, and a writer that reached for this would be a page that had gone wrong.
     async stream() {
       throw new Error('the page writing a run does not watch it');
     },
+    // The door the run's own line is said through: opened only when the page has a chat to say it in
+    // (the tests below hand one in as `say`), and keeping every word it was asked to carry.
+    async chat(id, note) {
+      said.push({ id, note });
+    },
   };
-  return { wire, opened, sent, ended };
+  return { wire, opened, sent, ended, said };
 }
 
 /** The moment a run is opened at, and the name it is written under: the clock it began at. */
@@ -473,6 +481,7 @@ describe('the door a run is watched through', () => {
       steps: 100,
       stepMs: TAPE_STEP_MS,
       live: true,
+      label: '',
     });
     expect(stream.head?.seed).toBe(77);
     expect(stream.slices).toEqual([{ seq: 3, steps: 50, frames: [[1, 2, 3], 47], edits: [] }]);
@@ -673,5 +682,81 @@ describe('the walk under a tape that grows', () => {
     (watcher as unknown as { onVisibility(): void }).onVisibility();
     vi.unstubAllGlobals();
     expect(watcher.world.snapshot()).toEqual(before);
+  });
+});
+
+describe("the run's own line in the chat", () => {
+  /** A line as the server would have taken it: an id is all the run is bound by. */
+  function taken(id: number): ChatMessage {
+    return {
+      id,
+      tape: LOBBY,
+      atStep: null,
+      userId: 2,
+      nick: 'Марат',
+      face: '/i/2.gif',
+      ghost: false,
+      parts: [{ kind: 'run', run: 'run-1' }],
+      sentMs: 0,
+    };
+  }
+
+  it('is written the moment the run opens, and bound to the run with its first words on it', async () => {
+    vi.useFakeTimers();
+    const { recorder } = hall();
+    const { wire, said } = wireOf();
+    const announced: (readonly MessagePart[])[] = [];
+    const live = useLiveRun(engineOf(recorder), ref(report(true)), {
+      wire,
+      now: () => at,
+      say: async (parts) => {
+        announced.push(parts);
+        return taken(41);
+      },
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    // The line carries nothing but the link — the words live on the run, not in the log — and the run
+    // is bound to the line and given its first words in the same breath.
+    expect(announced).toEqual([[{ kind: 'run', run: 'run-1' }]]);
+    expect(said).toEqual([{ id: 'run-1', note: { message: 41, label: RUN_STARTED } }]);
+    live.stop();
+  });
+
+  it('goes unsaid when there is no chat to say it in, and the run goes on', async () => {
+    vi.useFakeTimers();
+    const { world, recorder } = hall();
+    const { wire, said, sent } = wireOf();
+    const live = useLiveRun(engineOf(recorder), ref(report(true)), { wire, now: () => at });
+    await vi.advanceTimersByTimeAsync(0);
+    drag(world, recorder, TAPE_SLICE_STEPS);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(said).toHaveLength(0);
+    expect(sent).toHaveLength(1);
+    live.stop();
+  });
+
+  it('is rewritten when the play does something worth saying, and only while the run goes on', async () => {
+    vi.useFakeTimers();
+    const { recorder } = hall();
+    const { wire, said } = wireOf();
+    const game = engineOf(recorder);
+    const live = useLiveRun(game, ref(report(true)), {
+      wire,
+      now: () => at,
+      say: async () => taken(41),
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    // The engine's own word for a feat, put in the run's mouth: the same door the opening words went
+    // through, carrying nothing but new words this time.
+    (game.value as unknown as { onFeat: (label: string) => void }).onFeat('Сделал перешпагат');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(said.at(-1)).toEqual({ id: 'run-1', note: { label: 'Сделал перешпагат' } });
+
+    // The run ends, and with it the page's say in what its line reads: a feat after that is nobody's
+    // words to change, however the world was left standing.
+    await live.end();
+    const words = said.length;
+    (game.value as unknown as { onFeat: ((label: string) => void) | null }).onFeat?.('Ещё раз');
+    expect(said).toHaveLength(words);
   });
 });

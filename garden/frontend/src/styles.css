@@ -530,27 +530,11 @@ body {
 }
 
 /*
- * The whole list of runs in a window of its own (`RunsDialog.vue`): the same card, conversation-sized,
- * with nothing in it but the rows and the way out — the chat's own window is what «Ещё...» was pressed
- * in, and this one stands over it rather than in it.
- */
-.chat-card--runs {
-  width: min(420px, 100%);
-  height: min(560px, 100%);
-}
-
-/* The rows in that window start a card's own slack in from its edge, the way a conversation does. */
-.chat-card--runs .chat-card__body {
-  padding: 0 8px;
-}
-
-/*
  * The screen's own heading: the way back at the left of it, and the name of the place centred across
  * the whole of the screen — a place is named over its middle, and the button beside the name is the
  * way back rather than a part of the title. The name is lifted out of the flow for the sake of that
  * centring, so the button keeps the left end and the name keeps the middle whatever either of them
- * is wide. A window's own heading keeps its cross at the other end of it (`RunsDialog.vue`), so this
- * is the screen's own arrangement alone.
+ * is wide.
  */
 .chat-card--full .chat-card__head {
   position: relative;
@@ -599,25 +583,6 @@ body {
   background: rgba(0, 0, 0, 0.4);
 }
 
-/*
- * The screen's own plates and readings — everything the paper card drew in black or dimmed with a wash
- * of itself, said in the colours the interface over the hall has always used: the chat's own colour for
- * the words, dark plates under the pointer, and the field framed in the bar's own wood over black, the
- * way a hint or the tape's own track is framed.
- */
-.chat-card--full .chat-run {
-  color: inherit;
-}
-
-.chat-card--full .chat-run:hover {
-  background: rgba(0, 0, 0, 0.4);
-}
-
-.chat-card--full .chat-runs__none {
-  color: inherit;
-  opacity: 0.7;
-}
-
 /* The chat's own failures, said over the world rather than on paper: a red that carries on the hall. */
 .chat-card--full .chat-card__error {
   color: #ff9d9d;
@@ -648,7 +613,7 @@ body {
 
 .chat-card--full .chat-card__speaker:focus-visible,
 .chat-card--full .chat-card__send:focus-visible,
-.chat-card--full .chat-run:focus-visible {
+.chat-card--full .chat-line__run:focus-visible {
   outline-color: #fff;
 }
 
@@ -673,15 +638,13 @@ body {
 }
 
 /*
- * The window's one scroll, carrying the log and the runs together: the conversation is read to its end and
- * the rows are as many as other people's playing, and a scrollbar apiece would be two places to look for
- * the end of either. The heading above and the field below stay where they are — they are the parts of the
- * window that are reached rather than read.
+ * The window's one scroll, carrying the conversation: it is read to its end, and the heading above and
+ * the field below stay where they are — they are the parts of the window that are reached rather than
+ * read.
  *
  * The gutter is stable so that a line arriving past the bottom of the window does not rewrap the ones
- * above it to make room for a scrollbar that was not there, and nothing scrolls sideways: the columns
- * give way each in their own way (the conversation wraps, the list's nicks shrink and then go) rather
- * than the window growing wide.
+ * above it to make room for a scrollbar that was not there, and nothing scrolls sideways: a line wraps
+ * rather than the window growing wide.
  */
 .chat-card__body {
   flex: 1;
@@ -691,209 +654,44 @@ body {
   scrollbar-gutter: stable;
 }
 
-/*
- * The two columns: the conversation, and the runs beside it. The conversation is the width — a chat is
- * read in lines rather than in a column — and the list is a fifth of it, which is a nickname and a length
- * per row with room to spare (see the grid of the window's own row: 4:1 is the same shape the strip and
- * the bar have).
- *
- * The list's own floor is 7.5 rem (see the column itself, `.chat-card__runs`): below it the column stops
- * giving way whatever the window does, and it is the conversation that shrinks — a line wraps, a row
- * does not.
- */
-.chat-card__columns {
-  display: grid;
-  grid-template-columns: minmax(0, 4fr) minmax(7.5rem, 1fr);
-  gap: 4px;
-  align-items: start;
-  padding: 0 12px;
-}
-
-/* The log: the conversation's own column, one block after another with the newest at the bottom. */
+/* The log: the conversation itself, one block after another with the newest at the bottom. */
 .chat-card__log {
-  padding: 4px 8px 16px;
+  padding: 4px 20px 16px;
 }
 
-/* The way out, at the right end of the heading: the whole of it is the button. */
-.chat-card__close {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 0;
-  border-radius: 8px;
-  background: none;
-  color: #000;
-  cursor: pointer;
-}
-
-.chat-card__close .icon {
-  width: 16px;
-  height: 16px;
-}
-
-.chat-card__close:hover {
-  background: rgba(0, 0, 0, 0.12);
-}
-
-/* One message and the buttons under it: the space after a line is the space after the whole of it. */
+/* One message: the space after a line is the space after the whole of it. */
 .chat-card__log .chat-entry {
   margin-bottom: 6px;
 }
 
 /*
- * The other column: the runs the server holds, one row each and newest first — a row being the tape, the
- * nickname it was played under, and how long it is (or that it is still being played). It does not scroll
- * of its own: the window's one scroll carries it with the conversation (`.chat-card__body`), and there is
- * no line down its left — the two are read together, and the gap says as much without saying more.
- *
- * It is a container of its own inline size, which is what lets a row give up its nickname by itself
- * (`.chat-run__nick`): the column is what is asked about rather than the window, because the window's
- * width says nothing about what a row has room for once the conversation has had its share.
- *
- * The floor of 7.5 rem is the room a row's unshakeable parts take — the column's own padding (0.5 rem), a
- * row's padding, cassette, gaps and clock (5 rem), and a little over for the window's own scrollbar, which
- * arrives at this end of the columns when the log is long (2 rem). Below it the column does not go, and
- * there is never anything to scroll sideways for: a cassette and a clock are always there to read.
+ * A link to a run, inside a line: the last word of what the run's own saying is — «Начал **игру**» —
+ * underlined the way a link on paper is, in the chat's own colour whatever it is drawn over, and it
+ * brightens under the pointer the way the chat's own strip does rather than changing colour. Where the
+ * line is drawn inside the strip the link is the strip's — the same word, underlined, with no door of
+ * its own (a click anywhere on the strip opens the chat, where the link can be followed) — so it is a
+ * `span` there and an `a` here, wearing one class between them.
  */
-.chat-card__runs {
-  container-type: inline-size;
-  min-width: 7.5rem;
-  padding: 4px 4px 16px;
-}
-
-/*
- * One run: its tape's own pictogram, who played it, and its reading. The whole row is the button — a
- * length is not a target to aim at — and it answers the pointer the way the bar's own tools do.
- */
-.chat-run {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 6px 8px;
-  border: 0;
-  border-radius: 8px;
-  background: none;
-  color: #000;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.chat-run:hover {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-/* A cassette, drawn: a pictogram the size of a badge, since a row is a line and not a panel. */
-.chat-run__icon {
-  flex: none;
-  width: 16px;
-  height: 16px;
-}
-
-/*
- * The nickname gives way rather than the reading, and it gives way alone: a long one is cut off at the end
- * of its row, and a narrow one is gone altogether rather than a letter wide (see the column's own query
- * below). The clock and the cassette do not move — they are what a row is found by once the names are not
- * there.
- */
-.chat-run__nick {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/*
- * A run's length, at the end of its row: dimmed, since the nickname is what a row is looked up by, and of
- * one width whatever the reading is — a column of runs reads as one, and the width is one of the numbers
- * the column's floor and its query are counted from (`.chat-card__runs`).
- */
-.chat-run__reading {
-  flex: none;
-  min-width: 3rem;
-  font-size: 13px;
-  opacity: 0.75;
-  text-align: right;
-}
-
-/*
- * When the column cannot spare two rem for a nickname, the nicknames go: a row of a cassette and a clock
- * is still a way into a run, while a column of single letters is a guessing game. The threshold is the
- * column's own arithmetic — a row's padding, cassette, gaps and clock (6 rem) beside the nickname's least
- * (2 rem) — which is why it is asked of the column and not of the window: the column's own padding is
- * already outside the width a container query measures.
- */
-@container (max-width: 8rem) {
-  .chat-run__nick {
-    display: none;
-  }
-}
-
-/* A clock in the row's own corner, of one width whatever the digits do — a column of runs reads as one. */
-.chat-run:not(.is-live) .chat-run__reading {
-  font-variant-numeric: tabular-nums;
-}
-
-/*
- * Still being played: the one reading on the list that is not a clock, and it is said the way a broadcast
- * says it rather than in the player's own language — the word is a reading of a state, like the clock it
- * stands in the place of, and it is the same word in every language the game is read in.
- */
-.chat-run.is-live .chat-run__reading {
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  opacity: 0.9;
-  text-transform: uppercase;
-}
-
-/* The tape of that run is on its way down: the row goes quiet where it stands rather than going away. */
-.chat-run.is-opening {
-  opacity: 0.55;
-}
-
-/* Nothing written down yet: what an empty list says, in the list's own voice. */
-.chat-runs__none {
-  margin: 6px 8px;
-  color: rgba(0, 0, 0, 0.6);
-  font-size: 13px;
-}
-
-/*
- * The door on the rest of the list: the column shows the runs there is column for (`SIDEBAR_RUNS`), and the
- * rest are one press away in a window of their own (`RunsDialog.vue`). A link rather than a row, because
- * it goes somewhere rather than playing something.
- */
-.chat-runs__more {
-  display: block;
-  width: 100%;
-  margin: 0;
-  padding: 6px 8px;
-  border: 0;
-  background: none;
+.chat-line__run {
   color: inherit;
-  font: inherit;
-  text-align: center;
   text-decoration: underline;
   text-underline-offset: 3px;
-  opacity: 0.75;
   cursor: pointer;
 }
 
-.chat-runs__more:hover,
-.chat-runs__more:focus-visible {
-  opacity: 1;
+a.chat-line__run:hover,
+a.chat-line__run:focus-visible {
+  color: #fff;
+}
+
+a.chat-line__run:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 /*
  * What the chat could not do, between the log and the field: it is about what the player has just tried,
- * so it stands beside the field rather than up in the log among other people's messages. The list's own
- * failures wear the same line, inside the column they belong to.
+ * so it stands beside the field rather than up in the log among other people's messages.
  */
 .chat-card__error {
   margin: 0;
@@ -901,11 +699,6 @@ body {
   color: #7a1c1c;
   font-size: 13px;
 }
-
-.chat-card__runs .chat-card__error {
-  padding: 8px 8px 0;
-}
-
 
 /* The field and the button beside it are one row of one height: a control the size of a control. There is
    no line over it — the slack above it and the scroll ending at the field's own frame say where the log

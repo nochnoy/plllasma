@@ -84,6 +84,12 @@ export interface ChatWire {
   /** Every run the server holds, newest first — which is the order the window's own list keeps. */
   runs(): Promise<Run[]>;
   /**
+   * The rows of exactly these runs, in the order asked for, without the ones the server does not
+   * hold: the chat's own asking, for the runs its lines link (`linkedRuns` in `messages.ts`), whose
+   * words and liveness are the runs' business rather than the log's.
+   */
+  runsByIds(ids: readonly string[]): Promise<Run[]>;
+  /**
    * One run's own tape, as the file the game decodes (`decodeTape`).
    *
    * It is handed on as text rather than as a value on purpose: the tape is the game's own format, and
@@ -169,6 +175,13 @@ export function chatApi(base: string = apiBase(), take: typeof fetch = fetch, to
       // No `tape` is asked for here: the list is the runs themselves, and a hundred of them being a
       // hundred files off a disk is the server's own business rather than this client's (`store.Recordings`).
       const answer = (await ask('/recordings')) as { recordings?: WireRun[] | null } | null;
+      return (answer?.recordings ?? []).map(asRun);
+    },
+
+    async runsByIds(ids) {
+      if (!ids.length) return [];
+      const asked = ids.map((id) => encodeURIComponent(id)).join(',');
+      const answer = (await ask(`/recordings?ids=${asked}`)) as { recordings?: WireRun[] | null } | null;
       return (answer?.recordings ?? []).map(asRun);
     },
 

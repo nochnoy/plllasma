@@ -70,6 +70,16 @@ const STILL_CREEP_PX = 1e-6;
  * right arrow a few times to speed her back up to the original's pace.
  */
 const INITIAL_SPEED = 0.2;
+/**
+ * How far apart her knees have to open, in degrees, before the run is said to have put her in a
+ * split — an oversplit, really, which is what a rope and a determined hand can work her into and
+ * what the run's own line in the chat should not keep quiet about. Her thighs rest against each
+ * other, so the angle between them is near zero until somebody means it; 150 of the 180 a full
+ * split would take is a pose nobody lands in by falling.
+ */
+const OVERSPLIT_DEGREES = 150;
+/** What the run's line says when she is put into one: a sentence, because the chat says it as it is. */
+const FEAT_SPLIT = 'Сделал перешпагат';
 
 /**
  * What the interface is told about the tape: whether one is being written or watched, where the playhead
@@ -332,6 +342,21 @@ export class Game {
    */
   onToolChange: ((tool: Tool) => void) | null = null;
 
+  /**
+   * The world's own word for what the play just did: a feat, as a sentence rather than a code,
+   * because what it says is what the chat will say. The page wires this to the run's own line
+   * (`useLiveRun`), so a run that hauls her into an oversplit announces itself in the log — the link
+   * stays the link, and the words around it change. Null when nobody is listening, which is every
+   * page that is not recording a run.
+   */
+  onFeat: ((label: string) => void) | null = null;
+
+  /**
+   * The feat this run has already said, so that the same one is not said again every step she holds
+   * the pose: reset when a run begins (`record`), and replaced when a different feat happens.
+   */
+  private saidFeat: string | null = null;
+
   get tool(): Tool {
     return this.world.tool;
   }
@@ -531,6 +556,9 @@ export class Game {
     // A new run owns the door to the server: whatever the one before it had left is gone with it (`tail`).
     this.tail = null;
     this.world.cancelRope();
+    // And nothing of it has been said yet: a run's own word for itself starts with the page's
+    // announcement of it and is earned from there (`noteFeats`).
+    this.saidFeat = null;
     const seed = tapeSeed();
     // A fresh stream for the world's own odds, taken before the stage is written down. The instance is
     // kept (`weather`) so that a run interrupted by a watch and resumed draws on from where it had got
@@ -961,10 +989,10 @@ export class Game {
 
   /**
    * A click on the stage, routed by the tool the toolbar has selected: the rope tool lays one end of
-   * a rope (the first click) or fixes the whole rope (the second), and the arrow tool drags things — a
-   * knot of a rope if the click landed on one, the *middle* of a rope's cord, which takes the whole
-   * rope off the stage, and otherwise the original's `onMouseDown`: hold every particle within
-   * sqrt(1500) of the pointer.
+   * a rope (the first click) or fixes the whole rope (the second) — or takes hold of a knot, if the
+   * click landed on one, which either tool carries — and the arrow tool drags things: the
+   * *middle* of a rope's cord, which takes the whole rope off the stage, and otherwise the original's
+   * `onMouseDown`, which held every particle within sqrt(1500) of the pointer.
    *
    * A pointer is either a mouse, a finger or a pen — a `pointerdown` from any of them is a click here,
    * and the whole drag is followed by *that* pointer's id until it is lifted ({@link pointer}): the
@@ -978,21 +1006,22 @@ export class Game {
     if (this.pointer !== null && event.pointerId !== this.pointer) return;
     const point = this.scene?.toWorld(event.clientX, event.clientY);
     if (!point) return;
-    // The rope tool spends a click and takes nothing in hand: a rope end is put down with the press itself, and
-    // there is nothing for the pointer to follow afterwards. The arrow presses *through* to the line below,
-    // even when the press is one that takes a rope off the stage: what a press did is read off the world
-    // afterwards (`holdingAnything`), so a press that burned a rope simply leaves the hand empty.
-    if (this.world.tool === 'rope') {
-      this.pressAt(point);
-      return;
-    }
+    // The press is made first and the hand is asked what it is holding afterwards, because the rope tool's
+    // press is not always the click it spends: one that lands on a knot takes it in hand, and the drag is
+    // then either tool's drag alike — the pointer is followed, captured, and anchored against the camera
+    // the same way. Every other press the rope tool makes spends itself on the rope it is drawing — a rope
+    // end is put down with the press itself, and there is nothing for the pointer to follow afterwards.
+    // The arrow presses *through* to the hand below, even when the press is one that takes a rope off the
+    // stage: what a press did is read off the world afterwards (`holdingAnything`), so a press that burned
+    // a rope simply leaves the hand empty.
+    this.pressAt(point);
+    if (this.world.tool === 'rope' && !this.holdingAnything()) return;
     this.pointer = event.pointerId;
     try {
       this.host.setPointerCapture(event.pointerId);
     } catch {
       /* capture is a nicety: dragging works even without it */
     }
-    this.pressAt(point);
     // The anchor is kept only for a press that took something — particles of a doll, or a knot: a hand
     // holding the bare floor has nothing for a camera to move, and a hand that took nothing has no
     // reason to be immune to one either. Where the hand is *now* follows the same rule, being the
@@ -1005,9 +1034,9 @@ export class Game {
 
   /**
    * What a press on the stage does, at a world point: routed by the tool the toolbar has selected — the rope
-   * tool lays one end of a rope (the first click) or fixes the whole rope (the second), and the arrow tool drags
-   * things: a knot of a rope if the click landed on one, the *middle* of a rope's cord, which takes the whole
-   * rope off the stage, and otherwise the original's own `onMouseDown`, which holds every particle within
+   * tool lays one end of a rope (the first click) or fixes the whole rope (the second), and either tool
+   * drags things: a knot of a rope if the click landed on one, the *middle* of a rope's cord, which takes the
+   * whole rope off the stage, and otherwise the original's own `onMouseDown`, which holds every particle within
    * sqrt(1500) of the pointer.
    *
    * A rope the press took off the stage goes to the renderer, which bursts it where it stood (`Scene.popRope`):
@@ -1152,6 +1181,9 @@ export class Game {
         this.accumulator -= FIXED_STEP_MS;
         steps++;
       }
+      // After the stepping, not inside it: a feat is a thing to *say* once, and the world being asked
+      // about it eight times a frame would only ever say the same thing eight times.
+      this.noteFeats();
     } else if (this.recorder) {
       // The run has taken its own pause: the world is not being stepped at all, and the stillness is
       // handed to the recording by the wall clock instead — a pause in a tape is as long as it lasted.
@@ -1195,6 +1227,25 @@ export class Game {
    * with it is the world's own answer for the step just gone (`standingStill`), which is what keeps a
    * world that is creeping by a hundredth of a pixel a step from being taken for a still one.
    */
+  /**
+   * What the play just did that is worth saying: her thighs opened past a split ({@link
+   * OVERSPLIT_DEGREES}), measured off the first doll's pelvis and knees as they stand — the same
+   * angle the smoke test reads when it pulls her knees apart, so what the run's line calls a
+   * перешпагат is the pose the test would measure as one.
+   *
+   * Said once per run per feat ({@link saidFeat}): the pose is held for seconds, and a line that
+   * said the same thing every frame of it would be a line nobody could read. A feat nobody is
+   * listening for (`onFeat` null) is not even measured — the world is not asked about a thing
+   * nobody wants to know.
+   */
+  private noteFeats(): void {
+    if (!this.onFeat) return;
+    const angle = this.world.dolls[0]?.thighAngle() ?? null;
+    if (angle === null || angle < OVERSPLIT_DEGREES || this.saidFeat === FEAT_SPLIT) return;
+    this.saidFeat = FEAT_SPLIT;
+    this.onFeat(FEAT_SPLIT);
+  }
+
   private liveStep(): void {
     const recorder = this.recorder;
     if (recorder) recorder.step(this.world.dolls, this.standingStill());

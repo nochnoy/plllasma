@@ -5,12 +5,13 @@
 //
 //	GET  /api/health                   a line for a monitor: is anything alive
 //	POST /api/auth                     one token, and the player the site says owns it
-//	GET  /api/recordings               the list, newest first
+//	GET  /api/recordings               the list, newest first — or, with `ids`, exactly those runs
 //	POST /api/recordings               one run's tape, uploaded whole
 //	POST /api/recordings/live          a run that arrives as it is played
 //	GET  /api/recordings/{id}          one tape, for a live or a stored playback
 //	GET  /api/recordings/{id}/chunks   the slices of a live run, as they arrive
 //	POST /api/recordings/{id}/chunks   one slice of a live run
+//	POST /api/recordings/{id}/chat     the run's own line: which message it is, and what it says
 //	GET  /api/messages                 the log of a recording, or of the lobby — its newest fifty lines
 //	POST /api/messages                 one line, anchored or not
 //
@@ -90,6 +91,9 @@ const (
 	// maxFile is how long a gif's own path may be: an asset of the app's
 	// (`assets/chat/heart.gif`) rather than a file the caller's machine has.
 	maxFile = 300
+	// maxRun is how long a run's own id may be: this server's ids are 32 hex
+	// characters, and a longer one than that is not a name anybody here gave.
+	maxRun = 64
 
 	// tapeFormat and tapeStepMs are the tape this server will accept, and they
 	// are copies of `TAPE_FORMAT` and `TAPE_STEP_MS` in
@@ -179,6 +183,7 @@ func (s *Server) routes() {
 	s.HandleFunc("GET /api/recordings/{id}", s.tape)
 	s.HandleFunc("GET /api/recordings/{id}/chunks", s.chunks)
 	s.HandleFunc("POST /api/recordings/{id}/chunks", s.appendChunk)
+	s.HandleFunc("POST /api/recordings/{id}/chat", s.runChat)
 	s.HandleFunc("GET /api/messages", s.messages)
 	s.HandleFunc("POST /api/messages", s.post)
 }
@@ -285,11 +290,28 @@ func (s *Server) auth(w http.ResponseWriter, r *http.Request) {
 // recordings is the list the window draws: every run this server holds, newest
 // first, each with the numbers a list needs to show (how long it lasts, how big
 // it is, whether it is still being played) and without the tapes themselves.
+//
+// With `ids` — a comma-separated list of the runs a caller is already looking
+// at — it is those runs' rows instead, in the order asked for and without the
+// ones this server does not hold. That is the chat's own asking: its window
+// shows lines that link runs, and what a line says about its run is the run's
+// own label and liveness rather than anything the log itself stores
+// (`frontend/src/chat`).
 func (s *Server) recordings(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.userOf(w, r); !ok {
 		return
 	}
-	list, err := s.store.Recordings(s.now().UnixMilli())
+	now := s.now().UnixMilli()
+	if asked := strings.TrimSpace(r.URL.Query().Get("ids")); asked != "" {
+		list, err := s.store.RecordingsByID(strings.Split(asked, ","), now)
+		if err != nil {
+			fail(w, http.StatusInternalServerError, "the recordings could not be read: %v", err)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"recordings": list})
+		return
+	}
+	list, err := s.store.Recordings(now)
 	if err != nil {
 		fail(w, http.StatusInternalServerError, "the recordings could not be read: %v", err)
 		return
@@ -659,6 +681,65 @@ func (s *Server) tape(w http.ResponseWriter, r *http.Request) {
 	_, _ = io.WriteString(w, body)
 }
 
+// runChat is the run's own word in the chat: which line of the log is the
+// run's, and what that line says. A page writes both at once, the moment its
+// run begins — the line has just been posted, and the run it names has just
+// been opened — and rewrites the words as the play goes on: a run that hauled
+// her into an oversplit says so, and the line that links it says so too.
+//
+// Only the run's own player may say any of it (`SetChat`), because the line is
+// what everybody else's window will draw for the run. Neither field is
+// required, but a request that says nothing is a mistake rather than a no-op.
+func (s *Server) runChat(w http.ResponseWriter, r *http.Request) {
+	user, ok := s.userOf(w, r)
+	if !ok {
+		return
+	}
+	id := r.PathValue("id")
+	var body struct {
+		Message *int64  `json:"message"`
+		Label   *string `json:"label"`
+	}
+	if err := readJSON(w, r, &body); err != nil {
+		fail(w, http.StatusBadRequest, "%v", err)
+		return
+	}
+	if body.Message == nil && body.Label == nil {
+		fail(w, http.StatusBadRequest, "say which line the run's is, or what it says: the body has neither")
+		return
+	}
+	if body.Message != nil && *body.Message < 1 {
+		fail(w, http.StatusBadRequest, "message is the id of the run's own line, not %d", *body.Message)
+		return
+	}
+	if body.Label != nil {
+		trimmed := strings.TrimSpace(*body.Label)
+		if trimmed == "" {
+			fail(w, http.StatusBadRequest, "the run's line cannot say nothing")
+			return
+		}
+		if len(trimmed) > maxText {
+			fail(w, http.StatusBadRequest, "the run's line says %d characters; a line is up to %d",
+				len(trimmed), maxText)
+			return
+		}
+		body.Label = &trimmed
+	}
+	recording, err := s.store.SetChat(id, user.ID, body.Message, body.Label, s.now().UnixMilli())
+	switch {
+	case errors.Is(err, store.ErrNotFound):
+		fail(w, http.StatusNotFound, "no recording %s", id)
+		return
+	case errors.Is(err, store.ErrForbidden):
+		fail(w, http.StatusForbidden, "%v", err)
+		return
+	case err != nil:
+		fail(w, http.StatusInternalServerError, "the run's line could not be written: %v", err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"recording": recording})
+}
+
 // messages is the log of one conversation: `tape` names the recording and an
 // absent one means the lobby, and `after` asks for what has been written since
 // the last line the caller saw, so that a window catching up never has to ask
@@ -755,6 +836,23 @@ func (s *Server) post(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusBadRequest, "%v", err)
 		return
 	}
+	// A part that links a run links a run this server holds: a line whose link
+	// opens nothing is a line that will 404 whoever follows it, and this is the
+	// last place that can say so. The run need not have a step in it — a line
+	// written the moment a run begins links a run that is all head so far.
+	for _, part := range parts {
+		if part.Kind != "run" {
+			continue
+		}
+		if _, err := s.store.Steps(part.Run); err != nil {
+			if errors.Is(err, store.ErrNotFound) {
+				fail(w, http.StatusNotFound, "no recording %s", part.Run)
+				return
+			}
+			fail(w, http.StatusInternalServerError, "the recording could not be read: %v", err)
+			return
+		}
+	}
 	message := store.Message{
 		Tape:   tape,
 		AtStep: body.AtStep,
@@ -774,13 +872,16 @@ func (s *Server) post(w http.ResponseWriter, r *http.Request) {
 }
 
 // cleanParts is a body off the wire, checked as it is read: a handful of parts,
-// each of them either a run of text or a gif.
+// each of them a run of text, a gif, or a link that opens a recording.
 //
-// The two kinds are the two the window draws (`MessagePart` in
+// The three kinds are the three the window draws (`MessagePart` in
 // `frontend/src/chat/messages.ts`), and a part of any other kind is a message
 // nobody could draw — so it is refused here rather than stored and skipped
 // there. A gif is named by its path under the app rather than by any file the
-// caller's machine may have: the window draws what the app ships.
+// caller's machine may have: the window draws what the app ships. A run is
+// named by its id, and whether that id is a run this server holds is the
+// handler's own question (`post`), because it is a question about the store
+// rather than about the shape of a part.
 //
 // A part may be empty of text — a gif is often the whole of what somebody had to
 // say — but a body may not be empty of parts: a line with nothing in it is a
@@ -811,8 +912,14 @@ func cleanParts(parts []store.Part) ([]store.Part, error) {
 					i+1, len(part.Alt), maxAlt)
 			}
 			clean = append(clean, store.Part{Kind: "gif", File: file, Alt: part.Alt})
+		case "run":
+			run := strings.TrimSpace(part.Run)
+			if run == "" || len(run) > maxRun {
+				return nil, fmt.Errorf("part %d is a link to a run with no run in it", i+1)
+			}
+			clean = append(clean, store.Part{Kind: "run", Run: run})
 		default:
-			return nil, fmt.Errorf("part %d is a %q, and a message is made of text and gifs", i+1, part.Kind)
+			return nil, fmt.Errorf("part %d is a %q, and a message is made of text, gifs and runs", i+1, part.Kind)
 		}
 	}
 	return clean, nil

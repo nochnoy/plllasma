@@ -76,11 +76,14 @@ function fakeWire(rule: Rule = {}) {
       if (!written) throw new Refused(0, 'the fake wire was not told what to answer');
       return written;
     },
-    // The two doors of the window's own list of runs (`useRuns`), which the chat never opens: they are
-    // here because they are part of what a wire is, and a wire that was asked would say so rather than
-    // answer with a list or a tape this chat has no use for.
+    // The doors of the runs the chat itself never opens — the list and the rows (`useRuns`,
+    // `useRunStates`): they are here because they are part of what a wire is, and a wire that was
+    // asked would say so rather than answer with a list or a tape this chat has no use for.
     async runs() {
       throw new Refused(0, 'the chat does not read the list of runs');
+    },
+    async runsByIds() {
+      throw new Refused(0, 'the chat does not read the rows of runs');
     },
     async tape() {
       throw new Refused(0, 'the chat does not fetch a run\'s tape');
@@ -453,5 +456,46 @@ describe('the place the chat belongs to', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('a line the game itself writes', () => {
+  it('is posted as the player, unanchored, and lands in the log as the server took it', async () => {
+    const { wire, asked } = fakeWire({
+      send: () => line(7, null),
+    });
+    const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0, speaker: MARAT });
+    await settled();
+
+    // The announcement of a run: a link, written by the game and not the field — which is why neither
+    // the ghost switch nor the place the player happens to be in has any say in it.
+    const written = await chat.announce([{ kind: 'run', run: 'abc' }]);
+    expect(written?.id).toBe(7);
+    expect(asked.send).toEqual([
+      { tape: LOBBY, atStep: null, ghost: false, parts: [{ kind: 'run', run: 'abc' }] },
+    ]);
+    // And it stands in the log at once, beside whatever the server had already said.
+    expect(chat.messages.value.some((one) => one.id === 7)).toBe(true);
+  });
+
+  it('is the game\'s line to write, not the ghost\'s, whatever the field is saying', async () => {
+    const { wire, asked } = fakeWire({ send: () => line(8, null) });
+    const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0, speaker: MARAT });
+    await settled();
+    chat.toggleAnonymous();
+
+    await chat.announce([{ kind: 'run', run: 'abc' }]);
+    expect(asked.send[0].ghost).toBe(false);
+  });
+
+  it('is not worth a pending line: a server that would not take it is said and left', async () => {
+    // The fake wire throws when its rule has no answer for a send, which is the refusal here.
+    const { wire } = fakeWire({});
+    const chat = useChat(() => AT_THE_LOBBY, { wire, every: 0, speaker: MARAT });
+    await settled();
+
+    expect(await chat.announce([{ kind: 'run', run: 'abc' }])).toBeNull();
+    expect(chat.messages.value.length).toBe(0);
+    expect(chat.error.value).toBe('Чат не дозвонился до сервера.');
   });
 });

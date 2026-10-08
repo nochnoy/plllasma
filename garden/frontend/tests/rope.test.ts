@@ -459,4 +459,44 @@ describe('knots', () => {
     expect(rope.end.nailed).toBe(true);
     expect(rope.measuredLength()).toBeLessThanOrEqual(rope.length * MAX_STRETCH);
   });
+
+  it('takes hold of a knot in the rope tool\'s own hand, and the draft keeps waiting', () => {
+    // The rope tool is for tying ropes, and a knot already on the stage is not a place to tie one to:
+    // a press near an end of a rope takes hold of that end — the arrow\'s own grab, made from the
+    // rope tool\'s hand — and a rope that was only half drawn keeps waiting for its second click while
+    // the knot is carried and dropped, exactly as a press that burned a rope leaves the draft open.
+    const world = new World();
+    const rope = tie(world, [-120, -120], [120, 120]) as Rope;
+    world.tool = 'rope';
+    world.startRope(-260, 60);
+    expect(world.press(122, 122)).toBeNull();
+    expect(world.dragged).toBe(rope.end);
+    expect(world.draft).not.toBeNull();
+
+    // It follows and drops as the arrow\'s knot does, and the tool stays the player\'s throughout.
+    world.engine.mouseX = 200;
+    world.engine.mouseY = -150;
+    world.step(20);
+    expect(rope.end.node.x).toBeCloseTo(200, 6);
+    expect(rope.end.node.y).toBeCloseTo(-150, 6);
+    world.dropAnchor(210, -140);
+    expect(world.dragged).toBeNull();
+    expect(rope.end.nailed).toBe(true);
+    expect(world.tool).toBe('rope');
+
+    // And the half-drawn rope was waiting all along: its second click still finishes it.
+    expect(world.finishRope(-260, 200) as Rope).not.toBeNull();
+    expect(world.ropes).toHaveLength(2);
+  });
+
+  it('offers the knot under the pointer to the rope tool\'s hand as well', () => {
+    // What the renderer lights up: the knot in hand, or the one under the pointer that a press would
+    // take — offered by either tool, since either can take it (`World.press`).
+    const world = new World();
+    const rope = tie(world, [-120, -120], [120, 120]) as Rope;
+    world.engine.mouseX = 120;
+    world.engine.mouseY = 120;
+    world.tool = 'rope';
+    expect(world.hoverAnchor()).toBe(rope.end);
+  });
 });
