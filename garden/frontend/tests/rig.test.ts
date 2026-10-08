@@ -179,7 +179,7 @@ describe('engine', () => {
   });
 
   it('holds all four sides of its box, the top as surely as the floor', () => {
-    // The box is the movie's own and was closed on all four sides; the port's *ceiling* stands far above the
+    // The box is the movie's own and was closed on all four sides; the port's *ceiling* stands above the
     // picture rather than at it, so a doll hauled up by the pointer goes up out of the frame and is stopped
     // by that line when there is no more room above her at all (`PEngine2D.clampToWorld`). What the player
     // can watch her hit is still the two sides and the floor.

@@ -157,6 +157,8 @@ export function useChat(place: () => Place = atTheLobby, options: ChatOptions) {
    * the finger the way a chat does rather than after a round trip, and the next line may be typed while
    * this one is still on its way. The server's own line replaces it when it lands; when it does not, the
    * pending line is taken back and the reason is shown, and `true` from here is what clears the field.
+   * A catch-up that read the line while this answer was on the wire has already put the server's own copy
+   * in the log, and then it is the pending line that goes: the sentence is standing there once either way.
    *
    * Where the line hangs is the place: anchored at the step the playhead is standing on while a run is
    * loaded, which is what makes it a line *about* that moment, and in the lobby unanchored — there is no
@@ -176,7 +178,14 @@ export function useChat(place: () => Place = atTheLobby, options: ChatOptions) {
     log.value = [...log.value, playerMessage(trimmed, speaker.value, where, anonymous.value)];
     try {
       const written = await wire.send(draft);
-      log.value = log.value.map((message) => (message.id === PENDING ? written : message));
+      // The answer can be beaten to the log by a catch-up — the two cross on the wire, and it is the
+      // catch-up that wins: the server's own copy is already in the log under its own id, so what goes is
+      // the line waiting under {@link PENDING} rather than the same sentence twice (`catchUp`, which keeps
+      // a line once by id from the other side of the crossing).
+      const read = log.value.some((message) => message.id === written.id);
+      log.value = read
+        ? log.value.filter((message) => message.id !== PENDING)
+        : log.value.map((message) => (message.id === PENDING ? written : message));
       error.value = null;
       return true;
     } catch (err) {

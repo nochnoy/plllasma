@@ -8,7 +8,7 @@ import type { PartAsset } from './parts.generated';
  * padding. The renderer decodes these masks once, from the same canvas it uploads as a texture, and
  * hands them to the world: a click that lands on a texel the artwork does not cover must not count
  * as a click on that part — otherwise a rope could be tied to her hip from the empty corner beside
- * it, and the delete tool would take a doll from a click in thin air.
+ * it, or pinned to her by a drop on the bare stage at her feet.
  */
 export interface PartMask {
   readonly width: number;

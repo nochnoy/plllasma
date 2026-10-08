@@ -97,7 +97,7 @@ export const WINDOW_LINES = 50;
  *
  * The two travel together wherever one of them is drawn — a message wears both, and so does the
  * player's own field — which is why they are one thing here rather than two arguments everywhere. The
- * face is a ready `src` (a userpic the site keeps, or the ghost's own badge), so that whoever draws a
+ * face is a ready `src` (a userpic the site keeps, the ghost's among them), so that whoever draws a
  * speaker draws one string and asks nothing further about where pictures live.
  */
 export interface Speaker {
@@ -115,27 +115,28 @@ export interface Speaker {
 export const GHOST_NICK = 'Привидение';
 
 /**
- * Where the chat's own pictures live — the same base the renderer builds its asset paths off.
+ * Where the gifs of a message's body live — the same base the renderer builds its asset paths off.
  *
- * A badge travels as the file's own name rather than as a path, because the name is the same in every
+ * A gif travels as the file's own name rather than as a path, because the name is the same in every
  * build of the port and a path is not: the base it is read under belongs to whoever is reading. The
- * gifs a body may hold are paths already (`assets/chat/*.gif`), since a body is written by a player
- * rather than by the game.
+ * faces beside the names are not here at all — they are the site's own userpics (`userpic`), the
+ * ghost's included.
  */
 export function badgeSrc(badge: string): string {
   return `${import.meta.env.BASE_URL}assets/chat/${badge}`;
 }
 
-/** The badge the ghost wears: the app's own picture, the one speaker that is not a person. */
-export const GHOST_BADGE = 'badge-ghost.gif';
-
 /** The ghost as a speaker: the name and the face the field switches to. */
-export const GHOST: Speaker = { id: 0, nick: GHOST_NICK, face: badgeSrc(GHOST_BADGE) };
+export const GHOST: Speaker = { id: 0, nick: GHOST_NICK, face: userpic('ghost') };
 
 /**
  * One of the site's userpics, as the page reads it: an origin-absolute path, because the game lives
  * under the same site as the folder does — `/i/2.gif` is the same file from any page of plllasma.ru.
  * A development server proxies the folder to the site (`vite.config.ts`).
+ *
+ * The ghost's own face is one of these too (`i/ghost.gif`): the chat's speakers are the site's, all
+ * of them — the ghost is simply the one of them that is not a person, rather than a picture the game
+ * keeps of its own.
  */
 export function userpic(icon: string): string {
   return `/i/${icon}.gif`;

@@ -1,8 +1,9 @@
-// Writes the chat's own pictures: the badges the mock's nicknames wear, the two the player answers to,
-// and the gifs they drop into their messages. All of them are GIFs — an animated face beside a nickname
-// is the same kind of thing as an animated heart inside a sentence — and all of them are written here by
-// hand, because nothing else in the port's tooling emits GIF: the SWF's own artwork comes out of
-// `prepare-assets.mjs` as PNG, and a browser has no GIF encoder to hand the job to.
+// Writes the chat's own gifs: the little animations a line can be decorated with — a laugh, a heart.
+// All of them are GIFs — an animated heart inside a sentence is the same kind of thing as an animated
+// face beside a nickname — and all of them are written here by hand, because nothing else in the
+// port's tooling emits GIF: the SWF's own artwork comes out of `prepare-assets.mjs` as PNG, and a
+// browser has no GIF encoder to hand the job to. The faces beside the names are not written here at
+// all: they are the site's own userpics (`i/*.gif`, the ghost's among them).
 //
 // Usage: node tools/chat-icons.mjs
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -147,38 +148,6 @@ function face() {
 }
 
 /**
- * A ghost: the shape everyone knows — a dome of a head over straight sides, a hem of three scallops and
- * two dark eyes — drawn a pixel higher on the second frame, which is a ghost's own way of being alive
- * rather than the blinking every other badge does.
- *
- * It is the one picture here that is a figure rather than a face on a disc: this is the player's own
- * badge when they would rather not be themselves (see `chat/messages.ts`), so it is the one thing in the
- * strip that is nobody.
- */
-function ghost() {
-  const paint = (x, y, lift) => {
-    // `lift` is a pixel of height the whole picture is drawn with: a picture pixel at `y` is in the
-    // shape when the point a pixel lower is, which floats the ghost.
-    const float = y + lift;
-    // The hem: three blobs with a notch between them, cut out of the shape's own bottom edge — the wave
-    // is what makes the bottom read as a ghost's rather than as a skirt. Half a blob hangs off each side,
-    // which is what the shape of the thing does at its own edges.
-    const hem = 12.2 + 1.1 * (1 + Math.cos((2 * Math.PI * (x - 3.73)) / 4.27));
-    // Above the middle of the head it is the dome; below it, straight sides down to that hem.
-    const body = float <= hem && (float >= 8.2 ? Math.abs(x - 8) <= 6.4 : disc(x, float, 8, 8.2, 6.4));
-    if (!body) return 0;
-    if (disc(x, float, 5.7, 7, 1.25) || disc(x, float, 10.3, 7, 1.25)) return 2;
-    return 1;
-  };
-  return [frame((x, y) => paint(x, y, 0)), frame((x, y) => paint(x, y, 1))];
-}
-
-/** A badge: a face on a disc of its own colour, blinking. */
-function badge(name, colour) {
-  return { name, frames: face(), palette: [[0, 0, 0], colour, [58, 44, 36], [0, 0, 0]] };
-}
-
-/**
  * A heart that beats: the same shape a hair larger on the second frame, which is the whole of what
  * makes it read as animated.
  */
@@ -197,14 +166,11 @@ function heart() {
   return [shape(6.2), shape(5.6)];
 }
 
+// The gifs a message's body may drop into a sentence — the only pictures the game keeps of the chat,
+// now that every face beside a name is the site's own userpic (`i/*.gif`, the ghost's among them): a
+// yellow laugh and a beating heart, and nothing else.
 const pictures = [
-  badge('badge-margo.gif', [232, 150, 108]),
-  badge('badge-kostya.gif', [126, 168, 214]),
-  badge('badge-anya.gif', [148, 200, 148]),
-  badge('badge-player.gif', [206, 196, 206]),
-  // The player's other name: pale, so it reads as a ghost on the chat's own paper and over the hall.
-  { name: 'badge-ghost.gif', frames: ghost(), palette: [[0, 0, 0], [233, 239, 247], [58, 44, 36], [0, 0, 0]] },
-  badge('laugh.gif', [255, 214, 74]),
+  { name: 'laugh.gif', frames: face(), palette: [[0, 0, 0], [255, 214, 74], [58, 44, 36], [0, 0, 0]] },
   { name: 'heart.gif', frames: heart(), palette: [[0, 0, 0], [224, 86, 110], [0, 0, 0], [0, 0, 0]] },
 ];
 

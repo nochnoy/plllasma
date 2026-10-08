@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CEILING_MARGIN,
   MIN_WORLD_HEIGHT,
   MIN_WORLD_WIDTH,
   STAGE_BOTTOM,
@@ -202,10 +203,10 @@ describe('the walls of the one room there is', () => {
     const world = new World();
     expect(world.engine.maxx).toBe(WALL_WIDTH / 2);
     expect(world.engine.minx).toBe(-WALL_WIDTH / 2);
-    // The floor is the hall's own, and so is the line the ceiling hangs over the top of it: one
-    // location's height of sky over the picture, and never more than that.
+    // The floor is the hall's own, and so is the line the ceiling hangs over the top of it: a strip
+    // of sky `CEILING_MARGIN` deep over the picture, and never more than that.
     expect(world.engine.maxy).toBe(STAGE_BOTTOM - 163);
-    expect(world.engine.miny).toBe(-STAGE_HEIGHT / 2 - STAGE_HEIGHT);
+    expect(world.engine.miny).toBe(-STAGE_HEIGHT / 2 - CEILING_MARGIN);
   });
 
   it('brings a click past the picture onto the edge of the picture', () => {

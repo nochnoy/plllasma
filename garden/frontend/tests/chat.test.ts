@@ -121,7 +121,7 @@ describe('a line the player has just typed', () => {
   it('wears that speaker\'s own face, and the other one is never worn by mistake', () => {
     expect(playerMessage('привет', MARAT, AT_THE_LOBBY, false).face).toBe(MARAT.face);
     expect(playerMessage('привет', GHOST, AT_THE_LOBBY, true).face).toBe(GHOST.face);
-    expect(GHOST.face).toContain('badge-ghost.gif');
+    expect(GHOST.face).toBe('/i/ghost.gif');
     expect(MARAT.face).not.toBe(GHOST.face);
   });
 
@@ -153,11 +153,12 @@ describe('the face a message wears', () => {
     expect(userpic('-')).toBe('/i/-.gif');
   });
 
-  it('is a path rather than the name the server sent, except for the ghost\'s own badge', () => {
-    // The ghost's badge is the app's own picture, under the build's own base (`badgeSrc`); a player's
-    // userpic is the site's, and the two are built by different rules on purpose.
-    expect(badgeSrc('badge-ghost.gif')).toBe(`${import.meta.env.BASE_URL}assets/chat/badge-ghost.gif`);
-    expect(GHOST.face).toBe(badgeSrc('badge-ghost.gif'));
+  it('is the ghost\'s own userpic for the ghost, and only a gif of the body ever comes from the build', () => {
+    // The ghost is one of the site's faces like every other speaker — `i/ghost.gif` — rather than a
+    // picture of the game's own; what the build's own base holds is the gifs a message's body drops
+    // into a sentence, which are the site's names carried under the build's roof (`badgeSrc`).
+    expect(GHOST.face).toBe('/i/ghost.gif');
+    expect(badgeSrc('laugh.gif')).toBe(`${import.meta.env.BASE_URL}assets/chat/laugh.gif`);
     expect(MARAT.face).not.toBe(badgeSrc(MARAT.face));
   });
 });

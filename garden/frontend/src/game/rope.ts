@@ -50,6 +50,15 @@ const END_REACH = 0.999;
  */
 const DRAG_REACH = 0.998;
 
+/**
+ * How many links at either end of the chain belong to the end hanging there rather than to the rope's
+ * own body: the cord right beside a knot is part of that knot, which is what a click near an end takes
+ * hold of and drags. What lies between the two stretches is the rope's *middle* — the part of the
+ * drawing with nothing of the player's on it, and so the part a click can take the whole rope away by
+ * ({@link Rope.middleDistance}); see `World.press`.
+ */
+export const END_SEGMENTS = 2;
+
 /** A click that landed on something a rope can be tied to. */
 export interface RopeHit {
   /** The doll the end is tied to. */
@@ -402,10 +411,32 @@ export class Rope {
     return this.start.holder === holder || this.end.holder === holder;
   }
 
-  /** Shortest distance from a point to the drawn chain — how the delete tool picks a rope. */
+  /** Shortest distance from a point to the drawn chain — how a rope is picked out at all. */
   distanceTo(x: number, y: number): number {
     let best = Number.POSITIVE_INFINITY;
     for (const c of this.segments) {
+      best = Math.min(best, pointSegmentDistance(x, y, c.p1.x, c.p1.y, c.p2.x, c.p2.y));
+    }
+    return best;
+  }
+
+  /**
+   * Shortest distance from a point to the *middle* of the drawn chain: the stretch of cord that is
+   * neither end's, {@link END_SEGMENTS} links in from either knot. A point on the end of a rope does
+   * not read here however close it is — the ends are the knots' own ground — so this is what a click
+   * that means the rope *itself* is measured against (`World.press`).
+   *
+   * Infinity for a rope with no middle at all, which is a chain of two links or fewer: there is
+   * nothing on it that is not one of its ends. Such a rope is still a rope — it can be picked out and
+   * tied to things, and its knots are still knots to take hold of — it is only its own body that it
+   * does not have. A rope always keeps as many links in the middle as it can spare, so that a rope
+   * drawn short is never all ends and nothing else.
+   */
+  middleDistance(x: number, y: number): number {
+    const ends = Math.min(END_SEGMENTS, Math.floor((this.segments.length - 1) / 2));
+    let best = Number.POSITIVE_INFINITY;
+    for (let i = ends; i < this.segments.length - ends; i++) {
+      const c = this.segments[i];
       best = Math.min(best, pointSegmentDistance(x, y, c.p1.x, c.p1.y, c.p2.x, c.p2.y));
     }
     return best;

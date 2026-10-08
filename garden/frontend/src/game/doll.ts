@@ -129,7 +129,8 @@ export class Doll {
 
   /**
    * The body part whose artwork covers a point, topmost (last drawn) first — the part a rope gets
-   * tied to when the player clicks the doll, and the part the delete tool counts as the doll.
+   * tied to when the player ties one to her, and what the end of a rope being drawn is read against
+   * as it comes down on her.
    *
    * Two tests, cheapest first. The first is the artwork box: centred on the bone's midpoint,
    * `partLen` long along the bone and `depth` wide across it, which is the extent

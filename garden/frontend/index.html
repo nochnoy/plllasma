@@ -18,7 +18,36 @@
       since the build can be dropped into any sub-directory (`base` in `vite.config.ts`).
     -->
     <link rel="icon" type="image/x-icon" href="./favicon.ico" sizes="16x16 32x32 48x48" />
+    <!--
+      The two screens the player pans to, warmed before they are needed: a CSS background arrives
+      fetched but not decoded, and a screen that decodes its own picture as it slides in is a screen
+      that arrives in pieces. Preloading hands the browser the whole of `bg-1` and `bg-3` — the
+      threshold and the chat's own scenery — while the handshake is still on the single black word.
+    -->
+    <link rel="preload" as="image" href="./assets/bg-1.png" />
+    <link rel="preload" as="image" href="./assets/bg-3.png" />
     <title>Сад с привидениями</title>
+    <!--
+      The page's own first paint, inline so that it is there before the bundle's own CSS has loaded —
+      the module script that brings `styles.css` in runs after the document is parsed, and the wait is
+      long enough for a white page to flash otherwise. The page is black from the first frame, and the
+      one word of the wait stands in the middle of it in the chat's own colour (`--paper` in
+      `src/styles.css`): the same numbers as `.loading` there, said here first.
+    -->
+    <style>
+      html {
+        background: #000;
+      }
+      .loading {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
+        color: #C0C0C0;
+        font: 16px 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+      }
+    </style>
   </head>
   <body>
     <!-- What the page is until its player is signed in: the handshake runs before anything is mounted

@@ -4,7 +4,7 @@ import ChatLine from './ChatLine.vue';
 
 /**
  * The chat's own strip: the last few messages, standing beside the bar's chat button — the world's own
- * bottom left corner, where that button stands at the foot of the bar's column. It is the part of the
+ * bottom left corner, where that button is the last of the bar's three. It is the part of the
  * chat the player reads while the game runs.
  *
  * It is a button as well as a block of text: a click anywhere on the lines opens the chat, so the way

@@ -122,8 +122,8 @@ function keyboardBelongsToField(target: EventTarget | null): boolean {
  *
  * Everything about how she moves lives in `src/game/vm`, everything about what is on the stage lives
  * in {@link World}, and this file drives both: it mirrors the original's `onMouseDown` / `onMouseUp` /
- * arrow-key code for the arrow tool, and routes clicks to the rope and delete tools when those are
- * selected in the toolbar.
+ * arrow-key code for the arrow tool, and routes clicks to the rope tool when it is selected in the
+ * toolbar.
  */
 export class Game {
   /** The stage: the engine, the dolls and the ropes. */
@@ -258,6 +258,14 @@ export class Game {
   private bytes = 0;
   /** The report last handed out, so that only real news is pushed (`report`). */
   private reported: TapeReport | null = null;
+  /**
+   * Whether the player is elsewhere in the garden: the stage's own clock stands still while they are
+   * (`suspend`/`resume`, called by the page when it pans to another of the garden's screens). A
+   * playback is not held by it — a tape walks its own clock wherever the player is — but the live
+   * world and the run being written on it are: nothing is stepped and nothing recorded of the away
+   * time, and coming back sets both going again exactly where they stood.
+   */
+  private away = false;
 
   /**
    * Called whenever there is something new to say about the tape — a recording starting or stopping, a
@@ -317,9 +325,10 @@ export class Game {
    * thing the toolbar keeps for itself is which button looks pressed.
    */
   /**
-   * Called when the *world* picks a tool on its own, which it does whenever something is added or
-   * deleted: the arrow goes back into the player's hand. The toolbar's buttons cannot see that happen
-   * — what they light up from is Vue's own copy of the tool — so this is how they are told.
+   * Called when the *world* changes the tool without being asked to, which is one occasion only: the
+   * player coming home from a watched run gets back the tool they left with (`homeAgain`). The
+   * toolbar's buttons cannot see that happen — what they light up from is Vue's own copy of the tool —
+   * so this is how they are told.
    */
   onToolChange: ((tool: Tool) => void) | null = null;
 
@@ -341,6 +350,26 @@ export class Game {
   }
 
   /**
+   * The player has left the stage for another of the garden's screens: the live world stands still
+   * until they come back (`resume`), whatever it was doing — a doll mid-fall hangs where she was, a
+   * run being written waits at the step it had got to, and nothing of the away time is recorded. The
+   * hold is let go of as well, the way a hidden tab lets it go: a hand that is no longer at the stage
+   * is no longer holding anything on it.
+   *
+   * A playback is not the player's hand and not the live world — a tape walks its own clock — so the
+   * walk goes on; a watch is left and returned to, never taken along.
+   */
+  suspend(): void {
+    this.away = true;
+    if (!this.player) this.release();
+  }
+
+  /** The player is back at the stage: the world and the run being written on it go on where they stood. */
+  resume(): void {
+    this.away = false;
+  }
+
+  /**
    * The character list's own action: one more doll, wearing the character the player picked, put down
    * on the first free spot of the stage. Returns null when the engine has no room for another rig.
    */
@@ -352,14 +381,13 @@ export class Game {
     if (!this.player) this.recorder?.dollAdded(character.id, character.name, character.folder);
     // `undefined` for the spot: the world's own default is the first free one.
     const doll = this.world.addDoll(undefined, character);
-    this.syncTool();
     return doll;
   }
 
   /**
-   * Tells the toolbar about a tool the world changed without being asked. Called from every way in
-   * that can change it — the "add" action above, and a click on the stage — and once more per
-   * frame, which is what catches the tool being put back after a deletion the world made on its own.
+   * Tells the toolbar about a tool the world changed without being asked. Called from the one way in
+   * that can change it — coming home from a watched run (`homeAgain`) — and nowhere else: a tool picked
+   * is the player's to keep until they pick another.
    */
   private syncTool(): void {
     const tool = this.world.tool;
@@ -933,9 +961,10 @@ export class Game {
 
   /**
    * A click on the stage, routed by the tool the toolbar has selected: the rope tool lays one end of
-   * a rope (the first click) or fixes the whole rope (the second), the delete tool removes the rope
-   * that was clicked, and the arrow tool drags things — a knot of a rope if the click landed on one,
-   * and otherwise the original's `onMouseDown`: hold every particle within sqrt(1500) of the pointer.
+   * a rope (the first click) or fixes the whole rope (the second), and the arrow tool drags things — a
+   * knot of a rope if the click landed on one, the *middle* of a rope's cord, which takes the whole
+   * rope off the stage, and otherwise the original's `onMouseDown`: hold every particle within
+   * sqrt(1500) of the pointer.
    *
    * A pointer is either a mouse, a finger or a pen — a `pointerdown` from any of them is a click here,
    * and the whole drag is followed by *that* pointer's id until it is lifted ({@link pointer}): the
@@ -949,9 +978,11 @@ export class Game {
     if (this.pointer !== null && event.pointerId !== this.pointer) return;
     const point = this.scene?.toWorld(event.clientX, event.clientY);
     if (!point) return;
-    // The two tools that spend a click take nothing in hand: a rope and a deletion are done with the press
-    // itself, and there is nothing for the pointer to follow afterwards.
-    if (this.world.tool === 'rope' || this.world.tool === 'delete') {
+    // The rope tool spends a click and takes nothing in hand: a rope end is put down with the press itself, and
+    // there is nothing for the pointer to follow afterwards. The arrow presses *through* to the line below,
+    // even when the press is one that takes a rope off the stage: what a press did is read off the world
+    // afterwards (`holdingAnything`), so a press that burned a rope simply leaves the hand empty.
+    if (this.world.tool === 'rope') {
       this.pressAt(point);
       return;
     }
@@ -974,14 +1005,18 @@ export class Game {
 
   /**
    * What a press on the stage does, at a world point: routed by the tool the toolbar has selected — the rope
-   * tool lays one end of a rope (the first click) or fixes the whole rope (the second), the bin removes
-   * the rope that was clicked, and the arrow tool drags things: a knot of a rope if the click landed on
-   * one, and otherwise the original's own `onMouseDown`, which holds every particle within sqrt(1500) of
-   * the pointer.
+   * tool lays one end of a rope (the first click) or fixes the whole rope (the second), and the arrow tool drags
+   * things: a knot of a rope if the click landed on one, the *middle* of a rope's cord, which takes the whole
+   * rope off the stage, and otherwise the original's own `onMouseDown`, which holds every particle within
+   * sqrt(1500) of the pointer.
+   *
+   * A rope the press took off the stage goes to the renderer, which bursts it where it stood (`Scene.popRope`):
+   * the world has already let the rope go by the time the press returns, so the picture of it going is all that
+   * is left of it, and the world has no business keeping a picture of a rope it no longer has.
    */
   private pressAt(point: { x: number; y: number }): void {
-    this.world.press(point.x, point.y);
-    this.syncTool();
+    const burned = this.world.press(point.x, point.y);
+    if (burned) this.scene?.popRope(burned, point.x, point.y);
     // The first touch of a doll is what starts a run (`record`): the player's own play is the thing worth
     // writing down and sharing, and the bar of tools has no button for it any more. A press that took hold of
     // nothing — a knot, the bare floor — starts nothing, because what a run is about is her.
@@ -1101,10 +1136,13 @@ export class Game {
     if (this.player) {
       // A run is on the timeline: the world belongs to the tape, and the frame walks it (`playFrame`).
       this.playFrame(dt);
-    } else if (this.paused) {
-      // A paused world still *reads*: nothing about her pose is stepped, but what the player does to it
+    } else if (this.paused || this.away) {
+      // A world standing still — the player's own pause, or the player being elsewhere in the garden
+      // (`suspend`) — still *reads*: nothing about her pose is stepped, but what the player does to it
       // while the world stands still — put back in her authored pose, added to the stage, dragged along
-      // the floor — is read into her face, so the card is about the same pose whatever the pause is doing.
+      // the floor — is read into her face, so the card is about the same pose whatever the pause is
+      // doing. The recorder hears none of it: time the player was not at the stage is not time the run
+      // was being played.
       this.world.observe();
     } else if (!this.runIsIdle()) {
       this.accumulator += dt;
@@ -1120,7 +1158,6 @@ export class Game {
       this.recorder.idle(dt);
     }
 
-    this.syncTool();
     // The frame's own clock is the camera's too: a pan glides at the pace the frames come, whatever
     // the display's refresh rate is (`Camera`), and the hand's place goes with it — the edge assist
     // reads where the drag has got to every frame, resting fingers included.
@@ -1263,7 +1300,6 @@ export class Game {
   private applyEdit(edit: TapeEdit): void {
     if (edit[1] !== 'doll') return;
     this.world.addDoll(undefined, { id: edit[2], name: edit[3], folder: edit[4] });
-    this.syncTool();
   }
 
   /**

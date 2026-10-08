@@ -293,6 +293,27 @@ describe('a line the player sends', () => {
     expect(chat.sending.value).toBe(false);
   });
 
+  it('is written once when a catch-up read it while the answer was still on the wire', async () => {
+    // The line the player wrote can come back from a catch-up as well as from the send that wrote it, and
+    // the crossing goes both ways: here the answer is still on its way when a catch-up reads the line the
+    // server has already stored, so the line waits under `PENDING` for an answer that has — as far as the
+    // log is concerned — already arrived.
+    const onItsWay = held<ChatMessage>();
+    const answers: ChatMessage[][] = [[], [line(1)]];
+    const { chat } = await open({ log: () => answers.shift() ?? [], send: () => onItsWay.promise });
+    const sending = chat.send('привет');
+    expect(chat.log.value.map((message) => message.id)).toEqual([PENDING]);
+
+    await chat.catchUp();
+    expect(chat.log.value.map((message) => message.id)).toEqual([PENDING, 1]);
+
+    onItsWay.land(line(1));
+    expect(await sending).toBe(true);
+    // The server's own line was already read: the one waiting under `PENDING` goes rather than being it
+    // twice over.
+    expect(chat.log.value.map((message) => message.id)).toEqual([1]);
+  });
+
   it('goes out under the player\'s own token, trimmed, with the lobby as its place', async () => {
     const { chat, asked } = await open({ send: () => line(9) });
     await chat.send('  привет  ');

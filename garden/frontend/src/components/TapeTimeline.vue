@@ -57,7 +57,7 @@ const length = computed(() => `${clock(props.tape.step)} / ${clock(props.tape.st
 
     Its three pieces stand at the foot of the world, in the order a player reads them — the run first, then the
     run itself, then the way back to the game — and its bottom edge is the world's own foot, which the bar of
-    tools' column ends at too.
+    tools' own buttons stand on too.
   -->
   <div class="tape" :class="{ 'is-seeking': tape.seeking }" role="group" aria-label="Запись на таймлайне">
     <button

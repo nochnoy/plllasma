@@ -6,26 +6,28 @@
 //
 // The run also covers the toolbar, which is real DOM: it picks the rope from the bar, draws one on the
 // doll, carries one of its knots about, puts two more dolls on the stage through the engine's own
-// calls, and takes the rope off it again with the bin. A run of the world is written down and played
+// calls, and takes the rope off it again with a press on the middle of its cord, which bursts the rope
+// where it stood. A run of the world is written down and played
 // back too (`tape.ts`), which is where the promise that a tape *is* the run is measured: the run is
 // the rows of every joint and every card, quarter-pixel for quarter-pixel, and a playback is those
 // rows put back — no simulation in it, and nothing to drift. It exits non-zero if any of that
 // — or the rope's 5% stretch budget, the opening's own claims (she is lying on the floor from the first
-// frame, at rest, with her shadow at full strength and a calm card), the rule that adding something and
-// deleting something both hand the arrow back, the interface having to sit *inside* the world (the bar
-// down the world's left edge — its column as tall as the world, the chat's own button at the foot of it
-// — the chat's strip beside that button and the strip of portraits in the bottom right corner of it, or
+// frame, at rest, with her shadow at full strength and a calm card), the rule that a tool is the
+// player's to keep, the interface having to sit *inside* the world (the bar
+// at the world's left edge — its three buttons hanging from the world's own top, the chat's own button the
+// last of them — the chat's strip under that stack against the same left edge and the strip of portraits in the bottom right corner of it, or
 // in its top right one when the window is taller than it is wide, at
 // whatever size the window makes the world), the page being black around it, the icon the page hands the
 // browser for its own tab, the chat's own four lines and
-// the window they open — the list of runs in that window's right-hand column, and the run a press on one
+// the screen they open — the garden's first location the player lands on and pans through to the stage,
+// the list of runs in that screen's right-hand column, and the run a press on one
 // of its rows plays — the walls
 // having to stand `WALL_MARGIN_X`/`Y` world pixels inside the world with the doll ending up on their
 // floor rather than the picture's, or a card having to follow the pose the doll is in — did not hold.
 //
-// The game's own obstacle is in the run as well: she is flung up at the ceiling that stands one
-// location's height (`STAGE_HEIGHT`, 740 world pixels) above the picture, is stopped by it rather
-// than lost, and comes back down.
+// The game's own obstacle is in the run as well: she is flung up at the ceiling that stands
+// `CEILING_MARGIN` (200 world pixels) above the picture, is stopped by it rather than lost, and
+// comes back down.
 //
 // Requires `npm i --no-save puppeteer @ruffle-rs/ruffle` and a prior `npm run build`.
 // Usage: node tools/smoke.mjs [outDir]
@@ -89,11 +91,11 @@ function lobbyLine(id, userId, nick, icon, parts) {
 
 const chatLog = [
   lobbyLine(1, 9, 'Марго', '9', [said('она полезла на самый верх')]),
-  lobbyLine(2, 4, 'Костя', '4', [said('и без страховки, конечно')]),
-  lobbyLine(3, 7, 'Аня', '7', [said('вот это сальто'), drew('laugh.gif', 'смешно')]),
+  lobbyLine(2, 4, 'Костя', '14', [said('и без страховки, конечно')]),
+  lobbyLine(3, 7, 'Аня', '15', [said('вот это сальто'), drew('laugh.gif', 'смешно')]),
   lobbyLine(4, 9, 'Марго', '9', [said('держитесь, я записываю')]),
-  lobbyLine(5, 4, 'Костя', '4', [said('пятнадцать шагов и всё')]),
-  lobbyLine(6, 7, 'Аня', '7', [said('кто на сцене?')]),
+  lobbyLine(5, 4, 'Костя', '14', [said('пятнадцать шагов и всё')]),
+  lobbyLine(6, 7, 'Аня', '15', [said('кто на сцене?')]),
 ];
 
 /** What the doors have been asked: the run's own record of it, read again by the report at the foot. */
@@ -300,10 +302,17 @@ const server = createServer(async (req, res) => {
   // server for the log and this run has none of its own (`chatDoor` above).
   if (url.startsWith('/api/')) return chatDoor(req, res);
   // The site's own userpics, read as origin-absolute paths (`userpic` in `frontend/src/chat/messages.ts`):
-  // this run has no site, so every one of them is served the same 16×16 gif — the ghost's own badge out
-  // of the build, which is that size — and all the page asks of a face is that it is there.
+  // served straight out of the site's own folder at the root of the repository — the same files the
+  // site itself hands out — so the faces in the chat, the ghost's own `i/ghost.gif` among them, are
+  // the real ones rather than anything the build keeps of its own. (The site's gifs are wide 16 and as
+  // tall as their frames stack; the page wears every one of them at 16×16, which is the site's own way
+  // of wearing them.)
   if (url.startsWith('/i/')) {
-    const file = join(root, 'frontend', 'dist', 'assets', 'chat', 'badge-ghost.gif');
+    const file = join(root, '..', 'i', basename(url));
+    if (!existsSync(file)) {
+      res.writeHead(404);
+      return res.end('not found');
+    }
     res.writeHead(200, { 'content-type': 'image/gif' });
     return res.end(readFileSync(file));
   }
@@ -339,6 +348,44 @@ const logs = [];
 page.on('console', (m) => logs.push(`[${m.type()}] ${m.text()}`));
 page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}`));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+/**
+ * Waits the garden's own pan out: the stage's own layer is polled until it has *arrived* — its
+ * transform within a pixel of where the location being moved to puts it — rather than until it has
+ * stood still, because a page rendering in software WebGL can freeze mid-pan for whole frames at a
+ * time and stillness says nothing. `at` is the location being moved to; the stage stands at its own
+ * place in the row (`placeOf` in `App.vue`), one number that says where in the garden the player is.
+ */
+const panSettled = (at) =>
+  page.evaluate((where) => new Promise((resolve) => {
+    const stage = document.querySelector('.location--stage');
+    const target = (2 - where) * innerWidth;
+    const xOf = (t) => {
+      const m = t.match(/matrix\([^)]*,\s*(-?[\d.eE+]+),\s*(-?[\d.eE+]+)\)/);
+      return m ? Number(m[1]) : 0;
+    };
+    const began = Date.now();
+    const tick = () => {
+      const t = getComputedStyle(stage).transform;
+      if (Math.abs(xOf(t) - target) < 1.5 || Date.now() - began > 8000) return resolve(t);
+      setTimeout(tick, 40);
+    };
+    tick();
+  }), at);
+
+/**
+ * The chat's own screen arrived at *and standing in its contents*: the pan over, the panel showing,
+ * and the runs' list answered — a row in it or its own word for having nothing. The last two are not
+ * quibbles: the screen's contents wait the pan out before they appear (`App.vue`, whose whole point
+ * is a pan that carries nothing but the scenery), so a pan that has stopped is not yet a chat that
+ * is there — and its list is read off the server on the same arrival, a beat after the panel shows.
+ */
+const chatArrived = async () => {
+  await panSettled(3);
+  await page.waitForSelector('.chat-card', { visible: true, timeout: 8000 });
+  await page.waitForSelector('.chat-card__runs .chat-run, .chat-card__runs .chat-runs__none', {
+    timeout: 8000,
+  });
+};
 
 const summary = { steps: [], lying: [], shadowSamples: [] };
 /** Everything the run found wrong, whatever stage it found it at. Printed and exited on at the end. */
@@ -600,15 +647,30 @@ await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'load' });
  * behind the word and no question over it: nothing is mounted until the player is known (`main.ts`),
  * because there is nobody to sign a line for until then.
  *
- * The word is read where it stands — the middle of the page, at reading size, in the page's own ink on the
- * page's own black — and then the player lands and the hall takes the page back, which is what the middle
- * of the page says next.
+ * The word is read where it stands — the middle of the page, at reading size, in the chat's own colour on
+ * the page's own black — and then the player lands on the garden's threshold: the first of its three
+ * locations, the one the sentence about the place and the «Сцена» button are, with nothing of the game in
+ * it at all (`App.vue`). The world is mounted behind it the whole time — the engine boots whatever the
+ * player is looking at — and the button pans the garden along to the stage, which is what the middle of
+ * the page is made of after it.
  */
 const middleOfPage = () =>
   page.evaluate(() => {
     const at = document.elementFromPoint(innerWidth / 2, innerHeight / 2);
     return { tag: at?.tagName ?? null, className: String(at?.className ?? '') };
   });
+/** The interface's own two colours, read out of the page's CSS rather than off this file: the palette is the page's to change, and the checks are about what is drawn being what the palette says. */
+const palette = await page.evaluate(() => {
+  const read = (name) => {
+    const probe = document.createElement('div');
+    probe.style.color = `var(${name})`;
+    document.body.appendChild(probe);
+    const colour = getComputedStyle(probe).color;
+    probe.remove();
+    return colour;
+  };
+  return { wood: read('--wood'), paper: read('--paper') };
+});
 const loading = await page.evaluate(() => {
   const word = document.querySelector('.loading');
   const box = word?.getBoundingClientRect() ?? { left: 0, top: 0, width: 0, height: 0 };
@@ -619,22 +681,59 @@ const loading = await page.evaluate(() => {
     canvas: document.querySelector('canvas')?.tagName ?? null,
     centre: [Math.round(box.left + box.width / 2), Math.round(box.top + box.height / 2)],
     size: style?.fontSize ?? null,
+    colour: style?.color ?? null,
   };
 });
 loading.middle = await middleOfPage();
 summary.handshake = loading;
 await page.screenshot({ path: join(outDir, '00-loading.png') });
-// The server answers, the player lands, and the hall takes the page: the word goes and the world is what
-// the middle of the page is made of now. Every click this run makes after this line is made as that player.
+// The server answers, the player lands on the threshold, and the way in is pressed like a player would:
+// the garden pans one screen to the left — its three locations each carried by their own transform
+// (`placeOf` in `App.vue`, `.location` in `src/styles.css`) — and the stage is what the middle of the
+// page is made of once it has settled. Every click this run makes after this line is made as that
+// player, on that stage.
 await page.evaluate(() => new Promise((resolve) => {
   const tick = () => (window.__garden ? resolve(true) : setTimeout(tick, 20));
   tick();
 }));
 await wait(60);
+const theSentence =
+  'Говорят, если ночью в саду найти старую сцену, раздеться и лечь на неё, то станешь очень гибкой...';
 summary.handshake.after = {
   gone: await page.evaluate(() => document.querySelector('.loading') === null),
   middle: await middleOfPage(),
+  threshold: await page.evaluate(() => {
+    const said = document.querySelector('.intro__said');
+    const go = document.querySelector('.intro__go');
+    const box = (element) => {
+      const rect = element?.getBoundingClientRect() ?? { left: 0, top: 0, width: 0, height: 0 };
+      return {
+        left: Math.round(rect.left),
+        top: Math.round(rect.top),
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+      };
+    };
+    return {
+      // The sentence is written with breaks of line of its own (`<br>` in `App.vue`); the reading
+      // flattens them back to one line, since the words are what is being checked against.
+      said: said?.textContent?.replace(/\s+/g, ' ').trim() ?? null,
+      saidAt: box(said),
+      go: go?.textContent?.trim() ?? null,
+      goAt: box(go),
+    };
+  }),
 };
+await page.screenshot({ path: join(outDir, '00-threshold.png') });
+// The pan itself, read as where the stage's own layer has got to — it is the garden's needle: the
+// stage stands at its own place in the row wherever the player is, so one transform says where the
+// whole of the garden is.
+await page.click('.intro__go');
+await panSettled(2);
+summary.handshake.entered = await page.evaluate(() => ({
+  middle: document.elementFromPoint(innerWidth / 2, innerHeight / 2)?.tagName ?? null,
+  stage: getComputedStyle(document.querySelector('.location--stage')).transform,
+}));
 await page.screenshot({ path: join(outDir, '00-playing.png') });
 // What the page said on the way in, read as the one wait it is.
 if (loading.text !== 'Loading...') problems.push(`the page waits on "${loading.text}", not "Loading..."`);
@@ -649,11 +748,40 @@ if (Math.abs(loading.centre[0] - 450) > 2 || Math.abs(loading.centre[1] - 350) >
   problems.push(`the page waits at ${loading.centre.join(',')} rather than in the middle of it`);
 }
 if (loading.size !== '16px') problems.push(`the page waits at ${loading.size}, not at reading size`);
+if (loading.colour !== palette.paper) {
+  problems.push(`the page waits in ${loading.colour}, not in the chat's own colour`);
+}
 if (!summary.handshake.after.gone) problems.push('the waiting word stayed up after the player landed');
-if (summary.handshake.after.middle.tag !== 'CANVAS') {
+// The threshold: the sentence the garden is known by, centred, and the way in at the right of the
+// screen, halfway down — the direction it goes being the direction it says.
+const saidAt = summary.handshake.after.threshold.saidAt;
+const goAt = summary.handshake.after.threshold.goAt;
+if (summary.handshake.after.threshold.said !== theSentence) {
+  problems.push(`the threshold says "${summary.handshake.after.threshold.said}", not the sentence`);
+}
+if (summary.handshake.after.threshold.go !== 'Сцена') {
+  problems.push(`the way into the garden says "${summary.handshake.after.threshold.go}", not «Сцена»`);
+}
+// The sentence lives in the first third of the screen — the width the garden's own three locations
+// are laid out in — centred inside its container, both ways: a 900-wide window puts a third's middle
+// at 150.
+if (Math.abs(saidAt.left + saidAt.width / 2 - 150) > 6 || Math.abs(saidAt.top + saidAt.height / 2 - 350) > 4) {
   problems.push(
-    `the middle of the page after the handshake is ${summary.handshake.after.middle.tag}` +
-      `.${summary.handshake.after.middle.className}, so the hall does not have the page back`,
+    `the sentence stands at ${saidAt.left + saidAt.width / 2},${saidAt.top + saidAt.height / 2}, not centred in the first third`,
+  );
+}
+if (goAt.left < 450 || Math.abs(goAt.top + goAt.height / 2 - 350) > 4) {
+  problems.push(`the «Сцена» button stands at ${goAt.left},${goAt.top}, not at the right of the screen`);
+}
+// The stage has come to its own place in the row — the middle of the window — the threshold sliding
+// out left of it and the canvas taking the page: the stage layer rests at no offset worth the name
+// (read out of the matrix rather than off the string, a browser that lands a hair off zero has
+// arrived just the same).
+const panX = Number(summary.handshake.entered.stage.match(/matrix\([^)]*,\s*(-?[\d.eE+]+),\s*(-?[\d.eE+]+)\)/)?.[1] ?? 0);
+if (summary.handshake.entered.middle !== 'CANVAS' || Math.abs(panX) > 1.5) {
+  problems.push(
+    `the stage is what the window looks at after «Сцена»: the middle is ` +
+      `${summary.handshake.entered.middle}, the stage at ${summary.handshake.entered.stage}`,
   );
 }
 // The strip in the world's own bottom right corner is up from the first frame: one card, and the calm
@@ -1009,7 +1137,8 @@ summary.respawn = respawned;
 await page.screenshot({ path: join(outDir, '07-respawn.png') });
 
 // The toolbar: the rope is a button in the bar itself, so this part clicks it the way a player would.
-// The world hands the arrow back once the rope is drawn, so the tool is checked after every action.
+// The tool is the player's to keep — drawing a rope does not hand the arrow back — so the tool is
+// checked after every action just the same.
 //
 // The two clicks are made with the world *paused* and it is resumed before the knot is carried: a click
 // only counts when it lands on a texel of her own artwork (`Doll.hitTest`), and a doll who is falling — or
@@ -1079,8 +1208,9 @@ if (!knot || !tied) {
 // Where the rope's free end may be put: anywhere in the *picture* — a knot is not the body, and the
 // walls are not a box a rope is kept in (`Particle2D.clamped`), so the free end may go out into the
 // scenery beside them or above them and stay there — but clear of the interface, which is where a click
-// lands on a button rather than on the knot: the bar's own column down the world's left edge, and the band
-// the chat's block and the strip of portraits make along the world's own foot, the two ends of it. Every
+// lands on a button rather than on the knot: the bar's own buttons at the world's left edge, the chat's
+// block under them against the same edge, and the band the strip of portraits makes along the world's own
+// foot, at the other end of it. Every
 // one of those boxes is read, from the renderer and from the page.
 const knotWorld = summary.layout.first.world;
 const knotBar = summary.layout.first.bar;
@@ -1160,13 +1290,12 @@ await wait(120);
 summary.toolbar.afterKnotDrag = droppedAt;
 await page.screenshot({ path: join(outDir, '11-knot-dropped.png') });
 
-// The bar itself: three tools and the chat, in a column down the whole of the world's left edge — the
-// arrow, the rope and the bin from the world's own top left corner downwards, and the chat's own button
-// at the foot of the column. Each is a black square with a drawing the colour of the hall's own wood in
-// it, since the bar lies over the hall, and the one in the player's hand is the same square the other
-// way round. Where the bar
-// *is* — against the world's own left edge, and as tall as the world — is read with the rest of the
-// layout.
+// The bar itself: three buttons hanging from the top of the world's own left edge — the arrow, then the
+// rope, then the chat's at the very foot of the stack, that one being the only button of the three that
+// picks no tool. Each is a black square with a drawing the colour of the hall's own wood in it, since the
+// bar lies over the hall, and the one in the player's hand is the same square the other way round. Where
+// the bar *is* — against the world's own left edge, hanging from the world's top — is read with the rest
+// of the layout, and what each button wears for the pointer on it is read straight after.
 summary.toolbar.layout = await page.evaluate(() =>
   [...document.querySelectorAll('.toolbar [data-tool]')].map((button) => {
     const style = getComputedStyle(button);
@@ -1189,15 +1318,125 @@ summary.toolbar.layout = await page.evaluate(() =>
   }),
 );
 
+// Each of those buttons also wears the word a player calls it — «Таскать», «Связывать», «Чатъ» — while the
+// pointer is on it and not otherwise: a word beside the square rather than over it, since a caption laid over
+// a button covers the very thing the button presses on, and no control of its own, so that a press where the
+// word stands belongs to whatever is under it (the hall, or the chat's own four lines for the lower two). A
+// hover is the browser's own and nothing synthetic makes one, so the pointer really goes to each button in
+// turn; `null` is the pointer off the bar altogether, in the middle of the hall, where no word is up.
+/**
+ * Puts the pointer on one button of the bar — or off the bar altogether, in the middle of the hall, which is
+ * what `null` asks for — and waits for the browser to have answered with a hover.
+ *
+ * The point is worked out here rather than asked of the page's own `hover`, because a hover is the browser's
+ * own and nothing synthetic makes one: the pointer really crosses the glass. It is carried there *in steps*,
+ * the way a hand crosses the bar, and put there again if the word has not come up — one jump of the pointer
+ * is one event, and this page (software WebGL, a frame every tick) is not the place to trust that it landed.
+ */
+async function pointPointer(tool) {
+  const spot = await page.evaluate((t) => {
+    const world = window.__garden.inspect().world;
+    const canvas = document.querySelector('.stage canvas')?.getBoundingClientRect();
+    const middle = {
+      x: (canvas?.left ?? 0) + world.x + world.width / 2,
+      y: (canvas?.top ?? 0) + world.y + world.height / 2,
+    };
+    if (!t) return { hall: middle };
+    const rect = document.querySelector(`.toolbar [data-tool="${t}"]`).getBoundingClientRect();
+    return {
+      hall: middle,
+      button: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
+    };
+  }, tool);
+  if (!spot.button) {
+    await page.mouse.move(spot.hall.x, spot.hall.y);
+    await wait(200);
+    return;
+  }
+  for (let attempt = 0; attempt < 3; attempt++) {
+    // Across the hall to the bar, and then up onto the button itself.
+    await page.mouse.move(spot.button.x - 30, spot.button.y, { steps: 2 });
+    await page.mouse.move(spot.button.x, spot.button.y, { steps: 3 });
+    await wait(200);
+    const answered = await page.evaluate(
+      (t) =>
+        Number.parseFloat(
+          getComputedStyle(document.querySelector(`.toolbar [data-tool="${t}"] .hint`)).opacity,
+        ) > 0.5,
+      tool,
+    );
+    if (answered) return;
+  }
+}
+
+async function hintsAt(tool) {
+  await pointPointer(tool);
+  return page.evaluate(() => {
+    const inspect = window.__garden.inspect();
+    const scale = inspect.hud.scale || 1;
+    const world = inspect.world;
+    const canvas = document.querySelector('.stage canvas')?.getBoundingClientRect();
+    return [...document.querySelectorAll('.toolbar [data-tool]')].map((button) => {
+      const hint = button.querySelector('.hint');
+      const style = getComputedStyle(hint);
+      const at = hint.getBoundingClientRect();
+      const square = button.getBoundingClientRect();
+      // What a press at the word's own middle would land on, asked of the browser: a word that was a control
+      // would answer for itself here.
+      const landed = document.elementFromPoint(at.left + at.width / 2, at.top + at.height / 2);
+      return {
+        tool: button.dataset.tool,
+        word: hint.textContent.trim(),
+        // The word is the button's own name in the markup as well, which is what a screen reader reads out.
+        name: button.getAttribute('aria-label'),
+        shown: Number.parseFloat(style.opacity) > 0.5,
+        // Where the word stands, in the interface's own pixels: off the right edge of the square and level
+        // with the middle of it, both of which are `styles.css`'s own numbers (`.hint`).
+        gap: (at.left - square.right) / scale,
+        level: (at.top + at.height / 2 - (square.top + square.height / 2)) / scale,
+        width: at.width / scale,
+        height: at.height / scale,
+        // The word is part of the picture: it stands inside the world's own box, not out on the black.
+        inside:
+          at.left - (canvas?.left ?? 0) >= world.x - 0.5 &&
+          at.right - (canvas?.left ?? 0) <= world.x + world.width + 0.5 &&
+          at.top - (canvas?.top ?? 0) >= world.y - 0.5 &&
+          at.bottom - (canvas?.top ?? 0) <= world.y + world.height + 0.5,
+        clicks: style.pointerEvents,
+        overItself: landed === hint,
+        landed: landed?.getAttribute('class') ?? landed?.tagName ?? null,
+        background: style.backgroundColor,
+        colour: style.color,
+        borderColour: style.borderTopColor,
+        borderWidth: Number.parseFloat(style.borderTopWidth),
+        radius: Number.parseFloat(style.borderTopLeftRadius),
+      };
+    });
+  });
+}
+summary.toolbar.hints = {
+  // Read off the bar each time, with the pointer somewhere else: the key is where the pointer was.
+  rest: await hintsAt(null),
+  drag: await hintsAt('drag'),
+  rope: await hintsAt('rope'),
+  chat: await hintsAt('chat'),
+};
+// A picture of it while one is up: the rope's word, standing over the hall. The pointer is put on that
+// button again for it, since a word is worth a screenshot the way any other part of the page is.
+await pointPointer('rope');
+await page.screenshot({ path: join(outDir, '12-bar-words.png') });
+
 // The chat, which is part of the interface rather than of the hall: the last four messages in a strip
-// beside the bar's own chat button — the world's bottom left corner, where that button stands at the foot
-// of the bar's column — and the window that either of them opens. The log behind it is this run's own
+// standing in the world's own bottom left corner — across the foot of the picture from the bar that
+// hangs at its top left one — and the screen of its own that the strip and the bar's chat button are
+// both the way into, the garden's third location. The log behind it is this run's own
 // server's (`chatDoor` at the top of this file): six messages in the lobby, one of them holding a gif, the
 // newest carrying a like somebody else left. So what is asked here is the interface: four lines 300 px
 // wide, in the chat's own colour, one message to a line and no wrapping, the strip standing inside the
-// world and level with the bottom of the chat button in the bar, the three buttons under a line going
-// straight to the server when they are pressed, and a line sent from the field landing in the log and in
-// the strip as the same thing, signed by whoever the field said.
+// world on its own bottom left corner, the screen those two ways in pan to — one screen to the right
+// of the stage, with the way back and the speaker's own switch in it — and a line sent from the field
+// landing in the log and in the strip as the same thing, signed by whoever the field said — handed
+// over to the server once.
 const sender = 'проверка связи';
 // The strip is a button as well as a block of text, so it brightens under the pointer the way the bar's
 // own buttons do: that is read first, and then the pointer is taken off it — to the middle of the hall —
@@ -1229,6 +1468,7 @@ summary.chat.before = await page.evaluate(() => {
       top: Math.round(rect.top - (canvas?.top ?? 0)),
       bottom: Math.round(rect.bottom - (canvas?.top ?? 0)),
       width: rect.width,
+      height: rect.height,
     };
   };
   const strip = document.querySelector('.chat-strip');
@@ -1244,8 +1484,8 @@ summary.chat.before = await page.evaluate(() => {
     button: box(button),
     bar: box(bar),
     // The world's own box, which the strip has to be inside of: the chat is in the picture, not on the
-    // black around it. The interface's own corner, scale and height come with it: the bar is DOM, so
-    // that is what says how tall the column down the world's left edge is meant to be.
+    // black around it. The interface's own corner, scale and height come with it: the bar is DOM, so that is
+    // what says how tall the pile of buttons standing on the world's own foot is meant to be.
     world: measured.world,
     hud: measured.hud,
     colour: style.color,
@@ -1258,11 +1498,26 @@ summary.chat.before = await page.evaluate(() => {
 });
 await page.screenshot({ path: join(outDir, '12-chat-strip.png') });
 
-// The window: the chat's own paper colour with black on it, the log, the field and its button, and
-// nothing in the heading but the cross. It is opened by the *strip* here rather than by the bar's own
-// button, so that the click on the lines is checked too — the two are two ways into the same window.
+// The screen: the chat's own location — the third of the garden's three — arrived at by the garden
+// panning a screen to the left, over its own scenery (`bg-3.png`), its words in the chat's own
+// colour and nothing behind them but the picture. It is opened by the *strip* here rather than by the
+// bar's own button, so that the click on the lines is checked too — the two are two ways into the
+// same screen. A sampler is set going before the click, so the pan itself is caught on the wing:
+// where the stage's own layer was, frame by frame — the chat lies one screen to the right of the
+// stage, and arriving at it has to be the whole picture travelling left, the stage sliding out to
+// left of the window a window's width.
+await page.evaluate(() => {
+  window.__slideSeen = new Set();
+  const began = performance.now();
+  const tick = () => {
+    window.__slideSeen.add(getComputedStyle(document.querySelector('.location--stage')).transform);
+    if (performance.now() - began < 1500) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+});
 await page.click('.chat-strip');
-await wait(300);
+await chatArrived();
+summary.chat.slide = await page.evaluate(() => [...window.__slideSeen]);
 summary.chat.window = await page.evaluate(() => {
   const card = document.querySelector('.chat-card');
   const line = card.querySelector('.chat-line');
@@ -1271,10 +1526,24 @@ summary.chat.window = await page.evaluate(() => {
   const input = card.querySelector('.chat-card__input');
   const speaker = card.querySelector('.chat-card__speaker');
   const send = card.querySelector('.chat-card__send');
+  const back = card.querySelector('.chat-card__back');
   return {
     background: getComputedStyle(card).backgroundColor,
     colour: getComputedStyle(card).color,
+    // Where the garden itself has got to, and what each of the three screens is wearing behind its
+    // own content: the pan is the travel, the pictures are the place.
+    stage: getComputedStyle(document.querySelector('.location--stage')).transform,
+    introBack: getComputedStyle(document.querySelector('.location--intro')).backgroundImage,
+    chatBack: getComputedStyle(document.querySelector('.location--chat')).backgroundImage,
     parts: [...card.children].map((child) => child.className),
+    // The heading: the way back at the left of it, the name of the place beside it.
+    title: card.querySelector('.chat-card__title')?.textContent ?? null,
+    // The heading: the way back at the left of it, the name of the place centred across the screen.
+    titleAt: (() => {
+      const rect = card.querySelector('.chat-card__title')?.getBoundingClientRect();
+      return rect ? { left: rect.left, width: rect.width } : null;
+    })(),
+    back: back?.textContent.trim() ?? null,
     lines: card.querySelectorAll('.chat-line').length,
     wraps: getComputedStyle(line).whiteSpace,
     nick: nick.textContent,
@@ -1340,8 +1609,10 @@ summary.chat.sent = await page.evaluate(() => {
   };
 });
 // And what the server was handed for it: the line as it was written, addressed to the lobby (which is to
-// say addressed to nothing), signed by whoever the field said.
+// say addressed to nothing), signed by whoever the field said — and handed over once, since one press is
+// one line.
 summary.chat.sent.took = chatAsked.sent.at(-1);
+summary.chat.sent.asked = chatAsked.sent.length;
 await page.screenshot({ path: join(outDir, '14-chat-sent.png') });
 
 // ...and back to being themselves: the same button, the other way round.
@@ -1355,18 +1626,28 @@ summary.chat.back = await page.evaluate(() => {
     pressed: speaker.getAttribute('aria-pressed'),
   };
 });
-await page.click('.chat-card__close');
-await wait(200);
-summary.chat.stillOpen = await page.evaluate(() => Boolean(document.querySelector('.chat-window')));
+// The way back: one button, one pan to the right, and the garden is the stage again. The chat's
+// screen does not go away — it stays where it is in the garden, one screen to the right of the
+// stage, which is what leaving it looks like: the conversation itself sliding out rather than a
+// screen blanking under the pan.
+await page.click('.chat-card__back');
+await panSettled(2);
+summary.chat.stillOpen = await page.evaluate(() => {
+  const card = document.querySelector('.chat-card');
+  return card ? card.getBoundingClientRect().left < innerWidth - 2 : false;
+});
+summary.chat.backAt = await page.evaluate(
+  () => getComputedStyle(document.querySelector('.location--stage')).transform,
+);
 
 
 
-// What all of that adds up to: four lines of four messages beside the bar's own chat button, inside the
-// world and level with that button's own bottom edge, in the chat's own colour, with the strip itself
-// taking a click; a window that opens on the chat's paper with a heading of nothing but a cross and two
-// columns under it — the conversation and the runs; a field
-// of one frame, as tall as the button beside it, saying who is speaking; and a line sent from that field
-// landing in the log and in the strip as the same thing, signed by whoever the field said.
+// What all of that adds up to: four lines of four messages under the bar and against the world's own
+// left edge, inside the world, in the chat's own colour, with the strip itself taking a click; a screen
+// that opens — one pan of the garden to the left — on the chat's paper, with a heading of the way back
+// and the name of the place and two columns under it — the conversation and the runs; a field of one
+// frame, as tall as the button beside it, saying who is speaking; and a line sent from that field landing
+// in the log and in the strip as the same thing, signed by whoever the field said.
 const chatStrip = summary.chat.before;
 const chatWindow = summary.chat.window;
 const chatGhost = summary.chat.ghost;
@@ -1376,24 +1657,26 @@ if (chatStrip.lines !== 4) {
   problems.push(`the chat's strip shows ${chatStrip.lines} lines, not the four it is`);
 }
 if (chatStrip.width !== 300) problems.push(`the chat's block of text is ${chatStrip.width} px wide, not 300`);
-// The chat button is one of the bar's own — as wide as the bar and no wider — and the strip stands
-// beside that column rather than in it: against its right edge, and level with its bottom.
+// The chat button is one of the bar's own — as wide as the bar and no wider — and the strip stands in
+// the opposite corner of the picture from it: the world's bottom left, with the bar at its top left,
+// both against the same left edge.
 if (chatStrip.button.right !== chatStrip.bar.right) {
   problems.push(`the chat button ends at ${chatStrip.button.right} px with the bar ending at ${chatStrip.bar.right}`);
 }
-if (chatStrip.strip.left !== chatStrip.button.right + 8) {
+if (chatStrip.strip.left !== chatStrip.bar.left) {
   problems.push(
-    `the chat's strip starts at ${chatStrip.strip.left} px with the chat button ending at ${chatStrip.button.right}`,
-  );
-}
-if (chatStrip.strip.bottom !== chatStrip.button.bottom) {
-  problems.push(
-    `the chat's strip ends at ${chatStrip.strip.bottom} px with the chat button ending at ${chatStrip.button.bottom}`,
+    `the chat's strip starts at ${chatStrip.strip.left} px with the bar starting at ${chatStrip.bar.left}`,
   );
 }
 // The chat is part of the picture: the strip stands inside the world's own box, not out on the black.
 const chatRight = chatStrip.world.x + chatStrip.world.width;
 const chatFloor = chatStrip.world.y + chatStrip.world.height;
+if (Math.abs(chatStrip.strip.bottom - (chatFloor - chatStrip.hud.scale * 12)) > 1) {
+  problems.push(
+    `the chat's strip ends at y = ${chatStrip.strip.bottom}, not standing on the world's own corner ` +
+      `(${(chatFloor - chatStrip.hud.scale * 12).toFixed(1)})`,
+  );
+}
 if (
   chatStrip.strip.left < chatStrip.world.x ||
   chatStrip.strip.right > chatRight ||
@@ -1404,20 +1687,21 @@ if (
       `outside a world of ${chatStrip.world.x}..${chatRight}, ${chatFloor}`,
   );
 }
-// The bar is the world's own left edge rather than a pile of buttons in its corner: a column that runs
-// from the world's top left corner down to its bottom left one, with the chat's own button at the foot of
-// it — which is what puts the way into the chat in the bottom left corner of the picture. The bar's own
-// height comes from the renderer (`hud.height`), and the browser's box has to land on the same numbers.
+// The bar is a pile of buttons hanging from the world's own top rather than a column floating down its
+// left edge: its own box is nothing but the three of them, and its head — the arrow, the first of the
+// three — is the world's own top, one inset in. The numbers in between are the interface's own (three
+// 44 px buttons 8 px apart), and the browser's box has to land on them.
+const barStack = 3 * 44 + 2 * 8;
 if (Math.abs(chatStrip.bar.top - (chatStrip.world.y + chatStrip.hud.scale * 12)) > 1) {
   problems.push(
-    `the bar starts at y = ${chatStrip.bar.top}, not at the world's own corner ` +
+    `the bar starts at y = ${chatStrip.bar.top}, not hanging from the world's top ` +
       `(${(chatStrip.world.y + chatStrip.hud.scale * 12).toFixed(1)})`,
   );
 }
-if (Math.abs(chatStrip.bar.bottom - (chatFloor - chatStrip.hud.scale * 12)) > 1) {
+if (Math.abs(chatStrip.bar.height - chatStrip.hud.scale * barStack) > 1) {
   problems.push(
-    `the bar ends at y = ${chatStrip.bar.bottom}, not at the foot of the world ` +
-      `(${(chatFloor - chatStrip.hud.scale * 12).toFixed(1)})`,
+    `the bar is ${chatStrip.bar.height.toFixed(1)} px tall, not the ` +
+      `${(chatStrip.hud.scale * barStack).toFixed(1)} of its three buttons`,
   );
 }
 if (chatStrip.button.bottom !== chatStrip.bar.bottom) {
@@ -1425,7 +1709,7 @@ if (chatStrip.button.bottom !== chatStrip.bar.bottom) {
     `the chat's button ends at ${chatStrip.button.bottom} px with the bar ending at ${chatStrip.bar.bottom}`,
   );
 }
-if (chatStrip.colour !== 'rgb(215, 202, 187)') problems.push(`the chat's text is ${chatStrip.colour}`);
+if (chatStrip.colour !== palette.paper) problems.push(`the chat's text is ${chatStrip.colour}`);
 // ...and under the pointer it is the bar's own white, the way a button of the bar answers a hover.
 if (summary.chat.hover !== 'rgb(255, 255, 255)') {
   problems.push(`the chat's strip answers a hover with ${summary.chat.hover}`);
@@ -1433,12 +1717,34 @@ if (summary.chat.hover !== 'rgb(255, 255, 255)') {
 if (chatStrip.nowrap !== 'nowrap') problems.push(`a line on the chat's strip wraps (${chatStrip.nowrap})`);
 if (!chatStrip.mask.includes('16px')) problems.push(`the strip's own fade is ${chatStrip.mask}`);
 if (chatStrip.clicks !== 'auto') problems.push(`the strip takes no clicks (${chatStrip.clicks})`);
-if (chatStrip.badges.some((size) => size !== '16x16')) {
-  problems.push(`the strip's badges are ${chatStrip.badges.join(', ')}, not 16x16`);
+if (chatStrip.badges.some((size) => !size.startsWith('16x'))) {
+  problems.push(`the strip's badges are ${chatStrip.badges.join(', ')}, not the site's own sixteen-wide gifs`);
 }
 if (chatStrip.gifs !== 1) problems.push(`the strip drew ${chatStrip.gifs} of the gifs in its messages, not the one`);
-if (chatWindow.background !== 'rgb(215, 202, 187)' || chatWindow.colour !== 'rgb(0, 0, 0)') {
-  problems.push(`the chat window is ${chatWindow.background} with ${chatWindow.colour} on it`);
+// The screen is over its own scenery rather than on paper: no background of its own at all, and its
+// words in the chat's own colour — the same colour the strip in the world's corner reads in.
+if (chatWindow.background !== 'rgba(0, 0, 0, 0)' || chatWindow.colour !== palette.paper) {
+  problems.push(`the chat screen is ${chatWindow.background} with ${chatWindow.colour} on it`);
+}
+// The travel: the third location is one screen right of the second, so arriving at it is the whole
+// garden moving one window to the left — the world the player leaves sliding out to the left, the
+// chat sliding in from the right — and the sampler has to have caught it doing exactly that. (The
+// viewport is 900 wide: the stage's own layer travels from 0 at the stage to -900 one window left of
+// it, which is where the player stands at the chat.)
+const xOf = (transform) => Number(transform.match(/matrix\([^)]*,\s*(-?[\d.eE+]+),\s*(-?[\d.eE+]+)\)/)?.[1] ?? 0);
+const slides = summary.chat.slide ?? [];
+if (Math.abs(xOf(chatWindow.stage) + 900) > 2) {
+  problems.push(`the chat was arrived at with the garden at ${chatWindow.stage}`);
+}
+if (slides.length < 2 || !slides.some((one) => xOf(one) < -450)) {
+  problems.push(`the garden did not travel left into the chat (${slides.length} frames of the pan seen)`);
+}
+// And the place: each screen of the garden wears its own picture behind its own content.
+if (!/bg-1\.png/.test(chatWindow.introBack)) {
+  problems.push(`the first location wears ${chatWindow.introBack}, not its own picture`);
+}
+if (!/bg-3\.png/.test(chatWindow.chatBack)) {
+  problems.push(`the third location wears ${chatWindow.chatBack}, not its own picture`);
 }
 if (chatWindow.parts.join() !== 'chat-card__head,chat-card__body,chat-card__form') {
   problems.push(`the chat window's own parts are ${chatWindow.parts.join(', ')}`);
@@ -1452,12 +1758,25 @@ if (chatWindow.none !== 'Пока ничего не записано.' || chatWi
 if (chatWindow.lines !== chatStrip.lines + 2) {
   problems.push(`the chat window shows ${chatWindow.lines} messages where the log has ${chatStrip.lines + 2}`);
 }
+if (chatSent.asked !== 1) {
+  problems.push(`a line sent was handed to the server ${chatSent.asked} times`);
+}
 if (chatWindow.wraps !== 'normal') problems.push(`a message in the chat window does not wrap (${chatWindow.wraps})`);
 if (chatWindow.bold !== '700' || chatWindow.colon !== ': ') {
   problems.push(`a message opens with "${chatWindow.nick}" in ${chatWindow.bold} and "${chatWindow.colon}" after it`);
 }
-if (chatWindow.badge !== '16x16') problems.push(`a message in the window opens with a ${chatWindow.badge} badge`);
+if (!chatWindow.badge.startsWith('16x')) problems.push(`a message in the window opens with a ${chatWindow.badge} badge`);
 if (chatWindow.send !== 'Отправить') problems.push(`the chat window's button says "${chatWindow.send}"`);
+// The heading of the screen: the way back at the left of it, the name of the place beside it — a
+// screen is left by a way back rather than closed by a cross.
+if (chatWindow.title !== 'Чат с привидениями') problems.push(`the chat's heading says "${chatWindow.title}"`);
+// A place is named over its middle: the title's own centre is the screen's own.
+if (chatWindow.titleAt && Math.abs(chatWindow.titleAt.left + chatWindow.titleAt.width / 2 - 450) > 6) {
+  problems.push(
+    `the chat's heading is centred at ${Math.round(chatWindow.titleAt.left + chatWindow.titleAt.width / 2)}, not the middle of the screen`,
+  );
+}
+if (chatWindow.back !== 'Назад') problems.push(`the way back says "${chatWindow.back}", not «Назад»`);
 // The field: one frame around the whole of it, a text box inside that neither draws a frame of its own
 // nor fills itself in, and the field and the button beside it the same height.
 if (chatWindow.fieldBorder !== 1 || chatWindow.inputBorder !== 0) {
@@ -1479,7 +1798,7 @@ if (chatWindow.fieldHeight !== chatWindow.sendHeight) {
 // here, so what stands here is the site's own word for this player coming out at the other end of the page
 // — with their own userpic the next line will be signed by, and the triangle of a combobox, pointing down
 // for the player and up for the ghost.
-if (chatWindow.speaker !== player.nick || chatWindow.speakerBadge !== '16x16' || !chatWindow.speakerIcon.endsWith('/i/2.gif')) {
+if (chatWindow.speaker !== player.nick || !chatWindow.speakerBadge.startsWith('16x') || !chatWindow.speakerIcon.endsWith('/i/2.gif')) {
   problems.push(
     `the chat's field opens as "${chatWindow.speaker}" with a ${chatWindow.speakerBadge} badge ` +
       `(${chatWindow.speakerIcon})`,
@@ -1489,8 +1808,8 @@ if (chatWindow.pressed !== 'false') {
   problems.push(`the field's speaker button says it is pressed (${chatWindow.pressed})`);
 }
 if (chatGhost.nick !== 'Привидение') problems.push(`the ghost is called "${chatGhost.nick}"`);
-if (chatGhost.badge !== '16x16' || !chatGhost.icon.endsWith('badge-ghost.gif')) {
-  problems.push(`the ghost wears a ${chatGhost.badge} badge (${chatGhost.icon})`);
+if (!chatGhost.badge.startsWith('16x') || !chatGhost.icon.endsWith('/i/ghost.gif')) {
+  problems.push(`the ghost wears a ${chatGhost.badge} badge (${chatGhost.icon}), not the site's own ghost`);
 }
 if (chatGhost.caret === chatWindow.caret) problems.push("the speaker's triangle did not turn over");
 if (chatGhost.pressed !== 'true') {
@@ -1504,7 +1823,7 @@ if (chatSent.field !== '') problems.push(`the field kept "${chatSent.field}" aft
 if (!(chatSent.log.at(-1) ?? '').startsWith(chatGhost.nick)) {
   problems.push(`a line sent anonymously is signed "${chatSent.log.at(-1)}"`);
 }
-if (chatSent.badge !== '16x16' || !chatSent.icon.endsWith('badge-ghost.gif')) {
+if (!chatSent.badge.startsWith('16x') || !chatSent.icon.endsWith('/i/ghost.gif')) {
   problems.push(`a line sent anonymously wears a ${chatSent.badge} badge (${chatSent.icon})`);
 }
 // What went out on the wire for it: the line as it was written — the ghost's flag and the body, nothing
@@ -1529,19 +1848,36 @@ if (chatBack.nick !== chatWindow.speaker || chatBack.pressed !== 'false') {
   problems.push(`pressing the speaker again left the field as "${chatBack.nick}" (pressed ${chatBack.pressed})`);
 }
 if (chatBack.caret !== chatWindow.caret) problems.push("the speaker's triangle did not come back");
-if (summary.chat.stillOpen) problems.push('the chat window stayed open after the cross was clicked');
+if (summary.chat.stillOpen) problems.push('the chat screen stayed up after «Назад» was clicked');
+if (Math.abs(xOf(summary.chat.backAt)) > 2) {
+  problems.push(`the way back left the garden at ${summary.chat.backAt}, not the stage`);
+}
 
 // The things that used to arrive from the "+" palette — a doll and a stone — are put on the stage
 // through the engine's own calls. The bar has no "+" any more (the world is the game, not a level
-// editor), but the stage still has to hold what it is given, and the tool still has to come back to
-// the arrow afterwards (`World.putDown`).
+// editor), but the stage still has to hold what it is given, and the tool stays exactly where the
+// player left it — a doll arriving is not the arrow's business (`World.addDoll`).
 await page.evaluate(() => window.__garden.addDoll());
 await wait(400);
 summary.toolbar.toolAfterDoll = await page.evaluate(() => window.__garden.overview().tool);
 
-// And once more: a second doll, which is what the strip below wants a second card of.
+// And once more: a second doll, which is what the strip below wants a second card of. The sprites are
+// the renderer's own answer to a doll arriving, and in a page rendering in software WebGL a frame is
+// not a cheap thing — so this waits for the parts to be drawn rather than for a clock: the whole of
+// the cast, eleven sprites a doll, standing in the renderer before anything is read of it. The cap is
+// for a renderer that never catches up: the reading below says so in its own words if it comes to that.
 await page.evaluate(() => window.__garden.addDoll());
-await wait(400);
+await page.evaluate(() => new Promise((resolve) => {
+  const began = Date.now();
+  const tick = () => {
+    const inspect = window.__garden.inspect();
+    if ((inspect.dolls > 0 && inspect.parts.length >= inspect.dolls * 11) || Date.now() - began > 10000) {
+      return resolve(true);
+    }
+    setTimeout(tick, 50);
+  };
+  tick();
+}));
 summary.toolbar.toolAfterSecondDoll = await page.evaluate(() => window.__garden.overview().tool);
 summary.toolbar.afterAdd = await page.evaluate(() => window.__garden.overview());
 summary.inspectAdded = await page.evaluate(() => window.__garden.inspect());
@@ -1551,40 +1887,96 @@ await page.screenshot({ path: join(outDir, '15-dolls.png') });
 // and the whole strip hung off the world's own right edge, inside it.
 summary.portraits.added = await portraits();
 
-// Let the world settle again, then hold it still for the deletions: every handle below is read once
-// and clicked afterwards, so nothing may move in between.
+// Let the world settle again, then hold it still for the burn: the handles below are read once and
+// pressed afterwards, so nothing may move in between — and the world standing still is what makes the
+// burst the press leaves behind worth reading, since it belongs to the frame clock rather than to a
+// step and plays out with the world stopped (`Scene.popRope`).
 await page.keyboard.press('Space');
 await wait(600);
 await page.keyboard.press('Space');
 await wait(120);
 
-// The delete tool takes away what the player put there: the rope. The doll is not the
-// bin's to take: a click on her is a click on the game itself, and it spends nothing.
-await page.click('[data-tool="delete"]');
-await wait(120);
-const doomed = await page.evaluate(() => window.__garden.overview());
-if (doomed.ropeHandles.length === 0) {
-  problems.push('the rope was gone before the delete tool could take it');
+// Taking a rope off the stage is the arrow's own doing, not a tool to pick up first: the pointer over
+// the *middle* of a rope's cord wears a crosshair — the whole of the offer, nothing being drawn on the
+// stage for it — and a press there takes the rope away. The ends of the cord are not offered that way:
+// those are the knots a hand takes hold of to carry a rope about, and the cursor is what tells the
+// player which of the two the press is about to be (`Rope.middleDistance`, `END_SEGMENTS`).
+const doomed = await page.evaluate(() => {
+  const garden = window.__garden;
+  return { ...garden.overview(), ropeNodes: garden.inspect().ropes[0]?.nodes ?? 0 };
+});
+/** The cursor the page is wearing at a client point, as the browser computes it. */
+const cursorAt = async (x, y) => {
+  await page.mouse.move(x, y);
+  await wait(150);
+  return page.evaluate(() => getComputedStyle(document.querySelector('.stage canvas')).cursor);
+};
+const middle = doomed.ropeHandles[0];
+if (!middle) {
+  problems.push('the rope was gone before the arrow could take it');
 } else {
-  await page.mouse.click(doomed.ropeHandles[0].x, doomed.ropeHandles[0].y);
+  summary.toolbar.cursorOverRope = await cursorAt(middle.x, middle.y);
+  const knot = doomed.anchorHandles[0];
+  summary.toolbar.cursorOverKnot = await cursorAt(knot.x, knot.y);
+  // The press, aimed from the screen point a player's would be and read back as the world point it
+  // landed on: that is where the burst opens out from, so a burst anywhere else is a burst of some
+  // other thing (`Burst.x`/`y`).
+  const meant = await page.evaluate((point) => {
+    const canvas = document.querySelector('.stage canvas').getBoundingClientRect();
+    const view = window.__garden.inspect().view;
+    return {
+      x: view.left + (point.x - canvas.left - view.x) / view.scale,
+      y: view.top + (point.y - canvas.top - view.y) / view.scale,
+    };
+  }, middle);
+  await page.mouse.click(middle.x, middle.y);
+  // Read at once, before there is time for the burst to have run its course: the rope is off the stage
+  // the moment the press returns, and what is left of it is the renderer's own picture of it going.
+  summary.toolbar.burn = await page.evaluate((at) => {
+    const inspect = window.__garden.inspect();
+    return {
+      ropes: inspect.ropes.length,
+      meant: at,
+      bursts: inspect.bursts.map((burst) => ({
+        nodes: burst.nodes,
+        x: Number(burst.x.toFixed(1)),
+        y: Number(burst.y.toFixed(1)),
+        age: Number(burst.age.toFixed(3)),
+        // How far the ring has opened, which is what says it is nine times as quick as the rest of the
+        // burst: read again below well inside the burst, where it has to be at its full reach already.
+        ring: Number(burst.ring.toFixed(1)),
+      })),
+    };
+  }, meant);
+  // The ring's own time is a ninth of the burst's (`RING_SECONDS` in `scene.ts`), so a quarter of a second
+  // in the ring is as far out as it ever goes while the rope it came off is still burning.
+  await wait(240);
+  summary.toolbar.burnLater = await page.evaluate(() =>
+    window.__garden.inspect().bursts.map((burst) => ({
+      age: Number(burst.age.toFixed(3)),
+      ring: Number(burst.ring.toFixed(1)),
+    })),
+  );
+  summary.toolbar.afterBurn = await page.evaluate(() => window.__garden.overview());
+  summary.toolbar.toolAfterBurn = summary.toolbar.afterBurn.tool;
+  await page.screenshot({ path: join(outDir, '16-burned.png') });
+  // ...and the picture outlives the rope by the length of the burst and is then dropped rather than
+  // drawn at nothing, with the world standing exactly where it was.
+  await wait(1000);
+  summary.toolbar.afterBurst = await page.evaluate(() => window.__garden.inspect().bursts.length);
+  summary.toolbar.cursorAfterBurn = await cursorAt(middle.x, middle.y);
+  await page.screenshot({ path: join(outDir, '16-burned-out.png') });
+}
+// And a press on a doll with the arrow, which is what the stage has always done with one: she is taken
+// hold of rather than taken away, and the stage is what it was — the only thing a press can spend is a
+// rope, and there is none left (`World.press` reaches a doll to hold her particles and no further).
+const newest = doomed.dollHandles[2] ?? doomed.dollHandles.at(-1);
+if (newest) {
+  await page.mouse.click(newest.x, newest.y);
   await wait(200);
 }
-summary.toolbar.afterDeleteRope = await page.evaluate(() => window.__garden.overview());
-summary.toolbar.toolAfterDeleteRope = summary.toolbar.afterDeleteRope.tool;
-// The bin, pointed at the newest doll: she is still there afterwards, and the tool is still the bin,
-// since nothing was spent.
-await page.click('[data-tool="delete"]');
-await wait(120);
-await page.mouse.click(doomed.dollHandles[2].x, doomed.dollHandles[2].y);
-await wait(200);
-summary.toolbar.afterDeleteDoll = await page.evaluate(() => window.__garden.overview());
-summary.toolbar.toolAfterDeleteDoll = summary.toolbar.afterDeleteDoll.tool;
-await page.screenshot({ path: join(outDir, '16-deleted.png') });
+summary.toolbar.afterDollClick = await page.evaluate(() => window.__garden.overview());
 await page.keyboard.press('Space');
-
-// Back to the arrow: the drag the game has always had.
-await page.click('[data-tool="drag"]');
-summary.toolbar.toolAfterwards = await page.evaluate(() => window.__garden.overview().tool);
 
 // What the strip is for: the pain of a pose, and the poses it is read from. Her head is pulled along
 // her own back and then the other way along her own front — the arch, both ways — and then her knees
@@ -1645,11 +2037,11 @@ if (!drawn.ropeHandles[0]?.tied) problems.push('the rope was not tied to the dol
 if (drawn.longestStretch > 1.05 + 1e-6) problems.push(`a rope stretched to ${drawn.longestStretch.toFixed(4)}`);
 if (drawn.dolls !== 1) problems.push(`the stage has ${drawn.dolls} dolls before anything was put on it`);
 
-// The hall: the world is drawn over `assets/bg.png`, and the sprite covers the world box exactly — it
+// The hall: the world is drawn over `assets/bg-2.png` — the second location's own picture — and the sprite covers the world box exactly — it
 // is stretched to `STAGE_WIDTH x STAGE_HEIGHT`, 1000x740 — so the picture is never cropped. The file
 // is that size itself, so it is not squeezed either; a file of another shape would be (read below).
 const hall = summary.inspect.background;
-if (!/assets\/bg\.png$/.test(hall?.src ?? '')) {
+if (!/assets\/bg-2\.png$/.test(hall?.src ?? '')) {
   problems.push(`the world is drawn over ${hall?.src || 'nothing'}`);
 }
 if (hall?.width !== 1000 || hall?.height !== 740) {
@@ -1657,7 +2049,7 @@ if (hall?.width !== 1000 || hall?.height !== 740) {
 }
 // The file itself, however big it is, is stretched over the world box: that is what covering the world
 // means. So a picture of another shape comes out flattened, and since nothing else in the game can see
-// it — the sprite is the world's size either way — it is said out loud here. The port's own `bg.png`
+// it — the sprite is the world's size either way — it is said out loud here. The port's own `bg-2.png`
 // is the world's own 1000x740, so this is a note that should stay silent; it is the check that says so
 // when the picture is replaced and the world is not.
 const [hallTexelWidth, hallTexelHeight] = hall?.texels ?? [];
@@ -1860,17 +2252,23 @@ for (const shadow of summary.inspect.shadows) {
   }
 }
 
-// The rule the toolbar promises: whatever goes on the stage or comes off it leaves the arrow behind.
-const handedBack = {
+// The rule the toolbar promises: a tool is the player's to keep. Drawing a rope leaves the rope in
+// hand, ready to draw another; the arrow stays the arrow through everything else — a knot dropped, a
+// character put there through the engine's own call, a rope burned away — because nothing that goes on
+// or comes off the stage is the bar's business (`World` changes the tool for nobody but the player).
+const kept = {
   rope: summary.toolbar.toolAfterRope,
   arrow: summary.toolbar.toolAfterArrow,
   character: summary.toolbar.toolAfterDoll,
   'character again': summary.toolbar.toolAfterSecondDoll,
-  deletion: summary.toolbar.toolAfterDeleteRope,
-  bin: summary.toolbar.toolAfterwards,
+  burn: summary.toolbar.toolAfterBurn,
 };
-for (const [what, tool] of Object.entries(handedBack)) {
-  if (tool !== 'drag') problems.push(`the toolbar did not hand the arrow back after the ${what} (${tool})`);
+if (kept.rope !== 'rope') {
+  problems.push(`drawing a rope left the toolbar holding ${kept.rope ?? 'nothing'} rather than the rope`);
+}
+for (const [what, tool] of Object.entries(kept)) {
+  if (what === 'rope') continue;
+  if (tool !== 'drag') problems.push(`the toolbar was left holding ${tool} rather than the arrow after the ${what}`);
 }
 
 // The knot that was carried should have gone exactly as far as the hand carried it, plus what the
@@ -1898,12 +2296,13 @@ if (!hauled || Math.hypot(hauled.x, hauled.y) < 40) {
   problems.push(`hauling the rope barely moved her (${Math.hypot(hauled?.x ?? 0, hauled?.y ?? 0).toFixed(1)} px)`);
 }
 
-// The bar is a column in the world's own top left corner, from the corner downwards: the arrow first,
-// which is the tool that used to be the whole of the game, the rope under it, the bin, and the chat last
-// — the one button of the four that picks no tool. Where the bar *is* is a claim about the world as well
-// as the page, and it is checked below with the layout.
+// The bar is a pile of buttons at the world's own left edge, standing on the foot of it: the arrow first,
+// which is the tool that used to be the whole of the game, the rope under it, and the chat last — the one
+// button of the three that picks no tool, and the one at the very foot of the picture, so the way into the
+// chat is in the bottom left corner of the world. Where the bar *is* is a claim about the world as well as
+// the page, and it is checked with the layout.
 const bar = summary.toolbar.layout;
-if (JSON.stringify(bar.map((button) => button.tool)) !== JSON.stringify(['drag', 'rope', 'delete', 'chat'])) {
+if (JSON.stringify(bar.map((button) => button.tool)) !== JSON.stringify(['drag', 'rope', 'chat'])) {
   problems.push(`the bar holds ${JSON.stringify(bar.map((button) => button.tool))}`);
 }
 if (bar.some((button, i) => i > 0 && (button.top <= bar[i - 1].top || button.left !== bar[i - 1].left))) {
@@ -1911,25 +2310,40 @@ if (bar.some((button, i) => i > 0 && (button.top <= bar[i - 1].top || button.lef
     `the buttons do not run down the corner: ${bar.map((button) => `${button.left},${button.top}`).join(' ')}`,
   );
 }
-// The chat's button is not the fourth tool in a row but the foot of the column (`.tool--chat`): above it
-// is the bar's own empty height — as much of the world as there is below the bin — so the 8 px gap the
-// other buttons keep between themselves is not the gap over this one.
-const footGap = bar[3].top - (bar[2].top + bar[2].width);
-if (!(footGap > 8)) {
-  problems.push(`the chat's button stands ${footGap.toFixed(0)} px under the bin, as though it were the next tool`);
+// ...and they are a pile rather than three buttons strung down the world: each stands the same distance
+// under the one above it (a button is 44 px and the gap is 8), the chat's included — it used to be pushed
+// down the whole height of the world away from the other two, and it is the next one under the rope now.
+const pitch = bar.length > 1 ? bar[1].top - bar[0].top : 0;
+if (bar.some((button, i) => i > 0 && Math.abs(button.top - bar[i - 1].top - pitch) > 1)) {
+  problems.push(
+    `the buttons are not evenly piled: ${bar.map((button) => button.top).join(', ')}`,
+  );
+}
+if (Math.abs(pitch - (bar[0].width + 8)) > 1) {
+  problems.push(`the buttons stand ${pitch} px apart, not a button and the 8 px gap (${bar[0].width + 8})`);
+}
+// ...and the first of them hangs from the top of the world, one inset in, which is what pinning the
+// bar down is (the frame's own height is the world's, and the column inside it is laid out from that
+// head — see `hudFrame`).
+const barHead = bar[0].top;
+const worldHead = chatStrip.world.y + chatStrip.hud.scale * 12;
+if (Math.abs(barHead - worldHead) > 1) {
+  problems.push(`the bar's buttons start at ${barHead}, not hanging from the top of the world (${worldHead.toFixed(1)})`);
 }
 // Every tool is a black square with a drawing the colour of the hall's own wood in it — the bar lies
 // over the hall, so the dark square is what tells a button from the picture under it — edged with
-// the same wood (`--wood`, `#C4B8AA`), and the one the player is holding is the same square the
-// other way round: wood with a dark drawing and a dark edge. Nothing brightens under the pointer.
+// the same wood (`--wood`, whatever the page is wearing it as), and the one the player is holding is
+// the same square the other way round: wood with a dark drawing and a dark edge. Nothing of the
+// square itself changes under the pointer: what a hover adds is the word beside it, which is not the
+// square.
 const activeTools = bar.filter((button) => button.active);
 if (activeTools.length !== 1 || activeTools[0].tool !== 'drag') {
   problems.push(`the bar has ${activeTools.length} active buttons, and the tool in hand is the arrow`);
 }
 for (const button of bar) {
   const wanted = button.active
-    ? { background: 'rgb(196, 184, 170)', colour: 'rgb(0, 0, 0)', edge: 'rgb(0, 0, 0)' }
-    : { background: 'rgb(0, 0, 0)', colour: 'rgb(196, 184, 170)', edge: 'rgb(196, 184, 170)' };
+    ? { background: palette.wood, colour: 'rgb(0, 0, 0)', edge: 'rgb(0, 0, 0)' }
+    : { background: 'rgb(0, 0, 0)', colour: palette.wood, edge: palette.wood };
   if (button.background !== wanted.background || button.colour !== wanted.colour) {
     problems.push(
       `the ${button.tool} button is ${button.colour} on ${button.background}` +
@@ -1951,6 +2365,58 @@ for (const card of summary.portraits.first.cards) {
   if (Math.abs(cardRounding - barRounding) > 0.01) {
     problems.push(
       `a card is rounded by ${(cardRounding * 100).toFixed(1)}% of itself, a button by ${(barRounding * 100).toFixed(1)}%`,
+    );
+  }
+}
+// Each of those squares wears its own word, and the words are the bar's three — the arrow's, the rope's and
+// the chat's — said beside the square and only while the pointer is on it. The word is the button's own name
+// in the markup as well, which is what a screen reader reads out, and it does not cover the button: it
+// stands off the right edge of the square, level with the middle of it, inside the world. It is not a
+// control either — no pointer of its own — so whatever stands under it (the hall, or the chat's own four
+// lines for the two lower buttons) is what a press there lands on.
+const barWords = ['Таскать', 'Связывать', 'Чатъ'];
+const hints = summary.toolbar.hints ?? {};
+const restWords = (hints.rest ?? []).map((hint) => hint.word);
+if (JSON.stringify(restWords) !== JSON.stringify(barWords)) {
+  problems.push(`the bar's own words are ${JSON.stringify(restWords)}, not ${JSON.stringify(barWords)}`);
+}
+if ((hints.rest ?? []).some((hint) => hint.shown)) {
+  problems.push('a word of the bar is up with the pointer nowhere on the bar');
+}
+for (const tool of ['drag', 'rope', 'chat']) {
+  const read = hints[tool] ?? [];
+  const shown = read.filter((hint) => hint.shown).map((hint) => hint.tool);
+  if (shown.length !== 1 || shown[0] !== tool) {
+    problems.push(`with the pointer on the ${tool} the bar wears ${JSON.stringify(shown)}`);
+  }
+  const hint = read.find((entry) => entry.tool === tool);
+  if (!hint) {
+    problems.push(`the ${tool}'s button wears no word`);
+    continue;
+  }
+  if (hint.name !== hint.word) {
+    problems.push(`the ${tool}'s button is named \u00ab${hint.name}\u00bb and wears \u00ab${hint.word}\u00bb`);
+  }
+  if (Math.abs(hint.gap - 8) > 1) {
+    problems.push(`the ${tool}'s word stands ${hint.gap.toFixed(1)} px off its button, not 8`);
+  }
+  if (Math.abs(hint.level) > 1) {
+    problems.push(`the ${tool}'s word stands ${hint.level.toFixed(1)} px off the middle of its button`);
+  }
+  if (!hint.inside) problems.push(`the ${tool}'s word is drawn outside the world`);
+  if (hint.clicks !== 'none') problems.push(`the ${tool}'s word takes pointers of its own (${hint.clicks})`);
+  if (hint.overItself) problems.push(`a press at the ${tool}'s word lands on the word itself`);
+  // ...and it is drawn as a small button of the bar: the same black square with the same wood in it, edged
+  // with that wood, and rounded by the same fraction of itself that a button is of itself.
+  if (hint.background !== 'rgb(0, 0, 0)' || hint.colour !== palette.wood) {
+    problems.push(`the ${tool}'s word is ${hint.colour} on ${hint.background}`);
+  }
+  if (hint.borderWidth !== 2 || hint.borderColour !== palette.wood) {
+    problems.push(`the ${tool}'s word is edged ${hint.borderWidth}px of ${hint.borderColour}, not 2px of the wood`);
+  }
+  if (Math.abs(hint.radius / hint.height - barRounding) > 0.01) {
+    problems.push(
+      `the ${tool}'s word is rounded by ${((hint.radius / hint.height) * 100).toFixed(1)}% of itself, a button by ${(barRounding * 100).toFixed(1)}%`,
     );
   }
 }
@@ -2033,15 +2499,80 @@ for (const sprite of summary.inspect.parts) {
     );
   }
 }
-// The bin: it takes ropes and stones away, and leaves the doll alone — she is the game, not something
-// the player put on the stage (`World.deleteAt`). A click that lands on her spends nothing, so the bin
-// stays in hand for the stone that comes next.
-const afterDoll = summary.toolbar.afterDeleteDoll;
-if (afterDoll.dolls !== 3) problems.push(`the delete tool took a doll away (${afterDoll.dolls} left of 3)`);
-if (summary.toolbar.toolAfterDeleteDoll !== 'delete') {
-  problems.push(`a click on the doll with the bin left the tool as ${summary.toolbar.toolAfterDeleteDoll}`);
+// The rope the arrow took away: the pointer over the middle of its cord wore the crosshair that offered
+// it, the press landed on the world point read off its own handle, and the rope left the world the
+// moment the press returned (`World.press`) — the picture of it going is the renderer's own, played out
+// with the world standing still and then dropped rather than drawn at nothing. The ends of the cord are
+// not offered that way: those are the knots the arrow carries about, and the hand is what the pointer
+// wears over one (`Rope.middleDistance`).
+const burn = summary.toolbar.burn;
+if (!burn) {
+  problems.push('the rope was never hovered or pressed, so nothing was burnt');
+} else {
+  if (summary.toolbar.cursorOverRope !== 'crosshair') {
+    problems.push(
+      `the pointer over the middle of a rope wears ${summary.toolbar.cursorOverRope || 'nothing'} ` +
+        'rather than the crosshair that offers it',
+    );
+  }
+  if (summary.toolbar.cursorOverKnot !== 'grab') {
+    problems.push(
+      `the pointer over a knot wears ${summary.toolbar.cursorOverKnot || 'nothing'}, not the hand that carries it`,
+    );
+  }
+  if (summary.toolbar.cursorAfterBurn === 'crosshair') {
+    problems.push('the crosshair still stands where the rope was');
+  }
+  if (burn.ropes !== 0 || summary.toolbar.afterBurn.ropes !== 0) {
+    problems.push(`the press left ${summary.toolbar.afterBurn.ropes} ropes on the stage`);
+  }
+  if (burn.bursts.length !== 1) {
+    problems.push(`the rope was taken off the stage with ${burn.bursts.length} bursts of it`);
+  } else {
+    const burst = burn.bursts[0];
+    if (burst.nodes !== doomed.ropeNodes) {
+      problems.push(`a rope of ${doomed.ropeNodes} joints was taken away as a burst of ${burst.nodes}`);
+    }
+    const off = Math.hypot(burst.x - burn.meant.x, burst.y - burn.meant.y);
+    if (off > 1.5) problems.push(`the burst opens ${off.toFixed(1)} px from where the press landed`);
+    // The ring the burst opens with is its own wavefront, and it is nine times as quick as the rest of the
+    // burst: it has its own time — a ninth of the burst's — so by a tenth of the way in it is already as
+    // far out as it ever goes, and everything after that is the light of it going out (`RING_SECONDS`,
+    // `RING_START`/`RING_REACH` in `scene.ts`). Read twice for that: once a frame or two after the press,
+    // where it is still snatching open, and once a quarter of a second in, where it has to be at its full
+    // reach — the burst is still burning there, but the ring has long since arrived.
+    const reach = 7 + 96;
+    const later = summary.toolbar.burnLater?.[0];
+    if (!later) {
+      problems.push('the burst was over before its ring could be read twice');
+    } else {
+      if (Math.abs(later.ring - reach) > 0.2 || !(later.age < 0.62)) {
+        problems.push(
+          `the ring is ${later.ring.toFixed(1)} px out at ${later.age.toFixed(2)} s, not the whole of its ` +
+            `${reach} px inside a burst of 0.62 s`,
+        );
+      }
+      if (burst.age < 0.04 && !(burst.ring < reach)) {
+        problems.push(
+          `the ring was already out at its full ${burst.ring.toFixed(1)} px ${burst.age.toFixed(2)} s after the press`,
+        );
+      }
+    }
+  }
+  if (summary.toolbar.afterBurst !== 0) {
+    problems.push('the burst was still being drawn a second after the rope was taken away');
+  }
 }
-if (summary.toolbar.afterDeleteRope.ropes !== 0) problems.push('the delete tool did not remove the rope');
+// A press on a doll, which is what the stage has always done with one: she is taken hold of rather than
+// taken away, and the stage is what it was — the only thing a press can spend is a rope, and there is
+// none left to spend (`World.press` reaches a doll to hold her particles and no further).
+const afterDollClick = summary.toolbar.afterDollClick;
+if (afterDollClick.dolls !== 3) {
+  problems.push(`a press on a doll took her off the stage (${afterDollClick.dolls} of 3 left)`);
+}
+if (afterDollClick.ropes !== 0) {
+  problems.push(`a press on a doll put ${afterDollClick.ropes} ropes on the stage`);
+}
 
 // The strip in the world's own bottom right corner: one card per doll, a bare portrait and nothing else,
 // hung off the world's right edge, and drawn under the world rather than over it. What a *pose* is
@@ -2112,9 +2643,9 @@ if (Math.abs(cornerGap) > 1) {
   problems.push(`the strip ends ${cornerGap.toFixed(1)} px in from the world's right edge, not on it`);
 }
 
-// The interface is part of the world rather than of the window: the bar hangs off the world's own top
-// left corner, 12 px in, and runs down the whole of its left edge, while the strip of portraits hangs off
-// the world's own bottom right corner *on* its two edges — so nothing is ever drawn out on the black.
+// The interface is part of the world rather than of the window: the bar hangs off the world's own left
+// edge, 12 px in, and its three buttons stand on the world's own foot, while the strip of portraits hangs
+// off the world's own bottom right corner *on* its two edges — so nothing is ever drawn out on the black.
 //
 // The bar is real DOM, so this is read twice over and the readings have to agree: the renderer says
 // where the world's corner is, and the browser says where the bar ended up — a CSS box placed by the
@@ -2129,8 +2660,9 @@ if (hud.scale !== 1) {
     `a ${started.canvas.cssWidth}x${started.canvas.cssHeight} window shrank the interface to ${hud.scale}`,
   );
 }
-// ...and it is as tall as the world is, less the two insets, which is what makes the bar a column down
-// the world's own left edge rather than a pile of buttons in its corner (`hudFrame` in `scene.ts`).
+// ...and it is as tall as the world is, less the two insets: that is the frame the row inside it is laid
+// out in, so it is the height of the frame — not of the bar — that stands the bar's buttons on the world's
+// own foot (`hudFrame` in `scene.ts`).
 if (Math.abs(hud.height - (started.world.height - 24)) > 1) {
   problems.push(
     `the interface is ${hud.height.toFixed(0)} px tall in a world ${started.world.height.toFixed(0)} px tall`,
@@ -2150,24 +2682,33 @@ if (JSON.stringify(started.layers) !== JSON.stringify(['hall', 'portraits', 'wor
 if (!started.bar) {
   problems.push('the bar is not on the page');
 } else {
-  if (Math.abs(started.bar.x - hud.x) > 0.5 || Math.abs(started.bar.y - hud.y) > 0.5) {
-    problems.push(`the bar is drawn at ${started.bar.x}, ${started.bar.y}, not at the world's own corner`);
+  if (Math.abs(started.bar.x - hud.x) > 0.5) {
+    problems.push(`the bar is drawn at x = ${started.bar.x}, not at the world's own left edge`);
+  }
+  // ...and its own head is the frame's own head: the three buttons are the whole of the bar, and they
+  // hang from the top of the frame — the world's own corner one inset in, at whatever the window shrank
+  // the interface to.
+  if (Math.abs(started.bar.y - hud.y) > 0.5) {
+    problems.push(
+      `the bar's buttons start at ${started.bar.y.toFixed(0)}, not hanging from the interface's own head ` +
+        `(${hud.y.toFixed(0)})`,
+    );
   }
   if (started.bar.width > 60) {
-    problems.push(`the bar is ${started.bar.width.toFixed(0)} px wide, so it is not a column of buttons`);
+    problems.push(`the bar is ${started.bar.width.toFixed(0)} px wide, so it is not a stack of buttons`);
   }
   if (started.bar.width > started.world.width || started.bar.height > started.world.height) {
     problems.push('the bar is wider or taller than the world it is in');
   }
-  // ...and the browser's own box is that same height: the renderer says how tall the column is, and the
-  // page has to have laid it out that tall.
-  if (Math.abs(started.bar.height - hud.height) > 1) {
+  // ...and the browser's own box is nothing but the pile: three 44 px buttons with the 8 px gaps between
+  // them, however tall the frame they are laid out in is.
+  if (Math.abs(started.bar.height - barStack) > 1) {
     problems.push(
-      `the bar is laid out ${started.bar.height.toFixed(0)} px tall, not the interface's own ${hud.height.toFixed(0)}`,
+      `the bar is laid out ${started.bar.height.toFixed(0)} px tall, not the ${barStack} of its three buttons`,
     );
   }
-  // The strip grows leftwards towards the bar and stops clear of it — the bar is a column, so the strip
-  // has the whole of the world's own foot to grow along.
+  // The strip grows leftwards towards the bar and stops clear of it — the bar is one narrow stack of buttons
+  // at the foot of the world, so the strip has the whole of the world's own foot to grow along.
   const barRight = started.bar.x + started.bar.width;
   if (stripLeft - barRight < 15) {
     problems.push(`the strip reaches x = ${stripLeft.toFixed(1)}, up against the bar's ${barRight.toFixed(1)}`);
@@ -2415,7 +2956,11 @@ if (
 const bigShot = decodePng(readFileSync(join(outDir, '21-big-window.png')));
 const insideWorld = pixelOf(bigShot, big.world.x + big.world.width / 2, big.world.y + 4);
 const besideWorld = pixelOf(bigShot, big.world.x - 8, big.world.y + big.world.height / 2);
-const aboveWorld = pixelOf(bigShot, big.world.x + big.world.width / 2, big.world.y - 8);
+// The band above the picture is read *above its left corner*, not above the middle of it: the room is taller
+// than the picture — the ceiling stands `CEILING_MARGIN` above the visible top — so a doll flung up there is
+// drawn outside the picture by design, and the middle of the band is exactly the lane she comes down. What
+// the band is being asked about is the backdrop behind her, which is the same black wherever it is read.
+const aboveWorld = pixelOf(bigShot, big.world.x + 8, big.world.y - 8);
 const bigCorner = pixelOf(bigShot, 2, 2);
 summary.layout.big.pixels = { insideWorld, besideWorld, aboveWorld, corner: bigCorner };
 for (const [where, pixel] of [
@@ -2453,7 +2998,8 @@ if (Math.abs(narrowWalls.floor - 207) > 0.5) {
 // top edge of the picture and with its right one — and the one corner a card rounds turns over with them:
 // a card's bottom right now (`CardCorner` in `scene.ts`). The world's top right is the one corner of the
 // picture the strip can be flush with on both of its edges, since the picture's left edge is the bar's —
-// a column of buttons down it — and a card standing there would be a card drawn over the buttons.
+// the buttons own that edge, and the room they take along it is kept clear of the cards — and a card
+// standing there would be a card drawn over the buttons.
 if (!(narrow.canvas.cssHeight > narrow.canvas.cssWidth)) {
   problems.push(
     `a ${narrow.canvas.cssWidth}x${narrow.canvas.cssHeight} window is not the upright one this is about`,
@@ -2524,13 +3070,12 @@ if (short.view.top <= -370 + 1) {
 }
 
 // The ceiling: the fourth wall of the world, and the only one that is never in the picture. The port's
-// room is closed on all four sides — three of them are the hall's own walls, and the fourth stands one
-// location's height (`CEILING_MARGIN` = `STAGE_HEIGHT` in `stage.ts`, 740 world pixels) above the top
-// of the picture, out of the frame far enough that it is a wall rather than a lid on the drawing. A
-// doll hauled up there is stopped by it instead of leaving the world for good, and comes back down
-// when let go.
+// room is closed on all four sides — three of them are the hall's own walls, and the fourth stands
+// `CEILING_MARGIN` (200 world pixels, `stage.ts`) above the top of the picture, out of the frame far
+// enough that it is a wall rather than a lid on the drawing. A doll hauled up there is stopped by it
+// instead of leaving the world for good, and comes back down when let go.
 //
-// She is flung up by hand, since nothing in the run can haul her a location's height into the air: the
+// She is flung up by hand, since nothing in the run can haul her that far into the air: the
 // pointer's reach is the visible picture (`World.onStage`), and a rope pulled hard enough to get her up
 // there is a whole scene of its own. Verlet reads the distance a particle moved as the speed it leaves
 // with, so a hand's width of the old position is an upward fling — and the opening's slow pace, a fifth
@@ -2584,8 +3129,8 @@ const ceiling = await page.evaluate(() => {
 });
 summary.ceiling = ceiling;
 const pictureTop = ceilingView.view.top;
-// One location's height of sky over the top of the picture (`CEILING_MARGIN` = `STAGE_HEIGHT` = 740).
-if (Math.abs(ceiling.ceiling - (pictureTop - 740)) > 1) {
+// A strip of sky `CEILING_MARGIN` deep (200 world pixels) over the top of the picture.
+if (Math.abs(ceiling.ceiling - (pictureTop - 200)) > 1) {
   problems.push(
     `the ceiling stands at ${ceiling.ceiling.toFixed(0)} with the top of the picture at ${pictureTop.toFixed(0)}`,
   );
@@ -2650,7 +3195,7 @@ const beforeTape = await page.evaluate(() => ({
   report: window.__garden.tapeState,
   timeline: document.querySelector('.tape') !== null,
   // The bar of tools has no buttons for the tape any more: a run begins by itself (`Game.pressAt`), and what
-  // plays one back is the tape's own bar (`TapeTimeline.vue`) — so neither is in the column, and neither is
+  // plays one back is the tape's own bar (`TapeTimeline.vue`) — so neither is on the bar, and neither is
   // anywhere else on the page while nothing is on the timeline.
   tapeButtons: document.querySelectorAll('[data-action="record"], [data-action="play"]').length,
   walls: window.__garden.engine.maxx,
@@ -2841,9 +3386,10 @@ if (!recorded.timeline) {
         `${recorded.timeline.width.toFixed(0)}x${recorded.timeline.height.toFixed(0)} is not inside the world`,
     );
   }
-  // The foot of the world is where the bar's own column ends, and the tape's bar stands on the same edge: what
-  // says it is anchored to the bottom of the picture rather than floating somewhere in the middle of it is that
-  // its own foot is the world's, less the inset the whole interface keeps from the world's edges (`HUD_INSET`).
+  // The foot of the world is where the bar's own buttons stand, and the tape's bar stands on the same edge:
+  // what says it is anchored to the bottom of the picture rather than floating somewhere in the middle of it
+  // is that its own foot is the world's, less the inset the whole interface keeps from the world's edges
+  // (`HUD_INSET`).
   const foot = recorded.timeline.y + recorded.timeline.height;
   const wanted = recorded.world.y + recorded.world.height - 12 * recorded.hud.scale;
   if (Math.abs(foot - wanted) > 2) {
@@ -3199,7 +3745,7 @@ chatRuns.push(smokedRun);
 chatTapes.set(smokedRun.id, tapeFile);
 
 await page.click('.chat-strip');
-await wait(500);
+await chatArrived();
 const runList = await page.evaluate(() => {
   const box = (element) => {
     const rect = element.getBoundingClientRect();
@@ -3268,10 +3814,16 @@ if (
 // (`Run.id`), and played from its own beginning rather than from wherever this page had been left.
 const askedFor = () => chatAsked.tapes.at(-1) ?? null;
 await page.click('.chat-run');
-await wait(500);
+// The screen is left by the garden panning back to the stage — waited out like every pan.
+await panSettled(2);
 const picked = await page.evaluate(() => ({
   report: window.__garden.tapeState,
-  window: document.querySelector('.chat-card') !== null,
+  // The chat's screen, off in its own place in the garden rather than gone: what says it is "shut"
+  // is that it is no longer on the window.
+  window: (() => {
+    const card = document.querySelector('.chat-card');
+    return card ? card.getBoundingClientRect().left < innerWidth - 2 : false;
+  })(),
   timeline: document.querySelector('.tape') !== null,
   walls: window.__garden.engine.maxx,
 }));
@@ -3400,7 +3952,7 @@ foreignRun = {
 chatRuns.push({ ...foreignRun.row, steps: 0 });
 
 await page.click('.chat-strip');
-await wait(500);
+await chatArrived();
 const liveRow = await page.evaluate(() => {
   const rows = [...document.querySelectorAll('.chat-run')];
   const row = rows.find((one) => one.classList.contains('is-live'));
@@ -3414,7 +3966,10 @@ const onTimeline = () =>
   page.evaluate(() => ({
     ...window.__garden.tapeState,
     timeline: document.querySelector('.tape') !== null,
-    window: document.querySelector('.chat-card') !== null,
+    window: (() => {
+      const card = document.querySelector('.chat-card');
+      return card ? card.getBoundingClientRect().left < innerWidth - 2 : false;
+    })(),
     tools: document.querySelector('.toolbar') !== null,
   }));
 summary.watching = { row: liveRow, asked: foreignRun.asked };
@@ -3427,12 +3982,19 @@ if (!liveRow.at) {
 } else {
 
   await page.mouse.click(liveRow.at.x, liveRow.at.y);
-  await wait(600);
+  // The garden pans back to the stage on the way in — waited out like every pan.
+  await panSettled(2);
   const first = await onTimeline();
-  await wait(1400);
-  const second = await onTimeline();
-  await wait(1400);
-  const third = await onTimeline();
+  const grownPast = async (from) => {
+    const began = Date.now();
+    for (;;) {
+      await wait(200);
+      const now = await onTimeline();
+      if (now.steps > from || Date.now() - began > 5000) return now;
+    }
+  };
+  const second = await grownPast(first.steps);
+  const third = await grownPast(second.steps);
 
   // The press put the run so far on the timeline: the window shut (a playback is not something to read a chat
   // over), the tape's own bar up where the tools and the strip were, and the run a second or more long rather
@@ -3484,9 +4046,13 @@ if (!liveRow.at) {
     document.dispatchEvent(new Event('visibilitychange'));
   });
   await wait(1500);
-  const awayAndBack = await onTimeline();
+  // The growth itself is what is waited for, the same as above: slices land on their own clock, and a
+  // reading timed against one can land either side of it. A run that has already arrived whole has
+  // nothing left to grow by — the run this watches is this run's own recording, and its length is
+  // known on this side of the wire.
+  const awayAndBack = await grownPast(third.steps);
   summary.watching.awayAndBack = awayAndBack;
-  if (!(awayAndBack.steps > third.steps)) {
+  if (!(awayAndBack.steps > third.steps) && third.steps < recordedTape.steps) {
     problems.push(`the watched run stopped growing while the watcher was away (${third.steps} steps)`);
   }
   if (!(awayAndBack.step > third.step)) {
@@ -3534,11 +4100,16 @@ if (!liveRow.at) {
  */
 async function settledRead(read, maxMs = 20000) {
   let was = await read();
+  // Two calm readings rather than one: a world settling slowly through software rendering can pass a
+  // single half-second of near-stillness while it still has most of a settling to do, and the
+  // sections that compare one settled reading against another are about exactly that.
+  let calm = 0;
   const began = Date.now();
   for (;;) {
     await wait(500);
     const now = await read();
-    if (Math.abs(now - was) < 0.01 || Date.now() - began > maxMs) return now;
+    calm = Math.abs(now - was) < 0.01 ? calm + 1 : 0;
+    if (calm >= 2 || Date.now() - began > maxMs) return now;
     was = now;
   }
 }
@@ -3610,9 +4181,33 @@ if (!ownHandle) {
 
   // The watch: the smoked run again, off the same list — the player's own run is *not* over, and must not be
   // ended by the watching of another one (`Game.loadTape` puts the player's game aside rather than away).
+  // The row is pressed where it stands once the pan has arrived, the way the live one below is.
   await page.click('.chat-strip');
-  await wait(500);
-  await page.click('.chat-run:not(.is-live)');
+  await chatArrived();
+  // The stage's own clock, stood still by the leaving of it: the run being written waits at the step
+  // it had got to, and nothing of the away time is recorded (`Game.suspend`) — read twice, a second
+  // and a half apart, and the two readings have to be the same step.
+  const awayFirst = await stepsOfTheRun();
+  await wait(1500);
+  const awaySecond = await stepsOfTheRun();
+  summary.ownRunAway = { awayFirst, awaySecond };
+  if (awayFirst !== awaySecond) {
+    problems.push(
+      `the run being written took ${awaySecond - awayFirst} steps while the player was away at the chat`,
+    );
+  }
+  const ownRow = await page.evaluate(() => {
+    const row = document.querySelector('.chat-run:not(.is-live)');
+    if (!row) return null;
+    const rect = row.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  });
+  if (!ownRow) {
+    problems.push('the own-game section found no finished run to watch off the list');
+  } else {
+    await page.mouse.click(ownRow.x, ownRow.y);
+  }
+  await panSettled(2);
   await wait(900);
   const underWatch = await page.evaluate(() => ({
     loaded: window.__garden.tapeState.loaded,
@@ -3750,6 +4345,8 @@ console.log(
 console.log('drag:', JSON.stringify(summary.drag));
 console.log('after release, moved by:', summary.afterRelease.fell.toFixed(1));
 console.log('respawned neck:', JSON.stringify(summary.respawn.particles.neck), 'speed:', summary.respawn.speed);
+const burned = summary.toolbar.burn?.bursts[0] ?? { x: 0, y: 0, nodes: 0, age: 0, ring: 0 };
+const burnedLater = summary.toolbar.burnLater?.[0] ?? { age: 0, ring: 0 };
 console.log(
   'toolbar: rope drawn?',
   summary.toolbar.drawn.ropes === 1,
@@ -3768,13 +4365,37 @@ console.log(
   '->',
   summary.toolbar.afterAdd.dolls,
   '->',
-  summary.toolbar.afterDeleteDoll.dolls,
-  '(dolls)',
-  '| ropes',
-  summary.toolbar.afterDeleteRope.ropes,
-  summary.toolbar.afterDeleteRope.ropes,
+  summary.toolbar.afterDollClick.dolls,
+  '(a press on one takes hold of her)',
+  '| pointer over rope/knot',
+  `${summary.toolbar.cursorOverRope}/${summary.toolbar.cursorOverKnot}`,
+  '->',
+  summary.toolbar.cursorAfterBurn,
+  '| burst at',
+  `${burned.x.toFixed(0)},${burned.y.toFixed(0)}`,
+  'of',
+  burned.nodes,
+  'joints, ring',
+  `${burned.ring.toFixed(0)}->${burnedLater.ring.toFixed(0)}px of ${7 + 96} by`,
+  `${burnedLater.age.toFixed(2)}s, read`,
+  burned.age.toFixed(2),
+  's in, gone a second later:',
+  summary.toolbar.afterBurst === 0,
+  '| ropes left',
+  summary.toolbar.afterBurn.ropes,
   '| tool back to',
-  summary.toolbar.toolAfterwards,
+  summary.toolbar.toolAfterBurn,
+);
+console.log(
+  'bar words:',
+  (summary.toolbar.hints?.rest ?? []).map((hint) => hint.word).join(' / '),
+  '| worn for the pointer on',
+  ['drag', 'rope', 'chat']
+    .map((tool) => {
+      const hint = (summary.toolbar.hints?.[tool] ?? []).find((entry) => entry.shown);
+      return hint ? `${tool}: ${hint.word} over ${hint.landed}` : `${tool}: nothing`;
+    })
+    .join(', '),
 );
 console.log(
   'page:',
@@ -3786,6 +4407,8 @@ console.log(
   `${(started.bar?.x ?? -1).toFixed(0)}, ${(started.bar?.y ?? -1).toFixed(0)}`,
   'down to',
   `${((started.bar?.y ?? 0) + (started.bar?.height ?? 0)).toFixed(0)}`,
+  '(three buttons',
+  `${(started.bar?.height ?? 0).toFixed(0)} tall)`,
   '| world at',
   `${started.world.x.toFixed(0)}, ${started.world.y.toFixed(0)} ${started.world.width.toFixed(0)}x${started.world.height.toFixed(0)}`,
   '| showing',

@@ -44,7 +44,7 @@ export const TAPE_STEP_MS = 20;
  * the size of their deltas, twice the precision and a slow limb starts stepping a quarter-pixel at a
  * time. A quarter of a pixel is an eighth of a texel of her artwork — under a fifth of what a
  * sub-pixel render pass dithers away — and it keeps the whole of the world's reach, a doll hauled
- * a location's height over the top of the picture included, inside the thirty-two thousand an
+ * to the ceiling over the top of the picture included, inside the thirty-two thousand an
  * int16 holds: the day this format wants to be bytes instead of JSON, the numbers already are them.
  */
 export const TAPE_SCALE = 4;

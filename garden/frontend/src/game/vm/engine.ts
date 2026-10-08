@@ -23,11 +23,11 @@ export class PEngine2D {
 
   /**
    * The box every clamped particle is kept inside: `minx..maxx` for the sides, `maxy` for the floor, and
-   * `miny` for the ceiling high above the picture.
+   * `miny` for the ceiling above the picture.
    *
    * The width is not fixed: a narrow screen shows a narrower world, and the walls come in with it
-   * (see {@link setWallWidth}); the floor is the hall's own, so it never moves. The ceiling moves with
-   * the *visible* top edge and stands far above it (`ceilingFor` in `stage.ts`).
+   * (see {@link setWallWidth}); the floor is the hall's own, so it never moves. The ceiling stands a
+   * fixed margin over the *visible* top edge, out of the frame (`ceilingFor` in `stage.ts`).
    */
   minx: number;
   miny: number;
@@ -236,11 +236,11 @@ export class PEngine2D {
    * the port's world having no ball *field* under the doll this is what keeps her in play. Switch it off
    * with {@link clampToWorldEnabled} to replay an unclamped run.
    *
-   * **The top is a wall, but a distant one.** The original's box was closed on all four sides, and the
+   * **The top is a wall, but an unseen one.** The original's box was closed on all four sides, and the
    * port wants the doll to be hauled up and out of the picture rather than stopping at the frame like a
-   * balloon on a string — so the ceiling stands far above the picture (`ceilingFor` in `stage.ts`) and is
-   * a wall only when she has gone as far as the port allows at all, which is where the balls meet her
-   * (`World.dropBalls`). What the player can see her hit is still the two sides and the floor.
+   * balloon on a string — so the ceiling stands above the picture, past the frame's own top edge
+   * (`ceilingFor` in `stage.ts`), and is a wall only when she has gone as far out of the picture as
+   * the port allows at all. What the player can see her hit is still the two sides and the floor.
    *
    * Note it clamps positions only, the way the original's `hackContraint` did: the velocity into
    * the wall is dropped by the next Verlet step, so she settles instead of bouncing.

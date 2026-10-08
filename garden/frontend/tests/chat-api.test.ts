@@ -131,7 +131,7 @@ describe('the log of one place', () => {
     const server = fakeServer({ body: { messages: [{ ...WIRE_LINE, ghost: true }] } });
     const [read] = await chatApi('/api', server.take).log(LOBBY, 0);
     expect(read.nick).toBe('Привидение');
-    expect(read.face).toContain('badge-ghost.gif');
+    expect(read.face).toBe('/i/ghost.gif');
     expect(read.ghost).toBe(true);
     expect(read.userId).toBe(9);
   });

@@ -3,10 +3,17 @@
   /*
    * The wood the interface over the hall is drawn in — the squares of the bar's tools and of the
    * tape's own bar, their drawings and their edges — the colour of the hall's own timber rather
-   * than a grey that belongs to no part of the room. Nothing brightens under the pointer: a button
-   * answers a press and nothing else.
+   * than a grey that belongs to no part of the room. Nothing of a button itself changes under the
+   * pointer: a press is the whole of its answer, and the one thing a hover adds is the word that
+   * stands beside it (`.hint`), which is not the button.
    */
-  --wood: #C4B8AA;
+  --wood: #C0C0C0;
+  /*
+   * The chat's own colour: the paper its screen is made of, and — turned around, on the black of the
+   * page — the colour its words stand in wherever they are read out of the paper (the strip beside the
+   * game, the one word of the page's own wait). One number for the chat's whole voice.
+   */
+  --paper: #C0C0C0;
   --font: 'Trebuchet MS', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
@@ -41,6 +48,113 @@ body {
   -webkit-touch-callout: none;
 }
 
+/*
+ * The garden's three locations, laid side by side in the order they are numbered: the threshold the
+ * player lands on, the stage itself, and the chat's own screen. Each is one window in its own right,
+ * standing in the row by its own transform (`placeOf` in `App.vue`) — a screen's neighbours lie a
+ * window away to either side, and a move is all three of them translated the same way at once, which
+ * reads exactly as one place panned across: the screen left behind slides out one way and the one
+ * arrived at slides in the other, each the way its neighbour lies. Going deeper into the garden
+ * (1→2→3) the whole picture travels left; coming back, it travels right.
+ *
+ * Carrying each screen by itself rather than as a slice of one triple-wide strip is what keeps the
+ * motion out of the main thread's reach: each screen is its own layer, one window big, and the
+ * browser's compositor does the moving. What the compositor cannot carry is the arrival of the
+ * heaviest screen — the chat's, with its list being read and its field taking focus — so that work
+ * is kept out of the motion altogether: the pan slides the chat's scenery in bare, and the
+ * conversation is standing there when it stops (`App.vue`, `settled`/`chatShown`). Each of the three
+ * also has a picture of its own (`bg-1`/`bg-2`/`bg-3.png`, laid in by `App.vue`) — the garden is the
+ * same place all the way along, and the pictures are what each end of it looks like.
+ */
+.location {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* The black each screen's own picture stands over, and what shows wherever a picture has not
+     arrived or does not cover. */
+  background: #000 center / cover no-repeat;
+  /* Fast enough to be a step rather than a ride: the whole way from one screen to the next is over
+     in well under half a second, easing out so the screen arriving settles into place. */
+  transition: transform 0.38s cubic-bezier(0.2, 0.7, 0.25, 1);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .location {
+    transition: none;
+  }
+}
+
+/*
+ * The first location: the garden before anything is shown of it. Its own picture (`bg-1.png`), the
+ * one thing said about the place, and the way in — the sentence in the first third of the screen,
+ * the «Сцена» button at the right of it — and nothing else: no doll, no bar, nothing of the game at
+ * all.
+ *
+ * The screen is split into thirds across and the sentence's own container is the first of them —
+ * the width the garden's own three locations are laid out in, said on one screen — with the
+ * sentence centred inside its container, both ways, and its breaks of line its own (`<br>` in
+ * `App.vue`) rather than the container's.
+ */
+.location--intro {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+}
+
+.intro__said {
+  grid-column: 1;
+  margin: 0;
+  padding: 0 16px;
+  color: var(--paper);
+  font-size: 18px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+/* The way in: a worded button of the bar's own making, standing at the right of the screen, halfway
+   down — the direction it goes is the direction it says. */
+.intro__go {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  height: 44px;
+  padding: 0 16px;
+  border: 2px solid var(--wood);
+  border-radius: 999px;
+  background: #000;
+  color: var(--wood);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+}
+
+.intro__go .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.intro__go:hover {
+  background: var(--wood);
+  border-color: #000;
+  color: #000;
+}
+
+.intro__go:active {
+  transform: translateY(-50%) scale(0.96);
+}
+
+.intro__go:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
 .stage {
   position: relative;
   width: 100%;
@@ -61,7 +175,7 @@ body {
 }
 
 /*
- * The interface's own corner: the bar of tools with the chat's block beside it — or, while a run is on the
+ * The interface's own corner: the bar of tools with the chat's block under it — or, while a run is on the
  * tape, the tape's own bar along the foot of the world.
  *
  * Both of those are put *inside* the world's own top left corner — the corner of the box the hall is drawn
@@ -72,8 +186,8 @@ body {
  *
  * Its own size is the world's, less the two insets, in the interface's own pixels — the world with its scale
  * divided back out — so that the frame ends exactly at the bottom right corner of the hall once the transform
- * has shrunk it back down: the bar's column reaches the world's own foot, and the tape's bar, which is laid
- * out as a fraction of this frame, is centred on the *world* rather than on the window.
+ * has shrunk it back down: the bar's buttons hang from the world's own top, and the tape's bar, which is
+ * laid out as a fraction of this frame, is centred on the *world* rather than on the window.
  */
 .hud {
   position: absolute;
@@ -94,20 +208,22 @@ body {
 }
 
 /*
- * The row the bar and the chat share: the bar's column down the world's left edge, with the chat's block
- * beside its *last* button, level with that button's own bottom edge — it grows upwards from the foot of the
- * column rather than pushing the button down.
+ * The column the bar and the chat share, down the world's own left edge: the bar's stack of buttons
+ * hanging from the top of it, and the chat's block of four lines pinned to the foot of it, both
+ * against the same left edge — the two ends of the picture's own left side.
  *
- * It is the whole height of the frame while it is there, and while the tape's own bar is up it is not on the
- * page at all (`App.vue`): the frame's one child is then that bar, which takes the foot of the world and is
- * centred on it. A tape on the timeline is a run being *watched*, and the tools are not what a player wants in
- * front of it.
+ * It is the whole height of the frame while it is there, which is what the two of them hang from: the
+ * bar from its head and the chat from its foot. And while the tape's own bar is up it is not on the
+ * page at all (`App.vue`): the frame's one child is then that bar, which takes the foot of the world
+ * and is centred on it. A tape on the timeline is a run being *watched*, and the tools are not what a
+ * player wants in front of it.
  */
 .hud__row {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
-  align-items: flex-end;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 8px;
   pointer-events: none;
 }
@@ -119,37 +235,80 @@ body {
   touch-action: manipulation;
   display: flex;
   /*
-   * A column the whole height of the world: the three tools at the top of the world's own left edge and
-   * the chat's button at the foot of it, in the bottom left corner of the picture. What is visible of
-   * the column is the buttons — nothing is drawn along it — and, being narrow and along the edge, it
-   * stays out of the way of whatever falls past it.
+   * The three buttons one under the other, hanging from the world's top left corner — the last of them
+   * the chat's, so the way into the chat is the lowest of the three. Being narrow and along the edge,
+   * the stack stays out of the way of whatever falls past it.
    */
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
-  /* Stretched to the world's own height, which is what `.hud` is given (see `Scene.hud`): the chat's
-     block beside it hangs off the bottom of this column rather than off the top of the world. */
-  align-self: stretch;
   /* The bar is an overlay on the stage, but only the buttons themselves take clicks. */
   pointer-events: none;
 }
 
 /*
- * The chat's own button: a tool like the other three, but it stands at the foot of the column rather
- * than under the bin, so that the way into the chat is in the world's bottom left corner. The space
- * above it is the column's own (the world's height), so the button is pushed down it.
+ * The word beside a button, while the pointer is on it: what the player calls the thing in the button —
+ * «Таскать», «Связывать», «Чатъ» — said beside the square, where a bar lying over the hall can afford to
+ * say it at all.
+ *
+ * It stands *beside* the button rather than over it. A caption laid over a button covers the very thing the
+ * button presses on, which is the one place a word may not go; out here it lies over the hall instead, or —
+ * for the lower two, whose words are level with the chat's own block — over the four lines of the chat, and
+ * the black plate it is on is what keeps a word readable on either.
+ *
+ * It is not a control: it takes no pointer of its own, so a press where it stands belongs to whatever is
+ * under it, and it is not part of the button's own answer to a hover either — the pointer leaving the square
+ * for the word has left the button, and the word goes with it.
+ *
+ * A plate the shape of a button, rounded by the same fraction of itself that a button is of itself — 13 of
+ * 44, which is 8 of its own 28 px (see `TOOLBAR_RADIUS` in `src/game/scene.ts`) — so the two read as the
+ * same kind of thing.
  */
-.tool--chat {
-  margin-top: auto;
+.hint {
+  position: absolute;
+  /*
+   * `100%` in `left` is the containing block's *padding* box, which for a button is its own 44 px less the
+   * 2 px edge it is drawn with on each side; that edge is added back, so the word stands 8 px off the button
+   * the player sees — the same 8 px the buttons keep between themselves.
+   */
+  left: calc(100% + 8px + 2px);
+  top: 50%;
+  transform: translateY(-50%);
+  box-sizing: border-box;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 0 10px;
+  border: 2px solid var(--wood);
+  border-radius: 8px;
+  background: #000;
+  color: var(--wood);
+  font: inherit;
+  /* `font: inherit` takes the *button's* own font, which the browser makes up for a form control; the family
+     the interface is set in is named here. */
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  pointer-events: none;
+}
+
+/* Shown for a pointer on the button, and for a keyboard on it too — the same word either way. */
+.tool:hover .hint,
+.tool:focus-visible .hint {
+  opacity: 1;
 }
 
 /*
  * One tool: a black square with a drawing the colour of the hall's own wood in it, since the bar lies
  * over the hall rather than over the page — the dark square is what tells a button from the picture
  * under it, and the wood is what tells the bar from the black around the picture. The square is
- * edged with the same wood as the drawing, which is what makes the column read as a row of buttons
- * on the hall rather than as three drawings floating over it. Nothing happens to it under the
- * pointer: the press is the whole of a button's answer.
+ * edged with the same wood as the drawing, which is what makes the bar read as a stack of buttons
+ * on the hall rather than as a few drawings floating over it. Nothing happens to the square itself
+ * under the pointer: the press is the whole of a button's answer, and the word beside it (`.hint`,
+ * above) is not the button.
  *
  * The tool the player is holding is the same square the other way round: wood with a dark drawing
  * and a dark edge, so which one is picked reads at a glance and without a colour of its own.
@@ -158,6 +317,8 @@ body {
   box-sizing: border-box;
   width: 44px;
   height: 44px;
+  /* The button the word beside it hangs off (`.hint`). */
+  position: relative;
   display: grid;
   place-items: center;
   padding: 0;
@@ -235,12 +396,13 @@ body {
 }
 
 /*
- * The chat, in two pieces: the strip of the last few messages beside the bar's own chat button — at the
- * foot of the bar's column, in the world's own bottom left corner — and the window that button opens.
+ * The chat, in two pieces: the strip of the last few messages in the world's own bottom left corner —
+ * across the foot of the picture from the bar of tools at its top left one — and the screen of its
+ * own that the strip and the bar's chat button are both the way into, the garden's third location.
  * Neither belongs to the hall — the chat is the player's, not the hall's — and neither is anything the
- * renderer knows about, but they hang off different things: the strip is part of the interface standing
- * in the world's corner (see `.hud`), while the window is a dialog over the page and keeps its own size
- * however the hall is scaled.
+ * renderer knows about, but they hang off different things: the strip is part of the interface
+ * standing in the world's corner (see `.hud`), while the screen is a location of its own over its own
+ * scenery (`.location--chat`).
  *
  * The strip is a block of 300 px that never wraps, so a long message runs on past the block; what stops
  * it is the mask — the last rem of the block is nothing, and a line that reaches it dissolves rather
@@ -249,13 +411,17 @@ body {
  */
 .chat-strip {
   flex: none;
+  /* The block is the chat's own corner of the picture: the column it stands in is as tall as the
+     world, and this is what pins it to the foot of that — the world's bottom left corner, across the
+     picture from the bar that hangs at its top left one. */
+  margin-top: auto;
   width: 300px;
   /* The block is a button as well as a block of text: a click anywhere on the lines opens the chat. */
   display: block;
   padding: 0;
   border: 0;
   background: none;
-  color: #d7cabb;
+  color: var(--paper);
   font: inherit;
   font-size: 14px;
   line-height: 1.35;
@@ -334,7 +500,7 @@ body {
   width: min(520px, 100%);
   height: min(560px, 100%);
   border-radius: 16px;
-  background: #d7cabb;
+  background: var(--paper);
   color: #000;
   overflow: hidden;
 }
@@ -348,13 +514,19 @@ body {
 }
 
 /*
- * The chat's own window (`ChatPanel.vue`): the whole page, less the margin it was laid out in. A window
- * 520 px wide has no room for the runs beside the conversation, and the two are read together — one does
- * not send a player to another screen to find out what there is to watch.
+ * The chat's own screen (`ChatPanel.vue`): the third location, arrived over the world from the right
+ * (`.chat-over` above, `App.vue`). Being a place laid over the stage rather than a window on paper, it
+ * has no background of its own at all — the world the player left stands behind every line of it — and
+ * its words are the chat's own colour, the colour the strip on the stage already reads in. The way
+ * back is where the cross was: a worded button beside the name of the place, because what it leaves is
+ * a *place* rather than a box.
  */
 .chat-card--full {
   width: 100%;
   height: 100%;
+  border-radius: 0;
+  background: none;
+  color: var(--paper);
 }
 
 /*
@@ -370,6 +542,114 @@ body {
 /* The rows in that window start a card's own slack in from its edge, the way a conversation does. */
 .chat-card--runs .chat-card__body {
   padding: 0 8px;
+}
+
+/*
+ * The screen's own heading: the way back at the left of it, and the name of the place centred across
+ * the whole of the screen — a place is named over its middle, and the button beside the name is the
+ * way back rather than a part of the title. The name is lifted out of the flow for the sake of that
+ * centring, so the button keeps the left end and the name keeps the middle whatever either of them
+ * is wide. A window's own heading keeps its cross at the other end of it (`RunsDialog.vue`), so this
+ * is the screen's own arrangement alone.
+ */
+.chat-card--full .chat-card__head {
+  position: relative;
+  justify-content: flex-start;
+}
+
+.chat-card--full .chat-card__title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  /* No wider than the space a name and its way back share: a long one is cut short at the end rather
+     than pushing its own centring about. */
+  max-width: calc(100% - 8rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * The way back to the stage: a word and an arrow, the arrow saying which way the way goes. It is drawn
+ * in the cross's own language — no frame, no fill, a plate coming up under the pointer — because it is
+ * the same thing the cross was: the one way out of the chat. The plate is dark rather than the paper's
+ * own dimming, since what it comes up over is the world.
+ */
+.chat-card__back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 28px;
+  padding: 0 10px 0 6px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.chat-card__back .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.chat-card__back:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/*
+ * The screen's own plates and readings — everything the paper card drew in black or dimmed with a wash
+ * of itself, said in the colours the interface over the hall has always used: the chat's own colour for
+ * the words, dark plates under the pointer, and the field framed in the bar's own wood over black, the
+ * way a hint or the tape's own track is framed.
+ */
+.chat-card--full .chat-run {
+  color: inherit;
+}
+
+.chat-card--full .chat-run:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.chat-card--full .chat-runs__none {
+  color: inherit;
+  opacity: 0.7;
+}
+
+/* The chat's own failures, said over the world rather than on paper: a red that carries on the hall. */
+.chat-card--full .chat-card__error {
+  color: #ff9d9d;
+}
+
+.chat-card--full .chat-card__field {
+  border-color: var(--wood);
+  background: #000;
+}
+
+.chat-card--full .chat-card__field:has(.chat-card__input:focus) {
+  outline: 2px solid #fff;
+  outline-offset: -1px;
+}
+
+.chat-card--full .chat-card__speaker {
+  color: inherit;
+}
+
+.chat-card--full .chat-card__speaker:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.chat-card--full .chat-card__input {
+  color: inherit;
+  caret-color: var(--paper);
+}
+
+.chat-card--full .chat-card__speaker:focus-visible,
+.chat-card--full .chat-card__send:focus-visible,
+.chat-card--full .chat-run:focus-visible {
+  outline-color: #fff;
 }
 
 /*
@@ -731,7 +1011,7 @@ body {
   border: 0;
   border-radius: 8px;
   background: #000;
-  color: #d7cabb;
+  color: var(--paper);
   font: inherit;
   font-weight: bold;
   cursor: pointer;
@@ -913,8 +1193,9 @@ body {
 /*
  * The whole page while its player is being signed in (`src/main.ts`, `index.html`): the game is not
  * there yet and the black is — the same black the hall hangs in — so the one word sits in the middle
- * of it, at reading size, in the page's own ink. It is also the page's whole answer when signing in
- * fails, with the word the failure left in its place.
+ * of it, at reading size, in the chat's own colour. It is also the page's whole answer when signing in
+ * fails, with the word the failure left in its place. The page says it itself, before any CSS of the
+ * bundle has arrived, in the very same numbers (`<style>` in `index.html`).
  */
 .loading {
   position: absolute;
@@ -923,4 +1204,5 @@ body {
   transform: translate(-50%, -50%);
   margin: 0;
   font-size: 16px;
+  color: var(--paper);
 }

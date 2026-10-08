@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import type { ChatMessage, Speaker } from '../chat/messages';
 import { SIDEBAR_RUNS, type Run } from '../chat/runs';
 import ChatLine from './ChatLine.vue';
@@ -7,37 +7,47 @@ import RunsDialog from './RunsDialog.vue';
 import RunsList from './RunsList.vue';
 
 /**
- * The window the chat button opens: a heading, the log and the runs under one scroll, and the field at the
- * foot. Messages are read from the top down, so the newest one is at the bottom and the scroll keeps itself
- * there; the field is where the eye already is, so the text in it takes the focus when the window opens and
- * again after every line sent.
+ * The chat's own screen — the third of the garden's three locations, arrived over the world from the
+ * right (`App.vue`): a heading, the log and the runs under one scroll, and the field at the foot.
+ * Messages are read from the top down, so the newest one is at the bottom and the scroll keeps itself
+ * there; the field is where the eye already is, so the text in it takes the focus when the screen
+ * arrives and again after every line sent.
  *
- * The window is the whole page, less the margin the world's own row is drawn inside of, and under its one
- * scroll it is two columns: the conversation takes the width, and the runs the server holds — one row each,
- * newest first — take a narrower column on the right. One scroll for both, because the two are read
- * together: the rows are as long as other people's playing, and a scrollbar of their own would be a second
- * place to look for the end of a conversation. The field stays where it is whatever has been said — it is
- * the one part of the window that has to be reached, not read.
+ * The screen is transparent — the world stands behind every line of it, and its words are the chat's
+ * own colour — and under its one scroll it is two columns: the conversation takes the width, and the
+ * runs the server holds — one row each, newest first — take a narrower column on the right. One scroll
+ * for both, because the two are read together: the rows are as long as other people's playing, and a
+ * scrollbar of their own would be a second place to look for the end of a conversation. The field
+ * stays where it is whatever has been said — it is the one part of the screen that has to be reached,
+ * not read.
  *
- * A row is a way into a run rather than something to read: pressing one brings that run's own tape down and
- * walks it (`useRuns`), which is the one thing the chat has to do with a recording that the conversation
- * itself cannot say. The column shows the first {@link SIDEBAR_RUNS} of the runs; when there are more, the
- * «Ещё...» under them opens the whole list in a window of its own (`RunsDialog.vue`) — a list of a hundred
- * rows beside a chat would be the taller of the two things, and the chat is what the window is for.
+ * A row is a way into a run rather than something to read: pressing one brings that run's own tape down
+ * and walks it (`useRuns`), which is the one thing the chat has to do with a recording that the
+ * conversation itself cannot say — and the way it leaves is the way back to the stage, which is the
+ * player's to watch it on. The column shows the first {@link SIDEBAR_RUNS} of the runs; when there are
+ * more, the «Ещё...» under them opens the whole list in a window of its own (`RunsDialog.vue`) — a list
+ * of a hundred rows beside a chat would be the taller of the two things, and the chat is what the screen
+ * is for.
  *
  * The field's own left end says who is speaking: the badge the next line will wear, the nickname, and a
- * triangle like the one on a combobox. Pressing any of that swaps the player for the ghost and back
+ * triangle like the one on a combobox. Pressing any part of that swaps the player for the ghost and back
  * (see `useChat`) — the field is the only place anonymity is decided, so it is the only place it is
  * shown, and nothing already said changes.
  *
  * Sending is a function rather than an event because the field has to wait for its answer: the line
- * stands in the log at once (`useChat`, which is why the field is emptied on the spot — the strip
+ * stands in the log at once (`useChat`, which is why the field is emptied on the spot — the screen
  * answers the finger rather than a round trip), and the text is put back if the server turned out not to
  * take it. A refusal then costs the player nothing but the reading of the error line. Picking a run is a
  * function for the same reason, with nothing to wait for but the row itself: the tape coming down is
  * `useRuns`'s own business, and this component only draws the result of it.
  */
 const props = defineProps<{
+  /**
+   * Whether the player is at the chat — the screen is arrived at and left by the garden panning to it
+   * and away (`App.vue`), and the component stays mounted in its pane once first visited: this is how
+   * it knows the moment to take the field and settle the scroll, each time the screen comes round.
+   */
+  open: boolean;
   messages: readonly ChatMessage[];
   speaker: Speaker;
   anonymous: boolean;
@@ -61,7 +71,7 @@ const emit = defineEmits<{
 }>();
 
 const typed = ref('');
-/** The window's own scroll: the one that carries the log and the runs together. */
+/** The screen's own scroll: the one that carries the log and the runs together. */
 const scroll = ref<HTMLElement | null>(null);
 const field = ref<HTMLInputElement | null>(null);
 /** Whether the whole list of runs is on screen in its own window (`RunsDialog.vue`). */
@@ -72,7 +82,7 @@ const listed = computed(() => props.runs.slice(0, SIDEBAR_RUNS));
 /** Whether there are runs the column does not show, which is what «Ещё...» is the door on. */
 const unlisted = computed(() => props.runs.length > listed.value.length);
 
-/** The newest message is the one to read: keep the window's own scroll at its bottom. */
+/** The newest message is the one to read: keep the screen's own scroll at its bottom. */
 function toBottom(): void {
   void nextTick(() => {
     const box = scroll.value;
@@ -80,11 +90,24 @@ function toBottom(): void {
   });
 }
 
-onMounted(() => {
-  toBottom();
-  field.value?.focus();
-});
+// The screen arriving in the window is the field's own moment, every time it does — and the first
+// time is no different: the panel is put in its place in the garden before the player ever arrives
+// at it (`App.vue`), so mounting takes no focus from the stage and the arrival itself is what puts
+// it in the field, with the scroll settled at the newest line.
+watch(
+  () => props.open,
+  (up) => {
+    if (!up) return;
+    toBottom();
+    field.value?.focus();
+  },
+  { immediate: true },
+);
 watch(() => props.messages.length, toBottom);
+// The runs are read off the server on the same arrival as the field's focus (`useRuns`), and their
+// column can be the taller of the two under the one scroll — so the scroll settles again when they
+// land, or the bottom it was put at is the bottom of half the screen.
+watch(() => props.runs.length, toBottom);
 
 async function submit(): Promise<void> {
   const text = typed.value.trim();
@@ -102,16 +125,19 @@ function pick(run: Run): void {
 </script>
 
 <template>
-  <div class="chat-window" @click.self="emit('close')">
-    <section class="chat-card chat-card--full" role="dialog" aria-modal="true" aria-label="Чат привидений">
-      <header class="chat-card__head">
-        <h2 class="chat-card__title">Чат привидений</h2>
-        <button type="button" class="chat-card__close" aria-label="Закрыть чат" @click="emit('close')">
-          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M6.4 6.4l11.2 11.2M17.6 6.4L6.4 17.6" />
-          </svg>
-        </button>
-      </header>
+  <!-- The screen itself: transparent over the world, its words in the chat's own colour, with the way
+       back at the left of its heading rather than a cross at the end of it — what it leaves is a
+       place, the stage, and a way back is what a place is left by. -->
+  <section class="chat-card chat-card--full" aria-label="Чат с привидениями">
+    <header class="chat-card__head">
+      <button type="button" class="chat-card__back" aria-label="Назад к сцене" @click="emit('close')">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M11.2 5.2 4.4 12l6.8 6.8M4.9 12h14.6" />
+        </svg>
+        Назад
+      </button>
+      <h2 class="chat-card__title">Чат с привидениями</h2>
+    </header>
       <!-- The one scroll of the window, carrying both columns: the conversation and the runs are read
            together, and neither has a scrollbar of its own to hunt for the end of the other in. -->
       <div ref="scroll" class="chat-card__body">
@@ -170,13 +196,16 @@ function pick(run: Run): void {
       </form>
     </section>
     <!-- The whole list of runs, when «Ещё...» has been pressed: the same rows in a window of their own,
-         over the chat's own rather than in it. -->
-    <RunsDialog
-      v-if="wholeList"
-      :runs="runs"
-      :opening="opening"
-      :choose="choose"
-      @close="wholeList = false"
-    />
-  </div>
-</template>
+         over the screen rather than in it. It is carried out of the screen to the body first, because a
+         window fixed to the page inside the panes the garden moves about would be fixed to the *pane*
+         — a transformed ancestor is a fixed descendant's containing block — and dragged along with it. -->
+    <Teleport to="body">
+      <RunsDialog
+        v-if="wholeList"
+        :runs="runs"
+        :opening="opening"
+        :choose="choose"
+        @close="wholeList = false"
+      />
+    </Teleport>
+  </template>

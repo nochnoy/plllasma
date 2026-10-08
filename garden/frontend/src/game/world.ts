@@ -9,7 +9,7 @@ import { PEngine2D } from './vm/engine';
 import type { SkinPart } from './vm/extractor';
 
 /** What a click on the stage does. The toolbar picks one of these. */
-export type Tool = 'drag' | 'rope' | 'delete';
+export type Tool = 'drag' | 'rope';
 
 /**
  * Where a freshly added doll goes: the first of these spots that is clear of everything else, in
@@ -112,7 +112,7 @@ export class World {
    * what `clampToWorld` keeps every particle inside — the rectangle the doll hits — and that rectangle
    * stands inside the picture (`WALL_MARGIN_X`/`Y` in `stage.ts`). The world is one size on every
    * screen, so the box it is born with is the box it keeps for the whole game: the widest play area
-   * there is, under a ceiling one location's height (`STAGE_HEIGHT`) over the top of the picture. How
+   * there is, under a ceiling `CEILING_MARGIN` (200 world pixels) over the top of the picture. How
    * much of it a
    * window shows is the renderer's own business (`stage.ts`), and no concern of the physics at all —
    * which is what makes a run recorded anywhere play back with the room it was recorded in: there is
@@ -147,7 +147,7 @@ export class World {
 
   constructor() {
     // The box the engine is born with has no ceiling of its own — the picture's top edge is not one, and
-    // the port's stands one location's height above it (`CEILING_MARGIN` in `stage.ts`), over the top of
+    // the port's stands 200 pixels above it (`CEILING_MARGIN` in `stage.ts`), over the top of
     // the one-and-only view of the world. The floor and the sides it does have: they are the widest play
     // area there is (see `WALL_MARGIN_X`/`Y` in `stage.ts`), and they never move again.
     this.engine.setCeiling(ceilingFor(visibleTop(STAGE_HEIGHT)));
@@ -187,7 +187,6 @@ export class World {
     const doll = Doll.spawn(this.engine, offset, character, this.random);
     if (!doll) return null;
     this.dolls.push(doll);
-    this.putDown();
     return doll;
   }
 
@@ -358,7 +357,6 @@ export class World {
     this.draft = null;
     const rope = new Rope(this.engine, start, end);
     this.ropes.push(rope);
-    this.putDown();
     return rope;
   }
 
@@ -371,33 +369,47 @@ export class World {
 
   /**
    * A press on the stage at (`x`, `y`), routed by the tool in the player's hand: the rope tool lays one end of
-   * a rope or ties the whole of it, the bin takes whatever is under the point away, and the arrow takes hold of
-   * a knot first, a stone next, and only then the particles of the doll — the original's own `onMouseDown`,
-   * which held every particle within `sqrt(1500)` of the point.
+   * a rope or ties the whole of it — and takes a rope away by the middle of its cord, the same press the
+   * arrow takes one away with — and the arrow takes hold of a knot first, and only then the particles of the
+   * doll, the original's own `onMouseDown`, which held every particle within `sqrt(1500)` of the point.
+   *
+   * The taking-away is both tools' own click rather than a bin to be picked first, because taking a rope
+   * away is a thing done *with* a rope: whichever of the two the player is holding, a press on the middle of
+   * a cord burns that rope away ({@link burnRopeAt}), and the tool stays in the player's hand either way
+   * (`Scene.syncCursor` draws the cursor to match).
+   *
+   * The *ends* of a rope are not the rope's: a press near one is a press on the knot hanging there, which is
+   * something the player can take hold of and carry, so those stay the knot's own (see `Rope.middleDistance`).
+   * In the rope tool's own hand a burn comes first even while a rope is only half drawn: the draft stays
+   * open for its second click, and the press spent itself on the rope under it.
    *
    * It belongs to the world rather than to the game because everything a press *does* is the world's own: the
-   * tools, the picking, the hold. What the game adds is only where the pointer is, which is a screen point
-   * brought into the world — and that is the one part of a press a tape can carry directly, so a playback
-   * presses through this same door (`Game.replay`).
+   * tools, the picking, the hold, and the taking away. What the game adds is only where the pointer is, which is
+   * a screen point brought into the world — and that is the one part of a press a tape can carry directly, so a
+   * playback presses through this same door (`Game.replay`).
+   *
+   * Returns the rope the press took off the stage, so that the renderer can burst it where it stood, or null
+   * when nothing was taken away — which is every press that ends in a hold, and every press on bare sky.
    */
-  press(x: number, y: number): void {
+  press(x: number, y: number): Rope | null {
     this.engine.mouseX = x;
     this.engine.mouseY = y;
 
     if (this.tool === 'rope') {
+      const burned = this.burnRopeAt(x, y);
+      if (burned) return burned;
       if (this.draft) this.finishRope(x, y);
       else this.startRope(x, y);
-      return;
-    }
-    if (this.tool === 'delete') {
-      this.deleteAt(x, y);
-      return;
+      return null;
     }
 
-    if (this.grabAnchor(x, y)) return;
+    const burned = this.burnRopeAt(x, y);
+    if (burned) return burned;
+    if (this.grabAnchor(x, y)) return null;
     this.engine.onHold = this.engine.particles.filter(
       (p) => (x - p.x) ** 2 + (y - p.y) ** 2 < GRAB_RADIUS_SQ,
     );
+    return null;
   }
 
   /**
@@ -500,6 +512,18 @@ export class World {
     return this.pickAnchor(this.engine.mouseX, this.engine.mouseY);
   }
 
+  /**
+   * The rope under the pointer that a press would take away: the one whose *middle* is under it, and
+   * nothing at all while a knot is in hand — a click that is already carrying something spends itself on
+   * putting that down. Both tools are offered it alike (`World.press`), so the renderer draws the
+   * crosshair to match (`Scene.syncCursor`).
+   */
+  hoverRope(): Rope | null {
+    if (this.dragged) return null;
+    if (this.tool !== 'drag' && this.tool !== 'rope') return null;
+    return this.pickRopeMiddle(this.engine.mouseX, this.engine.mouseY);
+  }
+
   // ------------------------------------------------------------------ picking
 
   /**
@@ -536,19 +560,22 @@ export class World {
   }
 
   /**
-   * The delete tool: removes the rope the click lands on — **except the doll**. She is not something the
-   * player put on the stage: she is the game, there is one of her, and a click on her means the player
-   * wants to take hold of her, which is the arrow's job (the two buttons sit next to each other in the
-   * bar). A bin that could swallow her would end the game on a misclick.
-   *
-   * A deletion puts the arrow back in the player's hand: the tool is not a mode to stay in, and the
-   * stage should be ready to be played with as soon as the rope is gone. A click that lands on bare
-   * sky — or on the doll — leaves the tool alone: nothing was spent.
+   * The rope whose *middle* is under a point, if the point lands close enough to the cord: the rope a
+   * press there takes away ({@link burnRopeAt}). A point on either end of a rope is not on this, however
+   * close it is to the drawing — those are where the knots hang, and the knots are the player's to take
+   * hold of (`Rope.middleDistance`).
    */
-  deleteAt(x: number, y: number): 'rope' | null {
-    const removed = this.removeAt(x, y);
-    if (removed) this.putDown();
-    return removed;
+  private pickRopeMiddle(x: number, y: number): Rope | null {
+    let best: Rope | null = null;
+    let bestDistance = ROPE_GRAB_RADIUS;
+    for (const rope of this.ropes) {
+      const distance = rope.middleDistance(x, y);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = rope;
+      }
+    }
+    return best;
   }
 
   /**
@@ -713,26 +740,23 @@ export class World {
   // ------------------------------------------------------------------ private
 
   /**
-   * Back to the arrow, after something was put on the stage or taken off it.
+   * The arrow taking a rope off the stage: a press on the middle of a rope's cord burns the whole rope
+   * away — the chain and its links with it, and both knots — and the rope is handed back so that the
+   * renderer can burst it where it stood (`Scene.popRope`).
    *
-   * The tools are not modes to stay in: a rope and a character are each picked, placed, and done with,
-   * and the arrow — the drag the whole game used to be — is what the stage should be left with. Only
-   * ever called once something actually happened; a click that spends itself on nothing leaves the tool
-   * the player chose.
+   * Only the *middle* counts, so the ends stay the knots' own ground and the arrow keeps both of its jobs
+   * on one rope: the knot under a press is picked up, the cord under it is taken away. A press that misses
+   * every rope's middle takes nothing away and returns null, which is the signal that the press is still
+   * free to become a hold.
+   *
+   * The doll is not something a click can take away at all: she is not something the player put on the
+   * stage, she is the game, and a press on her is the press that takes hold of her.
    */
-  private putDown(): void {
-    this.tool = 'drag';
-  }
-
-  /** What the delete tool takes away under a point, or null when the click missed the rope — or
-   * landed on the doll, who is not the bin's to take (see {@link deleteAt}). */
-  private removeAt(x: number, y: number): 'rope' | null {
-    const rope = this.pickRope(x, y);
-    if (rope) {
-      this.removeRope(rope);
-      return 'rope';
-    }
-    return null;
+  private burnRopeAt(x: number, y: number): Rope | null {
+    const rope = this.pickRopeMiddle(x, y);
+    if (!rope) return null;
+    this.removeRope(rope);
+    return rope;
   }
 
   /**

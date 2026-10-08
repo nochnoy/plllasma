@@ -3,7 +3,7 @@
  *
  * The movie's own stage was 550x400 and its physics had no walls at all — what stopped a doll was a
  * ball, and the balls are gone from the port. So the room she falls through is the port's own, and it
- * is exactly the picture of the hall (`public/assets/bg.png`, 1000x740): the theatre in which
+ * is exactly the picture of the hall (`public/assets/bg-2.png`, 1000x740): the theatre in which
  * everything happens is the world's own rectangle, drawn texel to texel at 1:1. The rig is still
  * written in the movie's own units — the doll is the size the author drew her, a texel of her artwork
  * to a world pixel — so the room is room *around* her rather than a bigger doll.
@@ -47,7 +47,7 @@ export const MIN_WORLD_HEIGHT = 400;
  * about to fall out of the frame. What they leave is the play area: {@link WALL_WIDTH} by
  * {@link WALL_HEIGHT} world pixels, centred, which is the box `PEngine2D` is built with.
  *
- * The two sides and the floor are inside the picture; the fourth wall is well above it
+ * The two sides and the floor are inside the picture; the fourth wall is above it
  * ({@link CEILING_MARGIN}) and no window ever reaches it. A rope is not confined to the box at all,
  * since a knot is the player's own drawing and goes where they put it (`Particle2D.clamped`).
  *
@@ -74,19 +74,17 @@ export const WALL_HEIGHT = STAGE_HEIGHT - 2 * WALL_MARGIN_Y;
  *
  * The movie's own box was closed on all four sides and the port opened the top, so that a rope could
  * haul her up and out of the frame instead of stopping her at it like a balloon on a string. What it
- * is open *onto* is one more location the size of the picture: the room over the hall is exactly
- * {@link STAGE_HEIGHT} tall, so past the top edge of the screen she may fly the height of the
- * location and no further. That is room a rope cannot reach (a knot is nailed inside the visible
- * picture, `World.onStage`) and more than a thrown doll has ever used, and it keeps her somewhere the
- * physics can find her — a doll with nothing above her at all is a doll who can be flung until she is
- * lost.
+ * is open *onto* is a strip of sky exactly this deep: past the top edge of the screen she may fly 200
+ * world pixels and no further. That is room enough to haul her clear of the picture and no more — a
+ * doll with nothing above her at all is a doll who can be flung until she is lost, and one with a
+ * whole location of sky over her is one the player waits for.
  *
  * It is measured from the picture's own top edge, which never moves: the world is one size, and so is
- * the room over it. The height is the location's own — the same `STAGE_HEIGHT` the picture is measured
- * in, the size of `bg.png` — rather than a number invented for the wall, so the hall and the sky over
- * it are counted in one unit.
+ * the room over it. A window shorter than the hall crops the picture from the top and the ceiling
+ * stays where it was — the physics never asks the window anything, which is what makes a run recorded
+ * anywhere play back with the room it was recorded in.
  */
-export const CEILING_MARGIN = STAGE_HEIGHT;
+export const CEILING_MARGIN = 200;
 
 /**
  * The top of the picture, in world coordinates — the line {@link ceilingFor} measures the room above

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Doll } from '../src/game/doll';
-import { MAX_STRETCH, type Rope, SEGMENT_LENGTH } from '../src/game/rope';
+import { END_SEGMENTS, MAX_STRETCH, type Rope, SEGMENT_LENGTH } from '../src/game/rope';
 import { STAGE_HEIGHT, STAGE_WIDTH, WALL_HEIGHT } from '../src/game/stage';
 import { World } from '../src/game/world';
 
@@ -86,8 +86,8 @@ describe('rope', () => {
     // and a click past even that (the letterbox the window leaves) is brought onto the picture's edge,
     // since a knot where nothing is drawn would look like no knot at all.
     const world = new World();
-    // Above the walls, which is still well inside the picture: the ceiling of the play area is one
-    // location's height above the picture, so what a click can reach and what the doll can reach are
+    // Above the walls, which is still well inside the picture: the ceiling of the play area is above
+    // the picture altogether, so what a click can reach and what the doll can reach are
     // not the same thing at all (`World.onStage` clamps to the picture, `clampToWorld` to the ceiling).
     world.startRope(world.engine.minx - 40, -WALL_HEIGHT / 2 - 40);
     expect(world.draft?.node.x).toBe(world.engine.minx - 40);
@@ -108,8 +108,7 @@ describe('rope', () => {
     // obligation to the ceiling either, which is what lets a rope be drawn up out of the picture.
     const world = new World();
     // Above the walls — their own top is `WALL_HEIGHT / 2` — and inside the picture, which is the strip a
-    // knot can actually be nailed in: the ceiling is one location's height further up than a click
-    // reaches.
+    // knot can actually be nailed in: the ceiling is further up than a click reaches.
     const above = -WALL_HEIGHT / 2 - 60;
     const rope = tie(world, [-200, above], [200, above]) as Rope;
     expect(rope).not.toBeNull();
@@ -211,25 +210,55 @@ describe('rope ends', () => {
   });
 });
 
+describe('a rope a press can take away by', () => {
+  it('is its cord between the knots, without the links that are the ends\u2019 own', () => {
+    const world = new World();
+    const rope = tie(world, [-100, 0], [100, 0]) as Rope;
+    const knot = rope.start.node;
+    // The drawing is right there under a press on the knot...
+    expect(rope.distanceTo(knot.x, knot.y)).toBe(0);
+    // ...but the knot is not the rope's middle: the links either side of it belong to the end, which is
+    // what the arrow takes hold of, so the rope's own body only starts that far in.
+    expect(rope.middleDistance(knot.x, knot.y)).toBeCloseTo(END_SEGMENTS * SEGMENT_LENGTH, 6);
+  });
+
+  it('is right under a press on the cord between the knots', () => {
+    const world = new World();
+    const rope = tie(world, [-100, 0], [100, 0]) as Rope;
+    const middle = rope.nodes[Math.floor(rope.nodes.length / 2)];
+    expect(rope.middleDistance(middle.x, middle.y)).toBe(0);
+  });
+
+  it('is the whole of a rope too short to have a body of its own', () => {
+    const world = new World();
+    const rope = tie(world, [-9, 0], [9, 0]) as Rope;
+    // Two links, and two is what each end would take: a rope keeps as many links as it can spare, so
+    // what is left of this one is its middle — a press on its knot is a press on the rope itself.
+    expect(rope.segments).toHaveLength(2);
+    expect(rope.middleDistance(rope.start.node.x, rope.start.node.y)).toBe(0);
+  });
+});
+
 describe('editing the stage', () => {
-  it('deletes what the delete tool is pointed at, ropes first — and never the doll', () => {
+  it('takes away the rope the arrow is pressed on at its cord, and never the doll', () => {
     const world = new World();
     const doll = world.addDoll({ x: 0, y: 0 }) as Doll;
     const rope = tie(world, [-120, -140], [120, 140]) as Rope;
 
-    // Empty sky: nothing happens.
-    expect(world.deleteAt(-260, 190)).toBeNull();
+    // Empty sky: nothing happens, and nothing is handed back to be burst.
+    expect(world.press(-260, 190)).toBeNull();
 
-    // The rope, because it is drawn over the doll.
+    // The rope, because the arrow's own first answer is the cord under the press — this rope's middle
+    // lies across the doll, and the rope is what goes rather than the doll under it.
     const middle = rope.nodes[Math.floor(rope.nodes.length / 2)];
-    expect(world.deleteAt(middle.x, middle.y)).toBe('rope');
+    expect(world.press(middle.x, middle.y)).toBe(rope);
     expect(world.ropes).toHaveLength(0);
     expect(world.engine.particles).toHaveLength(doll.particles.length);
 
-    // And the doll herself: she is left standing. The bin takes ropes and stones; a click on her is a
-    // click on the game, and the arrow tool is what answers it (`World.deleteAt`).
+    // And the doll herself: she is left standing. Nothing in the world takes her away — a press on her is
+    // a press on the game, which is the arrow's hold (`World.press`).
     const chest = partCentre(doll, 4);
-    expect(world.deleteAt(chest.x, chest.y)).toBeNull();
+    expect(world.press(chest.x, chest.y)).toBeNull();
     expect(world.dolls).toEqual([doll]);
     expect(world.engine.particles).toHaveLength(doll.particles.length);
 
@@ -237,6 +266,15 @@ describe('editing the stage', () => {
     world.removeDoll(doll);
     expect(world.dolls).toHaveLength(0);
     expect(world.engine.particles).toHaveLength(0);
+  });
+
+  it('takes a rope too short to have a middle away by its own knot', () => {
+    const world = new World();
+    const rope = tie(world, [-9, 0], [9, 0]) as Rope;
+    // Two links, both of them the rope's middle: there is no end's ground left to take hold of, so the
+    // whole of it is the rope's own body and a press on it burns it.
+    expect(world.press(rope.start.node.x, rope.start.node.y)).toBe(rope);
+    expect(world.ropes).toHaveLength(0);
   });
 
   it('takes the ropes tied to a doll away with the doll', () => {

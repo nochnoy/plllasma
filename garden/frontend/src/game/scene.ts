@@ -14,7 +14,7 @@ import { FACE } from './pain-state';
 import { Camera } from './camera';
 import { PART_ASSETS, type PartName } from './parts.generated';
 import { maskFromImageData, type PartMasks } from './part-mask';
-import { ROPE_THICKNESS, SEGMENT_LENGTH } from './rope';
+import { ROPE_THICKNESS, SEGMENT_LENGTH, type Rope } from './rope';
 import { MAX_WORLD_SCALE, STAGE_BOTTOM, STAGE_HEIGHT, STAGE_WIDTH, WALL_HEIGHT, WALL_MARGIN_Y, stageView, type StageView } from './stage';
 import type { Doll } from './doll';
 import type { World } from './world';
@@ -43,8 +43,11 @@ function shadowAlpha(height: number): number {
  */
 const BACKDROP_COLOR = 0x000000;
 /**
- * The picture of the hall the action happens in: the port's own artwork, `public/assets/bg.png`. It is
- * the one thing in the scene that comes from neither the movie nor an object the player put there.
+ * The picture of the hall the action happens in: the port's own artwork, `public/assets/bg-2.png`. It is
+ * the one thing in the scene that comes from neither the movie nor an object the player put there — and
+ * it is the *second* location's own picture, one of the garden's three (`bg-1`/`bg-2`/`bg-3`, laid out
+ * as the three screens the player pans through in `App.vue`): the hall is what the middle of the garden
+ * looks like.
  *
  * The file is the world itself — `STAGE_WIDTH x STAGE_HEIGHT`, 1000x740 — so a texel of it is a world
  * pixel and the hall is drawn with no scale at all. A picture of another size is stretched over the
@@ -52,7 +55,7 @@ const BACKDROP_COLOR = 0x000000;
  * {@link Scene.loadBackground}). Everything outside the world box keeps {@link BACKDROP_COLOR}: the
  * window's own margin, and nothing else.
  */
-const BACKGROUND_FILE = 'bg.png';
+const BACKGROUND_FILE = 'bg-2.png';
 /**
  * The rope is no material rope but the ghosts' own: a line of cold light, teal, that gives itself
  * off rather than hanging there. It is drawn in three strokes of one family — a wide faint wash of
@@ -72,6 +75,45 @@ const KNOT_RADIUS = 4.6;
 const KNOT_HOVER_RADIUS = 6;
 const KNOT_FILL = 0xbdf9ec;
 const KNOT_RING = 0x2cd9b8;
+
+/**
+ * What is left of a rope the arrow takes away: the rope does not simply stop being drawn, it *bursts*.
+ *
+ * The cord flares white where it stood and swells before it thins away; every joint of it is flung off
+ * the point the press landed on and trails off into an ember; and a ring of the rope's own teal opens
+ * out from that point. Every colour in it comes off the rope's own palette, so what the player sees is
+ * the rope giving itself off rather than something laid over it — and the whole thing is over inside
+ * {@link BURST_SECONDS}: long enough to read, short enough not to hold the player up.
+ */
+const BURST_SECONDS = 0.62;
+/** How long the cord stays white-hot before it starts to go, in seconds. */
+const BURST_FLASH_SECONDS = 0.12;
+/** How much wider than the cord the rope burns at the flash, as a multiple of its own `ROPE_THICKNESS`. */
+const BURST_SWELL = 2.6;
+/** How fast an ember is thrown off the joint it came from, in world pixels a second. */
+const EMBER_SPEED = 190;
+/** How much of that speed an ember may vary by, so the chain does not fly apart in two neat halves. */
+const EMBER_SPREAD = 0.7;
+/** How far an ember's course is turned off the line out of the press, in radians. */
+const EMBER_SCATTER = 1.1;
+/** How quickly the air takes an ember's speed away, per second. */
+const EMBER_DRAG = 6.5;
+/** How much of its own travel an ember's trail covers, in seconds. */
+const EMBER_TRAIL = 0.055;
+/**
+ * The ring the burst opens with: its radius at the press and at its furthest, in world pixels, and the time
+ * it takes to get there.
+ *
+ * The ring is a wavefront of its own rather than part of the burst's slow going: it snatches open in
+ * {@link RING_SECONDS} — a ninth of the whole burst, three times quicker than it used to snatch — so it
+ * is out and standing at its full reach before the cord has barely begun to go, and what is left of the
+ * burst after that is the light of it going out rather than a ring still opening.
+ */
+const RING_START = 7;
+const RING_REACH = 96;
+const RING_SECONDS = BURST_SECONDS / 9;
+/** How long the white flash at the press itself burns, in seconds. */
+const IMPACT_SECONDS = 0.14;
 /**
  * The shadow every doll casts on the floor: how tall it is in world pixels, how dark its middle is, and
  * the blend it is drawn with.
@@ -108,11 +150,11 @@ const SHADOW_DROP = 40;
 const SHADOW_FLOOR = WALL_HEIGHT / 2 + SHADOW_DROP;
 
 /**
- * The interface: the bar of tools down the world's own left edge — a column as tall as the world, its
- * last button, the chat's, in the bottom left corner — the chat's block of four lines beside that
- * button, and the strip of portraits, in the world's own bottom right corner, across the foot of the
- * world from it, or in its top right one when the window is taller than it is wide.
- * The tape's own bar is the fourth of those and the one the row above gives way to: it stands on the
+ * The interface: the bar of tools down the world's own left edge — a stack of buttons hanging from the top
+ * of it, the last of them, the chat's, the lowest of the three — the chat's block of four lines under that
+ * stack, against the same left edge, and the strip of portraits, in the world's own bottom right corner,
+ * across the foot of the world from it, or in its top right one when the window is taller than it is wide.
+ * The tape's own bar is the fourth of those and the one the column above gives way to: it stands on the
  * world's own foot, centred, while a run is on the tape (`TapeTimeline.vue`), and it is drawn by the page
  * like the bar of tools — this renderer's part in it is the frame it is laid out in, which has a width as
  * well as a height ({@link hudFrame}).
@@ -147,15 +189,16 @@ const TOOLBAR_BUTTON = 44;
 const TOOLBAR_RADIUS = 13;
 const TOOLBAR_GAP = 8;
 /**
- * How many buttons the bar has: the arrow, the rope, the bin, the two the tape is worked with (record and
- * play) and the chat.
+ * How many buttons the bar's own stack has: the arrow, the rope and the chat, one under the other in the
+ * world's own top left corner, with the chat's — the only one of the three that is not a tool — the
+ * last of them, the lowest of the stack. The tape's own bar is not one of these: it is a row along the
+ * world's foot and it asks for no height of its own (see {@link HUD_HEIGHT}).
  *
- * What this number is for is the room the world has to have for the bar — the buttons stacked with the gaps
- * between them, and the chat's own button at the foot of the column (see {@link TOOLBAR_ROOM}) — so a
- * button added to the bar is a number to change here, and the interface shrinks a little sooner on a small
- * window for it.
+ * What this number is for is the room the world has to have for the bar — the buttons stacked with the
+ * gaps between them, hanging from the world's top — so a button added to the bar is a number to change
+ * here, and the interface shrinks a little sooner on a small window for it.
  */
-const TOOLBAR_BUTTONS = 6;
+const TOOLBAR_BUTTONS = 3;
 /**
  * How round the corner a card rounds is, in the card's own pixels: the fraction of a card that a button's
  * rounding is of a button — 13 of 44, so a little under a third of the way across a card 120 px wide.
@@ -185,37 +228,45 @@ const CARD_RADIUS = (PORTRAIT_WIDTH * TOOLBAR_RADIUS) / TOOLBAR_BUTTON;
 type CardCorner = 'top-left' | 'bottom-right';
 /**
  * How much room the bar takes up along the world's left edge, measured from the world's own left edge:
- * it is a column of buttons, so that is its own width and nothing else. The world's own height is what
- * its column runs down (see {@link hudFrame}), and the strip of portraits — across the world's foot, or
- * along the top of it in a window taller than it is wide — keeps the whole of that width clear: nothing
- * of the interface is ever drawn over a button.
+ * it is a stack of buttons, so that is its own width and nothing else. The buttons hang from the world's
+ * own top rather than reaching down from it (see {@link hudFrame} and `.toolbar` in `src/styles.css`),
+ * and the strip of portraits — across the world's foot, or along the top of it in a window taller than
+ * it is wide — keeps the whole of that width clear: nothing of the interface is ever drawn over a button.
  */
 const TOOLBAR_ROOM = HUD_INSET + TOOLBAR_BUTTON;
 /**
- * The chat's own block beside the bar — four lines of text, 300 px wide — and the gap the bar keeps
+ * The chat's own block under the bar — four lines of text, 300 px wide — and the gap the bar keeps
  * clear of it, which is the same gap the bar's buttons keep between themselves (see `.chat-strip` in
  * `src/styles.css`).
  *
  * It is written down here as well as in the CSS, the way the bar's own buttons are, because the world
- * has to have room for it too: the block takes the world's bottom left corner, beside the chat's own
- * button, and the strip of portraits — in the bottom right one, with the whole of the world's foot
- * between them, or up in the top right of an upright window, where no card can reach the block — keeps
- * clear of the whole of it, so the interface shrinks together when the world has
- * no room for both (see {@link hudScale}).
+ * has to have room for it too: the block takes the world's left edge, under the bar's own buttons, and
+ * the strip of portraits — in the bottom right one, with the whole of the world's foot between them, or
+ * up in the top right of an upright window, where no card can reach the block — keeps clear of the whole
+ * of it, so the interface shrinks together when the world has no room for both (see {@link hudScale}).
  */
 const CHAT_STRIP_WIDTH = 300;
 const CHAT_ROOM = TOOLBAR_GAP + CHAT_STRIP_WIDTH;
 /**
- * The whole interface's own size, and so what the world has to have room for: the bar's column, the
- * chat's block beside it, the gap the chat keeps clear of the portraits, and one card — a card is where
+ * How tall the chat's block of four lines is, in its own pixels, mirrored from `.chat-strip` in
+ * `src/styles.css`: four lines of 14 px at a line height of 1.35, which is 75.6 and is said here as
+ * the whole number above it. The two are read apart rather than together the way the widths below are,
+ * because the block's height is what the world has to have room for *down* its left edge: the block
+ * stands under the bar's own stack (`App.vue`), so the column of the two of them is the tallest thing
+ * the interface is.
+ */
+const CHAT_STRIP_HEIGHT = 76;
+/**
+ * The whole interface's own size, and so what the world has to have room for: the bar's buttons, the
+ * chat's block under it, the gap the chat keeps clear of the portraits, and one card — a card is where
  * the strip starts out, and it shrinks card by card after this (see {@link Scene.syncPortraits}). Nothing
  * is added for the world's right edge, since the card in the corner is flush with it.
  *
  * In height it is the taller of the interface's two measurements: the strip of portraits, which is a
- * card tall, or the bar's own six buttons stacked with the gaps between them. The bar is as tall as the
- * world itself (see {@link hudFrame}), so the room it asks the world for is the room its buttons need
- * and no more. The chat's block stands *beside* the bar's last button rather than under it, so of the
- * three it is the shortest and never the one this is measured by.
+ * card tall, or the column the bar and the chat's block make together — the bar's own three buttons
+ * stacked with the gaps between them, the gap under them, and the chat's four lines (see `.toolbar` and
+ * `.chat-strip` in `src/styles.css`). The bar is only ever that tall, and the chat's block is never
+ * anywhere but under it, so the column is what the world is asked to hold down its left edge.
  *
  * The tape's own bar asks for nothing on top of this: it is a button tall and never as wide as the frame
  * it is centred in (`TapeTimeline.vue`), so a world with room for the rest of the interface has room for
@@ -223,7 +274,12 @@ const CHAT_ROOM = TOOLBAR_GAP + CHAT_STRIP_WIDTH;
  */
 const HUD_WIDTH = TOOLBAR_ROOM + CHAT_ROOM + HUD_GAP + PORTRAIT_WIDTH;
 const HUD_HEIGHT =
-  HUD_INSET + Math.max(PORTRAIT_HEIGHT, TOOLBAR_BUTTONS * TOOLBAR_BUTTON + (TOOLBAR_BUTTONS - 1) * TOOLBAR_GAP) + HUD_INSET;
+  HUD_INSET +
+  Math.max(
+    PORTRAIT_HEIGHT,
+    TOOLBAR_BUTTONS * TOOLBAR_BUTTON + (TOOLBAR_BUTTONS - 1) * TOOLBAR_GAP + TOOLBAR_GAP + CHAT_STRIP_HEIGHT,
+  ) +
+  HUD_INSET;
 
 /**
  * The file one of a card's faces is drawn from: the eight steps of pain are the numbered files, and the
@@ -231,6 +287,43 @@ const HUD_HEIGHT =
  */
 function faceUrl(character: Character, art: number, base: string): string {
   return art === FACE.rest ? restPortraitUrl(character, base) : portraitUrl(character, art, base);
+}
+
+/** One joint's ember: where the joint was, and the speed it was thrown off with. */
+interface Ember {
+  readonly x: number;
+  readonly y: number;
+  readonly vx: number;
+  readonly vy: number;
+}
+
+/**
+ * A rope of the player's, as it bursts where it stood: the chain it had the last moment it was drawn, an
+ * ember on every joint of it, the point the press landed on, and how long ago that was.
+ *
+ * None of it belongs to the world any more. The rope is gone from the world the moment the press that took
+ * it away returns (`World.press`), and this is the picture of it going that the renderer keeps instead —
+ * the world has no business holding a picture of a rope it no longer has.
+ */
+interface Burst {
+  /** The rope's joints as they stood, in world pixels. */
+  readonly nodes: readonly { x: number; y: number }[];
+  readonly embers: readonly Ember[];
+  /** Where the press landed: what the flare, the ring and the embers are all thrown from. */
+  readonly x: number;
+  readonly y: number;
+  /** How long ago the rope was taken away, in seconds: 0 at the press, `BURST_SECONDS` at the end. */
+  age: number;
+}
+
+/**
+ * Where an ember has got to `age` seconds after it was thrown: its joint's own place plus as much of its
+ * speed as the air has left it — the integral of `v e^-kt`, which is a short throw that trails off rather
+ * than the straight line a body with nothing in its way would take.
+ */
+function emberAt(ember: Ember, age: number): { x: number; y: number } {
+  const flung = (1 - Math.exp(-EMBER_DRAG * age)) / EMBER_DRAG;
+  return { x: ember.x + ember.vx * flung, y: ember.y + ember.vy * flung };
 }
 
 /** One doll's card in the strip: her portrait, at the pain her pose is worth. */
@@ -288,8 +381,9 @@ function textureKey(folder: string, part: string): string {
  * All of the drawing: the dolls, the ropes the player ties and the boxes on the stage. No counters,
  * nothing else.
  *
- * Dolls come and go — the character list adds them, the delete tool removes them — so the class keeps
- * no rigs of its own: {@link syncDolls} reconciles the sprites of every doll against the world's list.
+ * Dolls come and go — the character list adds them, and a tape's own stage takes their place while a run
+ * is being watched — so the class keeps no rigs of its own: {@link syncDolls} reconciles the sprites of
+ * every doll against the world's list.
  * `syncGirl` is a port of the original's `Skin.draw`: for every part, the sprite sits on the
  * midpoint of its two particles and its own +x axis is turned towards the *first* of the pair.
  * That is all the original did — no mirroring, no per-part offsets — and most of the artwork is
@@ -365,6 +459,16 @@ export class Scene {
   private readonly base = import.meta.env.BASE_URL ?? '/';
   /** The ropes, and the rope that is still being drawn. */
   private readonly ropeGraphics = new Graphics();
+  /**
+   * The ropes the arrow has just taken away, bursting where they stood, and the layer that draws them:
+   * over the ropes, since what is left of a rope belongs on top of the ones that are still there.
+   *
+   * These are the renderer's own, not the world's — a burst outlives the rope it is a picture of
+   * ({@link popRope}) — and each one drops out as soon as it is over, so nothing is kept of a rope that
+   * was taken away a moment ago.
+   */
+  private readonly bursts: Burst[] = [];
+  private readonly burstGraphics = new Graphics();
   /** The cursor the canvas was last given, so it is only touched when it actually changes. */
   private cursor = '';
   /**
@@ -467,13 +571,13 @@ export class Scene {
   }
 
   /**
-   * Fetches the hall: `assets/bg.png`, the port's own picture and the only thing in the scene the
+   * Fetches the hall: `assets/bg-2.png`, the port's own picture and the only thing in the scene the
    * movie had nothing to do with.
    *
    * The sprite is the world in its own pixels, and the layer around it is what is stretched over the
    * world's box — the world is a fixed 1000x740 whatever the window is doing, and a picture of the hall
    * has to cover it — so the one thing about the file that matters is its ratio: 1000x740, the world's
-   * own, or the hall comes out squeezed. The port's own `bg.png` is exactly that size, so nothing about
+   * own, or the hall comes out squeezed. The port's own `bg-2.png` is exactly that size, so nothing about
    * it is resampled or squeezed at all; a picture of another size would still be drawn (it fills, which
    * is what a background of the world means) and the squeezing is the price. A picture that will not
    * load is reported and left out: the world is drawn on the flat backdrop colour, exactly as it was
@@ -597,7 +701,7 @@ export class Scene {
       this.hallLayer.mask = this.hallMask;
     }
 
-    this.ropeLayer.addChild(this.ropeGraphics);
+    this.ropeLayer.addChild(this.ropeGraphics, this.burstGraphics);
     // The shadows of every doll, under the lot: the whole of the world is drawn over them.
     this.shadowGraphics.blendMode = SHADOW_BLEND;
     this.shadowLayer.addChild(this.shadowGraphics);
@@ -709,7 +813,7 @@ export class Scene {
    * least as big as the bar's own buttons, the chat's block, one card and the insets around them —
    * {@link HUD_WIDTH} and {@link HUD_HEIGHT} — and less than that when the window is small enough that
    * the world is. Both axes are asked: across, the chat's block beside the bar is what the world has to
-   * have room for, and down, the bar's own column of buttons.
+   * have room for, and down, the bar's own stack of buttons.
    */
   private hudScale(box: { width: number; height: number }): number {
     return Math.min(1, box.width / HUD_WIDTH, box.height / HUD_HEIGHT);
@@ -720,10 +824,11 @@ export class Scene {
    * how big it is in its own pixels: the world, less the two insets, with the shrink the world made
    * divided back out of it.
    *
-   * The height is what says the bar is a column down the whole of the world's left edge rather than a
-   * pile of buttons in its corner — a box that tall, shrunk back down by that scale, ends exactly at
-   * the world's bottom edge, so the last button of the bar, the chat's, stands in the bottom left
-   * corner of the picture however small the window makes the hall.
+   * The height is what the column of the bar and the chat hangs down from the world's own top left
+   * corner: the column is laid out from the top of this frame, so a box that tall, shrunk back down by
+   * that scale, ends exactly at the world's bottom edge and whatever the column does not reach of it is
+   * the hall's — while the tape's own bar, when a run is on it, takes that foot instead and is centred
+   * on it (`TapeTimeline.vue`).
    *
    * The width is the whole of the world across, less the same two insets: the frame is the world's own
    * box, so the page can lay a row out *on* the world's foot — centred on it — without knowing anything
@@ -816,7 +921,109 @@ export class Scene {
     this.syncShadows();
     this.syncPortraits(box);
     this.syncRopes();
+    // The bursts go after the ropes they came off, and on the frame's own clock — the same clock the
+    // camera and the dolls are drawn on, so a world paused under a playhead still shows a rope popping.
+    this.syncBursts(elapsedMs);
     this.syncCursor();
+  }
+
+  /**
+   * Starts the burst a rope leaves behind where it stood: the chain as it was drawn last, and an ember
+   * on every joint of it, thrown off the point the press landed on.
+   *
+   * The world has already let the rope go by the time this is called (`World.press`), so the chain is
+   * taken down here rather than asked for later: the joints are read once, now, and everything drawn
+   * afterwards is the picture of a rope that is not there any more.
+   *
+   * A joint standing on the press itself has no line out of the press to be thrown along, so it is
+   * given one: the burst always has somewhere to open out to.
+   */
+  popRope(rope: Rope, x: number, y: number): void {
+    const nodes = rope.nodes.map((node) => ({ x: node.x, y: node.y }));
+    const embers = nodes.map((node) => {
+      const dx = node.x - x;
+      const dy = node.y - y;
+      const angle =
+        (Math.hypot(dx, dy) < 1e-3 ? Math.random() * Math.PI * 2 : Math.atan2(dy, dx)) +
+        (Math.random() - 0.5) * EMBER_SCATTER;
+      const speed = EMBER_SPEED * (1 + Math.random() * EMBER_SPREAD);
+      return { x: node.x, y: node.y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed };
+    });
+    this.bursts.push({ nodes, embers, x, y, age: 0 });
+  }
+
+  /**
+   * The bursts that are still going: each is aged by the frame's own time and drawn, and one that has run
+   * its course is dropped rather than drawn at nothing. Whatever is in hand goes on living between them;
+   * a burst touches nothing but this layer.
+   */
+  private syncBursts(elapsedMs: number): void {
+    this.burstGraphics.clear();
+    for (let i = this.bursts.length - 1; i >= 0; i--) {
+      const burst = this.bursts[i];
+      burst.age += elapsedMs / 1000;
+      if (burst.age >= BURST_SECONDS) {
+        this.bursts.splice(i, 1);
+        continue;
+      }
+      this.drawBurst(burst);
+    }
+  }
+
+  /**
+   * One burst, drawn over the ropes: the cord's own light swelled and taken up to white for the flash, an
+   * ember trailing off from every joint of it, and the ring opening out of the press.
+   *
+   * Everything is read off the burst's own age, so the picture is a function of how long ago the rope was
+   * taken away and of nothing else — no state is carried from one frame to the next.
+   */
+  private drawBurst(burst: Burst): void {
+    const g = this.burstGraphics;
+    const t = Math.min(1, burst.age / BURST_SECONDS);
+    const left = 1 - t;
+    const flash = Math.max(0, 1 - burst.age / BURST_FLASH_SECONDS);
+    const swell = 1 + BURST_SWELL * flash - 0.5 * t;
+    const fade = left * left;
+
+    // The cord itself: the rope's own three strokes, swelled for the flash and thinning as they go, with
+    // the flash's white laid over them while it lasts.
+    this.strokeChainLayer(burst.nodes, ROPE_THICKNESS * 3.2 * swell, ROPE_GLOW, fade * 0.24, g);
+    this.strokeChainLayer(burst.nodes, ROPE_THICKNESS * 1.9 * swell, ROPE_GLOW, fade * 0.4, g);
+    this.strokeChainLayer(burst.nodes, ROPE_THICKNESS * swell, ROPE_CORE, fade, g);
+    this.strokeChainLayer(burst.nodes, 1.4 * swell, ROPE_THREAD, fade * 0.85, g);
+    if (flash > 0) {
+      this.strokeChainLayer(burst.nodes, ROPE_THICKNESS * 2.6 * swell, ROPE_THREAD, flash * 0.7, g);
+    }
+
+    // The embers: a head at every joint, with the short trail of where it has just been.
+    for (const ember of burst.embers) {
+      const head = emberAt(ember, burst.age);
+      const tail = emberAt(ember, Math.max(0, burst.age - EMBER_TRAIL));
+      g.moveTo(tail.x, tail.y).lineTo(head.x, head.y);
+      g.stroke({ width: 1 + 2.4 * fade, color: ROPE_CORE, alpha: fade, cap: 'round' });
+      g.circle(head.x, head.y, 1 + 1.8 * fade).fill({ color: ROPE_THREAD, alpha: fade * 0.9 });
+    }
+
+    // The ring, opening out of the press: fast enough to have been and gone while the cord is still going
+    // (`RING_SECONDS`), so what the rest of the burst does to it is thin its stroke and its light — that is
+    // the burst's own `left` — rather than carry it further out. The bite of light at its middle follows.
+    g.circle(burst.x, burst.y, this.ringAt(burst.age))
+      .stroke({ width: 1 + 4 * left, color: ROPE_GLOW, alpha: left * 0.8 });
+    if (burst.age < IMPACT_SECONDS) {
+      const impact = 1 - burst.age / IMPACT_SECONDS;
+      g.circle(burst.x, burst.y, 4 + RING_START * (1 - impact))
+        .fill({ color: ROPE_THREAD, alpha: impact * 0.85 });
+    }
+  }
+
+  /**
+   * How far the ring has opened, in world pixels: a function of the burst's own age and of nothing else, so
+   * the circle drawn on the stage and the one this renderer reports to a run (`inspect`) are one and the
+   * same — and so that how quick the ring is can be read without reading a picture of it.
+   */
+  private ringAt(age: number): number {
+    const left = Math.max(0, 1 - age / RING_SECONDS);
+    return RING_START + RING_REACH * (1 - left * left);
   }
 
   /**
@@ -854,9 +1061,17 @@ export class Scene {
       .fill(0xffffff);
   }
 
-  /** The pointer follows the knots: a hand over one, a fist while it is being carried. */
+  /** The pointer follows the ropes: a hand over a knot, a fist while one is being carried, and a
+   * crosshair over the *middle* of a rope — the one place a press takes the whole rope away, so the
+   * cursor is what tells the player which of the two the press is about to be. */
   private syncCursor(): void {
-    const next = this.world.dragged ? 'grabbing' : this.world.hoverAnchor() ? 'grab' : '';
+    const next = this.world.dragged
+      ? 'grabbing'
+      : this.world.hoverAnchor()
+        ? 'grab'
+        : this.world.hoverRope()
+          ? 'crosshair'
+          : '';
     if (next === this.cursor) return;
     this.cursor = next;
     this.canvas.style.cursor = next;
@@ -1063,19 +1278,19 @@ export class Scene {
     // always stood: level with the chat's block at the other end of the world's foot. A window taller than
     // it is wide — a phone held upright — is mostly picture *above* her instead, and she lies on the floor
     // at the foot of it, so there the cards go up to the world's own *top right* corner, above the room she
-    // falls through and out of the way of the bar's column, which owns the picture's left edge. The
+    // falls through and out of the way of the bar's buttons, which own the picture's left edge. The
     // comparison is the *window's* own, not the world's box: what a player is looking at is the window,
     // which may be taller than the picture it shows.
     const upright = this.width < this.height;
-    // What the strip keeps clear of on its own side of the world: the bar's own column, plus the gap the
-    // interface's own blocks keep between themselves.
+    // What the strip keeps clear of on its own side of the world: the strip of the world the bar's own
+    // buttons stand in, plus the gap the interface's own blocks keep between themselves.
     const beside = TOOLBAR_ROOM + HUD_GAP;
     // The room left for the strip, measured in the interface's own pixels: from the right edge of the
-    // bar's own block — the bar's column, with the chat's block beside its foot — to the world's right
-    // edge, or from the bar's column to that edge when the strip is across the top of the picture, where
-    // no card can reach the chat's block because it is at the other end of the world. The chat's block is
-    // the bottom of the bar's column, but the column is the strip's own part of the world all the same, so
-    // the cards stay clear of the whole of it.
+    // bar's own block — its stack of buttons with the chat's block under it, the whole column owning the
+    // world's left edge as wide as the chat's lines run — to the world's right edge, or from the bar to
+    // that edge when the strip is across the top of the picture, where no card can reach the chat's
+    // block because it is at the other end of the world. Keeping clear of the whole of the column is
+    // the simpler rule, and the one the two of them were laid out by in the first place.
     const room = Math.max(box.width / scale - (upright ? beside : beside + CHAT_ROOM), 1);
     const width = placed.length * PORTRAIT_WIDTH + Math.max(0, placed.length - 1) * HUD_GAP;
     const cardScale = scale * Math.min(1, room / Math.max(width, 1));
@@ -1237,11 +1452,15 @@ export class Scene {
    * of exactly `ROPE_THICKNESS` world pixels, and a near-white thread down the cord's middle — three
    * strokes that read as light being given off rather than as a thing lying there.
    */
-  private strokeChain(nodes: readonly { x: number; y: number }[], alpha: number): void {
-    this.strokeChainLayer(nodes, ROPE_THICKNESS * 3.2, ROPE_GLOW, alpha * 0.22);
-    this.strokeChainLayer(nodes, ROPE_THICKNESS * 1.9, ROPE_GLOW, alpha * 0.38);
-    this.strokeChainLayer(nodes, ROPE_THICKNESS, ROPE_CORE, alpha);
-    this.strokeChainLayer(nodes, 1.4, ROPE_THREAD, alpha * 0.85);
+  private strokeChain(
+    nodes: readonly { x: number; y: number }[],
+    alpha: number,
+    g: Graphics = this.ropeGraphics,
+  ): void {
+    this.strokeChainLayer(nodes, ROPE_THICKNESS * 3.2, ROPE_GLOW, alpha * 0.22, g);
+    this.strokeChainLayer(nodes, ROPE_THICKNESS * 1.9, ROPE_GLOW, alpha * 0.38, g);
+    this.strokeChainLayer(nodes, ROPE_THICKNESS, ROPE_CORE, alpha, g);
+    this.strokeChainLayer(nodes, 1.4, ROPE_THREAD, alpha * 0.85, g);
   }
 
   /** A knot: a knob of the same light, a shade bigger while the pointer is on it or carrying it. */
@@ -1253,14 +1472,19 @@ export class Scene {
       .stroke({ width: 1.6, color: KNOT_RING, alpha });
   }
 
+  /**
+   * One stroke of a chain, into whichever layer the drawing is going to: the rope's own
+   * ({@link ropeGraphics}) unless the caller says otherwise, which is what lets a burst be drawn with the
+   * very same strokes the rope was drawn in.
+   */
   private strokeChainLayer(
     nodes: readonly { x: number; y: number }[],
     width: number,
     color: number,
     alpha: number,
+    g: Graphics = this.ropeGraphics,
   ): void {
     if (nodes.length < 2) return;
-    const g = this.ropeGraphics;
     g.moveTo(nodes[0].x, nodes[0].y);
     for (let i = 1; i < nodes.length; i++) g.lineTo(nodes[i].x, nodes[i].y);
     g.stroke({ width, color, alpha, cap: 'round', join: 'round' });
@@ -1306,6 +1530,21 @@ export class Scene {
     dolls: number;
     /** Every rope on the stage, as it is tied: one entry per rope, in the world's own order. */
     ropes: { nodes: number; length: number; stretch: number }[];
+    /**
+     * The ropes the arrow has taken away that are still bursting, one entry per burst in the order they
+     * were taken: how many joints the cord had the moment it went, where the press landed (world pixels,
+     * the same point a click on the stage is aimed at), and how long ago that was, in seconds — 0 at the
+     * press, `BURST_SECONDS` when the last of it is gone.
+     *
+     * There is no rope of these left in the world: this is the renderer's own picture of one going
+     * (`popRope`), and it is here so that a run can check that the rope did not simply vanish — the
+     * world let it go the moment the press returned, and what is left of it is drawn from here on.
+     *
+     * `ring` is how far the opening ring has got, in world pixels: the very circle the stage is drawing
+     * this frame (`Scene.ringAt`), and the number that says the ring is nine times as quick as the burst
+     * it belongs to (`RING_SECONDS`).
+     */
+    bursts: { nodes: number; x: number; y: number; age: number; ring: number }[];
     stage: { width: number; height: number; scale: number; rootX: number; rootY: number };
     canvas: { bufferWidth: number; bufferHeight: number; cssWidth: number; cssHeight: number };
     /**
@@ -1346,8 +1585,8 @@ export class Scene {
     shadows: { x: number; y: number; width: number; height: number; alpha: number; rise: number }[];
     /**
      * Where the interface's own top left corner is, in canvas (CSS) pixels — the bar hangs off it — how
-     * much the world shrank it to fit, and how big it is in its own pixels: the bar is a column down the
-     * whole of the world's left edge and the tape's own bar stands on the world's foot (see {@link hud}).
+     * much the world shrank it to fit, and how big it is in its own pixels: the bar's buttons stand on the
+     * world's own foot inside it and the tape's own bar stands on that foot too (see {@link hud}).
      */
     hud: { x: number; y: number; scale: number; width: number; height: number };
     /** The colour the canvas is cleared to, as `0xrrggbb`, i.e. the colour of everything outside the world. */
@@ -1427,6 +1666,13 @@ export class Scene {
         length: rope.measuredLength(),
         stretch: rope.maxStretch(),
       })),
+      bursts: this.bursts.map((burst) => ({
+        nodes: burst.nodes.length,
+        x: burst.x,
+        y: burst.y,
+        age: burst.age,
+        ring: this.ringAt(burst.age),
+      })),
       stage: {
         width: STAGE_WIDTH,
         height: STAGE_HEIGHT,
@@ -1455,7 +1701,7 @@ export class Scene {
             width: this.background.width,
             height: this.background.height,
             // The size of the file itself: the sprite covers the world whatever the picture is, so
-            // this is the only place a `bg.png` of the wrong shape can be seen (see {@link
+            // this is the only place a `bg-2.png` of the wrong shape can be seen (see {@link
             // loadBackground} and the hall check in `tools/smoke.mjs`).
             texels: [this.background.texture.source.pixelWidth, this.background.texture.source.pixelHeight],
           }
