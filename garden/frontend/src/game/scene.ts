@@ -201,7 +201,7 @@ const TOOLBAR_GAP = 8;
 const TOOLBAR_BUTTONS = 3;
 /**
  * How round the corner a card rounds is, in the card's own pixels: the fraction of a card that a button's
- * rounding is of a button — 13 of 44, so a little under a third of the way across a card 120 px wide.
+ * rounding is of a button — 13 of 44, so a little under a third of the way across a card 220 px wide.
  *
  * Measured rather than picked, and measured off the button rather than off the card, because a card is
  * a picture in the same strip as the toolbar it hangs beside and the two should look like the same kind
@@ -1253,7 +1253,7 @@ export class Scene {
    * from the bar's own block, since a card that grew into the bar would be a card drawn over a button.
    *
    * Cards come and go with the dolls, exactly as their sprites do. The strip is laid out in the
-   * interface's own (CSS) pixels — a card is a portrait at the size it was baked, 120x180 — and is
+   * interface's own (CSS) pixels — a card is a portrait at the size it was baked, 220x220 — and is
    * shrunk twice over rather than spilling out of the world onto the black: once with the whole
    * interface for the world's own size (see {@link hudScale}), and once more, card by card, for the
    * room left between the bar's own block and the world's right edge. A card is a portrait and nothing

@@ -349,8 +349,8 @@ for (const [name, part] of Object.entries(PARTS)) {
 // card that is already on disk is never written over: the pictures belong to the character, not to
 // this tool.
 //
-// Every cell is cropped to the portrait's own 2:3 (the aspect the grid was drawn in, so nothing is
-// squeezed) and then resampled down to 120x180 by averaging every source texel a destination texel
+// Every cell is cropped to the portrait's own 1:1 (the aspect the cards are drawn in, so nothing is
+// squeezed) and then resampled down to 220x220 by averaging every source texel a destination texel
 // covers.
 
 /** The sheet a character that has no pictures at all is seeded from. */
@@ -359,8 +359,8 @@ const FACES = join(root, 'assets-source', 'faces.png');
 const FACE_COLUMNS = 3;
 const FACE_ROWS = 2;
 /** The card that comes out of every cell, and the hairline the sheet draws between cells. */
-const PORTRAIT_WIDTH = 120;
-const PORTRAIT_HEIGHT = 180;
+const PORTRAIT_WIDTH = 220;
+const PORTRAIT_HEIGHT = 220;
 const FACE_INSET = 3;
 
 /**
@@ -378,7 +378,8 @@ function overlap(from0, from1, to0, to1) {
 function cutPortraits(sheet) {
   const cellWidth = sheet.width / FACE_COLUMNS;
   const cellHeight = sheet.height / FACE_ROWS;
-  // The largest 2:3 window that fits a cell with its hairline left out, centred in the cell.
+  // The largest window of the portrait's own 1:1 that fits a cell with its hairline left out,
+  // centred in the cell.
   const windowWidth = Math.min(
     cellWidth - 2 * FACE_INSET,
     ((cellHeight - 2 * FACE_INSET) * PORTRAIT_WIDTH) / PORTRAIT_HEIGHT,

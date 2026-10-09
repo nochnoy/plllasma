@@ -40,7 +40,7 @@ describe('character artwork', () => {
     expect(portraitUrl(DEFAULT_CHARACTER, PORTRAIT_COUNT - 1)).toBe(
       '/assets/characters/elena/portrait/7.png',
     );
-    expect([PORTRAIT_WIDTH, PORTRAIT_HEIGHT]).toEqual([120, 180]);
+    expect([PORTRAIT_WIDTH, PORTRAIT_HEIGHT]).toEqual([220, 220]);
     // The breather is the ninth picture and the only one with a name instead of a number: the count
     // above is the ladder's own length, not how many files a character may bring (see `pain-state.ts`).
     expect(REST_PORTRAIT).toBe('rest');

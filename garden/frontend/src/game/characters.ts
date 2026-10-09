@@ -40,9 +40,9 @@ export const PORTRAIT_COUNT = 8;
  * measures it: it is a state of the machine, not a degree of anything.
  */
 export const REST_PORTRAIT = 'rest';
-/** Size of every portrait, in pixels: the shape the character list draws them in. */
-export const PORTRAIT_WIDTH = 120;
-export const PORTRAIT_HEIGHT = 180;
+/** Size of every portrait, in pixels: the shape the strip of cards draws them in. */
+export const PORTRAIT_WIDTH = 220;
+export const PORTRAIT_HEIGHT = 220;
 
 /** The character the game starts with: the one baked from the original movie's artwork. */
 export const DEFAULT_CHARACTER: Character = { id: 'elena', name: 'Елена', folder: 'elena' };
