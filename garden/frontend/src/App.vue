@@ -75,18 +75,52 @@ const PAN_MS = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 400;
 const settled = ref(true);
 let settleTimer: number | null = null;
 
+/**
+ * Whether the move being made now is a *cut* rather than a pan ({@link cutTo}): the transition is
+ * taken off the screens for the moment of the move, so the garden arrives at the next screen the way
+ * a film does — the whole picture changes at once, nothing slides.
+ */
+const cutting = ref(false);
+let cutTimer: number | null = null;
+
+/**
+ * A move with no travel in it: following a run's link out of the chat puts its playback on at once,
+ * and the way back from that playback returns to the chat the same way — the run is already what the
+ * player asked for, and watching it slide in for a third of a second is a wait between the click and
+ * the thing clicked.
+ */
+function cutTo(at: 1 | 2 | 3): void {
+  if (cutTimer !== null) clearTimeout(cutTimer);
+  cutting.value = true;
+  location.value = at;
+  // The class has to be gone before any *next* move is made, or that move would be a cut too; one
+  // frame is the whole of the move's own moment, and a few of them is nothing to wait on.
+  cutTimer = window.setTimeout(() => {
+    cutting.value = false;
+    cutTimer = null;
+  }, 64);
+}
+
 // Every move re-arms the wait; a move made before the last one settled (a quick change of mind)
-// starts its own clock over, and the arrival work of the screen left in between never happens.
+// starts its own clock over, and the arrival work of the screen left in between never happens. A cut
+// is its own arrival: nothing is moving once it is made, so the chat's screen shows or empties with
+// the move itself rather than after a clock that never runs.
 watch(location, (at, was) => {
   if (at === was) return;
-  settled.value = false;
   if (settleTimer !== null) clearTimeout(settleTimer);
+  if (cutting.value) {
+    settled.value = true;
+    chatShown.value = at === 3;
+    return;
+  }
+  settled.value = false;
   settleTimer = window.setTimeout(() => {
     settled.value = true;
   }, PAN_MS);
 });
 onBeforeUnmount(() => {
   if (settleTimer !== null) clearTimeout(settleTimer);
+  if (cutTimer !== null) clearTimeout(cutTimer);
 });
 
 /**
@@ -280,8 +314,22 @@ const { open: openRun, stop: stopWatching } = useRuns({
   grow: growRun,
 });
 
-/** What a link in the chat is followed by: the run it names, onto the timeline and walking. */
+/**
+ * Whether the run being watched was followed out of the chat: a link pressed in a conversation is
+ * the player leaving it *for* the run, and putting that run away is the player done with it — the
+ * way back is the conversation the link was found in, not the stage it happens to play on. A run
+ * the page was opened on (`?run=`) was not followed out of anything: it *is* where the player
+ * arrived, and the stage is where they are left.
+ */
+const fromChat = ref(false);
+
+/**
+ * What a link in the chat is followed by: the run it names, onto the timeline and walking. That a
+ * link is followed out of the chat is remembered ({@link fromChat}), because the way back from the
+ * run it opens is back to the conversation the link was found in.
+ */
 function followTheLink(id: string): void {
+  fromChat.value = true;
   void openRun(id);
 }
 
@@ -292,15 +340,17 @@ function followTheLink(id: string): void {
  * player watches is that run rather than wherever the world had been left.
  *
  * And the player is brought to the stage to watch it — following a link is the one thing the chat does
- * that is the game's, and what it opens onto is the run. The address is told the run as well, so that
- * what the player is watching is what the player can hand to somebody else (`setRunInUrl`).
+ * that is the game's, and what it opens onto is the run. The bringing is a cut rather than a pan
+ * (`cutTo`): the link was pressed for the run, and the run is what the player asked to see. The
+ * address is told the run as well, so that what the player is watching is what the player can hand
+ * to somebody else (`setRunInUrl`).
  */
 function playRun(id: string, tapeFile: string): void {
   const engine = game.value;
   if (!engine) return;
   engine.loadTape(tapeFile);
   engine.play();
-  location.value = 2;
+  cutTo(2);
   setRunInUrl(id);
 }
 
@@ -317,13 +367,20 @@ function growRun(run: Run, tape: Tape): void {
 // A run that is not on the timeline any more is a run nobody is watching: the tape's own report says so
 // (`useTape`), and what takes a tape off is its own bar's «Закрыть» — which is also the door the player
 // comes back through, to their own scene and their own interrupted run (`Game.unload`). The address is
-// told too: a page no longer watching a run is a page whose address should not say it is.
+// told too: a page no longer watching a run is a page whose address should not say it is. And a run
+// that was followed out of the chat is put away *back into* the chat, as a cut: the conversation is
+// where the player left it, one line down — the run's own line — and that is where the reading of it
+// goes on (`fromChat`).
 watch(
   () => tape.value.loaded,
   (loaded) => {
     if (!loaded) {
       stopWatching();
       setRunInUrl(null);
+      if (fromChat.value) {
+        fromChat.value = false;
+        cutTo(3);
+      }
     }
   },
 );
@@ -389,13 +446,16 @@ watch(game, (engine) => {
   const id = engine && !openedTheAddress ? runInUrl() : null;
   if (!id) return;
   openedTheAddress = true;
+  // The address is not the chat: a run opened this way was not followed out of anything, and putting
+  // it away leaves the player where they already are.
+  fromChat.value = false;
   location.value = 2;
   void openRun(id);
 });
 </script>
 
 <template>
-  <div class="scene">
+  <div class="scene" :class="{ 'scene--cut': cutting }">
     <!-- The garden's three screens, each in the row by its own transform (`placeOf`): one window each,
          neighbours of the one being stood at a window away to either side, and all three carried by
          the same move at once — the browser's compositor does the carrying, screen by screen, so the

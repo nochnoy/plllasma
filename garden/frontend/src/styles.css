@@ -86,6 +86,17 @@ body {
 }
 
 /*
+ * A move that is a cut rather than a pan (`cutTo` in `App.vue`): the transition is taken off the
+ * screens for the moment of the move, so the whole garden changes at once the way a film cuts — the
+ * two moves that are cuts are following a run's link out of the chat and the way back from the run
+ * it opened, where what was pressed for is already what the player asked for and a slide would only
+ * stand between the click and the thing clicked.
+ */
+.scene--cut .location {
+  transition: none;
+}
+
+/*
  * The first location: the garden before anything is shown of it. Its own picture (`bg-1.png`), the
  * one thing said about the place, and the way in — the sentence in the first third of the screen,
  * the «Сцена» button at the right of it — and nothing else: no doll, no bar, nothing of the game at
@@ -438,6 +449,13 @@ body {
   white-space: nowrap;
 }
 
+/* The strip's link wears no underline: the whole block is a button already — a press anywhere on the
+   line opens the chat — so an underline under the one word would promise a door the strip has
+   deliberately not got. The window's own link keeps its underline, where the word is the door. */
+.chat-strip .chat-line__run {
+  text-decoration: none;
+}
+
 /* The block is a control as well as a block of text, and these are the two things that say so: the
    pointer, and the brightening its own colour answers a hover with — the strip is the chat's own
    text, not a button of the bar's, and the chat says things its own way. */
@@ -554,24 +572,27 @@ body {
 }
 
 /*
- * The way back to the stage: a word and an arrow, the arrow saying which way the way goes. It is drawn
- * in the cross's own language — no frame, no fill, a plate coming up under the pointer — because it is
- * the same thing the cross was: the one way out of the chat. The plate is dark rather than the paper's
- * own dimming, since what it comes up over is the world.
+ * The way back to the stage: a word and an arrow, the arrow saying which way the way goes. It wears
+ * the outline every worded button of the garden wears — the pill of the threshold's own «Сцена»
+ * button, black with a wood edge — rather than the cross's framelessness it used to answer to: it is
+ * a button like the others now, and it reads as one wherever the screen is looked at from.
  */
 .chat-card__back {
   display: flex;
   align-items: center;
   gap: 6px;
   flex: none;
-  height: 28px;
-  padding: 0 10px 0 6px;
-  border: 0;
-  border-radius: 8px;
-  background: none;
-  color: inherit;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 14px 0 8px;
+  border: 2px solid var(--wood);
+  border-radius: 999px;
+  background: #000;
+  color: var(--wood);
   font: inherit;
+  line-height: 1;
   cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
 }
 
 .chat-card__back .icon {
@@ -580,7 +601,14 @@ body {
 }
 
 .chat-card__back:hover {
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--wood);
+  border-color: #000;
+  color: #000;
+}
+
+.chat-card__back:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 /* The chat's own failures, said over the world rather than on paper: a red that carries on the hall. */
@@ -668,9 +696,9 @@ body {
  * A link to a run, inside a line: the last word of what the run's own saying is — «Начал **игру**» —
  * underlined the way a link on paper is, in the chat's own colour whatever it is drawn over, and it
  * brightens under the pointer the way the chat's own strip does rather than changing colour. Where the
- * line is drawn inside the strip the link is the strip's — the same word, underlined, with no door of
- * its own (a click anywhere on the strip opens the chat, where the link can be followed) — so it is a
- * `span` there and an `a` here, wearing one class between them.
+ * line is drawn inside the strip the link is the strip's — the same word, without the underline (the
+ * strip is a button already, and a press anywhere on it opens the chat, where the link can be
+ * followed) — so it is a `span` there and an `a` here, wearing one class between them.
  */
 .chat-line__run {
   color: inherit;

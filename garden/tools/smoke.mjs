@@ -2820,9 +2820,9 @@ if (JSON.stringify(stripCharacters) !== JSON.stringify(['Елена', 'Елен�
 }
 const cardGaps = added.cards.slice(1).map((card, i) => card.x - (added.cards[i].x + added.cards[i].width));
 // 1rem between two cards, measured in the cards' own pixels: the strip is laid out at the size the
-// portraits were baked at — 120x180 — until the world is too narrow to hold it, and then card and gap
+// portraits were baked at — 220x220 — until the world is too narrow to hold it, and then card and gap
 // are shrunk together (see `Scene.syncPortraits`), so the gap to expect is 16 of those pixels.
-const gapWanted = (16 * (added.cards[0]?.width ?? 120)) / 120;
+const gapWanted = (16 * (added.cards[0]?.width ?? 220)) / 220;
 if (cardGaps.some((gap) => Math.abs(gap - gapWanted) > 1)) {
   problems.push(
     `cards stand ${cardGaps.map((gap) => gap.toFixed(1)).join(', ')} px apart, not ${gapWanted.toFixed(1)}`,
@@ -4047,13 +4047,20 @@ if (!picked.report.loaded || picked.report.steps !== smokedRun.steps) {
 // the room it walks in: a run carries the window it was made in and puts it back as it goes (the `v` events
 // of the file), so at its own beginning it walks in the room of the recording's beginning — which is this
 // window's own, this run having been made in a window of this size. The room is read below, where a run has
-// one of its own: out at the other end, past the resize in the middle of the recording.
+// one of its own: out at the other end, past the resize in the middle of the recording. The playhead itself
+// is waited for rather than sampled: a page rendering the world in software can take a second to draw the
+// walk's first frame, and what is checked is that the walk began — not that it began within half a second.
 if (!picked.report.playing) {
   problems.push(`the run off the link is not walking: ${JSON.stringify(picked.report)}`);
 }
-if (!(picked.report.step > 0) || picked.report.step >= picked.report.steps) {
+await page
+  .waitForFunction(() => window.__garden.tapeState.step > 0, { timeout: 15000, polling: 200 })
+  .catch(() => undefined);
+const pickedStep = await page.evaluate(() => window.__garden.tapeState);
+summary.runs.picked.step = pickedStep.step;
+if (!(pickedStep.step > 0) || pickedStep.step >= pickedStep.steps) {
   problems.push(
-    `the run off the link was at step ${picked.report.step} of ${picked.report.steps} a moment after it started`,
+    `the run off the link was at step ${pickedStep.step} of ${pickedStep.steps} a moment after it started`,
   );
 }
 // Six seconds is longer than any run this section records, so the picked run is over by the time it is up —
@@ -4173,7 +4180,10 @@ chatLog.push({
   sent_ms: Date.now(),
 });
 
-await page.click('.chat-strip');
+// The tape before this one was closed out of the chat it was followed from, which is where closing
+// leaves the player (`App.vue`, `fromChat`): the chat is already the screen stood at, so there is no
+// strip to press — only the line to wait for.
+await chatArrived();
 await linkArrived(foreignRun.id);
 const liveRow = await page.evaluate((id) => {
   const link = document.querySelector(`.chat-card .chat-line__run[data-run="${id}"]`);
@@ -4236,6 +4246,21 @@ if (!liveRow.at) {
   };
   const second = await grownPast(first.steps);
   const third = await grownPast(second.steps);
+  /**
+   * The playhead past a step it has already been read at. What is checked is that the walk goes on —
+   * not how soon — because a page rendering the world in software can run the walk at a frame a
+   * second, and a reading taken against that is a race rather than a check (`grownPast` above is the
+   * same patience about the tape's own growth).
+   */
+  const walkedPast = async (from) => {
+    const began = Date.now();
+    for (;;) {
+      await wait(200);
+      const now = await onTimeline();
+      if (now.step > from || Date.now() - began > 15000) return now;
+    }
+  };
+  const walkedOn = await walkedPast(first.step);
 
   // The press put the run so far on the timeline: the window shut (a playback is not something to read a chat
   // over), the tape's own bar up where the tools and the strip were, and the run a second or more long rather
@@ -4256,11 +4281,13 @@ if (!liveRow.at) {
   }
   // The walk is neither restarted by the growth nor left standing: the playhead moves on, and it never runs
   // past the end of the tape it is walking (`playFrame`, `Game.growTape`).
-  if (!(third.step > first.step)) problems.push(`the playback stood still: ${first.step} steps, then ${third.step}`);
-  if (third.step > third.steps) {
-    problems.push(`the playhead ran past the end of the tape: ${third.step} of ${third.steps}`);
+  if (!(walkedOn.step > first.step)) {
+    problems.push(`the playback stood still: ${first.step} steps, then ${walkedOn.step}`);
   }
-  summary.watching.tape = { first, second, third };
+  if (walkedOn.step > walkedOn.steps) {
+    problems.push(`the playhead ran past the end of the tape: ${walkedOn.step} of ${walkedOn.steps}`);
+  }
+  summary.watching.tape = { first, second, third, walkedOn };
 
   // What the page asked the run for: what it has, and never a slice it has already pasted on. Every ask is
   // here in order, so the first of them has to be the one with nothing behind it, and no later one may go
@@ -4292,12 +4319,13 @@ if (!liveRow.at) {
   // nothing left to grow by — the run this watches is this run's own recording, and its length is
   // known on this side of the wire.
   const awayAndBack = await grownPast(third.steps);
-  summary.watching.awayAndBack = awayAndBack;
+  const walkedAway = await walkedPast(walkedOn.step);
+  summary.watching.awayAndBack = { ...awayAndBack, walkedAway };
   if (!(awayAndBack.steps > third.steps) && third.steps < recordedTape.steps) {
     problems.push(`the watched run stopped growing while the watcher was away (${third.steps} steps)`);
   }
-  if (!(awayAndBack.step > third.step)) {
-    problems.push(`the playback stood still through the watcher going away (${third.step} steps)`);
+  if (!(walkedAway.step > walkedOn.step)) {
+    problems.push(`the playback stood still through the watcher going away (${walkedOn.step} steps)`);
   }
   await page.screenshot({ path: join(outDir, '30-run-watched.png') });
 
@@ -4370,8 +4398,12 @@ function lowestDoll() {
 }
 
 // A doll of the player's own scene, taken hold of: the touch is what starts a run (`Game.pressAt`), which the
-// server is handed at once (`useLiveRun`). The world is waited for first — a scene mid-fall is no scene to
-// put aside — and the doll taken is the lowest of them, clear of everything the page hangs over the world.
+// server is handed at once (`useLiveRun`). The watched run before this was closed back into the chat it was
+// followed from, so the way to the stage is the chat's own «Назад» — and the world is waited for first
+// after it: a scene mid-fall is no scene to put aside — and the doll taken is the lowest of them, clear
+// of everything the page hangs over the world.
+await page.click('.chat-card__back');
+await panSettled(2);
 await settledRead(massOfTheWorld);
 const openedAtTouch = chatLive.opened.length;
 let ownHandle = await lowestDoll();
@@ -4498,6 +4530,11 @@ if (!ownHandle) {
       `the scene came back standing ${(backHome.still - beforeWatch.still).toFixed(3)} from where it was left`,
     );
   }
+
+  // The watch was followed out of the chat, so putting its tape away left the player back at the chat:
+  // the run goes on at the stage, and the way there is the chat's own «Назад» again.
+  await page.click('.chat-card__back');
+  await panSettled(2);
 
   // ...and the run goes on: another second of the player's play is the *next* second of the same run — the
   // same id, the numbers counted on from where they were, and no ending anywhere in it.
