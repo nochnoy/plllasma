@@ -98,25 +98,33 @@ body {
 
 /*
  * The first location: the garden before anything is shown of it. Its own picture (`bg-1.png`), the
- * one thing said about the place, and the way in — the sentence in the first third of the screen,
- * the «Сцена» button at the right of it — and nothing else: no doll, no bar, nothing of the game at
+ * one thing said about the place, and the way in — the sentence in the left half of the screen, the
+ * «Сцена» button at the right of it — and nothing else: no doll, no bar, nothing of the game at
  * all.
  *
- * The screen is split into thirds across and the sentence's own container is the first of them —
- * the width the garden's own three locations are laid out in, said on one screen — with the
- * sentence centred inside its container, both ways, and its breaks of line its own (`<br>` in
- * `App.vue`) rather than the container's.
+ * The picture keeps its own shape and stands in the middle of the screen (`contain`, rather than
+ * the `cover` the other two locations lay their pictures by): it is not stretched to the window,
+ * and what the window does not fit of it is the black the screen itself is made of — so resizing
+ * the window moves nothing on the screen, it only changes how much black stands around the picture.
+ *
+ * The screen is split into halves across, with 20 px of the screen's own black standing between
+ * them, and the sentence's own container is pressed to the right edge of the left one — a shade
+ * left of the middle of the screen — where it has its own 200 px, with the sentence centred inside
+ * that and its breaks of line its own (`<br>` in `App.vue`) rather than the container's.
  */
 .location--intro {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
   align-items: center;
+  background-size: contain;
 }
 
 .intro__said {
   grid-column: 1;
+  justify-self: end;
+  width: 200px;
   margin: 0;
-  padding: 0 16px;
   color: var(--paper);
   font-size: 18px;
   line-height: 1.55;

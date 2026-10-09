@@ -461,7 +461,7 @@ watch(game, (engine) => {
          the same move at once — the browser's compositor does the carrying, screen by screen, so the
          motion is one thing and whatever a screen is busy doing about its own arrival is another. -->
     <!-- The first: the threshold the player lands on. Nothing of the game is here at all — its own
-         picture, the sentence the place is known by in the first third of the screen, and the way
+         picture, the sentence the place is known by in the left half of the screen, and the way
          in. -->
     <section
       class="location location--intro"
@@ -472,7 +472,7 @@ watch(game, (engine) => {
         Говорят,<br />
         если ночью в саду<br />
         найти старую сцену,<br />
-        раздеться и лечь на неё,<br />
+        и лечь на неё,<br />
         то станешь<br />
         очень гибкой...
       </p>

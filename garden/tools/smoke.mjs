@@ -787,7 +787,7 @@ await page.evaluate(() => new Promise((resolve) => {
 }));
 await wait(60);
 const theSentence =
-  'Говорят, если ночью в саду найти старую сцену, раздеться и лечь на неё, то станешь очень гибкой...';
+  'Говорят, если ночью в саду найти старую сцену, и лечь на неё, то станешь очень гибкой...';
 summary.handshake.after = {
   gone: await page.evaluate(() => document.querySelector('.loading') === null),
   middle: await middleOfPage(),
