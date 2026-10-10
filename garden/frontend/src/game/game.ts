@@ -335,10 +335,11 @@ export class Game {
    * thing the toolbar keeps for itself is which button looks pressed.
    */
   /**
-   * Called when the *world* changes the tool without being asked to, which is one occasion only: the
-   * player coming home from a watched run gets back the tool they left with (`homeAgain`). The
-   * toolbar's buttons cannot see that happen — what they light up from is Vue's own copy of the tool —
-   * so this is how they are told.
+   * Called when the *world* changes the tool without being asked to, which is two occasions only: the
+   * player coming home from a watched run gets back the tool they left with (`homeAgain`), and a rope
+   * fixed on the stage hands the arrow back (`pressAt`) — the rope tool spends itself on its own
+   * success. The toolbar's buttons cannot see either happen — what they light up from is Vue's own
+   * copy of the tool — so this is how they are told.
    */
   onToolChange: ((tool: Tool) => void) | null = null;
 
@@ -410,9 +411,10 @@ export class Game {
   }
 
   /**
-   * Tells the toolbar about a tool the world changed without being asked. Called from the one way in
-   * that can change it — coming home from a watched run (`homeAgain`) — and nowhere else: a tool picked
-   * is the player's to keep until they pick another.
+   * Tells the toolbar about a tool the world changed without being asked. Called from the two ways in
+   * that can change it — coming home from a watched run (`homeAgain`), and the press that fixes a rope
+   * handing the arrow back (`pressAt`) — and nowhere else: otherwise a tool picked is the player's to
+   * keep until they pick another.
    */
   private syncTool(): void {
     const tool = this.world.tool;
@@ -1044,8 +1046,18 @@ export class Game {
    * is left of it, and the world has no business keeping a picture of a rope it no longer has.
    */
   private pressAt(point: { x: number; y: number }): void {
+    const ropes = this.world.ropes.length;
     const burned = this.world.press(point.x, point.y);
     if (burned) this.scene?.popRope(burned, point.x, point.y);
+    // A rope fixed on the stage spends the rope tool: the press that drew its second end is the tool's
+    // own last act, and the hand goes back to the arrow — the rope is there to be pulled about now, and
+    // pulling is the arrow's work. The bar cannot see a press, so the change is told rather than waited
+    // for (`onToolChange`); a rope that came out too short spends nothing, because the draft is still
+    // waiting for its proper second click.
+    if (this.world.ropes.length > ropes) {
+      this.world.tool = 'drag';
+      this.syncTool();
+    }
     // The first touch of a doll is what starts a run (`record`): the player's own play is the thing worth
     // writing down and sharing, and the bar of tools has no button for it any more. A press that took hold of
     // nothing — a knot, the bare floor — starts nothing, because what a run is about is her.

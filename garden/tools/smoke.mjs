@@ -12,8 +12,8 @@
 // the rows of every joint and every card, quarter-pixel for quarter-pixel, and a playback is those
 // rows put back — no simulation in it, and nothing to drift. It exits non-zero if any of that
 // — or the rope's 5% stretch budget, the opening's own claims (she is lying on the floor from the first
-// frame, at rest, with her shadow at full strength and a calm card), the rule that a tool is the
-// player's to keep, the interface having to sit *inside* the world (the bar
+// frame, at rest, with her shadow at full strength and a calm card), the rule that a rope fixed on the
+// stage hands the arrow back, the interface having to sit *inside* the world (the bar
 // at the world's left edge — its three buttons hanging from the world's own top, the chat's own button the
 // last of them — the chat's strip under that stack against the same left edge and the strip of portraits in the bottom right corner of it, or
 // in its top right one when the window is taller than it is wide, at
@@ -851,12 +851,13 @@ if (summary.handshake.after.threshold.said !== theSentence) {
 if (summary.handshake.after.threshold.go !== 'Сцена') {
   problems.push(`the way into the garden says "${summary.handshake.after.threshold.go}", not «Сцена»`);
 }
-// The sentence lives in the first third of the screen — the width the garden's own three locations
-// are laid out in — centred inside its container, both ways: a 900-wide window puts a third's middle
-// at 150.
-if (Math.abs(saidAt.left + saidAt.width / 2 - 150) > 6 || Math.abs(saidAt.top + saidAt.height / 2 - 350) > 4) {
+// The sentence lives in the left half of the screen — the width the garden's own three locations
+// are laid out in — pressed to the right edge of that half by its own 200 px container, centred
+// inside it both ways: a 900-wide window split in two with 20 px between the halves puts the left
+// half's right edge at 440.
+if (Math.abs(saidAt.left + saidAt.width - 440) > 6 || Math.abs(saidAt.top + saidAt.height / 2 - 350) > 4) {
   problems.push(
-    `the sentence stands at ${saidAt.left + saidAt.width / 2},${saidAt.top + saidAt.height / 2}, not centred in the first third`,
+    `the sentence stands at ${saidAt.left + saidAt.width},${saidAt.top + saidAt.height / 2}, not pressed to the left half's right edge`,
   );
 }
 if (goAt.left < 450 || Math.abs(goAt.top + goAt.height / 2 - 350) > 4) {
@@ -1226,8 +1227,8 @@ summary.respawn = respawned;
 await page.screenshot({ path: join(outDir, '07-respawn.png') });
 
 // The toolbar: the rope is a button in the bar itself, so this part clicks it the way a player would.
-// The tool is the player's to keep — drawing a rope does not hand the arrow back — so the tool is
-// checked after every action just the same.
+// The rope tool spends itself on its own success — the second click that fixes the rope hands the arrow
+// back — so the tool is checked after every action just the same.
 //
 // The two clicks are made with the world *paused* and it is resumed before the knot is carried: a click
 // only counts when it lands on a texel of her own artwork (`Doll.hitTest`), and a doll who is falling — or
@@ -1262,7 +1263,13 @@ await page.screenshot({ path: join(outDir, '08-rope-draft.png') });
 await page.mouse.click(ropeTo.x, ropeTo.y);
 await wait(150);
 summary.toolbar = { drawn: await page.evaluate(() => window.__garden.overview()), pickedRope };
-summary.toolbar.toolAfterRope = summary.toolbar.drawn.tool;
+// The rule the rope's own success promises, on both sides of the wire: the second click that fixed the
+// rope handed the arrow back (`Game.pressAt` → `onToolChange`), and the bar the player looks at lit the
+// arrow's own square up for it.
+summary.toolbar.toolAfterRope = await page.evaluate(() => ({
+  dom: document.querySelector('.toolbar [data-tool].is-active')?.dataset.tool ?? null,
+  world: window.__garden.tool,
+}));
 // ...and the cord is on the stage as well as drawn: a live world draws the ropes the player ties.
 summary.toolbar.ropeDrawing = await page.evaluate(() => ({
   onStage: window.__garden.inspect().ropes.length,
@@ -1273,9 +1280,9 @@ await page.keyboard.press('Space');
 await wait(1500);
 
 // The arrow tool carries a knot about — and since a rope takes whatever is on its far end with it,
-// the doll comes too. She is lying on the floor by now, so any movement is the rope's doing.
-await page.click('[data-tool="drag"]');
-await wait(120);
+// the doll comes too. She is lying on the floor by now, so any movement is the rope's doing. The arrow
+// is already in the hand: fixing the rope put it there, and no click on the bar is made before the
+// knot is picked up — which is the rule working, not a step skipped.
 const aim = await page.evaluate(() => window.__garden.overview());
 summary.toolbar.toolAfterArrow = aim.tool;
 const knot = aim.anchorHandles[1];
@@ -1383,8 +1390,9 @@ await page.screenshot({ path: join(outDir, '11-knot-dropped.png') });
 
 // The same knot, carried by the rope's own tool: a press near an end of a rope already tied takes
 // hold of that end instead of laying a new rope's start, so the point of a rope can be moved without
-// putting the tool down — and the tool stays the rope's through the whole carry, since a tool is the
-// player's to keep. The world is already stood still here (the arrow's own carry put it so), which is
+// putting the tool down — and the tool stays the rope's through the whole carry, since only the
+// player's own picking — or a rope the tool has just fixed — changes what is in the hand. The world is
+// already stood still here (the arrow's own carry put it so), which is
 // what keeps the pressed-at place where it was read — and standing still is its own check: a knot in
 // hand follows the pointer whatever the clock is doing.
 //
@@ -1396,11 +1404,39 @@ await page.click('[data-tool="rope"]');
 const knotY = () => page.evaluate(() => window.__garden.overview().anchorHandles[1]?.y ?? -1);
 await cameraStill(knotY);
 const ropeHandStart = await page.evaluate(() => window.__garden.overview().anchorHandles[1]);
+// The press takes the knot from wherever around it the cord is not. A knot is grabbed anywhere within
+// 13 world pixels of its centre and the cord is burned anywhere within 8 of its middle — and the burn
+// is checked first — so a slack cord piling its beads around a knot that was carried and dropped can
+// have its middle beads closer to that knot's centre than the knot's own grab circle, and a press dead
+// on the knot takes the rope away instead of the knot, whichever tool is holding the press. The point
+// pressed is therefore picked rather than assumed: a ring of candidates around the knot, each well
+// inside the grab radius, and among them the one farthest from the cord's middle beads (everything
+// from two beads in from either end, which is the stretch of cord a press burns — `END_SEGMENTS` in
+// `rope.ts`). A player does the same by eye: the knot's whole circle is the knot, and the cursor says
+// grab over all of it, so the press goes to the part of it the cord has not piled up on.
+const pressTheKnotAt = await page.evaluate(() => {
+  const game = window.__garden;
+  const knot = game.overview().anchorHandles[1];
+  if (!knot) return null;
+  const rope = game.world.ropes[0];
+  if (!rope || rope.nodes.length < 5) return { x: knot.x, y: knot.y };
+  const middle = rope.nodes.slice(2, -2).map((node) => game.toScreen(node.x, node.y));
+  let best = { x: knot.x, y: knot.y, clear: -1 };
+  for (let step = 0; step < 24; step++) {
+    const angle = (step / 24) * Math.PI * 2;
+    for (const radius of [3, 6, 9, 12]) {
+      const at = { x: knot.x + Math.cos(angle) * radius, y: knot.y + Math.sin(angle) * radius };
+      const clear = Math.min(...middle.map((bead) => Math.hypot(bead.x - at.x, bead.y - at.y)));
+      if (clear > best.clear) best = { ...at, clear };
+    }
+  }
+  return best;
+});
 const stageHigh = await page.evaluate(() => {
   const canvas = document.querySelector('.stage canvas').getBoundingClientRect();
   return { x: canvas.left + canvas.width / 2, y: canvas.top + 90 };
 });
-await page.mouse.move(ropeHandStart.x, ropeHandStart.y);
+await page.mouse.move(pressTheKnotAt.x, pressTheKnotAt.y);
 await page.mouse.down();
 for (let i = 1; i <= 8; i++) {
   await page.mouse.move(
@@ -1493,7 +1529,7 @@ summary.toolbar.layout = await page.evaluate(() =>
   }),
 );
 
-// Each of those buttons also wears the word a player calls it — «Таскать», «Связывать», «Чатъ» — while the
+// Each of those buttons also wears the word a player calls it — «Таскать», «Связывать», «Чат» — while the
 // pointer is on it and not otherwise: a word beside the square rather than over it, since a caption laid over
 // a button covers the very thing the button presses on, and no control of its own, so that a press where the
 // word stands belongs to whatever is under it (the hall, or the chat's own four lines for the lower two). A
@@ -2444,10 +2480,12 @@ for (const shadow of summary.inspect.shadows) {
   }
 }
 
-// The rule the toolbar promises: a tool is the player's to keep. Drawing a rope leaves the rope in
-// hand, ready to draw another; the arrow stays the arrow through everything else — a knot dropped, a
-// character put there through the engine's own call, a rope burned away — because nothing that goes on
-// or comes off the stage is the bar's business (`World` changes the tool for nobody but the player).
+// The rule the toolbar promises: whatever went on or came off the stage, the arrow is what the hand
+// holds afterwards. Drawing a rope hands the arrow back the moment the rope is fixed — the rope tool
+// spends itself on its own success (`Game.pressAt`) — and the bar shows it: the rope's square goes
+// dark and the arrow's lights up. Everything else — a knot dropped, a character put there through the
+// engine's own call, a rope burned away — never took the arrow away at all, because nothing but the
+// rope's own fixing and the player's own picking changes the tool.
 const kept = {
   rope: summary.toolbar.toolAfterRope,
   arrow: summary.toolbar.toolAfterArrow,
@@ -2455,8 +2493,10 @@ const kept = {
   'character again': summary.toolbar.toolAfterSecondDoll,
   burn: summary.toolbar.toolAfterBurn,
 };
-if (kept.rope !== 'rope') {
-  problems.push(`drawing a rope left the toolbar holding ${kept.rope ?? 'nothing'} rather than the rope`);
+if (kept.rope.dom !== 'drag' || kept.rope.world !== 'drag') {
+  problems.push(
+    `fixing a rope left the toolbar holding ${kept.rope.dom ?? 'nothing'} in the bar and ${kept.rope.world} in the world rather than the arrow`,
+  );
 }
 for (const [what, tool] of Object.entries(kept)) {
   if (what === 'rope') continue;
@@ -2566,7 +2606,7 @@ for (const card of summary.portraits.first.cards) {
 // stands off the right edge of the square, level with the middle of it, inside the world. It is not a
 // control either — no pointer of its own — so whatever stands under it (the hall, or the chat's own four
 // lines for the two lower buttons) is what a press there lands on.
-const barWords = ['Таскать', 'Связывать', 'Чатъ'];
+const barWords = ['Таскать', 'Связывать', 'Чат'];
 const hints = summary.toolbar.hints ?? {};
 const restWords = (hints.rest ?? []).map((hint) => hint.word);
 if (JSON.stringify(restWords) !== JSON.stringify(barWords)) {
@@ -4661,6 +4701,8 @@ console.log(
   summary.toolbar.afterBurst === 0,
   '| ropes left',
   summary.toolbar.afterBurn?.ropes,
+  '| tool after the rope',
+  `${summary.toolbar.toolAfterRope.dom}/${summary.toolbar.toolAfterRope.world}`,
   '| tool back to',
   summary.toolbar.toolAfterBurn,
 );

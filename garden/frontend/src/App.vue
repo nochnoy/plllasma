@@ -208,9 +208,9 @@ const tool = ref<Tool>('drag');
 // a button clicked while the renderer is still loading is not lost.
 watch([game, tool], () => game.value?.setTool(tool.value));
 
-// ...and it is taken back from the engine on the one occasion the world changes it by itself: coming
-// home from a watched run puts back the tool the player left with (`Game.homeAgain`), and the buttons
-// have to follow.
+// ...and it is taken back from the engine on the two occasions the world changes it by itself: coming
+// home from a watched run puts back the tool the player left with (`Game.homeAgain`), and a rope
+// fixed on the stage hands the arrow back (`Game.pressAt`) — and the buttons have to follow.
 watch(
   game,
   (engine) => {
@@ -511,7 +511,7 @@ watch(game, (engine) => {
         <div v-if="!tape.loaded" class="hud__row">
               <!-- The bar of tools, hanging from the top of the world's own left edge: three buttons one
                    under the other, each a black square with a drawing of the hall's own wood in it.
-                   Each also wears the word the player calls it — «Таскать», «Связывать», «Чатъ» — for the
+                   Each also wears the word the player calls it — «Таскать», «Связывать», «Чат» — for the
                    pointer on it, which is the button's own name in the markup as much as it is what is drawn;
                    the word stands *beside* the square rather than over it, since a caption laid over a button
                    covers the very thing that button presses on (`.hint` in `src/styles.css`).
@@ -569,10 +569,10 @@ watch(game, (engine) => {
               data-tool="chat"
               :class="{ 'is-active': location === 3 }"
               :aria-expanded="location === 3"
-              aria-label="Чатъ"
+              aria-label="Чат"
               @click="location = 3"
             >
-              <span class="hint">Чатъ</span>
+              <span class="hint">Чат</span>
               <!-- A comic bubble: a balloon with its tail swinging down to the left, and three dots waiting
                    inside it. Drawn rather than filled, so that the dots are holes in nothing. -->
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
