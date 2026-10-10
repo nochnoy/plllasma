@@ -15,7 +15,7 @@
 | PHP | 7.4, модуль Apache; MySQL 8.0.28 |
 | Домены | **plllasma.ru и plllasma.com** — оба живые, люди ходят через оба |
 | Код сайта | docroot — сам git-чекаут этого репозитория: обновление кода сайта — `git pull` |
-| Vhost'ы | IspManager хранит их не в `sites-available` — искать через `grep -rl plllasma /etc/apache2/` (обычно `/etc/apache2/includes/`). `000-default.conf` —-stock-дефолт Apache, к сайту отношения не имеет |
+| Vhost'ы | IspManager хранит их не в `sites-available` — искать через `grep -rl plllasma /etc/apache2/` (обычно `/etc/apache2/includes/`). `000-default.conf` — стоковый дефолт Apache, к сайту отношения не имеет |
 | Порт 8080 | **занят Apache** — поэтому garden-сервер слушает 8081 |
 
 ## Что где живёт на проде
