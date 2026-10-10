@@ -14,16 +14,16 @@
 | Веб | nginx 1.18 спереди (80/443, TLS здесь) → Apache MPM-ITK сзади на **127.0.0.1:8080** |
 | PHP | 7.4, модуль Apache; MySQL 8.0.28 |
 | Домены | **plllasma.ru и plllasma.com** — оба живые, люди ходят через оба |
-| Код сайта | docroot — сам git-чекаут этого репозитория: обновление кода сайта — `git pull` |
-| Vhost'ы | IspManager хранит их не в `sites-available` — искать через `grep -rl plllasma /etc/apache2/` (обычно `/etc/apache2/includes/`). `000-default.conf` — стоковый дефолт Apache, к сайту отношения не имеет |
+| Код сайта | docroot — сам git-чекаут этого репозитория: `/var/www/www-root/data/www/plllasma.ru`, обновление кода сайта — `git pull` |
+| Vhost'ы | Apache: `/etc/apache2/vhosts/www-root/plllasma.ru` (один на оба домена — `ServerAlias plllasma.com www.plllasma.com www.plllasma.ru` уже в нём); nginx: `/etc/nginx/vhosts/www-root/plllasma.ru.conf`. `000-default.conf` — стоковый дефолт Apache, к сайту отношения не имеет |
 | Порт 8080 | **занят Apache** — поэтому garden-сервер слушает 8081 |
 
 ## Что где живёт на проде
 
 | Что | Где | Как попадает |
 | --- | --- | --- |
-| Код сайта, `api/user-by-token.php` | docroot сайта (git-чекаут) | `git pull` |
-| Собранная игра (`garden/frontend/dist/`) | `<docroot>/garden/` | вручную по SFTP — **в git не входит** |
+| Код сайта, `api/user-by-token.php` | `/var/www/www-root/data/www/plllasma.ru` (git-чекаут) | `git pull` |
+| Собранная игра (`garden/frontend/dist/`) | `/var/www/www-root/data/www/plllasma.ru/garden/` — **содержимое** dist, не сама папка | вручную по SFTP — **в git не входит** |
 | Бинарь `garden-server` (Linux amd64) | `/opt/garden/garden-server`, `chmod +x` | вручную по SFTP, **передача binary** — в git не входит |
 | База (SQLite, WAL) | `/opt/garden/data/garden.db` | создаёт сам сервер при старте; **включить в бэкапы** |
 | systemd-юнит | `/etc/systemd/system/garden.service` | см. ниже |
@@ -73,7 +73,7 @@ go build -o garden-server .
 ### 1. Код сайта
 
 ```bash
-cd <docroot сайта> && git pull
+cd /var/www/www-root/data/www/plllasma.ru && git pull
 ```
 
 Среди прочего приезжает `api/user-by-token.php` — дверь, по которой garden-сервер
@@ -91,7 +91,7 @@ HttpOnly, страница читает её сама). Миграций MySQL �
 
 ### 2. Файлы
 
-- содержимое `dist/` (index.html, assets/, favicon.ico) → `<docroot>/garden/`;
+- содержимое `dist/` (index.html, assets/, favicon.ico) → `/var/www/www-root/data/www/plllasma.ru/garden/`;
 - `garden-server` → `/opt/garden/garden-server`, затем `chmod +x`.
 
 ### 3. Каталог и права
@@ -176,12 +176,23 @@ curl https://plllasma.com/garden/api/health      # {"ok":true}
 
 ## Про второй домен (plllasma.com)
 
-Игра специально написана на относительных путях: адрес API строится от адреса
+Оба домена — один vhost: в `/etc/apache2/vhosts/www-root/plllasma.ru` уже стоит
+`ServerAlias plllasma.com www.plllasma.com www.plllasma.ru`, и nginx-конфиг у них
+тоже общий (`/etc/nginx/vhosts/www-root/plllasma.ru.conf`). На стороне Apache .com
+неотличим от .ru — тот же docroot, та же статика, отдельной копии `garden/` для
+.com заводить не нужно.
+
+Игра к тому же написана на относительных путях: адрес API строится от адреса
 страницы (`./api` → `/garden/api` на каком домене страница открыта), юзерпики —
 пути от текущего origin. Кука `contortion_key` у залогиненного есть на том домене,
-где он залогинен. Поэтому для .com не нужно ничего сверх общего `ProxyPass` выше.
-`-auth-url` при этом прописан на .ru — это вопрос «какой двери сервер задаёт вопрос
-о токене», обе двери читают одну и ту же базу.
+где он залогинен. `-auth-url` при этом прописан на .ru — это вопрос «какой двери
+сервер задаёт вопрос о токене», обе двери читают одну и ту же базу, и браузер
+этот адрес не видит.
+
+Памятка из жизни: если `/garden/api/health` на обоих доменах отвечает, а сама
+`/garden/` даёт голый Apache-404 на *обоих* — это не домены и не какой-то SPA:
+это `dist/` не залит в docroot. Голый 404 с подписью «Apache … Server at …» в теле
+— верный признак отсутствующего файла, а не перехвата маршрутом.
 
 ## Обновление (каждый раз)
 
@@ -190,7 +201,7 @@ curl https://plllasma.com/garden/api/health      # {"ok":true}
 #   cd garden/frontend && npm test ; cd ../backend && go test ./...
 
 # залить по SFTP:
-#   dist/*          → <docroot>/garden/   (целиком, с заменой)
+#   dist/*          → /var/www/www-root/data/www/plllasma.ru/garden/  (целиком, с заменой)
 #   garden-server   → /opt/garden/        (binary!)
 
 # на сервере:
