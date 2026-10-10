@@ -1979,8 +1979,14 @@ if (!chatWindow.chat) {
   problems.push('the chat window is not the conversation it is');
 }
 // The first run this page played has said itself: its line is in the log, wearing the page's own
-// name and the words every run's line starts with — the link's words, read from the run's row.
-if (!chatWindow.runLine || !chatWindow.runLine.startsWith(`${player.nick}: Начал `) || !chatWindow.runLine.includes('игру')) {
+// name and the words the run's own line carries — «Начал игру» to begin with, and the heavier words
+// of a feat once the play has earned them (`Game.onFeat`), which is the same link wearing what the
+// run has done rather than a different line.
+if (
+  !chatWindow.runLine ||
+  !chatWindow.runLine.startsWith(`${player.nick}: `) ||
+  !/^(Начал игру|Сделал |Достиг )/.test(chatWindow.runLine.slice(player.nick.length + 2))
+) {
   problems.push(`a run the page began was said in the chat as ${JSON.stringify(chatWindow.runLine)}`);
 }
 if (!(chatWindow.lines > chatStrip.lines)) {
@@ -2860,9 +2866,9 @@ if (JSON.stringify(stripCharacters) !== JSON.stringify(['Елена', 'Елен�
 }
 const cardGaps = added.cards.slice(1).map((card, i) => card.x - (added.cards[i].x + added.cards[i].width));
 // 1rem between two cards, measured in the cards' own pixels: the strip is laid out at the size the
-// portraits were baked at — 220x220 — until the world is too narrow to hold it, and then card and gap
+// portraits were baked at — 120x120 — until the world is too narrow to hold it, and then card and gap
 // are shrunk together (see `Scene.syncPortraits`), so the gap to expect is 16 of those pixels.
-const gapWanted = (16 * (added.cards[0]?.width ?? 220)) / 220;
+const gapWanted = (16 * (added.cards[0]?.width ?? 120)) / 120;
 if (cardGaps.some((gap) => Math.abs(gap - gapWanted) > 1)) {
   problems.push(
     `cards stand ${cardGaps.map((gap) => gap.toFixed(1)).join(', ')} px apart, not ${gapWanted.toFixed(1)}`,
@@ -2965,38 +2971,46 @@ for (const [i, pixel] of painted.entries()) {
 
 // The strip shows what the doll's own machine is wearing, and every card the run read has to be drawn
 // from the picture that face asks for — the face and the artwork must not drift apart. A face whose
-// picture the artwork does not have is drawn with the worst picture that it does, so the two are
-// compared through the cards this character actually brought (see `Scene.cardArt`). What the machine
-// itself does over time is asked of it in `frontend/tests/pain-state.test.ts`, and which step a pose is worth in
+// picture the artwork does not have is drawn with the worst picture that it does, and a set it did not
+// bring with the set before it (`pickPortrait` in `characters.ts`, mirrored here over the disk), so
+// the two are compared through the cards this character actually brought. What the machine itself does
+// over time is asked of it in `frontend/tests/pain-state.test.ts`, and which step a pose is worth in
 // `frontend/tests/pain.test.ts`, where the world can be held still.
 //
-// The character's portraits on disk: the eight numbered ones the machine's scale is written in, and the
-// breather, which is not a step of that scale at all and so has a name rather than a number (`FACE.rest`
-// in `pain-state.ts`, `REST_PORTRAIT` in `characters.ts`).
+// The character's portraits on disk: the eight numbered ones — `0-1.png` .. `7-1.png`, in up to three
+// sets, `-1`/`-2`/`-3` — and the breather, which is not a step of that scale at all and so has a name
+// rather than a number (`FACE.rest` in `pain-state.ts`, `REST_PORTRAIT` in `characters.ts`). Which set
+// a card asks for is the doll's own doing — her two latches, read out of the machine's snapshot below.
 const portraitDir = join(root, 'frontend', 'dist', 'assets', 'characters', 'elena', 'portrait');
 const files = readdirSync(portraitDir);
-const pictures = files
-  .map((name) => Number(name.replace(/\.png$/, '')))
-  .filter((index) => Number.isInteger(index))
-  .sort((a, b) => a - b);
-const pictureFor = (face) => {
-  const below = pictures.filter((index) => index <= face);
-  return below.length ? below[below.length - 1] : (pictures[0] ?? -1);
-};
-if (pictures.length === 0) problems.push('the character brought no portraits at all');
+/** The sets a numbered face brought, highest first — an empty row is a hole in the pain scale. */
+const setsOf = (face) => [3, 2, 1].filter((set) => files.includes(`${face}-${set}.png`));
+const facesWith = [0, 1, 2, 3, 4, 5, 6, 7].filter((face) => setsOf(face).length > 0);
 /** The number the doll's machine wears the breather under: `FACE.rest`, past the eight numbered faces. */
 const REST_FACE = 8;
+if (facesWith.length === 0) problems.push('the character brought no portraits at all');
 /**
- * What a face names and the file it is drawn from, in a pair, as `Scene.dressCard` picks both.
- *
- * The breather is the one face whose art is not the file of its own number: it is `rest.png` when the
- * character brought one, and the lull's own picture when it did not — which is the fallback the scene
- * warns about, and the reason this cannot be written as one `endsWith` over a number.
+ * The picture a card's own reading asks for, as `Scene.dressCard` picks it: the set her latches have
+ * earned (`asked`), cascaded down on the sets the artwork brought, then down the faces — and the
+ * breather is the one face whose art is a file of its own name, falling to the lull's own picture
+ * when the character brought none.
  */
-const artFor = (face) => {
-  if (face !== REST_FACE) return { art: pictureFor(face), file: `${pictureFor(face)}.png` };
-  if (files.includes('rest.png')) return { art: REST_FACE, file: 'rest.png' };
-  return { art: pictureFor(1), file: `${pictureFor(1)}.png` };
+const artFor = (face, asked) => {
+  const worn = (at) => {
+    for (const set of setsOf(at)) if (set <= asked) return { art: at, set, file: `${at}-${set}.png` };
+    return null;
+  };
+  let at = face;
+  if (face === REST_FACE) {
+    const rested = [3, 2, 1].find((set) => files.includes(`rest-${set}.png`) && set <= asked);
+    if (rested) return { art: REST_FACE, set: rested, file: `rest-${rested}.png` };
+    // No breather of its own: the lull's own numbered picture stands in for it (`FACE.recent`).
+    at = 1;
+  }
+  const from = facesWith.filter((one) => one <= at);
+  const below = from.length ? worn(from[from.length - 1]) : null;
+  const found = below ?? (facesWith.length ? worn(facesWith[0]) : null);
+  return found;
 };
 
 for (const reading of [
@@ -3010,12 +3024,21 @@ for (const reading of [
   summary.pain.settled,
 ]) {
   for (const card of reading.cards) {
-    const { art, file } = artFor(card.portrait);
-    if (card.art !== art) {
-      problems.push(`portrait ${card.portrait} is drawn with picture ${card.art}, not ${art}`);
+    // The set the doll asked for comes off her own machine: the enlightenment outranks the
+    // extremality, and neither needs to have been reached in this run at all.
+    const asked = card.machine.enlightened ? 3 : card.machine.extremeOnce ? 2 : 1;
+    const wanted = artFor(card.portrait, asked);
+    if (!wanted) {
+      problems.push(`portrait ${card.portrait} has no picture to be drawn from`);
+      continue;
     }
-    if (!String(card.src).endsWith(`/portrait/${file}`)) {
-      problems.push(`picture ${card.art} is drawn from ${card.src || 'nothing'}, not ${file}`);
+    if (card.art !== wanted.art || card.set !== wanted.set) {
+      problems.push(
+        `portrait ${card.portrait} is drawn with picture ${card.art}-${card.set}, not ${wanted.art}-${wanted.set}`,
+      );
+    }
+    if (!String(card.src).endsWith(`/portrait/${wanted.file}`)) {
+      problems.push(`picture ${card.art}-${card.set} is drawn from ${card.src || 'nothing'}, not ${wanted.file}`);
     }
   }
 }
@@ -3856,7 +3879,7 @@ if (!played.timeline || !inside(played.timeline, played.world)) {
     const row = [];
     for (const doll of dolls) {
       for (const p of doll.particles) row.push(Math.round(p.x * 4), Math.round(p.y * 4));
-      row.push(doll.pain.shown);
+      row.push(doll.pain.shown, doll.pain.enlightened ? 1 : 0);
     }
     return row;
   });
@@ -3997,16 +4020,24 @@ chatLog.push({
 // and the runs of the sections before it) opened itself on the server, wrote a line linking itself, and
 // bound itself to that line with its first words. One saying per run, message id and all — the id of a line
 // that is in the log above, linking the run that was saying it.
+//
+// A run says itself more than once: the words change as the play goes on (`Game.onFeat`), and a word change
+// is a note with no message in it — the binding was done once, at «Начал игру», and is not redone. So the
+// tally is read per run: the first saying of each must be the bound one, and every saying after it is only
+// the run's own word for what the play has done.
 summary.runs = { said: chatSaid.map((one) => ({ ...one })) };
 if (!chatSaid.some((one) => one.label === 'Начал игру' && typeof one.message === 'number')) {
   problems.push(
     `the page's own runs were said as ${JSON.stringify(chatSaid)} rather than bound to lines with their first words`,
   );
 }
-for (const one of chatSaid) {
-  const line = chatLog.find((candidate) => candidate.id === one.message);
-  if (!line || !line.parts.some((part) => part.kind === 'run' && part.run === one.id)) {
-    problems.push(`the run ${one.id} was bound to message ${one.message}, which is not its line in the log`);
+for (const id of new Set(chatSaid.map((one) => one.id))) {
+  const opening = chatSaid.filter((one) => one.id === id).find((one) => typeof one.message === 'number');
+  const line = opening && chatLog.find((candidate) => candidate.id === opening.message);
+  if (!line || !line.parts.some((part) => part.kind === 'run' && part.run === id)) {
+    problems.push(
+      `the run ${id} was bound to message ${opening?.message ?? 'nothing'}, which is not its line in the log`,
+    );
   }
 }
 

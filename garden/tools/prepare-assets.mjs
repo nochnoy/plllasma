@@ -342,16 +342,18 @@ for (const [name, part] of Object.entries(PARTS)) {
 
 // --------------------------------------------------------------------- portraits
 //
-// A character's portraits are its own art: eight pictures, one per step of pain, at the size the game
-// lays its cards out in (`PORTRAIT_COUNT` in `frontend/src/game/characters.ts`). This sheet is only what seeds a
-// character that arrives without any — `assets-source/faces.png` draws six faces in a 3x2 grid, so six
-// cards is all it can hand over, and the levels above them stay empty until the artwork brings them. A
-// card that is already on disk is never written over: the pictures belong to the character, not to
-// this tool.
+// A character's portraits are its own art: eight faces, one per step of pain, in up to three sets
+// (`<n>-1.png` .. `<n>-3.png`, see `characters.ts`), at the size the game lays its cards out in
+// (`PORTRAIT_WIDTH`/`PORTRAIT_HEIGHT` in `frontend/src/game/characters.ts`). This sheet is only what
+// seeds a character that arrives without any — `assets-source/faces.png` draws six faces in a 3x2 grid,
+// so six cards of the first set is all it can hand over, and the levels and sets above them stay empty
+// until the artwork brings them. A card that is already on disk is never written over: the pictures
+// belong to the character, not to this tool.
 //
 // Every cell is cropped to the portrait's own 1:1 (the aspect the cards are drawn in, so nothing is
-// squeezed) and then resampled down to 220x220 by averaging every source texel a destination texel
-// covers.
+// squeezed) and then resampled down to 120x120 by averaging every source texel a destination texel
+// covers. What arrives larger from the artwork — the -2/-3 sets come as 1024x1024 sources of their
+// own — is brought to the same 120x120 by `tools/resize-portraits.mjs`, the same average, in place.
 
 /** The sheet a character that has no pictures at all is seeded from. */
 const FACES = join(root, 'assets-source', 'faces.png');
@@ -359,8 +361,10 @@ const FACES = join(root, 'assets-source', 'faces.png');
 const FACE_COLUMNS = 3;
 const FACE_ROWS = 2;
 /** The card that comes out of every cell, and the hairline the sheet draws between cells. */
-const PORTRAIT_WIDTH = 220;
-const PORTRAIT_HEIGHT = 220;
+const PORTRAIT_WIDTH = 120;
+const PORTRAIT_HEIGHT = 120;
+/** The set the seed lands in: the first, the plain faces the artwork drew. */
+const PORTRAIT_SET = 1;
 const FACE_INSET = 3;
 
 /**
@@ -423,9 +427,9 @@ function cutPortraits(sheet) {
         out[di + 3] = Math.round(a / total);
       }
     }
-    const path = join(OUT_PORTRAITS, `${index}.png`);
+    const path = join(OUT_PORTRAITS, `${index}-${PORTRAIT_SET}.png`);
     if (existsSync(path)) {
-      console.log(`portrait ${index} -> kept, this character has a picture of its own`);
+      console.log(`portrait ${index}-${PORTRAIT_SET} -> kept, this character has a picture of its own`);
       continue;
     }
     writeFileSync(path, encodePng(PORTRAIT_WIDTH, PORTRAIT_HEIGHT, out));

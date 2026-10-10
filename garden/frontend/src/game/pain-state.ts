@@ -31,7 +31,7 @@ export const FACE = {
    * The breather: nothing hurts any more, but she has just been through something and is not over it.
    *
    * It is the one face off the pain scale — `8`, past the eight numbered pictures — and the one whose
-   * file is named rather than numbered (`portrait/rest.png`, see `characters.ts`). Raised by
+   * file is named rather than numbered (`portrait/rest-<set>.png`, see `characters.ts`). Raised by
    * {@link REST_AFTER_EXTREME_MS} of extreme or by a beyond of any length at all, and worn in the lulls
    * afterwards until she has caught her breath.
    */
@@ -109,6 +109,11 @@ const REST_MS = 3000;
  *
  * All of it is timed in the real milliseconds the world is stepped by, not in the movie's own slowed
  * clock: these are the seconds a *player* is watching.
+ *
+ * Besides the face of the moment, the machine keeps two latches — one-way, per doll, outliving every
+ * face that earned them: {@link extremeOnce}, latched by the first breather, and {@link enlightened},
+ * latched by the first seventh portrait. They are not what the card *shows*; they are what the card is
+ * *dressed* from — the set of portraits the artwork draws the face in (`characters.ts`).
  */
 export class PainState {
   private portrait: number = FACE.calm;
@@ -139,6 +144,27 @@ export class PainState {
   private restLeft = 0;
   /** Milliseconds the pose has been at *hard* since the flag went up: the other way to wear it out. */
   private hardFor = 0;
+  /**
+   * Whether the machine has ever worn the breather — the *extremality* of the doll, as her portraits
+   * read it.
+   *
+   * It is a latch, not a flag that comes down: wearing {@link FACE.rest} means the pose has been
+   * extreme enough to earn one, and what has been earned is not unearned by the next calm step. It
+   * is what the card is drawn from — the set of portraits that follows the plain one (see the module
+   * comment in `characters.ts`) — and it lives on in a recording's stage and in every row the run
+   * wears the face in (`tape.ts`).
+   */
+  private wornRest = false;
+  /**
+   * Whether the machine has ever worn the seventh portrait — the *enlightenment*.
+   *
+   * A latch like {@link wornRest}, raised the moment `7.png` is the face (see `FACE.super`) rather
+   * than after any length of it, and it outweighs the extremality: a doll who has reached it is drawn
+   * from the last set of portraits, whatever the breather under it says. It is the one part of the
+   * machine that a row of a tape carries separately from the face (`dollRow`), because the face
+   * changes while the latch stays up and the latch is what the card is dressed from.
+   */
+  private wornSuper = false;
 
   /**
    * The stream every time this machine picks comes from — a range of milliseconds, or which of the two
@@ -164,13 +190,31 @@ export class PainState {
     return this.portrait;
   }
 
+  /** Whether she has once been through enough to be shown the breather — see {@link wornRest}. */
+  get extremeOnce(): boolean {
+    return this.wornRest;
+  }
+
+  /** Whether she has once worn the seventh portrait — see {@link wornSuper}. */
+  get enlightened(): boolean {
+    return this.wornSuper;
+  }
+
   /**
    * Puts a face on the card outright, machine untouched — what a playback does with every row of a
    * tape (`World.writePose`). A playback is the picture of a run rather than the run: the clock that
    * picks these faces ran when the run was played, and its choices are already in the rows.
+   *
+   * The two latches are the exception, because the card is *dressed* out of them rather than out of
+   * the face alone: a worn face latches what it would have latched live — the breather latches the
+   * extremality, the seventh portrait the enlightenment — and a row that carries the enlightenment
+   * outright (`dollRow` writes it beside the face) latches it whatever the face of that step is, so
+   * that a playback's cards come up in the sets the recorded ones did.
    */
-  wear(face: number): void {
+  wear(face: number, enlightened?: boolean): void {
     this.portrait = face;
+    if (face === FACE.rest) this.wornRest = true;
+    if (face === FACE.super || enlightened === true) this.wornSuper = true;
   }
 
   /**
@@ -181,6 +225,15 @@ export class PainState {
    * to be in trouble from.
    */
   step(sources: PoseSources | null, elapsedMs: number): void {
+    this.advance(sources, elapsedMs);
+    // The two latches, read off whatever the step decided to wear: the face is what the player sees,
+    // and the latch is what stays once the face has moved on.
+    if (this.portrait === FACE.rest) this.wornRest = true;
+    if (this.portrait === FACE.super) this.wornSuper = true;
+  }
+
+  /** The machine's own working, un-latched — see {@link step}. */
+  private advance(sources: PoseSources | null, elapsedMs: number): void {
     const dt = Math.max(0, elapsedMs);
     const levels = sources
       ? [sources.neck.level, sources.waist.level, sources.hip.level, sources.split.level]
@@ -329,6 +382,8 @@ export class PainState {
     restNeeded: boolean;
     restLeft: number;
     hardFor: number;
+    extremeOnce: boolean;
+    enlightened: boolean;
   } {
     return {
       portrait: this.portrait,
@@ -342,12 +397,14 @@ export class PainState {
       restNeeded: this.restNeeded,
       restLeft: this.restLeft,
       hardFor: this.hardFor,
+      extremeOnce: this.wornRest,
+      enlightened: this.wornSuper,
     };
   }
 
   /**
-   * The whole of the machine's own state, as a flat array of numbers: fifteen of them, in the order the
-   * fields are declared above, with `-1` standing in for a face it is not wearing and for a gap that is
+   * The whole of the machine's own state, as a flat array of numbers: seventeen of them, in the order
+   * the fields are declared above, with `-1` standing in for a face it is not wearing and for a gap that is
    * infinite.
    *
    * It is what a tape writes down about a doll besides her own pose (`TapeDoll`), and it is what makes a
@@ -358,6 +415,8 @@ export class PainState {
    * Infinity cannot go into JSON — `JSON.stringify(Infinity)` is `null` — and a gap that has had nothing
    * to measure for a long time is the one number here that grows without bound, so it is written as -1.
    * A flash or a flicker that is not being worn is -1 as well, since a face is 0..8 and -1 is no face.
+   * The two latches close the array, as 0 or 1 — the last two slots, absent in a stage an older build
+   * wrote, are simply not latched by {@link load}.
    */
   state(): number[] {
     return [
@@ -376,6 +435,8 @@ export class PainState {
       this.restNeeded ? 1 : 0,
       this.restLeft,
       this.hardFor,
+      this.wornRest ? 1 : 0,
+      this.wornSuper ? 1 : 0,
     ];
   }
 
@@ -397,6 +458,8 @@ export class PainState {
       restNeeded,
       restLeft,
       hardFor,
+      extremeOnce,
+      enlightened,
     ] = state;
     /** A gap of -1 is a gap with nothing in it: see {@link state}. */
     const gap = (value: number | undefined): number => (value === undefined || value < 0 ? Infinity : value);
@@ -419,6 +482,8 @@ export class PainState {
     this.restNeeded = restNeeded === 1;
     this.restLeft = restLeft ?? 0;
     this.hardFor = hardFor ?? 0;
+    this.wornRest = extremeOnce === 1;
+    this.wornSuper = enlightened === 1;
   }
 
   /** A number from `range`, in milliseconds — the only randomness in the machine. */

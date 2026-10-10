@@ -308,6 +308,11 @@ export class World {
    * about a playback ever reads a velocity: the physics is the game's own and a tape is only its
    * picture. A row shorter than the stage is a file that lied about its cast, and what it does not
    * cover is left as it stands rather than torn apart by half a doll's worth of numbers.
+   *
+   * After the face, a row may carry the doll's enlightenment latch (`dollRow` writes it there); a row
+   * of an older build does not, and the latch is latched by the face alone — the seventh portrait
+   * latches it live, so a playback of a tape that never wrote the column still ends up dressed the
+   * way the run was.
    */
   writePose(row: readonly number[]): void {
     let at = 0;
@@ -323,7 +328,8 @@ export class World {
       }
       const face = row[at++];
       if (face === undefined) return;
-      doll.pain.wear(face);
+      const light = row[at++];
+      doll.pain.wear(face, light === undefined ? undefined : light === 1);
     }
   }
 

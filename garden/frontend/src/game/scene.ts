@@ -3,9 +3,10 @@ import {
   DEFAULT_CHARACTER,
   PORTRAIT_COUNT,
   PORTRAIT_HEIGHT,
+  PORTRAIT_SETS,
   PORTRAIT_WIDTH,
-  REST_PORTRAIT,
   partUrl,
+  pickPortrait,
   portraitUrl,
   restPortraitUrl,
   type Character,
@@ -201,7 +202,7 @@ const TOOLBAR_GAP = 8;
 const TOOLBAR_BUTTONS = 3;
 /**
  * How round the corner a card rounds is, in the card's own pixels: the fraction of a card that a button's
- * rounding is of a button — 13 of 44, so a little under a third of the way across a card 220 px wide.
+ * rounding is of a button — 13 of 44, so a little under a third of the way across a card 120 px wide.
  *
  * Measured rather than picked, and measured off the button rather than off the card, because a card is
  * a picture in the same strip as the toolbar it hangs beside and the two should look like the same kind
@@ -283,10 +284,12 @@ const HUD_HEIGHT =
 
 /**
  * The file one of a card's faces is drawn from: the eight steps of pain are the numbered files, and the
- * one face off that scale — the breather — is the named one (`portrait/rest.png`, {@link FACE.rest}).
+ * one face off that scale — the breather — is the named one (`portrait/rest-<set>.png`, {@link FACE.rest}).
  */
-function faceUrl(character: Character, art: number, base: string): string {
-  return art === FACE.rest ? restPortraitUrl(character, base) : portraitUrl(character, art, base);
+function faceUrl(character: Character, art: number, set: number, base: string): string {
+  return art === FACE.rest
+    ? restPortraitUrl(character, set, base)
+    : portraitUrl(character, art, set, base);
 }
 
 /** One joint's ember: where the joint was, and the speed it was thrown off with. */
@@ -348,6 +351,13 @@ interface PortraitCard {
    * from the artwork, and -1 when the character has no picture at all.
    */
   art: number;
+  /**
+   * Which of the character's sets the picture came from — 1, 2 or 3. It is the set the doll's own
+   * latches asked for ({@link Scene.dressCard}), fallen back on the one before it by the cascade
+   * when the artwork brought no such picture (`pickPortrait`), so this is the set the player is
+   * actually looking at rather than the one the card asked for.
+   */
+  set: number;
   /**
    * Which corner the frame was drawn with, so that a card is redrawn when the strip moves to the world's
    * other corner and the picture on it has not changed — and so that a window turned upright turns the
@@ -446,13 +456,19 @@ export class Scene {
   private backgroundSrc: string | null = null;
   /** The artwork of every sprite set that has been loaded, by {@link textureKey}. */
   private readonly textures = new Map<string, Texture>();
-  /** The eight portraits of every sprite set that has been loaded, by folder, in portrait index order. */
-  private readonly portraitTextures = new Map<string, (Texture | null)[]>();
   /**
-   * The breather of every sprite set that has been loaded, by folder: the one face that is not a step of
-   * pain (see {@link FACE.rest} and {@link REST_PORTRAIT}). Null for a character that brought none.
+   * The portraits of every sprite set that has been loaded, by folder: the matrix `pickPortrait` is
+   * handed — one row per numbered face, each holding the sets in their own order, `null` for a file
+   * the artwork did not bring. The breather is not in it; it lives beside it, in
+   * {@link restTextures}.
    */
-  private readonly restTextures = new Map<string, Texture | null>();
+  private readonly portraitTextures = new Map<string, (Texture | null)[][]>();
+  /**
+   * The breather of every sprite set that has been loaded, by folder: the one face that is not a
+   * step of pain (see {@link FACE.rest} and {@link REST_PORTRAIT}), in the same sets the numbered
+   * pictures come in. A `null` is a set the character brought no breather for.
+   */
+  private readonly restTextures = new Map<string, (Texture | null)[]>();
   /** One load per sprite set, so a second doll of the same character fetches nothing. */
   private readonly loading = new Map<string, Promise<void>>();
   /** The page's asset base (`/` or `./`), where `assets/characters` hangs off. */
@@ -622,10 +638,11 @@ export class Scene {
   }
 
   /**
-   * Fetches a sprite set: the seven parts of her body, and the eight numbered portraits the strip draws
-   * her pain with — plus the breather, which is one more file of its own (see {@link restTextures}). The
-   * parts are redrawn through a canvas so the alpha the picking needs can be read back out of them; the
-   * portraits are drawn at their own size and need no such care.
+   * Fetches a sprite set: the seven parts of her body, and the portraits the strip draws her pain
+   * with — the eight numbered faces in up to three sets each (`-1`, `-2`, `-3`), plus the breather,
+   * which is one row of files of its own (see {@link restTextures}). The parts are redrawn through a
+   * canvas so the alpha the picking needs can be read back out of them; the portraits are drawn at
+   * their own size and need no such care.
    */
   private async loadSpriteSet(character: Character): Promise<void> {
     const masks: PartMasks = {};
@@ -653,40 +670,40 @@ export class Scene {
     this.world.setPartMasks(character.folder, masks);
 
     // The portraits are plain PNGs drawn at the size they were baked, so they are taken as they are:
-    // the strip puts them on a card of their own size (see {@link syncPortraits}). A character brings
-    // its own eight files, and one of them missing is not a reason to lose the other seven: the hole
-    // is left as a null, and the card wears the worst picture the artwork does have.
+    // the strip puts them on a card of their own size (see {@link syncPortraits}). Every file but
+    // the first set is the character's own choice to bring or not bring — a missing one is a `null`
+    // the cascade falls back on rather than an error (`pickPortrait`) — and even a hole in the
+    // numbered row itself is not a reason to lose the faces around it.
+    const load = async (url: string): Promise<Texture | null> => {
+      try {
+        return Texture.from(await loadImage(url));
+      } catch (cause) {
+        console.warn(`[free-falling-girl] no portrait at ${url}; the card cascades`, cause);
+        return null;
+      }
+    };
     this.portraitTextures.set(
       character.folder,
       await Promise.all(
-        Array.from({ length: PORTRAIT_COUNT }, async (_, index) => {
-          try {
-            const image = await loadImage(portraitUrl(character, index, this.base));
-            return Texture.from(image);
-          } catch (cause) {
-            console.warn(
-              `[free-falling-girl] ${character.name} has no portrait ${index}; the card falls back`,
-              cause,
-            );
-            return null;
-          }
-        }),
+        Array.from({ length: PORTRAIT_COUNT }, (_, index) =>
+          Promise.all(
+            Array.from({ length: PORTRAIT_SETS }, (_, set) =>
+              load(portraitUrl(character, index, set + 1, this.base)),
+            ),
+          ),
+        ),
       ),
     );
-    // ...and, next to them, the breather: one more file, named rather than numbered, which a character
-    // may simply not have (see {@link dressCard} for what a card does about that).
-    try {
-      this.restTextures.set(
-        character.folder,
-        Texture.from(await loadImage(restPortraitUrl(character, this.base))),
-      );
-    } catch (cause) {
-      console.warn(
-        `[free-falling-girl] ${character.name} has no ${REST_PORTRAIT} portrait; the card falls back`,
-        cause,
-      );
-      this.restTextures.set(character.folder, null);
-    }
+    // ...and, next to them, the breather: one row of her own, named rather than numbered, which a
+    // character may simply not have (see {@link dressCard} for what a card does about that).
+    this.restTextures.set(
+      character.folder,
+      await Promise.all(
+        Array.from({ length: PORTRAIT_SETS }, (_, set) =>
+          load(restPortraitUrl(character, set + 1, this.base)),
+        ),
+      ),
+    );
   }
 
   private build(): void {
@@ -1253,7 +1270,7 @@ export class Scene {
    * from the bar's own block, since a card that grew into the bar would be a card drawn over a button.
    *
    * Cards come and go with the dolls, exactly as their sprites do. The strip is laid out in the
-   * interface's own (CSS) pixels — a card is a portrait at the size it was baked, 220x220 — and is
+   * interface's own (CSS) pixels — a card is a portrait at the size it was baked, 120x120 — and is
    * shrunk twice over rather than spilling out of the world onto the black: once with the whole
    * interface for the world's own size (see {@link hudScale}), and once more, card by card, for the
    * room left between the bar's own block and the world's right edge. A card is a portrait and nothing
@@ -1325,23 +1342,7 @@ export class Scene {
     portrait.position.set(-PORTRAIT_WIDTH / 2, 0);
     container.addChild(portrait);
     this.portraitLayer.addChild(container);
-    return { container, portrait, texture: null, src: null, index: 0, art: -1, corner: null };
-  }
-
-  /**
-   * The picture a level is drawn with: the level itself, or the worst one the artwork has below it.
-   *
-   * A character's eight files are its own art, and a missing one is a hole in the middle of the
-   * scale, not a reason to show nothing: the card keeps the face below it, so a pose that asks for a
-   * picture nobody has still reads as the worst face there is. Nothing above the level is ever used —
-   * a card may understate a pose, never overstate it. -1 means the artwork has no picture at all.
-   */
-  private cardArt(portraits: readonly (Texture | null)[], index: number): number {
-    for (let i = Math.min(index, portraits.length - 1); i >= 0; i--) {
-      if (portraits[i]) return i;
-    }
-    for (let i = index + 1; i < portraits.length; i++) if (portraits[i]) return i;
-    return -1;
+    return { container, portrait, texture: null, src: null, index: 0, art: -1, set: 1, corner: null };
   }
 
   /**
@@ -1357,6 +1358,12 @@ export class Scene {
    * its own — one a character may not have at all, in which case the card wears the numbered picture that
    * means the same thing (`FACE.recent`: nothing hurts now, but something did a moment ago).
    *
+   * Which *set* of pictures the face is drawn from is the doll's own doing rather than the pose's: the
+   * machine keeps two latches — the breather once worn, and the seventh portrait once worn — and they
+   * pick the set outright, the enlightenment over the extremality (`pain-state.ts`). The set itself is
+   * then only what was *asked* for: the artwork decides what it actually gives, falling back on the set
+   * before it file by file, which is the cascade `pickPortrait` walks.
+   *
    * The corner the frame rounds is handed in rather than decided here: which of a card's four corners it
    * is follows the corner of the world the strip is hanging off ({@link CardCorner}), and the strip knows
    * that when it lays a card out. It is remembered on the card all the same, because a picture is only
@@ -1366,14 +1373,33 @@ export class Scene {
   private dressCard(card: PortraitCard, doll: Doll, corner: CardCorner): void {
     card.index = doll.pain.shown;
     const portraits = this.portraitTextures.get(doll.character.folder);
-    const rest = this.restTextures.get(doll.character.folder) ?? null;
+    const rest = this.restTextures.get(doll.character.folder) ?? [];
+    // The set the doll's own latches have earned her: the plain one until something extreme has been
+    // worn off her, the second once it has, and the third from the moment the seventh portrait was —
+    // the enlightenment outranking the extremality, not stacking on it.
+    const asked = doll.pain.enlightened ? 3 : doll.pain.extremeOnce ? 2 : 1;
     let texture: Texture | null;
     if (card.index === FACE.rest) {
-      card.art = rest ? FACE.rest : portraits ? this.cardArt(portraits, FACE.recent) : -1;
-      texture = rest ?? (card.art < 0 ? null : (portraits?.[card.art] ?? null));
+      // The breather's own row first, cascaded down the sets the way the numbered ones are; a
+      // character that brought none at all is not left without a face — the numbered picture that
+      // means the same thing stands in for it.
+      let set = asked;
+      while (set > 1 && !rest[set - 1]) set--;
+      if (rest[set - 1]) {
+        card.art = FACE.rest;
+        card.set = set;
+        texture = rest[set - 1] ?? null;
+      } else {
+        const found = portraits ? pickPortrait(portraits, FACE.recent, asked) : null;
+        card.art = found?.face ?? -1;
+        card.set = found?.set ?? 1;
+        texture = found?.picture ?? null;
+      }
     } else {
-      card.art = portraits ? this.cardArt(portraits, card.index) : -1;
-      texture = card.art < 0 ? null : (portraits?.[card.art] ?? null);
+      const found = portraits ? pickPortrait(portraits, card.index, asked) : null;
+      card.art = found?.face ?? -1;
+      card.set = found?.set ?? 1;
+      texture = found?.picture ?? null;
     }
     // Until the artwork arrives there is nothing to show: the card is the picture and nothing else,
     // so it stays empty for that frame rather than showing a blank slab.
@@ -1381,7 +1407,16 @@ export class Scene {
     if (texture === card.texture && corner === card.corner) return;
     card.texture = texture;
     card.corner = corner;
-    card.src = card.art < 0 ? null : faceUrl(doll.character, card.art, this.base);
+    card.src = card.art < 0 ? null : faceUrl(doll.character, card.art, card.set, this.base);
+    this.redrawCard(card, corner, texture);
+  }
+
+  /**
+   * The card's frame and the picture in it, drawn for the picture and the corner it is asked for —
+   * split out of {@link dressCard} because there are two ways to a picture (the breather's own file,
+   * or the numbered stand-in) and one way to draw whatever arrived.
+   */
+  private redrawCard(card: PortraitCard, corner: CardCorner, texture: Texture | null): void {
     card.portrait.clear();
     if (!texture) return;
     // Drawn at the size it was baked whatever the file happens to measure: the cards are laid out on
@@ -1615,6 +1650,12 @@ export class Scene {
        */
       art: number;
       /**
+       * Which of the character's sets that file came from — 1, 2 or 3, after the cascade has fallen
+       * back on whatever the artwork actually has (`pickPortrait`). The set the doll's own latches
+       * asked for is in `machine` (`extremeOnce`, `enlightened`).
+       */
+      set: number;
+      /**
        * What the doll's own machine is doing (`Doll.pain`): the step of the worst source it last read,
        * how long the trouble has lasted, and whichever face it is holding. `portrait` above is what it
        * decided to wear; this is the state that decided it, for the smoke test to check the card
@@ -1722,6 +1763,7 @@ export class Scene {
             name: doll.character.name,
             portrait: card.index,
             art: card.art,
+            set: card.set,
             machine: doll.pain.snapshot(),
             src: card.src ?? '',
             radius: CARD_RADIUS * stripScale,

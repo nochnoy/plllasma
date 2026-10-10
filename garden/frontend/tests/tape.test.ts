@@ -20,6 +20,7 @@ import {
   type TapeSlice,
 } from '../src/game/tape';
 import { World } from '../src/game/world';
+import { FACE } from '../src/game/pain-state';
 
 /**
  * The tape: a run of the world written down, and played back.
@@ -214,7 +215,8 @@ describe('the rows a recorder writes', () => {
     const tape = record(world, 11, script(), 40);
     const first = tape.frames[0];
     expect(Array.isArray(first)).toBe(true);
-    // The first row is the stage's own pose, whole and quantized: a doll of twelve joints and a face.
+    // The first row is the stage's own pose, whole and quantized: a doll of twelve joints, a face
+    // and her enlightenment latch.
     expect(first).toEqual(dollRow(hall().world.dolls));
     // The world stands still until the drag begins at step 20 — one pause covering the waiting — and
     // every step of the drag after that is a row.
@@ -225,6 +227,49 @@ describe('the rows a recorder writes', () => {
       if (typeof record === 'number') continue;
       expect(record.every((value) => Number.isInteger(value))).toBe(true);
     }
+  });
+
+  it('carries the enlightenment beside the face, and a playback dresses its cards out of it', () => {
+    const { world } = hall();
+    const recorder = new TapeRecorder(13, world.snapshot());
+    // The run reaches the seventh portrait, holds it a moment, and comes all the way back down: the
+    // face moves on, the latch does not, and both are in every row.
+    liveStep(world, recorder);
+    const doll = world.dolls[0];
+    doll.pain.wear(FACE.super);
+    liveStep(world, recorder);
+    doll.pain.wear(FACE.calm, true);
+    for (let step = 0; step < 3; step++) liveStep(world, recorder);
+    const tape = recorder.finish();
+    const rows = recordedRows(tape);
+    const [beyond, calm] = [rows[1], rows[2]];
+    // A row is twelve pairs, a face and a latch: the step of the seventh portrait carries a one
+    // beside it, and the steps after — whatever their faces — go on carrying it.
+    expect(beyond.at(-2)).toBe(FACE.super);
+    expect(beyond.at(-1)).toBe(1);
+    expect(calm.at(-2)).toBe(FACE.calm);
+    expect(calm.at(-1)).toBe(1);
+
+    // Played back, the world wears those rows — and its own latch is up from the step the tape says
+    // so, which is what the card is dressed from (`pickPortrait` in `characters.ts`).
+    const { world: watched } = hall();
+    for (const row of rows) watched.writePose(row);
+    expect(watched.dolls[0].pain.enlightened).toBe(true);
+
+    // A row of an older build carried no latch, and the face stands in for it: the seventh portrait
+    // latched it live, so a playback of such a tape still comes out dressed the way the run was.
+    const old = rows.map((row) => row.slice(0, -1));
+    const { world: older } = hall();
+    for (const row of old) older.writePose(row);
+    expect(older.dolls[0].pain.enlightened).toBe(true);
+
+    // ...and the breather of such a tape latches the extremality the same way: the row below is an
+    // old-shape one — no latch column — with the breather as its face.
+    const { world: formerly, doll: worn } = hall();
+    const short = dollRow([worn]).slice(0, -1);
+    formerly.writePose([...short.slice(0, -1), FACE.rest]);
+    expect(worn.pain.extremeOnce).toBe(true);
+    expect(worn.pain.enlightened).toBe(false);
   });
 
   it('takes a pause of its own instead of the rows nothing happened in', () => {
@@ -305,11 +350,12 @@ describe('the rows a recorder writes', () => {
     const tape = recorder.finish();
     // The stillness before she arrived is the one pause of the run; the edit says which character
     // arrived and at the step she takes effect before; and the row that follows is written whole,
-    // because a doll who was not in the row before is not a distance away from it.
+    // because a doll who was not in the row before is not a distance away from it. A doll's share
+    // of a row is twelve pairs, a face and her enlightenment latch: twenty-six numbers.
     expect(tape.edits).toEqual([[30, 'doll', 'id', 'Вторая', 'folder']]);
     expect(typeof tape.frames[1]).toBe('number');
     const after = tape.frames[2] as number[];
-    expect(after).toHaveLength(25 * 2);
+    expect(after).toHaveLength(26 * 2);
   });
 });
 

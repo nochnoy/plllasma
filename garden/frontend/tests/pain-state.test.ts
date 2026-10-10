@@ -290,11 +290,99 @@ describe('a pose that has stopped hurting, after something that hurt', () => {
 });
 
 describe('the machine’s own bookkeeping', () => {
-  it('is the step of the worst source, and counts the sources past their limits', () => {
+  it('is the step of the worst source, and counts the sources past its limits', () => {
     const state = new PainState(fixed(0));
     state.step(pose({ waist: HARD, hip: WORRY }), STEP);
     expect(state.snapshot()).toMatchObject({ portrait: FACE.hard, worst: HARD, beyondSources: 0 });
     state.step(pose({ waist: BEYOND, hip: BEYOND, neck: EXTREME }), STEP);
     expect(state.snapshot()).toMatchObject({ portrait: FACE.super, worst: BEYOND, beyondSources: 2 });
+  });
+});
+
+describe('the two latches the card is dressed from', () => {
+  /**
+   * A machine that has worn the breather: an extreme held past the four seconds that earn one, then
+   * the lull it is worn in. `afterExtreme` is the same trip the breather tests above take.
+   */
+  function rested(): PainState {
+    const state = new PainState(fixed(0));
+    run(state, extreme, 5000);
+    // The arrival of the lull lasts 500 ms here (the lowest end of the leave range) and the breather
+    // is worn for its three seconds after it; stopping a step short of the end leaves it still on.
+    run(state, calm, 500 + 2900);
+    expect(state.shown).toBe(FACE.rest);
+    return state;
+  }
+
+  it('latches the extremality on the first breather, and never un-latches it', () => {
+    const state = rested();
+    expect(state.extremeOnce).toBe(true);
+    // The breather is worn out, the pose comes back down, the flag inside the machine goes with it —
+    // and the latch stays: what has been earned is not unearned by the next calm step.
+    run(state, calm, 10000);
+    expect(state.shown).toBe(FACE.calm);
+    expect(state.snapshot().restNeeded).toBe(false);
+    expect(state.extremeOnce).toBe(true);
+  });
+
+  it('does not latch it for trouble the breather never answered', () => {
+    // An extreme that was let go of too soon owes her nothing, and a pose that is merely hard —
+    // however long — never leaves the hard face: neither machine has reached the rest state.
+    const brief = new PainState(fixed(0));
+    run(brief, extreme, 1000);
+    run(brief, calm, 5000);
+    expect(brief.extremeOnce).toBe(false);
+    const hard = new PainState(fixed(0));
+    run(hard, pose({ neck: HARD }), 6000);
+    expect(hard.shown).toBe(FACE.hard);
+    expect(hard.extremeOnce).toBe(false);
+  });
+
+  it('latches the enlightenment on the seventh portrait, once, whatever comes after', () => {
+    const state = new PainState(fixed(0));
+    run(state, pose({ neck: BEYOND, waist: BEYOND }), 100);
+    expect(state.shown).toBe(FACE.super);
+    expect(state.enlightened).toBe(true);
+    // The pose comes all the way down and the machine calms: the enlightenment is a latch, not a
+    // face, and the card goes on being dressed out of it.
+    run(state, calm, 60000);
+    expect(state.shown).toBe(FACE.calm);
+    expect(state.enlightened).toBe(true);
+  });
+
+  it('carries both latches in the state a stage is written down as', () => {
+    const state = rested();
+    state.step(pose({ neck: BEYOND, waist: BEYOND }), STEP);
+    const saved = state.state();
+    // Seventeen numbers now, the two latches closing the array as 0 or 1.
+    expect(saved).toHaveLength(17);
+    expect(saved.slice(-2)).toEqual([1, 1]);
+    const back = new PainState(fixed(0));
+    back.load(saved);
+    expect(back.extremeOnce).toBe(true);
+    expect(back.enlightened).toBe(true);
+    // A stage an older build wrote has no such slots, and loads without latching anything.
+    const older = new PainState(fixed(0));
+    older.load(saved.slice(0, 15));
+    expect(older.extremeOnce).toBe(false);
+    expect(older.enlightened).toBe(false);
+  });
+
+  it('latches in a worn face what the face would have latched live', () => {
+    // A playback wears rows rather than running the clock (`World.writePose`), and the latches are
+    // what the card is dressed from — so the wearing latches them too.
+    const state = new PainState(fixed(0));
+    state.wear(FACE.rest);
+    expect(state.extremeOnce).toBe(true);
+    state.wear(FACE.calm);
+    expect(state.extremeOnce).toBe(true);
+    state.wear(FACE.super);
+    expect(state.enlightened).toBe(true);
+    // A row carries the enlightenment beside the face (`dollRow`), and it latches outright — even
+    // under a face that would not, because the row is the recorded truth of the run.
+    const row = new PainState(fixed(0));
+    row.wear(FACE.calm, true);
+    expect(row.enlightened).toBe(true);
+    expect(row.extremeOnce).toBe(false);
   });
 });

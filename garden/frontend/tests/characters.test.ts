@@ -4,9 +4,11 @@ import {
   DEFAULT_CHARACTER,
   PORTRAIT_COUNT,
   PORTRAIT_HEIGHT,
+  PORTRAIT_SETS,
   PORTRAIT_WIDTH,
   REST_PORTRAIT,
   partUrl,
+  pickPortrait,
   portraitUrl,
   restPortraitUrl,
 } from '../src/game/characters';
@@ -16,8 +18,8 @@ import { World } from '../src/game/world';
 /**
  * A character is a look, not a rig: the game has the movie's one rig and one set of pivots, and what
  * a character brings to it is the artwork of a folder — `assets/characters/<folder>/parts/*.png` and
- * `assets/characters/<folder>/portrait/<n>.png`. These are the rules that follow from that: the paths
- * are the folder's, a doll carries the character it was added with, and the list the popup shows
+ * `assets/characters/<folder>/portrait/<n>-<set>.png`. These are the rules that follow from that: the
+ * paths are the folder's, a doll carries the character it was added with, and the list the popup shows
  * starts with the one character the game has.
  */
 
@@ -26,26 +28,33 @@ describe('character artwork', () => {
     expect(partUrl(DEFAULT_CHARACTER, PART_ASSETS.head.file)).toBe(
       '/assets/characters/elena/parts/head.png',
     );
-    expect(portraitUrl(DEFAULT_CHARACTER, 0)).toBe('/assets/characters/elena/portrait/0.png');
+    expect(portraitUrl(DEFAULT_CHARACTER, 0, 1)).toBe('/assets/characters/elena/portrait/0-1.png');
     // A character that wears someone else's sprite set reads those files, not its own id's: that is
     // what the folder is for, and it is how a character made on this device is dressed.
     const copy = { id: 'local-1', name: 'Маша', folder: 'elena' };
     expect(partUrl(copy, 'arm.png')).toBe('/assets/characters/elena/parts/arm.png');
     // The base is the page's, so a build dropped into a sub-directory reads its own assets.
-    expect(portraitUrl(DEFAULT_CHARACTER, 0, './')).toBe('./assets/characters/elena/portrait/0.png');
+    expect(portraitUrl(DEFAULT_CHARACTER, 0, 2, './')).toBe(
+      './assets/characters/elena/portrait/0-2.png',
+    );
   });
 
-  it('names the eight portraits and their size', () => {
+  it('names the eight portraits, their sets and their size', () => {
     expect(PORTRAIT_COUNT).toBe(8);
-    expect(portraitUrl(DEFAULT_CHARACTER, PORTRAIT_COUNT - 1)).toBe(
-      '/assets/characters/elena/portrait/7.png',
+    expect(PORTRAIT_SETS).toBe(3);
+    expect(portraitUrl(DEFAULT_CHARACTER, PORTRAIT_COUNT - 1, 3)).toBe(
+      '/assets/characters/elena/portrait/7-3.png',
     );
-    expect([PORTRAIT_WIDTH, PORTRAIT_HEIGHT]).toEqual([220, 220]);
+    expect([PORTRAIT_WIDTH, PORTRAIT_HEIGHT]).toEqual([120, 120]);
     // The breather is the ninth picture and the only one with a name instead of a number: the count
     // above is the ladder's own length, not how many files a character may bring (see `pain-state.ts`).
     expect(REST_PORTRAIT).toBe('rest');
-    expect(restPortraitUrl(DEFAULT_CHARACTER)).toBe('/assets/characters/elena/portrait/rest.png');
-    expect(restPortraitUrl(DEFAULT_CHARACTER, './')).toBe('./assets/characters/elena/portrait/rest.png');
+    expect(restPortraitUrl(DEFAULT_CHARACTER, 2)).toBe(
+      '/assets/characters/elena/portrait/rest-2.png',
+    );
+    expect(restPortraitUrl(DEFAULT_CHARACTER, 1, './')).toBe(
+      './assets/characters/elena/portrait/rest-1.png',
+    );
   });
 
   it('keeps the part file names bare, so any character folder can hold them', () => {
@@ -57,6 +66,50 @@ describe('character artwork', () => {
     // import this module (it is TypeScript, the tool is not), so the agreement is checked here.
     expect(DEFAULT_CHARACTER.id).toBe('elena');
     expect(DEFAULT_CHARACTER.folder).toBe('elena');
+  });
+});
+
+describe('the portrait matrix', () => {
+  it('takes the picture of the face and the set asked for', () => {
+    const pictures = [
+      ['a1', 'a2', 'a3'],
+      ['b1', 'b2', 'b3'],
+    ];
+    expect(pickPortrait(pictures, 1, 2)).toEqual({ face: 1, set: 2, picture: 'b2' });
+    expect(pickPortrait(pictures, 0, 1)).toEqual({ face: 0, set: 1, picture: 'a1' });
+  });
+
+  it('cascades down the sets when the artwork brought no such one', () => {
+    // The elena artwork itself is shaped like this: the fifth face has no `-2`, the sixth and the
+    // seventh have neither `-2` nor `-3`, and what the card wears is the set before the missing one.
+    const pictures = [
+      ['0-1', '0-2', '0-3'],
+      ['1-1', null, '1-3'],
+      ['2-1', null, null],
+    ];
+    expect(pickPortrait(pictures, 1, 2)).toEqual({ face: 1, set: 1, picture: '1-1' });
+    expect(pickPortrait(pictures, 1, 3)).toEqual({ face: 1, set: 3, picture: '1-3' });
+    expect(pickPortrait(pictures, 2, 3)).toEqual({ face: 2, set: 1, picture: '2-1' });
+    expect(pickPortrait(pictures, 2, 2)).toEqual({ face: 2, set: 1, picture: '2-1' });
+  });
+
+  it('falls to the worst face below a hole, and only then to the nearest above', () => {
+    const pictures = [
+      ['0-1', null, null],
+      [null, null, null],
+      ['2-1', '2-2', '2-3'],
+    ];
+    // A face missing from every set is a hole in the pain scale: the card understates rather than
+    // overstates, so the first face stands in for the missing second one...
+    expect(pickPortrait(pictures, 1, 2)).toEqual({ face: 0, set: 1, picture: '0-1' });
+    // ...and only with nothing below does it take the face above.
+    const upsideDown = [[null, null, null], ['1-1', '1-2', '1-3']];
+    expect(pickPortrait(upsideDown, 0, 3)).toEqual({ face: 1, set: 3, picture: '1-3' });
+  });
+
+  it('has nothing to show for an artwork that brought nothing', () => {
+    expect(pickPortrait([[], []], 1, 1)).toBeNull();
+    expect(pickPortrait([], 0, 1)).toBeNull();
   });
 });
 

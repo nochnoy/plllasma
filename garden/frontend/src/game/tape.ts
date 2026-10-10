@@ -19,7 +19,7 @@
  *   row says only how far it moved from the row before it, so a step of a lying doll is a row of
  *   zeros a byte apiece and a step of a dragged one is a row of one- and two-figure numbers;
  * - the bodies are not named in it. The joints of a rig are the rig's own, in its own order, and a
- *   row is read by position: twelve pairs and a face to a doll, the dolls in the stage's own order.
+ *   row is read by position: twelve pairs, a face and a latch to a doll, the dolls in the stage's own order.
  *
  * What a tape does not carry at all is everything that is not a doll. Ropes run in the world's own
  * physics while the game is played and are simply not part of the picture on the way back — a cord
@@ -102,10 +102,10 @@ export type TapeFrame = number | number[];
  */
 export type TapeEdit = readonly [step: number, kind: 'doll', id: string, name: string, folder: string];
 
-/** What the recorder reads of the stage each step: a doll's joints, and the face on her card. */
+/** What the recorder reads of the stage each step: a doll's joints, the face on her card, and her latches. */
 export interface TapeDollPose {
   readonly particles: readonly { readonly x: number; readonly y: number }[];
-  readonly pain: { readonly shown: number };
+  readonly pain: { readonly shown: number; readonly enlightened: boolean };
 }
 
 /**
@@ -267,18 +267,21 @@ export function dollRigs(dolls: readonly { readonly particles: readonly { readon
 /**
  * The run's body as the recorder sees it each step: one flat row of whole numbers, a doll at a time —
  * every joint's x and y in {@link TAPE_SCALE} units, in the rig's own order, then the face on her
- * card — with the dolls in the stage's own order.
+ * card and her enlightenment latch — with the dolls in the stage's own order.
  *
  * This is the shape of a frame record that is written whole, and the shape the deltas of every other
  * record are measured against. Faces sit in the row like positions, so that a face changing while the
  * doll lies still is one small row of its own rather than a special case: the row's joint deltas are
- * zeros and its face delta is whatever the card moved by.
+ * zeros and its face delta is whatever the card moved by. The latch sits beside the face for a
+ * different reason — it is what the card is *dressed* from (`pickPortrait` in `characters.ts`), and a
+ * playback that had to guess it would dress the run's last stretch in the wrong set of portraits. It
+ * flips exactly once, on the step the seventh portrait arrives, and stays for the rest of the run.
  */
 export function dollRow(dolls: readonly TapeDollPose[]): number[] {
   const row: number[] = [];
   for (const doll of dolls) {
     for (const p of doll.particles) row.push(Math.round(p.x * TAPE_SCALE), Math.round(p.y * TAPE_SCALE));
-    row.push(doll.pain.shown);
+    row.push(doll.pain.shown, doll.pain.enlightened ? 1 : 0);
   }
   return row;
 }
