@@ -257,8 +257,8 @@ export class ChannelPageComponent implements OnInit {
   checkHollydays(): void {
     const year = (new Date()).getFullYear();
     const now = new Date();
-    const from = new Date(year, 10 - 1, 11);  // 11 октября
-    const to = new Date(year, 11 - 1, 6);    // 6 ноября
+    const from = new Date(year, 10 - 1, 13);  // 13 октября
+    const to = new Date(year, 11 - 1, 4);    // 3 ноября
     this.isHalloween = (now.getTime() >= from.getTime() && now.getTime() <= to.getTime());
     const nowMonth = now.getMonth() + 1;
     const nowDate = now.getDate();
