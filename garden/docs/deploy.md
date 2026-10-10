@@ -6,6 +6,11 @@
 **docker — только локальная разработка**, на проде его нет вообще: Apache и MySQL живут
 на хосте под IspManager, деплой кода — `git pull`.
 
+> **Состояние:** развёрнуто и работает с 2026-10-10 — garden-сервер на 127.0.0.1:8081,
+> статика в `docroot/garden`, прокси действует на оба домена, проверено вживую
+> (логин → «Начал игру»). «Первый деплой» ниже — справка на случай переезда или
+> восстановления; рутина — «Обновление».
+
 ## Что за сервер
 
 | Факт | Значение |
@@ -207,12 +212,22 @@ curl https://plllasma.com/garden/api/health      # {"ok":true}
 # на сервере:
 chmod +x /opt/garden/garden-server
 systemctl restart garden
-curl -s https://plllasma.ru/garden/api/health   # {"ok":true}
+
+# проверка (полная, занимает полминуты):
+curl -s http://127.0.0.1:8081/api/health           # {"ok":true}
+curl -s https://plllasma.ru/garden/api/health      # {"ok":true}
+curl -s https://plllasma.com/garden/api/health     # {"ok":true}
+curl -sI https://plllasma.ru/garden/ | head -1     # HTTP/1.1 200 OK
 ```
+
+и одна живая проверка, которой не заменит ни один curl: залогиниться, открыть
+`/garden/`, войти на сцену, взять куклу — в углу появляется «<ник>: Начал игру
+(Идёт стрим)», ссылка открывает проигрывание, «Закрыть» возвращает в чат.
 
 Код сайта обновляется обычным `git pull`. Перезапуск юнита после замены бинаря
 **обязателен** — старый процесс держит порт и продолжает работать со старым кодом,
-пока его не тронешь.
+пока его не тронешь. `/garden` без слэша Apache сам перенаправит на `/garden/`
+(301, mod_dir), там `index.html` подхватится как индекс — это не поломка.
 
 Схема базы мигрирует при старте сама; подъём версии схемы storage считает поводом
 вычистить записи старого формата (это осознанное поведение `store.go` — файлы
@@ -228,6 +243,7 @@ curl -s https://plllasma.ru/garden/api/health   # {"ok":true}
 | `journalctl`: `bind: Only one usage of each socket address` | порт занят (8080 — это Apache): в юните должен быть `8081`; после правки — `daemon-reload` |
 | `journalctl`: `no auth endpoint is configured` | в ExecStart потерялся `-auth-url` |
 | Браузер: «Вы не вошли на сайт» | куки `contortion_key` нет — игрок не залогинен на этом домене (или логинится через другой). Не поломка |
+| `curl …/garden/` → Apache-404 на **обоих** доменах, при этом `…/garden/api/health` → 200 | статика не залита: содержимое `dist/` не лежит в `/var/www/www-root/data/www/plllasma.ru/garden/`. Голый 404 с подписью «Apache … Server at …» в теле — отсутствующий файл, а не перехват маршрута (никакой SPA) |
 | В чате пусто, в консоли `[free-falling-girl] the chat could not reach the server` | страница не достучалась до API: проверить health на том домене, с которого открыта страница |
 
 Порядок проверки при любой неполадке — с конца наружу: процесс (`ss`, `journalctl`)
