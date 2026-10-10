@@ -86,6 +86,12 @@ type Recording struct {
 	// upload time — a player the site has renamed is renamed here too, the
 	// next time anybody lists a run of theirs.
 	Author string `json:"author"`
+	// Icon is the author's badge that goes with that nickname — the name of the
+	// userpic the site keeps for them (`/i/<icon>.gif`), read from the same joined
+	// row the nickname is, so that a list can sign a run with a face without asking
+	// anything further of anybody. `-` is the site's own file for a player it has no
+	// picture of.
+	Icon string `json:"icon"`
 	// Steps is how long the run is, in the tape's own steps.
 	Steps int `json:"steps"`
 	// StepMs is the length of one of them — 20 for a tape of this format, and
@@ -406,6 +412,33 @@ func (s *Store) Recordings(now int64) ([]Recording, error) {
 		return nil, fmt.Errorf("recordings: %w", err)
 	}
 	defer rows.Close()
+	return recordingsOf(rows, now)
+}
+
+// RecordingsWindow is a stretch of that list rather than the whole of it:
+// `limit` rows, `offset` of them down, newest first — the archive's own
+// reading, which arrives a chunk at a time as its table is scrolled and so must
+// not ask for a server's every run at once, however many that holds. The order
+// is the whole list's own, so a window taken further down picks up exactly
+// where the one before it ended; an offset past the end is simply an empty
+// window, which is how the reader knows the list is over.
+func (s *Store) RecordingsWindow(now int64, offset, limit int) ([]Recording, error) {
+	rows, err := s.db.Query(`SELECT `+recordingColumns+`
+		FROM recordings r LEFT JOIN users u ON u.id = r.author_id
+		ORDER BY r.uploaded_ms DESC, r.id
+		LIMIT ? OFFSET ?`, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("recordings: %w", err)
+	}
+	defer rows.Close()
+	return recordingsOf(rows, now)
+}
+
+// recordingsOf is the rows a query over `recordingColumns` answered, as the
+// list would show them. Both readings of the list — the whole of it and a
+// window of it — are the same query apart from their bounds, so they read
+// their rows the same way too.
+func recordingsOf(rows *sql.Rows, now int64) ([]Recording, error) {
 	list := []Recording{}
 	for rows.Next() {
 		r, err := scanRecording(rows.Scan, now)
@@ -527,7 +560,7 @@ const liveGraceMs = 2 * 60 * 1000
 // read it, in the order `scanRecording` expects. The author is the player's own
 // row joined in (`users`), which is what keeps a run's byline as current as the
 // site's own word for its player.
-const recordingColumns = `r.id, r.name, COALESCE(u.nick, ''), r.steps, r.step_ms, r.seed, r.bytes,
+const recordingColumns = `r.id, r.name, COALESCE(u.nick, ''), COALESCE(u.icon, '-'), r.steps, r.step_ms, r.seed, r.bytes,
 	r.recorded_ms, r.uploaded_ms, r.live, r.ended_ms, r.label, r.message_id`
 
 // rower is what reading one row needs of a database, or of a transaction inside
@@ -551,7 +584,7 @@ func scanRecording(scan func(...any) error, now int64) (Recording, error) {
 		r    Recording
 		live bool
 	)
-	if err := scan(&r.ID, &r.Name, &r.Author, &r.Steps, &r.StepMs, &r.Seed, &r.Bytes,
+	if err := scan(&r.ID, &r.Name, &r.Author, &r.Icon, &r.Steps, &r.StepMs, &r.Seed, &r.Bytes,
 		&r.RecordedMs, &r.UploadedMs, &live, &r.EndedMs, &r.Label, &r.MessageID); err != nil {
 		return Recording{}, err
 	}

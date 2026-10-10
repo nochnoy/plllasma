@@ -1,19 +1,21 @@
 /**
- * The chat's own wire: the four calls the chat makes about the log and the runs, over four of the nine doors
- * the server opens (`backend/internal/api/server.go`) — the log of a place, the line written into it, the
- * list of runs the window draws beside that log, and one run's own tape, which is what picking a row off that
- * list asks for.
+ * The chat's own wire: the six calls the chat and its archive make about the log and the runs, over
+ * six of the eleven doors the server opens (`backend/internal/api/server.go`) — the log of a place, the
+ * line written into it, the list of runs the window draws beside that log, the rows of exactly those
+ * runs, a window of the whole list for the archive's table, and one run's own tape, which is what
+ * picking a row off any of them asks for.
  *
- * The fifth door the window uses is deliberately not here: a run that is still being played is watched
+ * The seventh door the page uses is deliberately not here: a run that is still being played is watched
  * through the recording side's own wire (`frontend/src/live/api.ts`, `LiveWire.stream`), which is about a run
  * rather than about talking.
  *
- * What is here is only the crossing. The shapes it crosses into are `messages.ts` and `runs.ts` — the same
- * types the interface draws — and the names on the wire are the server's own, snake_case and all, kept in
- * the `Wire*` types below so that the conversion happens once here rather than in every component that
- * reads a message.
+ * What is here is only the crossing. The shapes it crosses into are `messages.ts`, `runs.ts` and
+ * `archive.ts` — the same types the interface draws — and the names on the wire are the server's own,
+ * snake_case and all, kept in the `Wire*` types below so that the conversion happens once here rather
+ * than in every component that reads a message.
  */
 import { siteToken, type User } from '../auth';
+import { asEntry, type Entry, type WireEntry } from './archive';
 import { GHOST, LOBBY, userpic, type ChatMessage, type MessagePart } from './messages';
 import { asRun, type Run, type WireRun } from './runs';
 
@@ -67,7 +69,7 @@ export interface Draft {
 }
 
 /**
- * The whole of what the chat asks the server for, in five calls — which is the point of it: what the
+ * The whole of what the chat asks the server for, in six calls — which is the point of it: what the
  * window and the strip see is one interface, so a test can be a fake wire rather than a fake server.
  */
 export interface ChatWire {
@@ -89,6 +91,12 @@ export interface ChatWire {
    * words and liveness are the runs' business rather than the log's.
    */
   runsByIds(ids: readonly string[]): Promise<Run[]>;
+  /**
+   * A window of the whole list — that many rows, that far down, newest first: the archive's own
+   * asking (`useArchive`), whose table is filled a chunk at a time as it is scrolled and so never
+   * asks for more of the runs than the player has read.
+   */
+  archive(offset: number, limit: number): Promise<Entry[]>;
   /**
    * One run's own tape, as the file the game decodes (`decodeTape`).
    *
@@ -183,6 +191,15 @@ export function chatApi(base: string = apiBase(), take: typeof fetch = fetch, to
       const asked = ids.map((id) => encodeURIComponent(id)).join(',');
       const answer = (await ask(`/recordings?ids=${asked}`)) as { recordings?: WireRun[] | null } | null;
       return (answer?.recordings ?? []).map(asRun);
+    },
+
+    async archive(offset, limit) {
+      // Both numbers are always said: the server takes a window without its width as a request it
+      // refuses rather than guesses at, and the archive never wants the whole list at once.
+      const answer = (await ask(`/recordings?offset=${Math.max(0, Math.round(offset))}&limit=${limit}`)) as {
+        recordings?: WireEntry[] | null;
+      } | null;
+      return (answer?.recordings ?? []).map(asEntry);
     },
 
     async tape(id) {

@@ -49,22 +49,24 @@ body {
 }
 
 /*
- * The garden's three locations, laid side by side in the order they are numbered: the threshold the
- * player lands on, the stage itself, and the chat's own screen. Each is one window in its own right,
- * standing in the row by its own transform (`placeOf` in `App.vue`) — a screen's neighbours lie a
- * window away to either side, and a move is all three of them translated the same way at once, which
- * reads exactly as one place panned across: the screen left behind slides out one way and the one
- * arrived at slides in the other, each the way its neighbour lies. Going deeper into the garden
- * (1→2→3) the whole picture travels left; coming back, it travels right.
+ * The garden's locations, laid side by side in the order they are numbered: the threshold the
+ * player lands on, the stage itself, the chat's own screen, and the archive — one window further
+ * along than the chat, over the same scenery. Each is one window in its own right, standing in the
+ * row by its own transform (`placeOf` in `App.vue`) — a screen's neighbours lie a window away to
+ * either side, and a move is all of them translated the same way at once, which reads exactly as
+ * one place panned across: the screen left behind slides out one way and the one arrived at slides
+ * in the other, each the way its neighbour lies. Going deeper into the garden (1→2→3→4) the whole
+ * picture travels left; coming back, it travels right.
  *
  * Carrying each screen by itself rather than as a slice of one triple-wide strip is what keeps the
  * motion out of the main thread's reach: each screen is its own layer, one window big, and the
  * browser's compositor does the moving. What the compositor cannot carry is the arrival of the
  * heaviest screen — the chat's, with its list being read and its field taking focus — so that work
  * is kept out of the motion altogether: the pan slides the chat's scenery in bare, and the
- * conversation is standing there when it stops (`App.vue`, `settled`/`chatShown`). Each of the three
- * also has a picture of its own (`bg-1`/`bg-2`/`bg-3.png`, laid in by `App.vue`) — the garden is the
- * same place all the way along, and the pictures are what each end of it looks like.
+ * conversation is standing there when it stops (`App.vue`, `settled`/`chatShown`). Each of the four
+ * also has a picture of its own (`bg-1`/`bg-2`/`bg-3.png`, laid in by `App.vue` — the archive shares
+ * the chat's) — the garden is the same place all the way along, and the pictures are what each end
+ * of it looks like.
  */
 .location {
   position: absolute;
@@ -546,6 +548,11 @@ body {
  * its words are the chat's own colour, the colour the strip on the stage already reads in. The way
  * back is where the cross was: a worded button beside the name of the place, because what it leaves is
  * a *place* rather than a box.
+ *
+ * The archive's screen (`ArchivePanel.vue`) wears the same classes: it is the same kind of place — a
+ * full window over the scenery, its words in the chat's own colour, a heading with the way back at
+ * the left of it — which is why the frame is kept here rather than copied there. What differs is the
+ * body, which is the archive's own (`.archive` below).
  */
 .chat-card--full {
   width: 100%;
@@ -693,6 +700,21 @@ body {
 /* The log: the conversation itself, one block after another with the newest at the bottom. */
 .chat-card__log {
   padding: 4px 20px 16px;
+}
+
+/*
+ * The chat's own page: the conversation, its one line of failure, and the field beneath it all
+ * stand on the same page the archive's list is written on (`ArchivePanel.vue`) — 600 px across,
+ * in the middle of the screen, with the scenery showing at either side of it — so that the two
+ * screens the chat owns read as one place rather than as a ledger and a letter. A window narrower
+ * than the page has no room for it: the column takes the whole of what there is.
+ */
+.chat-card--full .chat-card__log,
+.chat-card--full .chat-card__error,
+.chat-card--full .chat-card__form {
+  width: min(600px, 100%);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* One message: the space after a line is the space after the whole of it. */
@@ -862,6 +884,165 @@ a.chat-line__run:focus-visible {
 .chat-run:focus-visible {
   outline: 2px solid #000;
   outline-offset: -2px;
+}
+
+/*
+ * The way to the archive («Все записи»), at the right of the chat's own heading: the same worded
+ * pill the ways back wear — black with a wood edge, the picture of the garden's own buttons —
+ * because it is a door to a place the way they are, not a part of the conversation it stands over.
+ * The heading is a row with the way back at its left end, so `margin-left: auto` is what puts this
+ * one at the right end, across the screen from it.
+ */
+.chat-card__archive {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  box-sizing: border-box;
+  height: 32px;
+  margin-left: auto;
+  padding: 0 8px 0 14px;
+  border: 2px solid var(--wood);
+  border-radius: 999px;
+  background: #000;
+  color: var(--wood);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.chat-card__archive .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.chat-card__archive:hover {
+  background: var(--wood);
+  border-color: #000;
+  color: #000;
+}
+
+.chat-card__archive:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/*
+ * The archive's own screen (`ArchivePanel.vue`): the fourth location, arrived over the chat's
+ * scenery from the left and wearing the chat's own full-screen frame (`chat-card--full` —
+ * transparent, its words in the chat's own colour), with a list where the conversation would be.
+ * The heading is the frame's own — the way back at the left of it, the name of the place centred —
+ * and the way back leads to the chat: the archive is a room off it, not a place of the garden's
+ * own.
+ */
+.archive {
+  font-size: 14px;
+}
+
+/* The one scroll of the screen, carrying the whole list: the rows arrive a window at a time and
+   the scroll carries them all, so that going back up is reading rather than asking. */
+.archive__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: 4px 0 16px;
+}
+
+/*
+ * The list itself: a page of it, 600 px across, stood in the middle of the screen — the scenery
+ * showing at either side of it the way it shows above and below. A window narrower than the page
+ * has no room for that: the list takes the whole of what there is (`min` below), which is the whole
+ * of the scroll's own box on anything under 600 px wide.
+ */
+.archive__list {
+  width: min(600px, 100%);
+  margin: 0 auto;
+}
+
+/*
+ * One run, one line: the moment it was kept, the byline with its face, and the run's own word for
+ * itself — all in one breath, nothing wrapping and nothing stacked, so the list reads down the way
+ * a log does. The whole of the line is the control it is — pressed to be watched, hovered as one
+ * thing — and its answer to a hover is the same brightening the chat's own strip answers with
+ * (`#fff` over the scenery) rather than a colour of its own.
+ */
+.archive__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 0;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.archive__row:hover,
+.archive__row:focus-visible {
+  color: #fff;
+}
+
+.archive__row:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+
+/* The moment the run was kept: the first thing a line says, and the thing the list is ordered by —
+   kept as it arrives from `whenWritten` rather than shortened, because the whole point of it is to
+   be read. */
+.archive__when {
+  flex: none;
+}
+
+/* The face the site keeps for the player, sitting in the line the way a badge sits in a line of the
+   chat. */
+.archive__badge {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+/* The byline: the nickname in bold, with a colon after it — the line's own pause between who and
+   what, kept outside the nickname so the bold ends where the name does. */
+.archive__nick {
+  flex: none;
+  font-weight: 700;
+}
+
+.archive__colon {
+  flex: none;
+}
+
+/* The run's own word for itself: whatever of it does not fit is cut short rather than wrapping the
+   line about a long word — the list is one line a run, and the run can be asked for itself. */
+.archive__what {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * The end of the list: the word «Всё», worn as one more line of the list — the same height, the
+ * same place, the same colour — rather than a note under it, because what it says is the last thing
+ * the list has to say and not something about the list. It is not a control: the pointer does
+ * nothing to it, and nothing of it can be pressed.
+ */
+.archive__row--end {
+  pointer-events: none;
+}
+
+/* What the list says about itself at its end — a failure, a wait, an emptiness, or the whole of
+   it — and the nothing the asking watches for: both under the list in the chat's own colour, the
+   way the chat's own one line of failure stands beside its field. */
+.archive__note {
+  margin: 0;
+  padding: 10px 20px;
+  font-size: 13px;
+}
+
+.archive__sentinel {
+  height: 1px;
 }
 
 /*

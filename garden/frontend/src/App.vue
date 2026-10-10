@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import ArchivePanel from './components/ArchivePanel.vue';
 import ChatPanel from './components/ChatPanel.vue';
 import ChatTicker from './components/ChatTicker.vue';
 import TapeTimeline from './components/TapeTimeline.vue';
+import { useArchive } from './composables/useArchive';
 import { useChat } from './composables/useChat';
 import { useGame } from './composables/useGame';
 import { useLiveRun } from './composables/useLiveRun';
@@ -28,16 +30,16 @@ const props = defineProps<{ user: User }>();
 const player: Speaker = { id: props.user.id, nick: props.user.nick, face: userpic(props.user.icon) };
 
 /**
- * Where in the garden the player is: one of three screens laid side by side in the order they are
+ * Where in the garden the player is: one of four screens laid side by side in the order they are
  * numbered. Each screen is one window in its own right, standing in the row by its own transform
- * (`placeOf`) — the whole of the garden is never one wide thing that has to be carried; it is three
- * window-sized layers, and a move is all three of them translated the same way at once, which reads
- * exactly as one place panned across. Going deeper (1→2→3) the whole picture travels to the left;
+ * (`placeOf`) — the whole of the garden is never one wide thing that has to be carried; it is four
+ * window-sized layers, and a move is all of them translated the same way at once, which reads
+ * exactly as one place panned across. Going deeper (1→2→3→4) the whole picture travels to the left;
  * coming back, to the right.
  *
  * Because each screen carries itself — its own layer, its own transform, nothing nested inside
  * anything wider — the motion belongs to the browser's compositor and to nothing else. What the
- * compositor does not carry is the *arrival*: the chat's screen, the heaviest of the three, comes
+ * compositor does not carry is the *arrival*: the chat's screen, the heaviest of the four, comes
  * with work of its own — the runs' list read off the server and drawn, the scroll settled at the
  * newest line, the field taking focus — and work that lands in the middle of a pan, however little
  * it is, is a pan that arrives in pieces. So the pan carries the screen bare: the arrival work waits
@@ -50,14 +52,16 @@ const player: Speaker = { id: props.user.id, nick: props.user.nick, face: userpi
  * draws), the doll, the bar of tools and the chat's strip. The third is the chat's own screen over
  * `assets/bg-3.png` — everything the window it used to be was, said over its own scenery in the
  * chat's own colour rather than on paper — and the way into it is the bar's chat button and the
- * strip alike.
+ * strip alike. The fourth is the archive — «Все записи» — over the same scenery as the chat's, one
+ * window further along: every run the server holds as one table, and the way into it is the button
+ * at the right of the chat's own heading.
  *
- * On the first and the third there is nothing of the game at all — no doll, no bar, no physics to
- * watch — just the screen each of them is. The stage's own clock stands still for as long as the
- * player is away from it: the world waits exactly where it was left, and a run being written is not
+ * On the first, the third and the fourth there is nothing of the game at all — no doll, no bar, no
+ * physics to watch — just the screen each of them is. The stage's own clock stands still for as long
+ * as the player is away from it: the world waits exactly where it was left, and a run being written is not
  * recording the away time (`Game.suspend`).
  */
-const location = ref<1 | 2 | 3>(1);
+const location = ref<1 | 2 | 3 | 4>(1);
 
 /**
  * How long a move from one screen to the next takes, in milliseconds: the 0.38s of `.location`'s
@@ -84,12 +88,12 @@ const cutting = ref(false);
 let cutTimer: number | null = null;
 
 /**
- * A move with no travel in it: following a run's link out of the chat puts its playback on at once,
- * and the way back from that playback returns to the chat the same way — the run is already what the
- * player asked for, and watching it slide in for a third of a second is a wait between the click and
- * the thing clicked.
+ * A move with no travel in it: following a run's link out of the chat or the archive puts its
+ * playback on at once, and the way back from that playback returns the same way — the run is
+ * already what the player asked for, and watching it slide in for a third of a second is a wait
+ * between the click and the thing clicked.
  */
-function cutTo(at: 1 | 2 | 3): void {
+function cutTo(at: 1 | 2 | 3 | 4): void {
   if (cutTimer !== null) clearTimeout(cutTimer);
   cutting.value = true;
   location.value = at;
@@ -111,6 +115,7 @@ watch(location, (at, was) => {
   if (cutting.value) {
     settled.value = true;
     chatShown.value = at === 3;
+    archiveShown.value = at === 4;
     return;
   }
   settled.value = false;
@@ -126,13 +131,13 @@ onBeforeUnmount(() => {
 /**
  * Where a screen sits while the player is at `location`: its own place in the row, as that many
  * windows left (negative) or right of the one being stood at. The screen the player is on is at
- * zero, its neighbours a window away each, and every move re-places all three at once.
+ * zero, its neighbours a window away each, and every move re-places all four at once.
  */
-function placeOf(screen: 1 | 2 | 3): { transform: string } {
+function placeOf(screen: 1 | 2 | 3 | 4): { transform: string } {
   return { transform: `translateX(${(screen - location.value) * 100}%)` };
 }
 
-/** The page's asset base, where the three locations' own pictures hang — the same one the renderer builds from. */
+/** The page's asset base, where the locations' own pictures hang — the same one the renderer builds from. */
 const base = import.meta.env.BASE_URL ?? '/';
 
 const host = ref<HTMLElement | null>(null);
@@ -291,6 +296,47 @@ watch(settled, (still) => {
 });
 
 /**
+ * The archive's own latch of the same shape ({@link chatShown}): its table waits the pan out before
+ * it is drawn, and stands looking like the place it was while it slides away — the archive's arrival
+ * work is its first window of rows (`atArchive` below), and none of it belongs in the middle of a
+ * move.
+ */
+const archiveShown = ref(false);
+
+// ...and it follows the settle for the same reasons the chat's does.
+watch(settled, (still) => {
+  if (still) archiveShown.value = location.value === 4;
+});
+
+/**
+ * The archive — «Все записи», the fourth location: every run the server holds as one table over the
+ * chat's own scenery, read a window at a time as it is scrolled (`useArchive`). It is the chat's
+ * other half: the conversation is the runs being played and said about now, and this is all of them,
+ * whoever played them and however long ago — newest first, each row signed by its player's own face
+ * and name, and pressed to be watched.
+ */
+const {
+  rows: archiveRows,
+  loading: archiveLoading,
+  done: archiveDone,
+  error: archiveError,
+  more: archiveMore,
+  arrive: arriveAtArchive,
+} = useArchive();
+
+/**
+ * Whether the player is at the archive *and the pan that brought them there is over* — the boundary
+ * the chat's own arrival work waits on ({@link atChat}), which the archive's shares: its first
+ * window of rows is asked for here and not before, so a page that never goes to the archive asks
+ * the server for none of it.
+ */
+const atArchive = computed(() => location.value === 4 && settled.value);
+
+watch(atArchive, (up) => {
+  if (up) arriveAtArchive();
+});
+
+/**
  * The runs the chat's lines link, as the chat knows them: their words and whether they are still
  * being played, fetched for exactly the ids the log is showing (`useRunStates`). This is what makes
  * a line that links a run a living thing rather than a dead one — the run's own label changes as the
@@ -302,12 +348,13 @@ const { rows: runRows } = useRunStates(() => linkedRuns(messages.value));
  * What following a run is, and what it does: it goes onto the timeline as the game's own run, which
  * is what makes somebody else's run a run this page watches (`useRuns`).
  *
- * The way in is a link in the chat or the page's own address (`?run=`) — there is no list to pick
- * from, the chat's lines are the list. The chat is left on the way in either way: a playback is not
- * something to read a chat over, and the world's own row — the bar of tools and the chat's strip —
- * comes back with the tape's own bar when the run is put away (`TapeTimeline.vue`). A run that is
- * still being played goes on arriving after that, and what stops it is the tape's own report rather
- * than the screen (`stopWatching`, below).
+ * The way in is a link in the chat, a row of the archive, or the page's own address (`?run=`) — the
+ * chat's lines are the live list and the archive's table is the whole one. The screen the run was
+ * followed from is left on the way in either way: a playback is not something to read a chat or a
+ * table over, and the world's own row — the bar of tools and the chat's strip — comes back with the
+ * tape's own bar when the run is put away (`TapeTimeline.vue`). A run that is still being played
+ * goes on arriving after that, and what stops it is the tape's own report rather than the screen
+ * (`stopWatching`, below).
  */
 const { open: openRun, stop: stopWatching } = useRuns({
   play: playRun,
@@ -315,21 +362,33 @@ const { open: openRun, stop: stopWatching } = useRuns({
 });
 
 /**
- * Whether the run being watched was followed out of the chat: a link pressed in a conversation is
- * the player leaving it *for* the run, and putting that run away is the player done with it — the
- * way back is the conversation the link was found in, not the stage it happens to play on. A run
- * the page was opened on (`?run=`) was not followed out of anything: it *is* where the player
- * arrived, and the stage is where they are left.
+ * Whether the run being watched was followed out of the chat or the archive — the screen the
+ * playback is *owed back to*. A link pressed in a conversation or a row pressed in the table is the
+ * player leaving that screen *for* the run, and putting that run away is the player done with it —
+ * the way back is the place the link was found in, not the stage it happens to play on. A run the
+ * page was opened on (`?run=`) was not followed out of anything: it *is* where the player arrived,
+ * and the stage is where they are left.
  */
-const fromChat = ref(false);
+const cameFrom = ref<3 | 4 | null>(null);
 
 /**
  * What a link in the chat is followed by: the run it names, onto the timeline and walking. That a
- * link is followed out of the chat is remembered ({@link fromChat}), because the way back from the
+ * link is followed out of the chat is remembered ({@link cameFrom}), because the way back from the
  * run it opens is back to the conversation the link was found in.
  */
 function followTheLink(id: string): void {
-  fromChat.value = true;
+  cameFrom.value = 3;
+  void openRun(id);
+}
+
+/**
+ * What pressing a row of the archive is: the same following, out of a different room — the run onto
+ * the timeline and walking, and the table it was pressed in remembered as the way back ({@link
+ * cameFrom}), so that putting the run away returns the player to the row they pressed rather than
+ * to wherever the garden was before.
+ */
+function openFromArchive(id: string): void {
+  cameFrom.value = 4;
   void openRun(id);
 }
 
@@ -339,11 +398,11 @@ function followTheLink(id: string): void {
  * (`useRuns`), which are a tape before they are a file — and the playhead starts at the beginning, so what the
  * player watches is that run rather than wherever the world had been left.
  *
- * And the player is brought to the stage to watch it — following a link is the one thing the chat does
- * that is the game's, and what it opens onto is the run. The bringing is a cut rather than a pan
- * (`cutTo`): the link was pressed for the run, and the run is what the player asked to see. The
- * address is told the run as well, so that what the player is watching is what the player can hand
- * to somebody else (`setRunInUrl`).
+ * And the player is brought to the stage to watch it — following a link or a row is the one thing
+ * the chat and its archive do that is the game's, and what it opens onto is the run. The bringing is
+ * a cut rather than a pan (`cutTo`): the link was pressed for the run, and the run is what the
+ * player asked to see. The address is told the run as well, so that what the player is watching is
+ * what the player can hand to somebody else (`setRunInUrl`).
  */
 function playRun(id: string, tapeFile: string): void {
   const engine = game.value;
@@ -367,19 +426,20 @@ function growRun(run: Run, tape: Tape): void {
 // A run that is not on the timeline any more is a run nobody is watching: the tape's own report says so
 // (`useTape`), and what takes a tape off is its own bar's «Закрыть» — which is also the door the player
 // comes back through, to their own scene and their own interrupted run (`Game.unload`). The address is
-// told too: a page no longer watching a run is a page whose address should not say it is. And a run
-// that was followed out of the chat is put away *back into* the chat, as a cut: the conversation is
-// where the player left it, one line down — the run's own line — and that is where the reading of it
-// goes on (`fromChat`).
+// told too: a page no longer watching a run is a page whose address should not say it is. And a run that
+// was followed out of a screen is put away *back into* that screen, as a cut: the conversation stands
+// where the player left it, one line down — the run's own line — and the table stands where its row was
+// pressed; either way, the reading goes on where it was left ({@link cameFrom}).
 watch(
   () => tape.value.loaded,
   (loaded) => {
     if (!loaded) {
       stopWatching();
       setRunInUrl(null);
-      if (fromChat.value) {
-        fromChat.value = false;
-        cutTo(3);
+      if (cameFrom.value !== null) {
+        const back = cameFrom.value;
+        cameFrom.value = null;
+        cutTo(back);
       }
     }
   },
@@ -446,9 +506,9 @@ watch(game, (engine) => {
   const id = engine && !openedTheAddress ? runInUrl() : null;
   if (!id) return;
   openedTheAddress = true;
-  // The address is not the chat: a run opened this way was not followed out of anything, and putting
-  // it away leaves the player where they already are.
-  fromChat.value = false;
+  // The address is not the chat and not the archive: a run opened this way was not followed out of
+  // anything, and putting it away leaves the player where they already are.
+  cameFrom.value = null;
   location.value = 2;
   void openRun(id);
 });
@@ -456,8 +516,8 @@ watch(game, (engine) => {
 
 <template>
   <div class="scene" :class="{ 'scene--cut': cutting }">
-    <!-- The garden's three screens, each in the row by its own transform (`placeOf`): one window each,
-         neighbours of the one being stood at a window away to either side, and all three carried by
+    <!-- The garden's four screens, each in the row by its own transform (`placeOf`): one window each,
+         neighbours of the one being stood at a window away to either side, and all four carried by
          the same move at once — the browser's compositor does the carrying, screen by screen, so the
          motion is one thing and whatever a screen is busy doing about its own arrival is another. -->
     <!-- The first: the threshold the player lands on. Nothing of the game is here at all — its own
@@ -627,6 +687,33 @@ watch(game, (engine) => {
         :open-run="followTheLink"
         @close="location = 2"
         @toggle-speaker="toggleAnonymous"
+        @open-archive="location = 4"
+      />
+    </section>
+
+    <!-- The fourth: the archive — «Все записи» — one window further along than the chat, over the
+         same scenery it stands over (`bg-3.png` again): a room off the conversation rather than a
+         place of the garden's own, arrived at by the chat's own heading and left by the same way
+         back. What it holds is every run the server keeps, as one table newest first — a byline with
+         its face, the moment it was kept, the run's own word for itself — filling a window at a time
+         as the table is scrolled, and each row pressed to be watched.
+         The table itself waits the pan out like the conversation does (`archiveShown`): the pan
+         slides in the scenery alone, and the rows are asked for and drawn to a screen that has
+         already arrived. -->
+    <section
+      class="location location--archive"
+      :style="[placeOf(4), { backgroundImage: `url(${base}assets/bg-3.png)` }]"
+      aria-label="Все записи"
+    >
+      <ArchivePanel
+        v-show="archiveShown"
+        :rows="archiveRows"
+        :loading="archiveLoading"
+        :done="archiveDone"
+        :error="archiveError"
+        :more="() => void archiveMore()"
+        :open-run="openFromArchive"
+        @close="location = 3"
       />
     </section>
   </div>

@@ -372,3 +372,36 @@ describe("the rows of the runs the chat's lines link", () => {
     expect(await chatApi('/api', fakeServer({ body: {} }).take).runsByIds(['gone'])).toEqual([]);
   });
 });
+
+describe("a window of the whole list, as the archive's table asks for it", () => {
+  it('says both of its numbers — how far down and how wide — even at the top of the list', async () => {
+    // The server takes a window without its width as a request it refuses rather than guesses at,
+    // and a window of the list is always asked for as a window, never as the whole of it.
+    const server = fakeServer({ body: { recordings: [] } });
+    await chatApi('/api', server.take).archive(0, 100);
+    expect(server.asked[0].url).toBe('/api/recordings?offset=0&limit=100');
+  });
+
+  it('asks from where the table has got to, which is where the last window ended', async () => {
+    const server = fakeServer({ body: { recordings: [] } });
+    await chatApi('/api', server.take).archive(100, 100);
+    expect(server.asked[0].url).toBe('/api/recordings?offset=100&limit=100');
+  });
+
+  it('reads the byline with its face, the moment and the word — the row the table draws', async () => {
+    const server = fakeServer({ body: { recordings: [{ ...WIRE_RUN, icon: '9', live: true }] } });
+    expect(await chatApi('/api', server.take).archive(0, 100)).toEqual([
+      { id: 'run-2', author: 'Марго', face: '/i/9.gif', whenMs: 1750000001000, label: '', live: true },
+    ]);
+  });
+
+  it('takes an answer with no runs in it as an empty window, which is how the list says it is over', async () => {
+    expect(await chatApi('/api', fakeServer({ body: {} }).take).archive(300, 100)).toEqual([]);
+    expect(await chatApi('/api', fakeServer({ body: { recordings: null } }).take).archive(300, 100)).toEqual([]);
+  });
+
+  it('refuses a window the server would not hand over', async () => {
+    const server = fakeServer({ status: 500, statusText: 'Internal Server Error' });
+    await expect(chatApi('/api', server.take).archive(0, 100)).rejects.toThrow(Refused);
+  });
+});

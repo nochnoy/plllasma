@@ -280,6 +280,99 @@ func TestUploadKeepsTheTapeWordForWord(t *testing.T) {
 	}
 }
 
+// TestTheListIsReadInWindows is the archive's own reading of the list: `limit`
+// rows from `offset` down, in the same newest-first order the whole list keeps,
+// so that a table filled a chunk at a time reads the runs in the order it would
+// have read them all at once — and each row carries the author's badge beside
+// the byline, which is the face the archive's table signs a run with.
+func TestTheListIsReadInWindows(t *testing.T) {
+	st, err := store.Open(filepath.Join(t.TempDir(), "chat.db"))
+	if err != nil {
+		t.Fatalf("open the database: %v", err)
+	}
+	t.Cleanup(func() { st.Close() })
+	// A clock that moves rather than stands: every upload is later than the one
+	// before it, which is the only thing here that puts one run above another in
+	// the list. It moves by the call, and an upload makes two of them (the door's
+	// own bookkeeping and the row itself), so each run lands a clear two hours
+	// after the last.
+	tick := int64(0)
+	server := httptest.NewServer(New(st,
+		WithClock(func() time.Time {
+			tick++
+			return time.UnixMilli(1_700_000_000_000 + tick*3_600_000)
+		}),
+		WithAuth(func(token string) (User, error) {
+			switch token {
+			case "anya":
+				return User{ID: 7, Nick: "Аня", Icon: "7"}, nil
+			case "margo":
+				return User{ID: 9, Nick: "Марго", Icon: "-"}, nil
+			default:
+				return User{}, errNoAuth
+			}
+		})))
+	t.Cleanup(server.Close)
+	h := &hall{t: t, server: server, client: server.Client()}
+	client := h.client
+	do := func(path string) call {
+		t.Helper()
+		return h.do(client, "anya", "GET", path, nil)
+	}
+
+	// Three runs, each uploaded after the one before it — and the last of them
+	// played by Аня, so that the window answers a byline with a badge in it
+	// rather than the site's own «no userpic» file on every row.
+	for _, name := range []string{"Первый", "Второй"} {
+		if c := h.do(client, "margo", "POST", "/api/recordings", uploadBody(name)); c.status != http.StatusCreated {
+			t.Fatalf("upload %s: %d %s, want 201", name, c.status, c.body)
+		}
+	}
+	if c := h.do(client, "anya", "POST", "/api/recordings", uploadBody("Третий")); c.status != http.StatusCreated {
+		t.Fatalf("upload Третий: %d %s, want 201", c.status, c.body)
+	}
+
+	// The whole list, as it always was: newest first, and no window asked for.
+	whole := read[recordings](t, do("/api/recordings")).Recordings
+	if len(whole) != 3 || whole[0].Name != "Третий" || whole[2].Name != "Первый" {
+		t.Fatalf("the whole list holds %+v", whole)
+	}
+	if whole[0].Author != "Аня" || whole[0].Icon != "7" || whole[1].Icon != "-" {
+		t.Fatalf("the list signs its runs without badges: %+v", whole)
+	}
+
+	// A window of two: the two newest. The next window picks up where this one
+	// ended, and a window past the end is empty rather than an error — that
+	// emptiness is how the reader knows the list is over.
+	first := read[recordings](t, do("/api/recordings?limit=2")).Recordings
+	if len(first) != 2 || first[0].Name != "Третий" || first[1].Name != "Второй" {
+		t.Fatalf("the first window holds %+v", first)
+	}
+	second := read[recordings](t, do("/api/recordings?limit=2&offset=2")).Recordings
+	if len(second) != 1 || second[0].Name != "Первый" {
+		t.Fatalf("the second window holds %+v", second)
+	}
+	if past := read[recordings](t, do("/api/recordings?limit=2&offset=4")).Recordings; len(past) != 0 {
+		t.Fatalf("a window past the end holds %+v", past)
+	}
+
+	// A window that says nothing about its width is not a window: an offset with
+	// no limit would be a request for rows with nothing saying how many, and a
+	// limit that is not a positive number is the same request in worse handwriting.
+	for _, bad := range []string{
+		"?offset=2",
+		"?limit=0",
+		"?limit=-1",
+		"?limit=soon",
+		"?limit=1&offset=-1",
+		"?limit=1&offset=never",
+	} {
+		if c := do("/api/recordings" + bad); c.status != http.StatusBadRequest {
+			t.Fatalf("a window asked with %s: %d %s, want 400", bad, c.status, c.body)
+		}
+	}
+}
+
 func TestUploadRefusesARunThatCouldNotBePlayed(t *testing.T) {
 	h := newHall(t)
 	for _, bad := range []struct {

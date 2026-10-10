@@ -48,6 +48,9 @@ function fakeWire(rows: Run[] = []) {
       asked.push([...ids]);
       return rows.filter((one) => ids.includes(one.id));
     },
+    async archive() {
+      throw new Refused(0, 'the rows do not read the archive');
+    },
     async tape() {
       throw new Refused(0, 'the rows do not fetch a tape');
     },
@@ -116,6 +119,9 @@ describe('the runs the chat is interested in', () => {
         async runsByIds(ids) {
           asked.push([...ids]);
           return answer.value.filter((one) => ids.includes(one.id));
+        },
+        async archive() {
+          throw new Refused(0, 'no');
         },
         async tape() {
           throw new Refused(0, 'no');

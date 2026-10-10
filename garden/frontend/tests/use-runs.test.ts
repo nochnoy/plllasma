@@ -64,6 +64,9 @@ function fakeWire(rule: Rule = {}) {
     async runsByIds() {
       throw new Refused(0, 'the following does not read the rows of runs');
     },
+    async archive() {
+      throw new Refused(0, 'the following does not read the archive');
+    },
     async tape(id) {
       asked.tape.push(id);
       const file = await rule.tape?.(id);

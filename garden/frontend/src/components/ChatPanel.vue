@@ -5,8 +5,10 @@ import type { Run } from '../chat/runs';
 import ChatLine from './ChatLine.vue';
 
 /**
- * The chat's own screen — the third of the garden's three locations, arrived over the world from the
+ * The chat's own screen — the third of the garden's locations, arrived over the world from the
  * right (`App.vue`): a heading, the log under one scroll, and the field at the foot.
+ * The heading's right end is the way to the fourth — «Все записи», the archive of every run the
+ * server holds — which is the chat's own door out rather than the game's.
  * Messages are read from the top down, so the newest one is at the bottom and the scroll keeps itself
  * there; the field is where the eye already is, so the text in it takes the focus when the screen
  * arrives and again after every line sent.
@@ -53,6 +55,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: [];
   toggleSpeaker: [];
+  openArchive: [];
 }>();
 
 const typed = ref('');
@@ -106,6 +109,19 @@ async function submit(): Promise<void> {
         Назад
       </button>
       <h2 class="chat-card__title">Чат с привидениями</h2>
+      <!-- The way to the archive: every run the server holds, as a table of its own over the same
+           scenery — the one thing the conversation itself does not reach, because the lines it is
+           showing are the last fifty and the runs are all of them. It stands at the right of the
+           heading, across the screen from the way back, and is the door the archive is entered by
+           (`App.vue`, the fourth location). -->
+      <button type="button" class="chat-card__archive" aria-label="Все записи" @click="emit('openArchive')">
+        <!-- A table of rows: three lines of three lengths, the way a list of recordings reads from
+             afar — the picture of what the door opens onto rather than a word about it. -->
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4.4 6.4h15.2M4.4 12h15.2M4.4 17.6h9" />
+        </svg>
+        Все записи
+      </button>
     </header>
       <!-- The one scroll of the window, carrying the conversation: the runs are links in it rather
            than a list beside it, so there is nothing else to read and no second scrollbar to hunt

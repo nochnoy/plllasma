@@ -46,9 +46,9 @@ const BACKDROP_COLOR = 0x000000;
 /**
  * The picture of the hall the action happens in: the port's own artwork, `public/assets/bg-2.png`. It is
  * the one thing in the scene that comes from neither the movie nor an object the player put there — and
- * it is the *second* location's own picture, one of the garden's three (`bg-1`/`bg-2`/`bg-3`, laid out
- * as the three screens the player pans through in `App.vue`): the hall is what the middle of the garden
- * looks like.
+ * it is the *second* location's own picture, one of the garden's (`bg-1`/`bg-2`/`bg-3`, laid out
+ * as the screens the player pans through in `App.vue` — the fourth shares the third's): the hall is
+ * what the middle of the garden looks like.
  *
  * The file is the world itself — `STAGE_WIDTH x STAGE_HEIGHT`, 1000x740 — so a texel of it is a world
  * pixel and the hall is drawn with no scale at all. A picture of another size is stretched over the

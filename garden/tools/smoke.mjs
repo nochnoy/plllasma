@@ -99,7 +99,7 @@ const chatLog = [
 ];
 
 /** What the doors have been asked: the run's own record of it, read again by the report at the foot. */
-const chatAsked = { sent: [], tapes: [] };
+const chatAsked = { sent: [], tapes: [], archives: [] };
 
 /**
  * The runs that arrived as they were *played*: the head each one was opened with, and the slices that followed
@@ -121,6 +121,40 @@ const chatLive = { opened: [], refused: [] };
  */
 const chatRuns = [];
 const chatTapes = new Map();
+
+/**
+ * Every run this server has been heard of, with the moment it arrived and the face its author wears:
+ * what the archive's door (`?limit=`/`?offset=` below) cuts its windows out of, newest first. A run is
+ * heard of here as it happens — a live run at the moment of its opening, the finished ones at their
+ * registration — and the row kept is the same object the chat's own asking reads, so a run's words stay
+ * as current in the table as they are in the conversation.
+ */
+const chatArchive = [];
+
+/**
+ * The runs of past evenings: a hundred and twenty rows of runs this server has held forever, none of
+ * them with a tape to serve and none of them linked from the chat — which is the point of them. The
+ * archive is the *whole* list rather than the lines the conversation is showing, and its list is
+ * filled a window at a time (`useArchive`): without more than a hundred rows to hold, no scroll would
+ * ever ask for a second window, and the asking is half of what the archive's section checks. They
+ * arrived an hour apart, the oldest of them two hours before this run began, so the runs of *this*
+ * run sit above them all — and each wears one of the site's own userpics, the faces the table signs
+ * its bylines with, turning over from row to row the way a hall of different players would.
+ */
+const OLD_FACES = ['14', '15', '9', '10', '111'];
+const chatOld = Array.from({ length: 120 }, (_, at) => ({
+  at: Date.now() - (at + 2) * 3_600_000,
+  icon: OLD_FACES[at % OLD_FACES.length],
+  row: {
+    id: `old-${at}`,
+    name: `вечер ${at + 1}`,
+    author: 'Старожил',
+    steps: 150,
+    step_ms: 20,
+    live: false,
+    label: 'Сделал шпагат',
+  },
+}));
 
 /**
  * The one run this smoke serves as a run that is *still being played*: a head and the slices of the run this
@@ -232,6 +266,19 @@ async function chatDoor(req, res) {
       }
       return answer(200, { recordings: rows });
     }
+    // A window of the whole list, as the archive's table asks with: that many rows, that far down, newest
+    // first — the reading `store.RecordingsWindow` answers in the real store, cut here out of everything
+    // this server has been heard of. A window shorter than it was asked for (an empty one included) is the
+    // list saying it is over, which is what tells the table to stop asking.
+    const limit = Number(asked.searchParams.get('limit') ?? 0);
+    const offset = Number(asked.searchParams.get('offset') ?? 0);
+    if (limit > 0 || offset > 0) {
+      chatAsked.archives.push({ limit, offset });
+      const all = [...chatArchive, ...chatOld]
+        .sort((one, other) => other.at - one.at)
+        .map((one) => ({ ...one.row, icon: one.icon, recorded_ms: one.at, uploaded_ms: one.at }));
+      return answer(200, { recordings: all.slice(offset, offset + limit) });
+    }
     return answer(200, { recordings: chatRuns });
   }
 
@@ -267,8 +314,9 @@ async function chatDoor(req, res) {
     };
     chatLive.opened.push(run);
     // The row the chat will ask with the moment a line links this run: live from here, and saying
-    // nothing yet — the words come with the line that is about to be written for it.
-    chatRows.set(run.id, {
+    // nothing yet — the words come with the line that is about to be written for it. The same row,
+    // heard of at this moment, is what the archive's table will show at the top of it.
+    const row = {
       id: run.id,
       name: run.name,
       author: run.author,
@@ -276,7 +324,9 @@ async function chatDoor(req, res) {
       step_ms: 20,
       live: true,
       label: '',
-    });
+    };
+    chatRows.set(run.id, row);
+    chatArchive.push({ at: Date.now(), icon: player.icon, row });
     return answer(201, { recording: { id: run.id, name: run.name, author: run.author, steps: 0, live: true } });
   }
 
@@ -1747,6 +1797,15 @@ summary.chat.window = await page.evaluate(() => {
     introBack: getComputedStyle(document.querySelector('.location--intro')).backgroundImage,
     chatBack: getComputedStyle(document.querySelector('.location--chat')).backgroundImage,
     parts: [...card.children].map((child) => child.className),
+    // The log and the field beneath it: the chat's own page — the same page the archive's list is
+    // written on, 600 px across and stood in the middle of the screen, measured against the
+    // scroll's own client box (a stable scrollbar gutter keeps ~15 px of the window for itself).
+    page: (() => {
+      const log = card.querySelector('.chat-card__log').getBoundingClientRect();
+      const form = card.querySelector('.chat-card__form').getBoundingClientRect();
+      const of = card.querySelector('.chat-card__body').clientWidth;
+      return { log: Math.round(log.width), form: Math.round(form.width), at: Math.round(log.left), of };
+    })(),
     // The heading: the way back at the left of it, the name of the place beside it.
     title: card.querySelector('.chat-card__title')?.textContent ?? null,
     // The heading: the way back at the left of it, the name of the place centred across the screen.
@@ -2011,6 +2070,16 @@ if (chatWindow.titleAt && Math.abs(chatWindow.titleAt.left + chatWindow.titleAt.
   );
 }
 if (chatWindow.back !== 'Назад') problems.push(`the way back says "${chatWindow.back}", not «Назад»`);
+// The conversation and the field stand on the same page the archive's list is written on: 600 px
+// across (the whole of the scroll on a window that narrow), both of them, in the middle of it.
+if (chatWindow.page.of >= 600 && (chatWindow.page.log !== 600 || chatWindow.page.form !== 600)) {
+  problems.push(
+    `the chat's conversation is ${chatWindow.page.log} px wide and its field ${chatWindow.page.form}, not the 600 px of a page`,
+  );
+}
+if (Math.abs(chatWindow.page.at - (chatWindow.page.of - chatWindow.page.log) / 2) > 2) {
+  problems.push(`the chat's conversation stands at ${chatWindow.page.at} of ${chatWindow.page.of}, not in the middle`);
+}
 // The field: one frame around the whole of it, a text box inside that neither draws a frame of its own
 // nor fills itself in, and the field and the button beside it the same height.
 if (chatWindow.fieldBorder !== 1 || chatWindow.inputBorder !== 0) {
@@ -3996,8 +4065,9 @@ const smokedRun = {
 chatTapes.set(smokedRun.id, tapeFile);
 // The run's own row and its own line in the log: what a link is drawn from. The row says the words, the
 // line carries the link, and — for a run that arrived whole rather than being played — both are written by
-// the server the way the page that played one writes them for itself.
-chatRows.set(smokedRun.id, {
+// the server the way the page that played one writes them for itself. The archive hears of the run here
+// too, a minute behind the page's own live one, so its table holds it under today's runs.
+const smokedRow = {
   id: smokedRun.id,
   name: smokedRun.name,
   author: smokedRun.author,
@@ -4005,7 +4075,9 @@ chatRows.set(smokedRun.id, {
   step_ms: smokedRun.step_ms,
   live: false,
   label: 'Начал игру',
-});
+};
+chatRows.set(smokedRun.id, smokedRow);
+chatArchive.push({ at: Date.now() - 60_000, icon: '14', row: smokedRow });
 chatLog.push({
   id: chatNext++,
   user_id: 5,
@@ -4240,7 +4312,22 @@ foreignRun = {
   },
 };
 // Its own line in the log, as the player still playing it would have written: a link, with the row saying
-// the words — and while the run is still going, the line wears «(Идёт стрим)» beside them.
+// the words — and while the run is still going, the line wears «(Идёт стрим)» beside them. The archive
+// hears of it here as well — a run being played is a run the whole list holds, and the table shows it
+// with its words and its «(Идёт стрим)» the way the conversation does.
+chatArchive.push({
+  at: Date.now() - 30_000,
+  icon: '14',
+  row: {
+    id: foreignRun.id,
+    name: foreignRun.row.name,
+    author: foreignRun.row.author,
+    steps: 0,
+    step_ms: recordedTape.step,
+    live: true,
+    label: foreignRun.label,
+  },
+});
 chatLog.push({
   id: chatNext++,
   user_id: 5,
@@ -4637,6 +4724,219 @@ if (!ownHandle) {
     problems.push(`the slices of a run that crossed a watch are numbered ${numbered.join(',')}`);
   }
   await page.screenshot({ path: join(outDir, '31-own-run-resumed.png') });
+}
+
+// The archive — «Все записи» — the garden's fourth screen: every run this server holds as one table,
+// over the same scenery the chat stands over, arrived at by a button at the right of the chat's own
+// heading and arrived over like every screen is — the whole picture travelling left one more window,
+// its table waiting the pan out before it is drawn (`archiveShown` in `App.vue`).
+//
+// What this section checks is the whole of that: the way in and where it stands, the pan and the
+// content after it, the columns of a row (a byline with its face, a human-readable moment, and the
+// run's own word for itself), the order (newest first — this page's own still-live run at the top),
+// and the filling: a hundred rows in the first window and the rest only as the scroll reaches for
+// them, a window at a time until the server's list is over. And the pressing of a row, which is the
+// same following a link in the chat is — a playback on at once, and the way back the table it was
+// pressed in.
+await page.click('.chat-strip');
+await chatArrived();
+const archiveDoor = await page.evaluate(() => {
+  const button = document.querySelector('.chat-card__archive');
+  if (!button) return null;
+  const rect = button.getBoundingClientRect();
+  return {
+    said: button.textContent.trim(),
+    fromRight: Math.round(innerWidth - rect.right),
+    fromTop: Math.round(rect.top),
+    at: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
+  };
+});
+summary.archive = { door: archiveDoor };
+if (!archiveDoor) {
+  problems.push('the chat\'s heading has no way to the archive in it');
+} else {
+  if (archiveDoor.said !== 'Все записи') problems.push(`the way to the archive says "${archiveDoor.said}"`);
+  // The right of the heading, at the top of the screen — across it from the way back, which is where
+  // the archive's door was put rather than anywhere in the conversation.
+  if (archiveDoor.fromRight > 40 || archiveDoor.fromTop > 60) {
+    problems.push(
+      `the way to the archive stands ${archiveDoor.fromRight} px from the right and ${archiveDoor.fromTop} from the top`,
+    );
+  }
+  await page.mouse.click(archiveDoor.at.x, archiveDoor.at.y);
+  // The pan: waited out like every pan, and the table waits it out too — arriving at the fourth
+  // screen finds its scenery only, and the rows are asked for and drawn once the garden is still.
+  await panSettled(4);
+  await page.waitForSelector('.archive', { visible: true, timeout: 8000 });
+  await page.waitForSelector('.archive .archive__row', { timeout: 8000 });
+  const table = await page.evaluate(() => {
+    const card = document.querySelector('.archive');
+    const rows = [...card.querySelectorAll('.archive__row')];
+    const first = rows[0];
+    return {
+      title: card.querySelector('.chat-card__title')?.textContent ?? null,
+      back: card.querySelector('.chat-card__back')?.textContent.trim() ?? null,
+      // One line per run and nothing over them: no columns, no heading row, no rule under one.
+      headings: card.querySelectorAll('th, .archive__head').length,
+      list: (() => {
+        const box = card.querySelector('.archive__list');
+        const body = card.querySelector('.archive__body');
+        const rect = box?.getBoundingClientRect();
+        // Measured against the scroll's own client box rather than the window: a stable scrollbar
+        // gutter (`scrollbar-gutter: stable`) keeps ~15 px of the window for itself, and four fifths
+        // of what the list may have is four fifths of that, not of the window.
+        return rect && body ? { width: Math.round(rect.width), left: Math.round(rect.left), of: body.clientWidth } : null;
+      })(),
+      standing: rows.length,
+      first: {
+        run: first.getAttribute('data-run'),
+        said: first.textContent.trim(),
+        when: first.querySelector('.archive__when')?.textContent.trim() ?? null,
+        nick: first.querySelector('.archive__nick')?.textContent.trim() ?? null,
+        badge: first.querySelector('.archive__badge')?.getAttribute('src') ?? null,
+        what: first.querySelector('.archive__what')?.textContent.trim() ?? null,
+      },
+      scenery: {
+        archive: getComputedStyle(document.querySelector('.location--archive')).backgroundImage,
+        chat: getComputedStyle(document.querySelector('.location--chat')).backgroundImage,
+      },
+    };
+  });
+  const newest = chatLive.opened.at(-1)?.id ?? null;
+  summary.archive.table = table;
+  summary.archive.windows = chatAsked.archives;
+  if (table.title !== 'Все записи') problems.push(`the archive's screen is titled "${table.title}"`);
+  if (table.back !== 'Назад') problems.push(`the archive's way back says "${table.back}"`);
+  if (table.headings !== 0) problems.push('the list has column headings or a rule over it');
+  // The list stands in the middle of the screen, a page of it 600 px across — and the whole of it
+  // on a window with no room for the page (checked below, where the window is made that narrow).
+  if (table.list.of >= 600 && table.list.width !== 600) {
+    problems.push(`the list is ${table.list.width} of ${table.list.of} wide, not the 600 px of a page centred`);
+  }
+  if (Math.abs(table.list.left - (table.list.of - table.list.width) / 2) > 2) {
+    problems.push(`the list stands at ${table.list.left} of ${table.list.of}, not in the middle`);
+  }
+  if (table.scenery.archive !== table.scenery.chat) {
+    problems.push('the archive stands over scenery of its own rather than the chat\'s');
+  }
+  // The first window is a hundred rows, and only a hundred: the filling is what the scroll asks for,
+  // and a table that arrived complete would be a page that asked for the whole of the list at once.
+  if (table.standing !== 100) problems.push(`the table arrived holding ${table.standing} rows, not the hundred of one window`);
+  if (chatAsked.archives.length !== 1 || chatAsked.archives[0].limit !== 100 || chatAsked.archives[0].offset !== 0) {
+    problems.push(`the first window was asked for as ${JSON.stringify(chatAsked.archives)}`);
+  }
+  if (table.first.run !== newest) {
+    problems.push(`the top of the table is the run ${table.first.run}, not this page's own ${newest}`);
+  }
+  // One line, in one breath: the moment first, then the byline with its face, then the run's own
+  // word — in that order, so the list reads like a log and not like a form to fill in.
+  if (!/^\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}$/.test(table.first.when ?? '')) {
+    problems.push(`the top line's moment reads "${table.first.when}"`);
+  }
+  if (!table.first.said.startsWith(table.first.when)) problems.push(`the top line does not begin with its moment: "${table.first.said}"`);
+  if (table.first.nick !== player.nick) problems.push(`the top row is signed "${table.first.nick}"`);
+  if (!table.first.said.includes(`${player.nick}:`)) problems.push(`the top line does not sign itself "${player.nick}:"`);
+  if (!table.first.what) problems.push('the top row says nothing about its run');
+  if (table.first.badge !== `/i/${player.icon}.gif`) problems.push(`the top row wears the badge ${table.first.badge}`);
+  await page.screenshot({ path: join(outDir, '32-archive-table.png') });
+
+  // A window too narrow for the slack: the list takes the whole of it rather than four fifths of a
+  // nothing much — read at 450 px, where the whole is the only width left. The measure is the
+  // scroll's own client box for the same reason as above: the gutter keeps its 15 px whatever the
+  // window is.
+  await page.setViewport({ width: 450, height: 700, deviceScaleFactor: 1 });
+  const narrowList = await page.evaluate(() => {
+    const list = document.querySelector('.archive__list').getBoundingClientRect();
+    const of = document.querySelector('.archive__body').clientWidth;
+    return { width: Math.round(list.width), of, window: innerWidth };
+  });
+  await page.setViewport({ width: 900, height: 700, deviceScaleFactor: 1 });
+  summary.archive.narrow = narrowList;
+  if (narrowList.window < 500 && narrowList.width !== narrowList.of) {
+    problems.push(`on a ${narrowList.window} px window the list is ${narrowList.width} of ${narrowList.of} wide, not the whole of it`);
+  }
+
+  // The rest of the list follows the scroll: the end of the drawn rows is watched for
+  // (`ArchivePanel`), and reaching it is what asks for the next window of them — here, the
+  // twenty-four this server holds past its first hundred.
+  const held = chatArchive.length + chatOld.length;
+  await page.evaluate(() => {
+    const box = document.querySelector('.archive .archive__body');
+    box.scrollTop = box.scrollHeight;
+  });
+  const grewTo = await page
+    .waitForFunction(
+      (want) => document.querySelectorAll('.archive .archive__row').length >= want,
+      { timeout: 20000, polling: 250 },
+      held,
+    )
+    .then(() => held)
+    .catch(() => -1);
+  summary.archive.grewTo = grewTo;
+  summary.archive.held = held;
+  if (grewTo !== held) {
+    problems.push(`the table grew to ${grewTo} rows, not the ${held} the server holds`);
+  }
+  const windows = chatAsked.archives.slice();
+  if (windows.length !== 2 || windows[1].offset !== 100 || windows[1].limit !== 100) {
+    problems.push(`the table's windows were asked for as ${JSON.stringify(windows)}`);
+  }
+
+  // The end of the list, once the whole of it stands: the word «Всё», worn as one more line of the
+  // list — the same line a run wears — rather than a note under it.
+  const end = await page.evaluate(() => {
+    const one = document.querySelector('.archive__row--end');
+    return one ? one.textContent.trim() : null;
+  });
+  summary.archive.end = end;
+  if (end !== 'Всё') problems.push(`the end of the list reads ${JSON.stringify(end)}, not «Всё»`);
+
+  // Pressing a row is following the run: the playback is on at once — a cut, not a pan — with the
+  // tape's own bar up and the table gone from the screen until the run is put away.
+  const row = await page.evaluate((id) => {
+    const one = document.querySelector(`.archive .archive__row[data-run="${id}"]`);
+    if (!one) return null;
+    one.scrollIntoView({ block: 'center' });
+    const rect = one.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  }, smokedRun.id);
+  if (!row) {
+    problems.push('the archive\'s table has no row for the run to press');
+  } else {
+    await page.mouse.click(row.x, row.y);
+    await page.waitForSelector('.tape', { visible: true, timeout: 20000 });
+    const onAtOnce = await page.evaluate(() => ({
+      loaded: window.__garden.tapeState.loaded,
+      tableGone: getComputedStyle(document.querySelector('.archive')).display === 'none',
+    }));
+    summary.archive.pressed = onAtOnce;
+    if (!onAtOnce.loaded) problems.push('pressing a row of the table put no tape on the timeline');
+    if (!onAtOnce.tableGone) problems.push('the table stayed on the screen over the playback');
+
+    // And the way back: putting the run away returns to the table it was pressed in — the row is
+    // where the player left it, and the conversation is not where they land.
+    await page.click('.tape__close');
+    await page.waitForSelector('.archive', { visible: true, timeout: 20000 });
+    // Counted by their runs rather than by their class: the end of the list is a line of it too
+    // («Всё»), and what the way back has to find is the entries, not the word after them.
+    const backToTable = await page.evaluate((want) => ({
+      rows: document.querySelectorAll('.archive .archive__row[data-run]').length,
+      tape: document.querySelector('.tape') !== null,
+      chat: getComputedStyle(document.querySelector('.chat-card')).display === 'none',
+    }), held);
+    summary.archive.backToTable = backToTable;
+    if (backToTable.rows !== held) problems.push(`the way back found ${backToTable.rows} rows, not the ${held} the table held`);
+    if (backToTable.tape) problems.push('the timeline stayed up over the archive');
+    if (!backToTable.chat) problems.push('the way back from a pressed row landed in the chat rather than the table');
+  }
+
+  // The way out is where the ways back always are: a worded button at the left of the heading, and
+  // this one leads to the chat — a pan rather than a cut, because the archive is a place left by
+  // rather than a mode put away.
+  await page.click('.archive .chat-card__back');
+  await panSettled(3);
+  await page.waitForSelector('.chat-card', { visible: true, timeout: 8000 });
+  await page.screenshot({ path: join(outDir, '33-archive-back-to-chat.png') });
 }
 
 const errors = logs.filter(

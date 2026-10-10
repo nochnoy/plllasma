@@ -5,7 +5,8 @@
 //
 //	GET  /api/health                   a line for a monitor: is anything alive
 //	POST /api/auth                     one token, and the player the site says owns it
-//	GET  /api/recordings               the list, newest first — or, with `ids`, exactly those runs
+//	GET  /api/recordings               the list, newest first — or, with `ids`, exactly those runs,
+//	                                   or, with `limit` and `offset`, a window of it that wide and that far down
 //	POST /api/recordings               one run's tape, uploaded whole
 //	POST /api/recordings/live          a run that arrives as it is played
 //	GET  /api/recordings/{id}          one tape, for a live or a stored playback
@@ -297,12 +298,21 @@ func (s *Server) auth(w http.ResponseWriter, r *http.Request) {
 // shows lines that link runs, and what a line says about its run is the run's
 // own label and liveness rather than anything the log itself stores
 // (`frontend/src/chat`).
+//
+// With `limit` — and `offset`, which is otherwise zero — it is a *window* of the
+// list rather than the whole of it: that many rows, that far down, newest
+// first. That is the archive's own asking (`Все записи`), whose table is filled
+// a chunk at a time as it is scrolled and so never asks for more of the list
+// than the player has read. A window needs its width: an offset with no limit
+// is a request for rows with nothing saying how many, and it is refused rather
+// than guessed at.
 func (s *Server) recordings(w http.ResponseWriter, r *http.Request) {
 	if _, ok := s.userOf(w, r); !ok {
 		return
 	}
 	now := s.now().UnixMilli()
-	if asked := strings.TrimSpace(r.URL.Query().Get("ids")); asked != "" {
+	query := r.URL.Query()
+	if asked := strings.TrimSpace(query.Get("ids")); asked != "" {
 		list, err := s.store.RecordingsByID(strings.Split(asked, ","), now)
 		if err != nil {
 			fail(w, http.StatusInternalServerError, "the recordings could not be read: %v", err)
@@ -311,7 +321,36 @@ func (s *Server) recordings(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"recordings": list})
 		return
 	}
-	list, err := s.store.Recordings(now)
+	limit, offset := 0, 0
+	if raw := strings.TrimSpace(query.Get("limit")); raw != "" {
+		parsed, err := number("limit", raw)
+		if err != nil || parsed < 1 {
+			fail(w, http.StatusBadRequest, "limit is how many rows a window of the list holds, not %q", raw)
+			return
+		}
+		limit = int(parsed)
+	}
+	if raw := strings.TrimSpace(query.Get("offset")); raw != "" {
+		parsed, err := number("offset", raw)
+		if err != nil || parsed < 0 {
+			fail(w, http.StatusBadRequest, "offset is how far down the list a window starts, not %q", raw)
+			return
+		}
+		offset = int(parsed)
+	}
+	if limit == 0 && offset != 0 {
+		fail(w, http.StatusBadRequest, "a window of the list needs a limit to say how wide it is")
+		return
+	}
+	var (
+		list []store.Recording
+		err  error
+	)
+	if limit > 0 {
+		list, err = s.store.RecordingsWindow(now, offset, limit)
+	} else {
+		list, err = s.store.Recordings(now)
+	}
 	if err != nil {
 		fail(w, http.StatusInternalServerError, "the recordings could not be read: %v", err)
 		return
@@ -504,6 +543,7 @@ func (s *Server) upload(w http.ResponseWriter, r *http.Request) {
 		Name:       name,
 		AuthorID:   user.ID,
 		Author:     user.Nick,
+		Icon:       user.Icon,
 		Steps:      header.Steps,
 		StepMs:     header.Step,
 		Seed:       header.Seed,
@@ -560,6 +600,7 @@ func (s *Server) open(w http.ResponseWriter, r *http.Request) {
 		Name:       name,
 		AuthorID:   user.ID,
 		Author:     user.Nick,
+		Icon:       user.Icon,
 		StepMs:     header.Step,
 		Seed:       header.Seed,
 		RecordedMs: body.RecordedMs,
