@@ -813,16 +813,21 @@ a.chat-line__run:focus-visible {
  * The field: one frame around the whole of it, the speaker included, with the text box inside it that
  * has neither a frame nor a fill of its own — two boxes around the same piece of paper read as a box in
  * a box. The frame is what says where the field is, so it is also what takes the focus, and its ring is
- * drawn *inside* itself (a 2 px outline over its 1 px border) rather than around the text alone. The
+ * drawn *inside* itself (a 2 px outline over its 2 px border) rather than around the text alone. The
  * speaker's own button is left to draw its own, or one field would show two rings.
+ *
+ * The border is the width the garden's worded buttons wear theirs (2 px, `.chat-card__back`): the field
+ * is a control like the others, so it reads as one wherever the two stand together. The box keeps its
+ * 40 px *with* the border (border-box), which is what keeps it and the button beside it one height.
  */
 .chat-card__field {
   flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
+  box-sizing: border-box;
   height: 40px;
-  border: 1px solid rgba(0, 0, 0, 0.35);
+  border: 2px solid rgba(0, 0, 0, 0.35);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.5);
 }
@@ -896,11 +901,17 @@ a.chat-line__run:focus-visible {
   outline: none;
 }
 
+/*
+ * The worded send button, beside the framed field: black like the garden's worded buttons, and — like
+ * them (`.chat-card__back`) — edged in the wood, 2 px of it, inside its own 40 px (border-box), so that
+ * it and the field stand one height still.
+ */
 .chat-card__send {
   flex: none;
+  box-sizing: border-box;
   height: 40px;
   padding: 0 14px;
-  border: 0;
+  border: 2px solid var(--wood);
   border-radius: 8px;
   background: #000;
   color: var(--paper);
@@ -925,6 +936,108 @@ a.chat-line__run:focus-visible {
 .chat-run:focus-visible {
   outline: 2px solid #000;
   outline-offset: -2px;
+}
+
+/*
+ * The field's second body — the painted one (`ChatFieldDesktop.vue`): the stone frame of
+ * `assets/chat-bg.png` *is* the field, drawn 785×113 at one size (a window this narrow-or-wider is
+ * the only one it is mounted in — `useMinWidth` in `ChatPanel.vue`), and everything alive stands on
+ * it transparent. The form *is* the picture's box: 785×113, the three faces of the picture filling
+ * it exactly, the text box over the dark field of the picture and the shield over the picture's own
+ * button — neither drawing so much as a pixel of itself, because the picture does the drawing.
+ *
+ * The coordinates are the picture's own, read off it by pixel: the dark field runs 72..646 across
+ * and 37..96 down, so the box stands a step inside it (74;38, 570×58) — inside, so that the text
+ * never leans on the rounded corners of the stone; the shield runs 667..727 across and 27..110
+ * down, so the button stands over it with a finger's width of stone around it to be pressed by
+ * (656;18, 84×94).
+ */
+.chat-card--full .chat-card__form--desktop {
+  position: relative;
+  display: block;
+  width: 785px;
+  height: 113px;
+  padding: 0;
+  margin-top: 12px;
+  /* The picture stands on the screen's own bottom edge: the stone lies on the floor of the place,
+     the way a frame of stone would, with nothing of the page's own beneath it. */
+  margin-bottom: 0;
+}
+
+/*
+ * The three faces of the picture — rest, hover, press — stand exactly on each other, and the two
+ * answers to the pointer show by turning their own opacity on (`:has`, the same way the framed
+ * field draws its focus ring): the shield lit while the button is under the cursor
+ * (`chat-hover.png`), the shield sunk while it is held down (`chat-press.png`). The lit face is
+ * turned back off while the button is down — its light lies around the shield, wider than the
+ * pressed one, and a press showing inside a glow reads as both at once rather than as one. They
+ * take no pointer themselves, or the face showing for the button would stand between the cursor
+ * and the button. A button out (`disabled`, a line still on its way) answers nobody: neither face
+ * shows for it.
+ */
+.chat-card__face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.chat-card__face--rest {
+  opacity: 1;
+}
+
+.chat-card--full .chat-card__form--desktop:has(.chat-card__send--desktop:not(:disabled):hover)
+  .chat-card__face--hover {
+  opacity: 1;
+}
+
+.chat-card--full .chat-card__form--desktop:has(.chat-card__send--desktop:not(:disabled):active)
+  .chat-card__face--press {
+  opacity: 1;
+}
+
+.chat-card--full .chat-card__form--desktop:has(.chat-card__send--desktop:not(:disabled):active)
+  .chat-card__face--hover {
+  opacity: 0;
+}
+
+/* The text box over the dark of the picture: no frame, no fill, no ring of its own — the dark is
+   the field, and it is the picture that says where it is; a ring drawn over the stone would be a
+   line the stone itself never wears, so the framed field's focus ring is taken back off here — said
+   against the ring's own `:has` rule, which is the one it has to out-say. */
+.chat-card--full .chat-card__field--desktop,
+.chat-card--full .chat-card__field--desktop:has(.chat-card__input:focus) {
+  position: absolute;
+  left: 74px;
+  top: 38px;
+  width: 570px;
+  height: 58px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  outline: none;
+}
+
+/* The shield: the picture's own button, and the button stands where the picture draws it, taking
+   the presses for it. It says nothing and draws nothing — its name is given for whoever reads
+   buttons rather than pictures (`aria-label` in `ChatFieldDesktop.vue`) — and its focus ring stands
+   around the shield, the one bright line the stone itself never draws. */
+.chat-card--full .chat-card__send--desktop {
+  position: absolute;
+  left: 656px;
+  top: 18px;
+  width: 84px;
+  height: 94px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+}
+
+.chat-card--full .chat-card__send--desktop:hover {
+  background: none;
 }
 
 /*

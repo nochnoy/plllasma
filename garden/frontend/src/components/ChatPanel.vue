@@ -3,6 +3,9 @@ import { nextTick, ref, watch } from 'vue';
 import type { ChatMessage, Speaker } from '../chat/messages';
 import type { Run } from '../chat/runs';
 import ChatLine from './ChatLine.vue';
+import ChatFieldMobile from './ChatFieldMobile.vue';
+import ChatFieldDesktop from './ChatFieldDesktop.vue';
+import { useMinWidth } from '../composables/useMinWidth';
 
 /**
  * The chat's own screen — the third of the garden's locations, arrived over the world from the
@@ -23,7 +26,10 @@ import ChatLine from './ChatLine.vue';
  * The field's own left end says who is speaking: the badge the next line will wear, the nickname, and a
  * triangle like the one on a combobox. Pressing any part of that swaps the player for the ghost and back
  * (see `useChat`) — the field is the only place anonymity is decided, so it is the only place it is
- * shown, and nothing already said changes.
+ * shown, and nothing already said changes. The field itself is one thing with two bodies: a window wide
+ * enough for the picture wears the painted stone of `assets/chat-bg.png` (`ChatFieldDesktop.vue`), a
+ * narrower one wears the framed field the chat has always had (`ChatFieldMobile.vue`) — the window's
+ * width alone decides (`useMinWidth`), and everything the field does is the same in either.
  *
  * Sending is a function rather than an event because the field has to wait for its answer: the line
  * stands in the log at once (`useChat`, which is why the field is emptied on the spot — the screen
@@ -61,8 +67,15 @@ const emit = defineEmits<{
 const typed = ref('');
 /** The screen's own scroll: the one that carries the log. */
 const scroll = ref<HTMLElement | null>(null);
-/** The field the screen's lines are written in. */
-const field = ref<HTMLInputElement | null>(null);
+/** The field the screen's lines are written in — whichever of the two bodies the window is wearing. */
+const field = ref<{ focus(): void } | null>(null);
+/**
+ * Enough window for the painted field: it is 785 px of picture, and a window narrower than that
+ * wears the framed one instead — the two are one field to everyone standing in front of them
+ * (`ChatFieldMobile.vue` / `ChatFieldDesktop.vue`), and which of them is mounted is the window's
+ * width alone.
+ */
+const paintedField = useMinWidth(785);
 
 /** The newest message is the one to read: keep the screen's own scroll at its bottom. */
 function toBottom(): void {
@@ -76,16 +89,22 @@ function toBottom(): void {
 // time is no different: the panel is put in its place in the garden before the player ever arrives
 // at it (`App.vue`), so mounting takes no focus from the stage and the arrival itself is what puts
 // it in the field, with the scroll settled at the newest line.
-watch(
-  () => props.open,
-  (up) => {
-    if (!up) return;
-    toBottom();
-    field.value?.focus();
-  },
-  { immediate: true },
-);
+/** Arriving at the screen is the field's own moment, every time: the scroll settles at the newest
+ * line and the field takes the focus — and the first time is no different, because the panel is put
+ * in its place in the garden before the player ever arrives at it (`App.vue`). */
+function arrived(): void {
+  toBottom();
+  field.value?.focus();
+}
+watch(() => props.open, arrived, { immediate: true });
 watch(() => props.messages.length, toBottom);
+// The window changing its width across the field's own line swaps the two bodies — and takes the
+// focus with the field that left. While the player is at the chat, the field that arrives takes it
+// back: the text keeps its place (both fields write into the same `typed`), and the caret is where
+// it was before the window moved.
+watch(paintedField, () => {
+  if (props.open) field.value?.focus();
+});
 
 async function submit(): Promise<void> {
   const text = typed.value.trim();
@@ -139,30 +158,30 @@ async function submit(): Promise<void> {
            beside the field rather than up in the log among other people's messages, and it stays there
            while the log scrolls. -->
       <p v-if="error" class="chat-card__error" role="alert">{{ error }}</p>
-      <!-- One frame around the whole of the field, the speaker included: the text box inside it has
-           neither a frame nor a fill of its own, or the field would read as two boxes — and its own
-           focus ring is drawn inside that frame rather than around the text alone. -->
-      <form class="chat-card__form" @submit.prevent="submit">
-        <div class="chat-card__field">
-          <button
-            type="button"
-            class="chat-card__speaker"
-            :aria-pressed="anonymous"
-            :aria-label="anonymous ? 'Писать от своего имени' : 'Писать от имени Привидения'"
-            @click="emit('toggleSpeaker')"
-          >
-            <img class="chat-card__badge" :src="speaker.face" alt="" width="16" height="16" />
-            <b class="chat-card__nick">{{ speaker.nick }}</b>
-            <!-- The combobox's own triangle, pointing down while the player is themselves and up
-                 while they are the ghost. -->
-            <svg class="chat-card__caret" viewBox="0 0 12 12" aria-hidden="true">
-              <path :d="anonymous ? 'M2.6 7.7h6.8L6 4.2z' : 'M2.6 4.3h6.8L6 7.8z'" />
-            </svg>
-          </button>
-          <input ref="field" v-model="typed" class="chat-card__input" type="text" aria-label="Сообщение" />
-        </div>
-        <!-- One line at a time is all the server is asked for, so the button waits for the last one. -->
-        <button type="submit" class="chat-card__send" :disabled="sending">Отправить</button>
-      </form>
+      <!-- The field is one thing with two bodies, and the window's width alone decides which of them
+           stands: a window wide enough for the picture wears the painted field
+           (`ChatFieldDesktop.vue`), a narrower one the framed field (`ChatFieldMobile.vue`). Both
+           write into the same `typed`, both send the same way, and both take the focus the screen
+           gives its field — the panel holds whichever is mounted by its exposed `focus`. -->
+      <ChatFieldDesktop
+        v-if="paintedField"
+        ref="field"
+        v-model="typed"
+        :speaker="speaker"
+        :anonymous="anonymous"
+        :sending="sending"
+        @submit="submit"
+        @toggle-speaker="emit('toggleSpeaker')"
+      />
+      <ChatFieldMobile
+        v-else
+        ref="field"
+        v-model="typed"
+        :speaker="speaker"
+        :anonymous="anonymous"
+        :sending="sending"
+        @submit="submit"
+        @toggle-speaker="emit('toggleSpeaker')"
+      />
     </section>
 </template>

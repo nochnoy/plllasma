@@ -1818,6 +1818,20 @@ summary.chat.window = await page.evaluate(() => {
   const speaker = card.querySelector('.chat-card__speaker');
   const send = card.querySelector('.chat-card__send');
   const back = card.querySelector('.chat-card__back');
+  // Where a painted field's own pieces stand, counted from the picture's own corner: the picture is
+  // the field, so its own coordinates are the only ones that say whether a box lies on the dark of
+  // it or beside it.
+  const boxOf = (selector) => {
+    const a = card.querySelector('.chat-card__form--desktop').getBoundingClientRect();
+    const b = card.querySelector(selector).getBoundingClientRect();
+    return {
+      left: Math.round(b.left - a.left),
+      top: Math.round(b.top - a.top),
+      width: Math.round(b.width),
+      height: Math.round(b.height),
+    };
+  };
+  const face = (name) => card.querySelector(`.chat-card__face--${name}`);
   return {
     background: getComputedStyle(card).backgroundColor,
     colour: getComputedStyle(card).color,
@@ -1827,9 +1841,10 @@ summary.chat.window = await page.evaluate(() => {
     introBack: getComputedStyle(document.querySelector('.location--intro')).backgroundImage,
     chatBack: getComputedStyle(document.querySelector('.location--chat')).backgroundImage,
     parts: [...card.children].map((child) => child.className),
-    // The log and the field beneath it: the chat's own page — the same page the archive's list is
-    // written on, 600 px across and stood in the middle of the screen, measured against the
-    // scroll's own client box (a stable scrollbar gutter keeps ~15 px of the window for itself).
+    // The log and the field beneath it: the conversation stands on the page it always has — 600 px
+    // across and stood in the middle of the screen (measured against the scroll's own client box:
+    // a stable scrollbar gutter keeps ~15 px of the window for itself) — while the field is the
+    // painted one here, a picture 785 px wide on the same page's place.
     page: (() => {
       const log = card.querySelector('.chat-card__log').getBoundingClientRect();
       const form = card.querySelector('.chat-card__form').getBoundingClientRect();
@@ -1850,12 +1865,30 @@ summary.chat.window = await page.evaluate(() => {
     bold: getComputedStyle(nick).fontWeight,
     colon: line.textContent.slice(nick.textContent.length, nick.textContent.length + 2),
     badge: `${line.querySelector('.chat-line__badge').naturalWidth}x${line.querySelector('.chat-line__badge').naturalHeight}`,
-    send: send.textContent.trim(),
-    // The field: one frame around the whole of it, and a text box inside that has no frame and no fill of
-    // its own — and the field and the button beside it are one height.
+    // The painted field's button draws no word of itself — the shield is the button — so its name is
+    // what it says about itself.
+    sendLabel: send.getAttribute('aria-label'),
+    // The field: the painted one here, so neither the box nor the button draws anything of its own —
+    // the picture is the frame, and the dark of it is the fill.
     fieldBorder: Number.parseFloat(getComputedStyle(field).borderTopWidth),
     inputBorder: Number.parseFloat(getComputedStyle(input).borderTopWidth),
     inputBackground: getComputedStyle(input).backgroundColor,
+    // The picture's own geometry: its three faces (rest, hover, press) one size and lying as they
+    // lie at rest — the two answers to the pointer dark until the pointer asks — the text box over
+    // the dark field of the picture, the shield over the picture's own button, and the picture
+    // itself standing on the floor of the screen (nothing of the page's own under it).
+    painted: {
+      faces: [...card.querySelectorAll('.chat-card__face')].map((img) => `${img.naturalWidth}x${img.naturalHeight}`),
+      rest: getComputedStyle(face('rest')).opacity,
+      hover: getComputedStyle(face('hover')).opacity,
+      press: getComputedStyle(face('press')).opacity,
+      field: boxOf('.chat-card__field--desktop'),
+      send: boxOf('.chat-card__send--desktop'),
+    },
+    floor: (() => {
+      const form = card.querySelector('.chat-card__form--desktop').getBoundingClientRect();
+      return Math.round(innerHeight - form.bottom);
+    })(),
     fieldHeight: Math.round(field.getBoundingClientRect().height),
     sendHeight: Math.round(send.getBoundingClientRect().height),
     // Who the field says is speaking, and which way its triangle points.
@@ -1875,6 +1908,33 @@ summary.chat.window = await page.evaluate(() => {
   };
 });
 await page.screenshot({ path: join(outDir, '13-chat-window.png') });
+
+// The painted field's own button is the shield, and the picture itself answers the pointer for it:
+// under the cursor the shield is lit (`chat-hover.png` over the rest of the picture), held down it
+// is sunk (`chat-press.png`), and away from it the picture is at rest again. The states are read as
+// the faces' own opacity — the faces stand on each other exactly, so an opacity of one *is* the
+// picture showing.
+const faceStates = () =>
+  page.evaluate(() => {
+    const one = (name) => getComputedStyle(document.querySelector(`.chat-card__face--${name}`)).opacity;
+    return { rest: one('rest'), hover: one('hover'), press: one('press') };
+  });
+const shieldAt = await page.evaluate(() => {
+  const box = document.querySelector('.chat-card__send--desktop').getBoundingClientRect();
+  return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+});
+await page.mouse.move(shieldAt.x, shieldAt.y);
+await wait(100);
+summary.chat.shieldHover = await faceStates();
+await page.screenshot({ path: join(outDir, '13-chat-shield-hover.png') });
+await page.mouse.down();
+await wait(100);
+summary.chat.shieldPress = await faceStates();
+await page.screenshot({ path: join(outDir, '13-chat-shield-press.png') });
+await page.mouse.up();
+await page.mouse.move(450, 80);
+await wait(100);
+summary.chat.shieldLeft = await faceStates();
 
 // The switch: the whole of the field's left end is one button, and pressing it makes the player the
 // ghost — another nickname, another badge, the triangle the other way up. What is sent from then on is
@@ -1931,6 +1991,43 @@ summary.chat.back = await page.evaluate(() => {
     pressed: speaker.getAttribute('aria-pressed'),
   };
 });
+// The field's second body: a window too narrow for the picture (the painted one is 785 px of
+// picture, and not a pixel smaller) is given the framed one — the field this chat has always worn,
+// its frame now the width the garden's worded buttons wear theirs, and the worded button beside it
+// edged the same way. The swap is waited for by what it is rather than by a length of time: the
+// media query hears the window, the page answers it, and the field that arrived is the one read.
+await page.setViewport({ width: 450, height: 700, deviceScaleFactor: 1 });
+await page
+  .waitForFunction(() => document.querySelector('.chat-card__form--desktop') === null, {
+    timeout: 8000,
+    polling: 100,
+  })
+  .catch(() => {});
+summary.chat.narrow = await page.evaluate(() => {
+  const card = document.querySelector('.chat-card');
+  const field = card.querySelector('.chat-card__field');
+  const input = card.querySelector('.chat-card__input');
+  const send = card.querySelector('.chat-card__send');
+  return {
+    paintedGone: card.querySelector('.chat-card__form--desktop') === null,
+    framed: card.querySelector('.chat-card__form:not(.chat-card__form--desktop)') !== null,
+    fieldBorder: Number.parseFloat(getComputedStyle(field).borderTopWidth),
+    inputBorder: Number.parseFloat(getComputedStyle(input).borderTopWidth),
+    sendBorder: Number.parseFloat(getComputedStyle(send).borderTopWidth),
+    sendEdge: getComputedStyle(send).borderTopColor,
+    fieldHeight: Math.round(field.getBoundingClientRect().height),
+    sendHeight: Math.round(send.getBoundingClientRect().height),
+    send: send.textContent.trim(),
+  };
+});
+await page.screenshot({ path: join(outDir, '13-chat-narrow.png') });
+await page.setViewport({ width: 900, height: 700, deviceScaleFactor: 1 });
+await page
+  .waitForFunction(() => document.querySelector('.chat-card__form--desktop') !== null, {
+    timeout: 8000,
+    polling: 100,
+  })
+  .catch(() => {});
 // The way back: one button, one pan to the right, and the garden is the stage again. The chat's
 // screen does not go away — it stays where it is in the garden, one screen to the right of the
 // stage, which is what leaving it looks like: the conversation itself sliding out rather than a
@@ -2074,7 +2171,7 @@ if (!/bg-1\.png/.test(chatWindow.introBack)) {
 if (!/bg-3\.png/.test(chatWindow.chatBack)) {
   problems.push(`the third location wears ${chatWindow.chatBack}, not its own picture`);
 }
-if (chatWindow.parts.join() !== 'chat-card__head,chat-card__body,chat-card__form') {
+if (chatWindow.parts.join() !== 'chat-card__head,chat-card__body,chat-card__form chat-card__form--desktop') {
   problems.push(`the chat window's own parts are ${chatWindow.parts.join(', ')}`);
 }
 if (!chatWindow.chat) {
@@ -2102,7 +2199,7 @@ if (chatWindow.bold !== '700' || chatWindow.colon !== ': ') {
   problems.push(`a message opens with "${chatWindow.nick}" in ${chatWindow.bold} and "${chatWindow.colon}" after it`);
 }
 if (!chatWindow.badge.startsWith('16x')) problems.push(`a message in the window opens with a ${chatWindow.badge} badge`);
-if (chatWindow.send !== 'Отправить') problems.push(`the chat window's button says "${chatWindow.send}"`);
+if (chatWindow.sendLabel !== 'Отправить') problems.push(`the chat window's button says "${chatWindow.sendLabel}"`);
 // The heading of the screen: the way back at the left of it, the name of the place beside it — a
 // screen is left by a way back rather than closed by a cross.
 if (chatWindow.title !== 'Чат с привидениями') problems.push(`the chat's heading says "${chatWindow.title}"`);
@@ -2113,32 +2210,89 @@ if (chatWindow.titleAt && Math.abs(chatWindow.titleAt.left + chatWindow.titleAt.
   );
 }
 if (chatWindow.back !== 'Назад') problems.push(`the way back says "${chatWindow.back}", not «Назад»`);
-// The conversation and the field stand on the same page the archive's list is written on: 600 px
-// across (the whole of the scroll on a window that narrow), both of them, in the middle of it.
-if (chatWindow.page.of >= 600 && (chatWindow.page.log !== 600 || chatWindow.page.form !== 600)) {
+// The conversation and the field stand on the same page: the conversation 600 px across (the whole
+// of the scroll on a window that narrow), both of them, in the middle of it — while the field, on a
+// window wide enough for the picture, is the painted one, its own 785 px of picture.
+if (chatWindow.page.of >= 785 && (chatWindow.page.log !== 600 || chatWindow.page.form !== 785)) {
   problems.push(
-    `the chat's conversation is ${chatWindow.page.log} px wide and its field ${chatWindow.page.form}, not the 600 px of a page`,
+    `the chat's conversation is ${chatWindow.page.log} px wide and its field ${chatWindow.page.form}, not a 600 px page with the 785 px picture on it`,
   );
 }
 if (Math.abs(chatWindow.page.at - (chatWindow.page.of - chatWindow.page.log) / 2) > 2) {
   problems.push(`the chat's conversation stands at ${chatWindow.page.at} of ${chatWindow.page.of}, not in the middle`);
 }
-// The field: one frame around the whole of it, a text box inside that neither draws a frame of its own
-// nor fills itself in, and the field and the button beside it the same height.
-if (chatWindow.fieldBorder !== 1 || chatWindow.inputBorder !== 0) {
+// The field, on a window wide enough for it, is the painted one: the picture is the frame and the
+// dark of it the fill, so neither the box nor the text inside draws anything of its own — and the
+// box stands on the dark of the picture, the shield on the picture's own button, both counted from
+// the picture's own corner (a tolerance of a couple of px is the reading's own, not the field's).
+if (chatWindow.fieldBorder !== 0 || chatWindow.inputBorder !== 0) {
   problems.push(
-    `the chat's field is framed ${chatWindow.fieldBorder}px around the whole of it and ` +
-      `${chatWindow.inputBorder}px around the text inside`,
+    `the painted field's box frames itself ${chatWindow.fieldBorder}px around the whole of it and ` +
+      `${chatWindow.inputBorder}px around the text inside, where the picture is the frame`,
   );
 }
 if (chatWindow.inputBackground !== 'rgba(0, 0, 0, 0)') {
-  problems.push(`the chat's text box is filled ${chatWindow.inputBackground}`);
+  problems.push(`the painted field's text box is filled ${chatWindow.inputBackground}`);
 }
-if (chatWindow.fieldHeight !== chatWindow.sendHeight) {
+const paintedField = chatWindow.painted;
+if (paintedField.faces.join() !== '785x113,785x113,785x113') {
+  problems.push(`the painted field's faces are ${paintedField.faces.join(', ')}, not three pictures of 785x113`);
+}
+const boxSays = (box, want, what) => {
+  for (const edge of Object.keys(want)) {
+    if (Math.abs(box[edge] - want[edge]) > 2) {
+      problems.push(`${what} stands at ${JSON.stringify(box)}, not at ${JSON.stringify(want)} of the picture`);
+      return;
+    }
+  }
+};
+boxSays(paintedField.field, { left: 74, top: 38, width: 570, height: 58 }, "the painted field's text box");
+boxSays(paintedField.send, { left: 656, top: 18, width: 84, height: 94 }, "the painted field's shield");
+if (chatWindow.floor !== 0) {
+  problems.push(`the painted field hangs ${chatWindow.floor} px above the floor of the screen`);
+}
+if (paintedField.rest !== '1' || paintedField.hover !== '0' || paintedField.press !== '0') {
   problems.push(
-    `the chat's field is ${chatWindow.fieldHeight} px tall with the button beside it ${chatWindow.sendHeight}`,
+    `the painted field's faces lie at rest ${paintedField.rest}, hover ${paintedField.hover}, press ${paintedField.press}`,
   );
 }
+// And the picture answers the pointer the shield's way: lit under the cursor, sunk while held down,
+// at rest again once the pointer has gone — each state the face's own opacity over the rest.
+const facesAt = (states) => JSON.stringify(states) === JSON.stringify({ rest: '1', hover: '1', press: '0' });
+if (!facesAt(summary.chat.shieldHover)) {
+  problems.push(`the shield under the pointer reads ${JSON.stringify(summary.chat.shieldHover)}`);
+}
+if (JSON.stringify(summary.chat.shieldPress) !== JSON.stringify({ rest: '1', hover: '0', press: '1' })) {
+  problems.push(`the shield held down reads ${JSON.stringify(summary.chat.shieldPress)}`);
+}
+if (JSON.stringify(summary.chat.shieldLeft) !== JSON.stringify({ rest: '1', hover: '0', press: '0' })) {
+  problems.push(`the shield left alone reads ${JSON.stringify(summary.chat.shieldLeft)}`);
+}// The field's other body, on a window too narrow for the picture: the framed one, its frame the
+// width the garden's worded buttons wear theirs, the button beside it edged in the wood the same
+// way — and the two of them one height still.
+const narrowField = summary.chat.narrow;
+if (!narrowField.paintedGone || !narrowField.framed) {
+  problems.push(
+    `on a 450 px window the painted field ${narrowField.paintedGone ? 'left' : 'stayed'} and the framed one ${
+      narrowField.framed ? 'took its place' : 'did not arrive'
+    }`,
+  );
+}
+if (narrowField.fieldBorder !== 2 || narrowField.inputBorder !== 0 || narrowField.sendBorder !== 2) {
+  problems.push(
+    `the framed field is framed ${narrowField.fieldBorder}px around the whole of it and ` +
+      `${narrowField.inputBorder}px around the text inside, its button edged ${narrowField.sendBorder}px`,
+  );
+}
+if (narrowField.sendEdge !== 'rgb(192, 192, 192)') {
+  problems.push(`the framed field's button is edged in ${narrowField.sendEdge}, not the wood's own silver`);
+}
+if (narrowField.fieldHeight !== narrowField.sendHeight) {
+  problems.push(
+    `the framed field is ${narrowField.fieldHeight} px tall with the button beside it ${narrowField.sendHeight}`,
+  );
+}
+if (narrowField.send !== 'Отправить') problems.push(`the framed field's button says "${narrowField.send}"`);
 // The field's own left end says who is speaking, and that is the whole of what switches between the
 // player and the ghost: the name the site answered the handshake with — not «Ты» and not anything chosen
 // here, so what stands here is the site's own word for this player coming out at the other end of the page
@@ -4225,6 +4379,20 @@ for (const id of new Set(chatSaid.map((one) => one.id))) {
 
 await page.click('.chat-strip');
 await linkArrived(smokedRun.id);
+// The words of a link are read out of the run's own row, re-read on the chat's own two-second beat
+// (`useRunStates`): the link stands the moment its line does, its words a beat later — waited for
+// by what they are, because the click below aims at the link's own middle, and a link that has
+// grown its words since the reading is a click that lands beside it.
+await page
+  .waitForFunction(
+    (id) => {
+      const link = document.querySelector(`.chat-card .chat-line__run[data-run="${id}"]`);
+      return link !== null && (link.closest('.chat-line')?.textContent ?? '').includes(': начал гнуть');
+    },
+    { timeout: 8000, polling: 250 },
+    smokedRun.id,
+  )
+  .catch(() => {});
 const runLink = await page.evaluate((id) => {
   const link = document.querySelector(`.chat-card .chat-line__run[data-run="${id}"]`);
   if (!link) return { said: null };
@@ -4487,6 +4655,21 @@ chatLog.push({
 // strip to press — only the line to wait for.
 await chatArrived();
 await linkArrived(foreignRun.id);
+// The words of a link are read out of the run's own row, which the chat re-reads on its own
+// two-second beat (`useRunStates`): the link stands in the log the moment its line does, but the
+// words arrive a beat later — waited for by what they are, so that what is read below is the line
+// as it stands rather than the stand-in a row not yet read wears.
+await page
+  .waitForFunction(
+    (id) =>
+      document
+        .querySelector(`.chat-card .chat-line__run[data-run="${id}"]`)
+        ?.closest('.chat-line')
+        ?.textContent.includes('(идёт стрим)'),
+    { timeout: 8000, polling: 250 },
+    foreignRun.id,
+  )
+  .catch(() => {});
 const liveRow = await page.evaluate((id) => {
   const link = document.querySelector(`.chat-card .chat-line__run[data-run="${id}"]`);
   if (!link) return { said: null };
