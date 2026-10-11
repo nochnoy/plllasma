@@ -26,12 +26,20 @@ export interface MusicOptions {
 }
 
 /**
- * The page's own track: an audio element, never looped and never a part of the page's DOM — the
- * music is nowhere to click, because nothing about it is asked of the player.
+ * How loud the garden's music stands on the page: a third of the file's own volume — the music is
+ * the sound of the place, and a place is felt under what happens in it rather than heard over it.
+ */
+const TRACK_VOLUME = 1 / 3;
+
+/**
+ * The page's own track: an audio element, never looped, a third of the file's own loudness, and
+ * never a part of the page's DOM — the music is nowhere to click, because nothing about it is
+ * asked of the player.
  */
 function makeAnAudioElement(src: string): MusicTrack {
   const audio = new Audio(src);
   audio.loop = false;
+  audio.volume = TRACK_VOLUME;
   audio.preload = 'auto';
   return audio;
 }
