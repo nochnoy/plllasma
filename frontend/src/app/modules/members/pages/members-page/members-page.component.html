@@ -155,7 +155,9 @@
 
   </main>
   <div class="spacer"></div>
-  <div class="sidebar"></div>
+  <div class="sidebar" [class.sidebar-halloween]="holiday.isHalloween">
+    <app-holiday></app-holiday>
+  </div>
 </div>
 
 <ng-template #memberTemplate let-member='member'>

@@ -1,0 +1,10 @@
+<ng-container *ngIf="holiday.isHalloween || holiday.isNewYear">
+
+  <div class="halloween" *ngIf="holiday.isHalloween">
+    <img src="assets/img/halloween-pumpkin.png">
+    <div class="halloween-text" [innerHTML]="halloweenText"></div>
+  </div>
+
+  <app-newyear *ngIf="holiday.isNewYear"></app-newyear>
+
+</ng-container>

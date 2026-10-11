@@ -24,7 +24,7 @@ import {MatMenuModule} from "@angular/material/menu";
 import {MatButtonModule} from "@angular/material/button";
 import {NoopAnimationsModule} from "@angular/platform-browser/animations";
 import {MatDialogModule} from "@angular/material/dialog";
-import { NewyearComponent } from './components/newyear/newyear.component';
+import { HolidayComponent } from './components/holiday/holiday.component';
 import { AttachmentPageComponent } from './pages/attachment-page/attachment-page.component';
 import { AttachmentItemComponent } from './components/attachment-item/attachment-item.component';
 import { AttachmentListComponent } from './components/attachment-list/attachment-list.component';
@@ -45,6 +45,7 @@ import { MatrixLinkDialogComponent } from './components/matrix-link-dialog/matri
     MatButtonModule,
     NoopAnimationsModule,
     MatDialogModule,
+    HolidayComponent,
   ],
     declarations: [
       AppComponent,
@@ -61,7 +62,6 @@ import { MatrixLinkDialogComponent } from './components/matrix-link-dialog/matri
       SelectionComponent,
       DialogDataExampleDialog,
       MatrixLinkDialogComponent,
-          NewyearComponent,
     AttachmentPageComponent,
     AttachmentItemComponent,
     AttachmentListComponent

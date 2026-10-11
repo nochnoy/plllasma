@@ -7,6 +7,7 @@ import { MembersPageComponent } from './pages/members-page/members-page.componen
 import {MainMenuComponent} from "../../components/main-menu/main-menu.component";
 import {SharedModule} from "../shared/shared.module";
 import {FormsModule} from "@angular/forms";
+import {HolidayComponent} from "../../components/holiday/holiday.component";
 
 @NgModule({
   declarations: [
@@ -19,7 +20,8 @@ import {FormsModule} from "@angular/forms";
 
     SharedModule,
     MembersRoutingModule,
-    MainMenuComponent
+    MainMenuComponent,
+    HolidayComponent
   ]
 })
 export class MembersModule { }

@@ -6,6 +6,7 @@ import {MainMenuComponent} from "../../components/main-menu/main-menu.component"
 import {SharedModule} from "../shared/shared.module";
 import {FormsModule, ReactiveFormsModule} from "@angular/forms";
 import { ChannelCreationPageComponent } from './pages/channel-creation-page/channel-creation-page.component';
+import {HolidayComponent} from "../../components/holiday/holiday.component";
 
 @NgModule({
   declarations: [
@@ -19,6 +20,7 @@ import { ChannelCreationPageComponent } from './pages/channel-creation-page/chan
 
         SharedModule,
         MainMenuComponent,
+        HolidayComponent,
         ChannelsRoutingModule,
         NgOptimizedImage,
     ]

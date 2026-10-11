@@ -13,7 +13,7 @@ import {MAT_DIALOG_DATA, MatDialog} from "@angular/material/dialog";
 import {IMatrix, newDefaultMatrix} from "../../model/matrix.model";
 import {UserService} from "../../services/user.service";
 import {Const} from "../../model/const";
-import {HALLOWEEN_TEXT} from "../../model/app-model";
+import {HolidayService} from "../../services/holiday.service";
 import {Utils} from "../../utils/utils";
 
 @UntilDestroy()
@@ -31,6 +31,7 @@ export class ChannelPageComponent implements OnInit {
     public channelService: ChannelService,
     public dialog: MatDialog,
     public userService: UserService,
+    public holiday: HolidayService,
   ) { }
 
   channelId = 0;
@@ -42,15 +43,8 @@ export class ChannelPageComponent implements OnInit {
   currentPage = 0;
   lv: string = '';
 
-  isHalloween = false;
-  isNewYear = false;
-  halloweenText = HALLOWEEN_TEXT;
-
   ngOnInit(): void {
     of({}).pipe(
-      tap(() => {
-        this.checkHollydays();
-      }),
       switchMap(() => this.activatedRoute.url),
       switchMap((urlSegments) => {
         this.isNotificationsReady = false;
@@ -252,17 +246,6 @@ export class ChannelPageComponent implements OnInit {
         animal: 'panda'
       }
     });
-  }
-
-  checkHollydays(): void {
-    const year = (new Date()).getFullYear();
-    const now = new Date();
-    const from = new Date(year, 10 - 1, 13);  // 13 октября
-    const to = new Date(year, 11 - 1, 4);    // 3 ноября
-    this.isHalloween = (now.getTime() >= from.getTime() && now.getTime() <= to.getTime());
-    const nowMonth = now.getMonth() + 1;
-    const nowDate = now.getDate();
-    this.isNewYear = (nowMonth === 12 && nowDate >= 15) || (nowMonth === 1 && nowDate <= 10);
   }
 
   createChannelStub(channelId: number): Channel {

@@ -4,6 +4,7 @@ import {HttpService} from "../../../../services/http.service";
 import {tap} from "rxjs/operators";
 import {IMember} from "../../../../model/app-model";
 import {UserService} from "../../../../services/user.service";
+import {HolidayService} from "../../../../services/holiday.service";
 
 type Tab = 'digest' | 'profile' | 'girls' | 'flexible'| 'byregisterdate' | 'bymessages' | 'byspasibas' | 'all';
 
@@ -17,7 +18,8 @@ export class MembersPageComponent implements OnInit {
 
   constructor(
     public httpService: HttpService,
-    public userService: UserService
+    public userService: UserService,
+    public holiday: HolidayService,
   ) { }
 
   isLoading = false;

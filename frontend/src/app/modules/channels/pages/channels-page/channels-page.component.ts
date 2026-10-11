@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from 'src/app/services/user.service';
 import {HttpService} from "../../../../services/http.service";
-import {IChannelLink, RoleEnum, HALLOWEEN_TEXT} from "../../../../model/app-model";
+import {IChannelLink, RoleEnum} from "../../../../model/app-model";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 import {switchMap, tap} from "rxjs/operators";
 import { Const } from 'src/app/model/const';
 import {Router} from "@angular/router";
 import {of} from "rxjs";
 import {ChannelService} from "../../../../services/channel.service";
+import {HolidayService} from "../../../../services/holiday.service";
 
 @UntilDestroy()
 @Component({
@@ -22,13 +23,11 @@ export class ChannelsPageComponent implements OnInit {
     public userService: UserService,
     public router: Router,
     public channelService: ChannelService,
+    public holiday: HolidayService,
   ) { }
 
   isLoading = false;
   searchPhrase = '';
-  isHalloween = false;
-  currentYear = 0;
-  halloweenText = HALLOWEEN_TEXT;
   hereAndNowUsers: string[] = [];
 
   channelsAll: IChannelLink[] = [];
@@ -46,7 +45,6 @@ export class ChannelsPageComponent implements OnInit {
   ngOnInit(): void {
     this.clearSuperstar();
     this.load();
-    this.checkHalloween();
     this.getHereAndNow();
   }
 
@@ -134,22 +132,6 @@ export class ChannelsPageComponent implements OnInit {
 
   onFilter(): void {
     this.updateChannelsToShow();
-  }
-
-  checkHalloween(): void {
-    const year = (new Date()).getFullYear();
-    const now = new Date();
-    const from = new Date(year, 10 - 1, 11);
-    const to = new Date(year, 11 - 1, 6);
-    this.isHalloween = (now.getTime() >= from.getTime() && now.getTime() <= to.getTime());
-    this.currentYear = year;
-
-    // Устанавливаем Хэллоуин-текст только если период активен
-    if (this.isHalloween) {
-      this.halloweenText = HALLOWEEN_TEXT;
-    } else {
-      this.halloweenText = '';
-    }
   }
 
   getHereAndNow(): void {

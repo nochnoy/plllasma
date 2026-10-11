@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
+import {CommonModule} from "@angular/common";
 import {concat, from, of} from "rxjs";
 import {concatMap, delay, flatMap, repeat, switchMap, tap} from "rxjs/operators";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
@@ -7,7 +8,9 @@ import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
 @Component({
   selector: 'app-newyear',
   templateUrl: './newyear.component.html',
-  styleUrls: ['./newyear.component.scss']
+  styleUrls: ['./newyear.component.scss'],
+  standalone: true,
+  imports: [CommonModule],
 })
 export class NewyearComponent implements OnInit {
 

@@ -8,7 +8,7 @@ describe('NewyearComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ NewyearComponent ]
+      imports: [ NewyearComponent ]
     })
     .compileComponents();
 
