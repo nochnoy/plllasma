@@ -1,4 +1,4 @@
-import { DEFAULT_CHARACTER, type Character } from './characters';
+import { DEFAULT_CHARACTER, POINTY_LEG, type Character } from './characters';
 import { Doll } from './doll';
 import { backFrom, dollSources } from './pain';
 import { beadCount, createAnchor, MAX_STRETCH, Rope, SOLVE_PASSES, type Anchor, type RopeHit } from './rope';
@@ -554,10 +554,29 @@ export class World {
   hitDoll(x: number, y: number): { doll: Doll; part: SkinPart } | null {
     for (let i = this.dolls.length - 1; i >= 0; i--) {
       const doll = this.dolls[i];
-      const part = doll.hitTest(x, y, this.masks.get(doll.character.folder) ?? null);
+      const part = doll.hitTest(x, y, this.masksFor(doll));
       if (part) return { doll, part };
     }
     return null;
+  }
+
+  /**
+   * The artwork a doll's clicks are read against: her folder's own masks, with the pointy legs worn
+   * over the plain ones once she is enlightened (`POINTY_LEG`) — she is *drawn* in them, so the
+   * texel that decides a click is one of theirs, and a click on the point of a foot has to land on
+   * her the way it looks.
+   *
+   * The masks are the artwork's rather than the doll's — every doll of a folder shares them — and
+   * this is the one part a doll may wear differently from her twin: the overlay is built per doll,
+   * per call, only while the latch is up and only for a folder that brought the file. Anything else
+   * (no masks at all yet, no pointy legs, no enlightenment) is the folder's masks exactly as they
+   * were filed.
+   */
+  private masksFor(doll: Doll): PartMasks | null {
+    const masks = this.masks.get(doll.character.folder);
+    if (!masks) return null;
+    const pointy = doll.pain.enlightened ? masks[POINTY_LEG] : undefined;
+    return pointy ? { ...masks, leg: pointy } : masks;
   }
 
   /** The rope under a point, if the point lands close enough to the drawn chain. */

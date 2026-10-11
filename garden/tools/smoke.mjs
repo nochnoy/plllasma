@@ -2328,6 +2328,62 @@ for (const [part, other] of [
 }
 summary.pain.settled = await portraits();
 
+// The enlightenment dresses the doll herself, not only her card: the same latch that asks for the
+// third set of portraits asks for her legs — `parts/leg-pointy.png`, a file the character brings
+// beside the seven baked ones and may not bring at all, in which case the plain ones stay. It is
+// latched here by hand (the seventh portrait worn outright, which is exactly what every row of a
+// playback does with the column it carries, `World.writePose`): reaching it with a pointer is
+// choreography, and the machine that latches it is asked in `frontend/tests/pain-state.test.ts`.
+// What is checked here is that the built game dresses the *body* in what the latch asked — the two
+// shins of the doll it was latched on and nobody else's — which the renderer reports per sprite
+// (`inspect().parts[].file`, the label the texture was filed under).
+if (!existsSync(join(root, 'frontend', 'dist', 'assets', 'characters', 'elena', 'parts', 'leg-pointy.png'))) {
+  problems.push('the character brought no leg-pointy.png in dist, so the enlightenment has no legs to wear');
+}
+/** Every sprite's artwork, first doll first, eleven a doll in the skin table's own order. */
+const legsWorn = async () =>
+  page.evaluate(() => {
+    const inspect = window.__garden.inspect();
+    const per = inspect.parts.length / inspect.dolls;
+    return {
+      dolls: inspect.dolls,
+      per,
+      files: inspect.parts.map((part) => part.file),
+    };
+  });
+summary.pointyLegs = { plain: await legsWorn() };
+if (summary.pointyLegs.plain.files.some((file) => file === 'leg-pointy')) {
+  problems.push('a doll is wearing the pointy legs before anyone has been enlightened');
+}
+await page.evaluate(() => window.__garden.world.dolls[0].pain.wear(7));
+await wait(400);
+summary.pointyLegs.enlightened = await legsWorn();
+await page.screenshot({ path: join(outDir, '19-pointy-legs.png') });
+// Only the first doll's shins: her eleven sprites wear two `leg-pointy`, every other doll's wear
+// none, and no part that is not a shin changed at all.
+{
+  const { dolls, per, files } = summary.pointyLegs.enlightened;
+  const ofDoll = (doll) => files.slice(doll * per, (doll + 1) * per);
+  const pointyOf = (doll) => ofDoll(doll).filter((file) => file === 'leg-pointy').length;
+  if (pointyOf(0) !== 2) {
+    problems.push(`the enlightenment dressed ${pointyOf(0)} of the first doll's sprites in the pointy legs, not her two shins`);
+  }
+  for (let doll = 1; doll < dolls; doll++) {
+    if (pointyOf(doll) !== 0) {
+      problems.push(`doll ${doll} is wearing ${pointyOf(doll)} pointy legs of somebody else's enlightenment`);
+    }
+  }
+  const before = summary.pointyLegs.plain.files;
+  if (before.length === files.length) {
+    for (const [at, file] of files.entries()) {
+      const was = before[at];
+      if (file !== was && file !== 'leg-pointy') {
+        problems.push(`a sprite went from ${was || 'nothing'} to ${file}, which is no enlightenment's doing`);
+      }
+    }
+  }
+}
+
 summary.inspect = await page.evaluate(() => window.__garden.inspect());
 const drawn = summary.toolbar.drawn;
 if (drawn.ropes !== 1) problems.push(`the rope tool drew ${drawn.ropes} ropes`);
@@ -4993,6 +5049,14 @@ console.log(
 );
 console.log('drag:', JSON.stringify(summary.drag));
 console.log('after release, moved by:', summary.afterRelease.fell.toFixed(1));
+console.log(
+  'pointy legs worn by the enlightened doll:',
+  summary.pointyLegs.enlightened.files.filter((file) => file === 'leg-pointy').length,
+  'of',
+  summary.pointyLegs.enlightened.files.length,
+  'sprites, plain before:',
+  summary.pointyLegs.plain.files.filter((file) => file === 'leg-pointy').length,
+);
 console.log('respawned neck:', JSON.stringify(summary.respawn.particles.neck), 'speed:', summary.respawn.speed);
 const burned = summary.toolbar.burn?.bursts[0] ?? { x: 0, y: 0, nodes: 0, age: 0, ring: 0 };
 const burnedLater = summary.toolbar.burnLater?.[0] ?? { age: 0, ring: 0 };

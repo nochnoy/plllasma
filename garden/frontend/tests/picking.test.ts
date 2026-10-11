@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { Doll } from '../src/game/doll';
 import { maskAlphaAt, maskCovers, type PartMask, type PartMasks } from '../src/game/part-mask';
 import { PART_ASSETS, type PartName } from '../src/game/parts.generated';
+import { FACE } from '../src/game/pain-state';
 import { STAGE_HEIGHT, STAGE_WIDTH } from '../src/game/stage';
 import { PEngine2D } from '../src/game/vm/engine';
+import { World } from '../src/game/world';
 
 /**
  * Picking a body part is the port's own job — the original movie had nothing to click, so nothing in
@@ -99,5 +101,65 @@ describe('doll picking', () => {
       maxY: thigh.pivotY,
     });
     expect(doll.hitTest(point.x, point.y, masks)?.mc).toBe('thigh');
+  });
+});
+
+describe('the pointy legs of an enlightened doll', () => {
+  /**
+   * A world with a doll on it, and the middle of her first shin — a point inside the leg's own box,
+   * which only the *artwork* on the leg decides a click on. The masks are the renderer's handover
+   * (`World.setPartMasks`), the enlightenment is the doll's own latch (`PainState.wear`, which is
+   * what a playback's rows latch it with), and the overlay that joins the two is the world's.
+   */
+  function stage(): { world: World; doll: Doll; point: { x: number; y: number } } {
+    const world = new World();
+    const doll = world.addDoll({ x: 0, y: 0 });
+    if (!doll) throw new Error('the engine refused a doll');
+    const part = doll.skin.find((candidate) => candidate.mc === 'leg');
+    if (!part) throw new Error('no leg in the skin table');
+    return {
+      world,
+      doll,
+      point: { x: (part.p1.x + part.p2.x) / 2, y: (part.p1.y + part.p2.y) / 2 },
+    };
+  }
+
+  it('is picked by the pointy artwork once the latch is up', () => {
+    const { world, doll, point } = stage();
+    // Nothing on her but the pointy legs — the plain ones and every other part are transparent — so
+    // the point is a click only the enlightenment's own artwork can answer.
+    const masks = everyPart(empty);
+    masks['leg-pointy'] = solid(PART_ASSETS.leg);
+    world.setPartMasks(doll.character.folder, masks);
+    expect(world.hitDoll(point.x, point.y)).toBeNull();
+    // The seventh portrait worn outright, which is how a row of a playback latches it.
+    doll.pain.wear(FACE.super);
+    expect(world.hitDoll(point.x, point.y)?.part.mc).toBe('leg');
+  });
+
+  it('keeps the plain artwork for a folder that brought no pointy legs', () => {
+    const { world, doll, point } = stage();
+    const masks = everyPart(empty);
+    world.setPartMasks(doll.character.folder, masks);
+    doll.pain.wear(FACE.super);
+    expect(world.hitDoll(point.x, point.y)).toBeNull();
+  });
+
+  it('wears the overlay per doll, not per folder', () => {
+    const { world, doll, point } = stage();
+    const twin = world.addDoll({ x: -260, y: -120 });
+    if (!twin) throw new Error('the engine refused a second doll');
+    const shin = twin.skin.find((candidate) => candidate.mc === 'leg');
+    if (!shin) throw new Error('no leg in the second skin table');
+    const twinPoint = { x: (shin.p1.x + shin.p2.x) / 2, y: (shin.p1.y + shin.p2.y) / 2 };
+
+    const masks = everyPart(empty);
+    masks['leg-pointy'] = solid(PART_ASSETS.leg);
+    world.setPartMasks(doll.character.folder, masks);
+    // Two dolls of one folder, and only one of them enlightened: the masks are the artwork's, but
+    // the legs each of them is wearing are her own.
+    doll.pain.wear(FACE.super);
+    expect(world.hitDoll(point.x, point.y)?.part.mc).toBe('leg');
+    expect(world.hitDoll(twinPoint.x, twinPoint.y)).toBeNull();
   });
 });

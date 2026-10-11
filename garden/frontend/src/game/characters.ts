@@ -56,6 +56,15 @@ export const PORTRAIT_SETS = 3;
  * nothing measures it: it is a state of the machine, not a degree of anything.
  */
 export const REST_PORTRAIT = 'rest';
+/**
+ * The enlightenment's own legs: `parts/leg-pointy.png`, the one *body* part a character may bring
+ * besides the seven the baking tool wrote. It is worn over `leg.png` — same tile, same pivot, same
+ * bone — from the moment the doll's machine latched the enlightenment (`PainState.enlightened`), the
+ * same latch that dresses her card in the third set of portraits, so the body and the face change
+ * together. Like a set past the first of the portraits, the file is the character's own choice: a
+ * folder without it keeps the plain legs, and the enlightenment is not a file's to give.
+ */
+export const POINTY_LEG = 'leg-pointy';
 /** Size of every portrait, in pixels: the shape the strip of cards draws them in. */
 export const PORTRAIT_WIDTH = 120;
 export const PORTRAIT_HEIGHT = 120;
@@ -84,6 +93,16 @@ export function portraitUrl(character: Character, index: number, set = 1, base =
  */
 export function restPortraitUrl(character: Character, set = 1, base = '/'): string {
   return `${base}assets/characters/${character.folder}/portrait/${REST_PORTRAIT}-${set}.png`;
+}
+
+/**
+ * Where the enlightenment's own legs live, `parts/leg-pointy.png` — see {@link POINTY_LEG}. The tile
+ * is the leg's own (`PartAsset` of `leg` in `parts.generated.ts`), so a folder that brought the file
+ * brought it in the same 150-pixel square with the pivot in the middle, and the renderer needs no
+ * geometry of its own to draw it.
+ */
+export function pointyLegUrl(character: Character, base = '/'): string {
+  return `${base}assets/characters/${character.folder}/parts/${POINTY_LEG}.png`;
 }
 
 /**

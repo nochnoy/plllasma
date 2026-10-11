@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CharacterStore,
   DEFAULT_CHARACTER,
+  POINTY_LEG,
   PORTRAIT_COUNT,
   PORTRAIT_HEIGHT,
   PORTRAIT_SETS,
@@ -9,6 +10,7 @@ import {
   REST_PORTRAIT,
   partUrl,
   pickPortrait,
+  pointyLegUrl,
   portraitUrl,
   restPortraitUrl,
 } from '../src/game/characters';
@@ -55,6 +57,17 @@ describe('character artwork', () => {
     expect(restPortraitUrl(DEFAULT_CHARACTER, 1, './')).toBe(
       './assets/characters/elena/portrait/rest-1.png',
     );
+  });
+
+  it('names the pointy legs and reads them out of the parts folder', () => {
+    // The enlightenment's own legs are a body part the character brings besides the seven baked ones:
+    // named like the breather rather than numbered like the portraits, and sitting in `parts/` next
+    // to the leg they are worn over. A character in borrowed artwork reads them where it reads
+    // everything else — from the folder, not its own id.
+    expect(POINTY_LEG).toBe('leg-pointy');
+    expect(pointyLegUrl(DEFAULT_CHARACTER)).toBe('/assets/characters/elena/parts/leg-pointy.png');
+    const copy = { id: 'local-1', name: 'Маша', folder: 'elena' };
+    expect(pointyLegUrl(copy, './')).toBe('./assets/characters/elena/parts/leg-pointy.png');
   });
 
   it('keeps the part file names bare, so any character folder can hold them', () => {

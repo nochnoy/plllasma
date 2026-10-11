@@ -1,12 +1,14 @@
 import { Application, CanvasSource, Container, FillGradient, Graphics, Matrix, Sprite, Texture, type RoundedPoint } from 'pixi.js';
 import {
   DEFAULT_CHARACTER,
+  POINTY_LEG,
   PORTRAIT_COUNT,
   PORTRAIT_HEIGHT,
   PORTRAIT_SETS,
   PORTRAIT_WIDTH,
   partUrl,
   pickPortrait,
+  pointyLegUrl,
   portraitUrl,
   restPortraitUrl,
   type Character,
@@ -14,7 +16,7 @@ import {
 import { FACE } from './pain-state';
 import { Camera } from './camera';
 import { PART_ASSETS, type PartName } from './parts.generated';
-import { maskFromImageData, type PartMasks } from './part-mask';
+import { maskFromImageData, type PartMask, type PartMasks } from './part-mask';
 import { ROPE_THICKNESS, SEGMENT_LENGTH, type Rope } from './rope';
 import { MAX_WORLD_SCALE, STAGE_BOTTOM, STAGE_HEIGHT, STAGE_WIDTH, WALL_HEIGHT, WALL_MARGIN_Y, stageView, type StageView } from './stage';
 import type { Doll } from './doll';
@@ -646,27 +648,69 @@ export class Scene {
    */
   private async loadSpriteSet(character: Character): Promise<void> {
     const masks: PartMasks = {};
+    /**
+     * One part's artwork through the canvas both of its uses are read from: the texture the renderer
+     * draws, and the alpha the picking reads back out of it. `asset` is the part's own geometry — the
+     * tile, the pivot, the density — which an alternative artwork for the same part (the pointy legs
+     * below) shares rather than brings its own.
+     */
+    const bake = (
+      image: HTMLImageElement,
+      asset: (typeof PART_ASSETS)[PartName],
+    ): { source: CanvasSource; mask: PartMask } | null => {
+      // Redrawn through a canvas so every part ends up on the same kind of texture source, which
+      // keeps sampling identical on every backend — and so the alpha the picking needs can be read
+      // back out of it right here.
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+      ctx.drawImage(image, 0, 0);
+      // The artwork is drawn at its own size and its density comes from the asset: a source told
+      // it holds `1 / unitsPerTexel` texels per world pixel reports its size in world pixels, so
+      // the sprite needs no scale of its own to come out the size the SWF drew it at. The canvas
+      // is left exactly as it is — CanvasSource only rescales the reported size.
+      return {
+        source: new CanvasSource({ resource: canvas, resolution: 1 / asset.unitsPerTexel }),
+        mask: maskFromImageData(ctx.getImageData(0, 0, canvas.width, canvas.height)),
+      };
+    };
     await Promise.all(
       Object.entries(PART_ASSETS).map(async ([name, asset]) => {
         const image = await loadImage(partUrl(character, asset.file, this.base));
-        // Redrawn through a canvas so every part ends up on the same kind of texture source, which
-        // keeps sampling identical on every backend — and so the alpha the picking needs can be read
-        // back out of it right here.
-        const canvas = document.createElement('canvas');
-        canvas.width = image.naturalWidth;
-        canvas.height = image.naturalHeight;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        ctx.drawImage(image, 0, 0);
-        // The artwork is drawn at its own size and its density comes from the asset: a source told
-        // it holds `1 / unitsPerTexel` texels per world pixel reports its size in world pixels, so
-        // the sprite needs no scale of its own to come out the size the SWF drew it at. The canvas
-        // is left exactly as it is — CanvasSource only rescales the reported size.
-        const source = new CanvasSource({ resource: canvas, resolution: 1 / asset.unitsPerTexel });
-        this.textures.set(textureKey(character.folder, name), new Texture({ source }));
-        masks[name] = maskFromImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        const baked = bake(image, asset);
+        if (!baked) return;
+        // The label is the part's own name, and it is what `Scene.inspect` reports a sprite as drawn
+        // in — the one thing that tells the plain legs from the pointy ones there (`POINTY_LEG`).
+        this.textures.set(
+          textureKey(character.folder, name),
+          new Texture({ source: baked.source, label: name }),
+        );
+        masks[name] = baked.mask;
       }),
     );
+    // The enlightenment's own legs, fetched apart from the seven because they are the character's
+    // choice to bring rather than the rig's furniture (see `POINTY_LEG`): they are worn over the
+    // leg's own tile — same square, same pivot — so the leg's asset answers for their geometry, and
+    // their alpha reaches the picking through the same masks, under their own name. A folder that
+    // brought none keeps the plain legs, which is the card's own rule for a set it did not bring.
+    try {
+      const image = await loadImage(pointyLegUrl(character, this.base));
+      const baked = bake(image, PART_ASSETS.leg);
+      if (baked) {
+        this.textures.set(
+          textureKey(character.folder, POINTY_LEG),
+          new Texture({ source: baked.source, label: POINTY_LEG }),
+        );
+        masks[POINTY_LEG] = baked.mask;
+      }
+    } catch (cause: unknown) {
+      console.warn(
+        `[free-falling-girl] no pointy legs at ${pointyLegUrl(character, this.base)}; the plain ones stay`,
+        cause,
+      );
+    }
     this.world.setPartMasks(character.folder, masks);
 
     // The portraits are plain PNGs drawn at the size they were baked, so they are taken as they are:
@@ -933,6 +977,7 @@ export class Scene {
 
     this.syncHall(view);
     this.syncDolls();
+    this.syncShins();
     this.syncGirl();
     // After `syncGirl`: the shadow is measured off the sprites, which is where they were just put.
     this.syncShadows();
@@ -1151,6 +1196,37 @@ export class Scene {
         const sprite = sprites[i];
         sprite.position.set((p1.x + p2.x) * 0.5, (p1.y + p2.y) * 0.5);
         sprite.rotation = Math.atan2(p1.y - p2.y, p1.x - p2.x);
+      }
+    }
+  }
+
+  /**
+   * Dresses every doll's shins the way her own latch has earned her: the plain artwork until the
+   * enlightenment, and the character's pointy legs from the moment it was latched (`POINTY_LEG`) —
+   * the same latch that dresses her card in the third set of portraits, so the body follows the
+   * face. The two tiles are the same square with the same pivot, so a sprite keeps its anchor and
+   * only its texture changes.
+   *
+   * Like `dressCard`, this reads the doll every frame and writes only a difference — there is no
+   * event to hear and no state of the renderer's own to keep — which is what makes a latch latched
+   * by *anything* arrive on her legs: a live step of the machine, a row of a playback
+   * (`World.writePose`), a stage restored from a snapshot. The pointy texture is fetched apart from
+   * the seven (a character may bring none), so a doll enlightened before it arrived is dressed the
+   * moment it is; a character without the file keeps the plain legs, the enlightenment not being a
+   * file's to give.
+   */
+  private syncShins(): void {
+    for (const [doll, sprites] of this.dollSprites) {
+      const folder = doll.character.folder;
+      const plain = this.textures.get(textureKey(folder, 'leg'));
+      const pointy = doll.pain.enlightened
+        ? this.textures.get(textureKey(folder, POINTY_LEG))
+        : undefined;
+      const wanted = pointy ?? plain;
+      if (!wanted) continue;
+      for (let i = 0; i < doll.skin.length && i < sprites.length; i++) {
+        if (doll.skin[i].mc !== 'leg') continue;
+        if (sprites[i].texture !== wanted) sprites[i].texture = wanted;
       }
     }
   }
@@ -1550,6 +1626,12 @@ export class Scene {
   /** Diagnostic snapshot used by the headless smoke test. */
   inspect(): {
     parts: {
+      /**
+       * The artwork the sprite is wearing — the part's own name, the label the texture was filed
+       * under, which for the legs is `leg` or the pointy legs' own (`POINTY_LEG`): the one thing
+       * that tells the two apart, the tiles being the same square.
+       */
+      file: string;
       x: number;
       y: number;
       rotation: number;
@@ -1689,6 +1771,7 @@ export class Scene {
       // Every part of every doll, first doll first, each in the skin table's own order.
       parts: [...this.dollSprites.values()].flatMap((sprites) =>
         sprites.map((sprite) => ({
+          file: sprite.texture.label ?? '',
           x: sprite.x,
           y: sprite.y,
           rotation: sprite.rotation,
