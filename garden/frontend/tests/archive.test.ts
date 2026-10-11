@@ -22,11 +22,12 @@ const WIRE = {
   bytes: 8192,
   recorded_ms: 1750000000000,
   uploaded_ms: 1750000001000,
-  label: 'Сделал перешпагат',
+  label: 'сделал перешпагат',
+  views: 3,
 };
 
 describe('one row of the table', () => {
-  it('is read for the byline with its face, the moment, and the word — and nothing else', () => {
+  it('is read for the byline with its face, the moment, the word, and the count of its watchings — and nothing else', () => {
     // The tape's own size, its seed, how long it is and when it was played are all in the answer
     // and none of them is read: a table that kept a field it had no use for would be claiming a
     // shape this client does not really know.
@@ -35,8 +36,9 @@ describe('one row of the table', () => {
       author: 'Марго',
       face: '/i/9.gif',
       whenMs: 1750000001000,
-      label: 'Сделал перешпагат',
+      label: 'сделал перешпагат',
       live: false,
+      views: 3,
     });
   });
 
@@ -47,11 +49,13 @@ describe('one row of the table', () => {
 
   it('takes omissions the way the chat\'s own reading of a run does', () => {
     // A run that came down without its word has not said anything yet, one without `live` has been
-    // played out, and one without its moment — which the server never leaves out — is a run kept at
-    // the beginning of everything rather than a guess.
+    // played out, one without a count has never been watched — which the row says nothing about —
+    // and one without its moment — which the server never leaves out — is a run kept at the
+    // beginning of everything rather than a guess.
     const read = asEntry({ id: 'run-3', author: 'Аня' });
     expect(read.label).toBe('');
     expect(read.live).toBe(false);
+    expect(read.views).toBe(0);
     expect(read.whenMs).toBe(0);
   });
 });
@@ -60,10 +64,14 @@ describe('the moment, as the table says it', () => {
   it('is a date and a time in the player\'s own language, in their own timezone', () => {
     // Built from local parts so the test reads the same on any machine: whatever timezone the
     // player is in, the moment they are shown is the moment as their own clock keeps it.
-    expect(whenWritten(new Date(2026, 9, 10, 14, 30).getTime())).toBe('10.10.2026, 14:30');
+    expect(whenWritten(new Date(2026, 9, 10, 14, 30).getTime())).toBe('10.10.2026 14:30');
   });
 
   it('pads the short parts of itself, so a table of rows aligns', () => {
-    expect(whenWritten(new Date(2026, 0, 5, 4, 5).getTime())).toBe('05.01.2026, 04:05');
+    expect(whenWritten(new Date(2026, 0, 5, 4, 5).getTime())).toBe('05.01.2026 04:05');
+  });
+
+  it('leaves no comma after the year: the date and the time are one breath, not two clauses', () => {
+    expect(whenWritten(new Date(2026, 9, 10, 14, 30).getTime())).not.toContain(',');
   });
 });

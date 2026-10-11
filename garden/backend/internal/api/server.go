@@ -13,6 +13,7 @@
 //	GET  /api/recordings/{id}/chunks   the slices of a live run, as they arrive
 //	POST /api/recordings/{id}/chunks   one slice of a live run
 //	POST /api/recordings/{id}/chat     the run's own line: which message it is, and what it says
+//	POST /api/recordings/{id}/view     one watching of a run: its count, and its row back
 //	GET  /api/messages                 the log of a recording, or of the lobby — its newest fifty lines
 //	POST /api/messages                 one line, anchored or not
 //
@@ -185,6 +186,7 @@ func (s *Server) routes() {
 	s.HandleFunc("GET /api/recordings/{id}/chunks", s.chunks)
 	s.HandleFunc("POST /api/recordings/{id}/chunks", s.appendChunk)
 	s.HandleFunc("POST /api/recordings/{id}/chat", s.runChat)
+	s.HandleFunc("POST /api/recordings/{id}/view", s.view)
 	s.HandleFunc("GET /api/messages", s.messages)
 	s.HandleFunc("POST /api/messages", s.post)
 }
@@ -720,6 +722,34 @@ func (s *Server) tape(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-length", strconv.Itoa(len(body)))
 	w.WriteHeader(http.StatusOK)
 	_, _ = io.WriteString(w, body)
+}
+
+// view is one watching of a run: the count a list of recordings keeps of how
+// many times a playback of it has been entered, one more than it was, and the
+// run's own row back — the byline and the moment, which is what the screen the
+// playback is watched on signs itself with.
+//
+// The counting is of askings rather than of watchers, and that is deliberate:
+// a run's row is read by whoever is interested in it, and "has anybody come
+// back to this" is the question a list of recordings answers — not who, which
+// is nobody's business here. The door is a POST because it is a change rather
+// than a read, and the answer carries the row because the one asking is the
+// one moment the row's byline is wanted.
+func (s *Server) view(w http.ResponseWriter, r *http.Request) {
+	if _, ok := s.userOf(w, r); !ok {
+		return
+	}
+	id := r.PathValue("id")
+	run, err := s.store.Viewed(id, s.now().UnixMilli())
+	if errors.Is(err, store.ErrNotFound) {
+		fail(w, http.StatusNotFound, "no recording %s", id)
+		return
+	}
+	if err != nil {
+		fail(w, http.StatusInternalServerError, "the recording could not be counted: %v", err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"recording": run})
 }
 
 // runChat is the run's own word in the chat: which line of the log is the

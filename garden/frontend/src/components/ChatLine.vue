@@ -20,7 +20,7 @@ import type { Run } from '../chat/runs';
  * message at all: the run's row says what its line is saying right now (`label`) and whether it is
  * still being played, and the chat holds those rows for exactly the runs its lines link
  * (`useRunStates`). The last word of the saying is the link — «Начал **игру**», «Сделал
- * **перешпагат**» — and a run that is still going wears «(Идёт стрим)» beside its words, so a reader
+ * **перешпагат**» — and a run that is still going wears «(идёт стрим)» beside its words, so a reader
  * knows the end of it is not in the link yet. Where the line is drawn inside the strip the link is
  * the strip's: a click anywhere on the strip opens the chat, so there is no second door inside the
  * first (`open` is simply not handed to the strip's lines).

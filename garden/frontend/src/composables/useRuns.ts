@@ -1,5 +1,6 @@
 import { getCurrentInstance, onBeforeUnmount, ref } from 'vue';
 import { chatApi, Refused, type ChatWire } from '../chat/api';
+import type { Entry } from '../chat/archive';
 import type { Run } from '../chat/runs';
 import { appendSlice, encodeTape, tapeFrom, type Tape } from '../game/tape';
 import { liveApi, type LiveWire } from '../live/api';
@@ -16,6 +17,12 @@ import { liveApi, type LiveWire } from '../live/api';
  * and the rest of it follows, a slice at a time, pasted onto the tape that is already on the timeline
  * ({@link RunsOptions.grow}) for as long as the run goes on. That is the whole of what watching
  * somebody else's run is.
+ *
+ * Every entering of a run is also *counted*: the view door is asked on the way in (`ChatWire.view`),
+ * which is what the archive's rows read as how many times a run has been watched — and the row it
+ * answers with is the run's own byline, handed to the caller for the head of the playback screen
+ * ({@link RunsOptions.watched}). Neither is waited for: a playback starts whether the count landed
+ * or not.
  *
  * What goes onto the timeline is the caller's business ({@link RunsOptions.play}, which is the engine,
  * in the only caller there is — `App.vue`), because this is the way into a run rather than the tape's
@@ -52,6 +59,12 @@ export interface RunsOptions {
    * run so far: what the caller does with the tape is put it under a playback that is already walking.
    */
   grow(run: Run, tape: Tape): void;
+  /**
+   * The row of the run being entered, as the view door answered with it: who played it, with the face
+   * the site keeps for them, and when it was kept — the byline of the screen the playback is watched
+   * on, arrived when it arrives rather than in the way of the run itself.
+   */
+  watched?(row: Entry): void;
 }
 
 /**
@@ -127,6 +140,7 @@ export function useRuns(options: RunsOptions) {
         }
         error.value = null;
         options.play(id, encodeTape(tape));
+        countView(id);
         follow(id, tape, last);
         return;
       }
@@ -134,10 +148,25 @@ export function useRuns(options: RunsOptions) {
       const tape = await wire.tape(id);
       error.value = null;
       options.play(id, tape);
+      countView(id);
     } catch (err) {
       blame(err);
     } finally {
       opening.value = null;
+    }
+  }
+
+  /**
+   * One watching of the run just entered, told to the server the moment there is one (`ChatWire.view`)
+   * — and the row it answers with, handed to the caller as the playback screen's own byline. Nothing
+   * is waited for and nothing is said when it does not land: the run is already walking, and a count
+   * that did not arrive is a number one lower rather than a playback gone wrong.
+   */
+  async function countView(id: string): Promise<void> {
+    try {
+      options.watched?.(await wire.view(id));
+    } catch {
+      // The one failure of opening a run that costs it nothing.
     }
   }
 

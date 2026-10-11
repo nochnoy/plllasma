@@ -18,7 +18,7 @@ import type { Game, TapeReport } from '../game/game';
  * one's — so a failure here is one line in the console and nothing else, and the game the player is playing
  * is not the recording's.
  *
- * A run is also *said*: the moment it opens, a line goes up in the chat linking it — «Начал игру» — and the
+ * A run is also *said*: the moment it opens, a line goes up in the chat linking it — «начал гнуть» — and the
  * run is bound to that line, so that its words can be rewritten as the play goes on ({@link say} and the
  * engine's own word for a feat, `Game.onFeat`).
  */

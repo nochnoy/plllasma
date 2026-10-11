@@ -429,19 +429,27 @@ body {
  * it is the mask — the last rem of the block is nothing, and a line that reaches it dissolves rather
  * than being cut off by an edge that is not there. A mask rather than a black gradient laid over the end
  * of the strip, because what is behind the strip is the hall, and the hall is not black.
+ *
+ * The strip is half-transparent: a plate of black at two fifths, rather than a solid one, so the hall
+ * the messages stand over keeps showing through them — the plate is what makes a line readable
+ * wherever it falls in the picture, and the transparency is what keeps it a word said over the place
+ * rather than a notice pinned to it. The mask fades the plate's own right edge the same way it fades
+ * the words, so the block still ends in nothing rather than in an edge.
  */
 .chat-strip {
   flex: none;
   /* The block is the chat's own corner of the picture: the column it stands in is as tall as the
      world, and this is what pins it to the foot of that — the world's bottom left corner, across the
-     picture from the bar that hangs at its top left one. */
+     picture from the bar that hangs at its top left one. The block is its own 300 px wide, padding
+     included — the plate is the block, not something under its words. */
+  box-sizing: border-box;
   margin-top: auto;
   width: 300px;
   /* The block is a button as well as a block of text: a click anywhere on the lines opens the chat. */
   display: block;
-  padding: 0;
-  border: 0;
-  background: none;
+  padding: 6px 12px 6px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.4);
   color: var(--paper);
   font: inherit;
   font-size: 14px;
@@ -887,7 +895,7 @@ a.chat-line__run:focus-visible {
 }
 
 /*
- * The way to the archive («Все записи»), at the right of the chat's own heading: the same worded
+ * The way to the archive («Гиблиотека»), at the right of the chat's own heading: the same worded
  * pill the ways back wear — black with a wood edge, the picture of the garden's own buttons —
  * because it is a door to a place the way they are, not a part of the conversation it stands over.
  * The heading is a row with the way back at its left end, so `margin-left: auto` is what puts this
@@ -987,11 +995,16 @@ a.chat-line__run:focus-visible {
   outline-offset: -2px;
 }
 
-/* The moment the run was kept: the first thing a line says, and the thing the list is ordered by —
-   kept as it arrives from `whenWritten` rather than shortened, because the whole point of it is to
-   be read. */
+/*
+ * The moment the run was kept: the first thing a line says, and the thing the list is ordered by —
+ * kept as it arrives from `whenWritten` rather than shortened, because the whole point of it is
+ * to be read. It is said in the scenery's own grey rather than the chat's own colour: the date is
+ * what a line is *found by* rather than what it *says*, and a reader's eye is meant to skip over it
+ * to the byline.
+ */
 .archive__when {
   flex: none;
+  color: #565656;
 }
 
 /* The face the site keeps for the player, sitting in the line the way a badge sits in a line of the
@@ -1002,24 +1015,20 @@ a.chat-line__run:focus-visible {
   height: 16px;
 }
 
-/* The byline: the nickname in bold, with a colon after it — the line's own pause between who and
-   what, kept outside the nickname so the bold ends where the name does. */
-.archive__nick {
-  flex: none;
-  font-weight: 700;
-}
-
-.archive__colon {
-  flex: none;
-}
-
-/* The run's own word for itself: whatever of it does not fit is cut short rather than wrapping the
-   line about a long word — the list is one line a run, and the run can be asked for itself. */
-.archive__what {
+/* The byline and the run's own word, as one breath of inline text: the nickname in bold and the word
+   after it joined by the one space a sentence takes — the line's own pause between who and what —
+   and held in the line's own remainder, where whatever does not fit is cut short rather than
+   wrapping the line about a long word. */
+.archive__say {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* The byline: the nickname in bold, ending where the name does. */
+.archive__nick {
+  font-weight: 700;
 }
 
 /*
@@ -1048,17 +1057,18 @@ a.chat-line__run:focus-visible {
 /*
  * The tape's own bar: the way along a run, along the foot of the world and centred on it.
  *
- * It is the whole of the interface while a run is on the tape (`App.vue`): the row above is not on the page
- * then, so this bar has the foot of the world to itself and is centred on *the world* rather than on the
- * window — the frame it is laid out in is the world's own box (`Scene.hud`), so a fraction of that frame is a
- * fraction of the picture whatever the window is doing.
+ * It is the whole of the interface's own row while a run is on the tape (`App.vue`): the row above is
+ * not on the page then, and the way out of the run is the head at the world's own top left corner
+ * (`TapeHead.vue`). The bar is centred on *the world* rather than on the window — the frame it is
+ * laid out in is the world's own box (`Scene.hud`), so a fraction of that frame is a fraction of the
+ * picture whatever the window is doing.
  *
- * It is a button tall, since the play button in it *is* one, and it is deliberately not as wide as the world:
- * the strip of portraits stands on the world's own feet (`Scene.syncPortraits`), so the bar keeps a card's
- * worth of room clear at either end of itself — two cards' widths in all, one at each end — and shrinks on a
- * narrow window rather than covering one. It has no box of its own: black with a wood edge is what
- * each of its three pieces wears, the way a tool does, since the bar lies over the hall and the dark is what
- * tells it from the picture under it.
+ * It is a button tall, since the play button in it *is* one, and it is deliberately not as wide as the
+ * world: the strip of portraits stands on the world's own feet (`Scene.syncPortraits`), so the bar
+ * keeps a card's worth of room clear at either end of itself — two cards' widths in all, one at each
+ * end — and shrinks on a narrow window rather than covering one. It has no box of its own: black with
+ * a wood edge is what each of its pieces wears, the way a tool does, since the bar lies over the hall
+ * and the dark is what tells it from the picture under it.
  *
  * The slider is the run's own steps rather than seconds: what a drag asks for is a step of the world (`seek`).
  * What it reads out — where the playhead is, and how long the run is — is a clock, and the clock is not drawn
@@ -1080,9 +1090,9 @@ a.chat-line__run:focus-visible {
   height: 44px;
   /*
    * Two cards are 240 px wide (`PORTRAIT_WIDTH`), and those two ends are what the bar stays clear of; the floor
-   * is what the three pieces of it need at their smallest — the play button, a slider still worth dragging, and
-   * the word the way out is written with — and the ceiling is what keeps it a bar along the foot of the picture
-   * rather than a second toolbar across it. `100%` is the world's own width, less the two insets: the frame.
+   * is what the two pieces of it need at their smallest — the play button and a slider still worth dragging —
+   * and the ceiling is what keeps it a bar along the foot of the picture rather than a second toolbar across
+   * it. `100%` is the world's own width, less the two insets: the frame.
    */
   width: max(220px, min(420px, 100% - 240px));
   color: var(--wood);
@@ -1170,34 +1180,62 @@ a.chat-line__run:focus-visible {
 }
 
 /*
- * The way out of the tape: the last button of the bar, at the other end of it from the run's own, and the one
- * that brings the game's tools and the chat's block back (`App.vue`). A word rather than a cross, because what
- * it ends is not a box but the *mode* the bar is for — a timeline is up while a run is loaded on it — and a
- * cross at the end of a bar reads as closing a window. Rounded at both ends rather than squared like a tool,
- * since it is not one of the bar's controls: it is the way out of them.
+ * The head of the playback screen (`TapeHead.vue`): the way out at the world's own top left corner —
+ * where the bar of tools hangs from while the stage is the player's own — and the run's own byline
+ * beside it.
+ *
+ * The way out is the chat's own worded button, worn as-is (`chat-card__back`, above): what it ends is
+ * a *place* — the mode a timeline up puts the stage in — and the chat's own way back is what that
+ * reads as, wherever it actually leads (`App.vue` decides). The byline is the face of whoever played
+ * the run, their name, and the moment it was kept, in the chat's own colour — the same three things
+ * an archive row is signed with, said over the hall the run is being watched in rather than over the
+ * archive's scenery.
+ *
+ * The head takes no clicks of its own beyond the button: it lies over the stage, and the stage stays
+ * the player's — a run being watched is still the game's own picture, not a page to be pressed on.
  */
-.tape__close {
+.tape-head {
   flex: none;
-  box-sizing: border-box;
-  height: 100%;
-  padding: 0 16px;
-  border: 2px solid var(--wood);
-  border-radius: 999px;
-  background: #000;
-  color: inherit;
-  font: inherit;
-  line-height: 1;
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
 }
 
-.tape__close:active {
-  transform: scale(0.96);
+.tape-head .chat-card__back {
+  pointer-events: auto;
 }
 
-.tape__close:focus-visible {
-  outline: 2px solid #fff;
-  outline-offset: 2px;
+/*
+ * The byline: badge, bold nickname, and the moment — one line, said after the button the way a
+ * recording's label follows the way out of it. Nothing of it is a control, so none of it takes a
+ * pointer; a byline longer than the room it has is cut short at the end, the way the archive's rows
+ * are, rather than pushing the head about.
+ */
+.tape-head__byline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  color: var(--paper);
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The face the site keeps for the player, sitting in the head the way a badge sits in a line of the
+   chat. */
+.tape-head__badge {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.tape-head__nick {
+  flex: none;
+  font-weight: 700;
 }
 
 /*

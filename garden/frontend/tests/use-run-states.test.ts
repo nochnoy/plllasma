@@ -51,6 +51,9 @@ function fakeWire(rows: Run[] = []) {
     async archive() {
       throw new Refused(0, 'the rows do not read the archive');
     },
+    async view() {
+      throw new Refused(0, 'the rows do not count a viewing');
+    },
     async tape() {
       throw new Refused(0, 'the rows do not fetch a tape');
     },
@@ -65,7 +68,7 @@ async function settled(): Promise<void> {
 
 describe('the runs the chat is interested in', () => {
   it('asks for exactly the linked ids, once each, and knows their rows', async () => {
-    const { wire, asked } = fakeWire([row('run-1', 'Начал игру'), row('run-2', 'Сделал перешпагат', true)]);
+    const { wire, asked } = fakeWire([row('run-1', 'начал гнуть'), row('run-2', 'сделал перешпагат', true)]);
     const linked = ref<readonly string[]>([]);
     const states = useRunStates(() => linked.value, { wire, every: 0 });
 
@@ -73,7 +76,7 @@ describe('the runs the chat is interested in', () => {
     linked.value = ['run-1', 'run-2', 'run-1'];
     await settled();
     expect(asked).toEqual([['run-1', 'run-2']]);
-    expect(states.rows.value.get('run-1')?.label).toBe('Начал игру');
+    expect(states.rows.value.get('run-1')?.label).toBe('начал гнуть');
     expect(states.rows.value.get('run-2')?.live).toBe(true);
     states.stop();
   });
@@ -101,7 +104,7 @@ describe('the runs the chat is interested in', () => {
   it('reads them again on the chat\u2019s own rhythm, so words and liveness move', async () => {
     vi.useFakeTimers();
     try {
-      const answer = ref<Run[]>([row('run-1', 'Начал игру', true)]);
+      const answer = ref<Run[]>([row('run-1', 'начал гнуть', true)]);
       const asked: string[][] = [];
       const wire: ChatWire = {
         async auth() {
@@ -123,6 +126,9 @@ describe('the runs the chat is interested in', () => {
         async archive() {
           throw new Refused(0, 'no');
         },
+        async view() {
+          throw new Refused(0, 'no');
+        },
         async tape() {
           throw new Refused(0, 'no');
         },
@@ -134,9 +140,9 @@ describe('the runs the chat is interested in', () => {
 
       // The run's player said something else, and the run went on: the next rhythm hears both,
       // without the log itself being touched.
-      answer.value = [row('run-1', 'Сделал перешпагат', false)];
+      answer.value = [row('run-1', 'сделал перешпагат', false)];
       await vi.advanceTimersByTimeAsync(2000);
-      expect(states.rows.value.get('run-1')?.label).toBe('Сделал перешпагат');
+      expect(states.rows.value.get('run-1')?.label).toBe('сделал перешпагат');
       expect(states.rows.value.get('run-1')?.live).toBe(false);
       expect(asked.every((one) => one.join() === 'run-1')).toBe(true);
       states.stop();

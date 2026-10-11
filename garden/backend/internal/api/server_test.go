@@ -373,6 +373,58 @@ func TestTheListIsReadInWindows(t *testing.T) {
 	}
 }
 
+// TestAWatchedRunCountsItsWatchings is the archive's own byline in reverse: a
+// run that has been entered to watch says so in the list, one more for every
+// entering of it, and the door that counts is the door that answers with the
+// row — the one moment the run's byline is wanted, which is why the two are
+// one door rather than two.
+func TestAWatchedRunCountsItsWatchings(t *testing.T) {
+	h := newHall(t)
+	client := h.client
+	run := h.uploaded(client)
+
+	// A run nobody has entered says nothing about watchings: zero, the row's own
+	// silence about a count there is not.
+	whole := read[recordings](t, h.do(client, "anya", "GET", "/api/recordings", nil)).Recordings
+	if len(whole) != 1 || whole[0].Views != 0 {
+		t.Fatalf("a run nobody watched holds %+v", whole)
+	}
+
+	// One entering of it: the door counts and answers with the row, views
+	// included, and the byline is the row's own — the site's word for the player
+	// and the badge that goes with it.
+	first := h.do(client, "anya", "POST", "/api/recordings/"+run.ID+"/view", nil)
+	if first.status != http.StatusOK {
+		t.Fatalf("a viewing of %s: %d %s, want 200", run.ID, first.status, first.body)
+	}
+	counted := read[recordingAnswer](t, first).Recording
+	if counted.Views != 1 {
+		t.Fatalf("the first watching counted the run as %+v", counted)
+	}
+	if counted.Author != "Марго" || counted.Icon != "-" || counted.UploadedMs == 0 {
+		t.Fatalf("the counted row came back without its byline: %+v", counted)
+	}
+
+	// The same player coming back is a second watching, which is what a list of
+	// recordings wants to know — not who comes back, but whether anybody does.
+	if second := h.do(client, "anya", "POST", "/api/recordings/"+run.ID+"/view", nil); second.status != http.StatusOK {
+		t.Fatalf("a second watching: %d %s, want 200", second.status, second.body)
+	}
+	after := read[recordings](t, h.do(client, "anya", "GET", "/api/recordings", nil)).Recordings
+	if len(after) != 1 || after[0].Views != 2 {
+		t.Fatalf("a run watched twice holds %+v", after)
+	}
+
+	// A run that is not there is not counted, and said so in the server's own way.
+	if missing := h.do(client, "anya", "POST", "/api/recordings/nothing/view", nil); missing.status != http.StatusNotFound {
+		t.Fatalf("a watching of nothing: %d, want 404", missing.status)
+	}
+	// And nobody's token counts nothing at all.
+	if nobody := h.do(client, "", "POST", "/api/recordings/"+run.ID+"/view", nil); nobody.status != http.StatusUnauthorized {
+		t.Fatalf("a watching with no token: %d, want 401", nobody.status)
+	}
+}
+
 func TestUploadRefusesARunThatCouldNotBePlayed(t *testing.T) {
 	h := newHall(t)
 	for _, bad := range []struct {

@@ -192,7 +192,7 @@ describe('the poses the markers are read from', () => {
     const state = new FeatState();
     state.step(doll, world.engine.maxy, STEP);
     expect(state.shown).toBe(FEATS.split);
-    expect(state.said?.label).toBe('Сделал шпагат');
+    expect(state.said?.label).toBe('сделал шпагат');
   });
 
   it('a spine arched to the extreme step is a backbend, with the arms out of the bridge\'s way', () => {
@@ -204,7 +204,7 @@ describe('the poses the markers are read from', () => {
     const state = new FeatState();
     state.step(doll, world.engine.maxy, STEP);
     expect(state.shown).toBe(FEATS.backbend);
-    expect(state.said?.label).toBe('Сделал бэкбенд');
+    expect(state.said?.label).toBe('сделал бэкбенд');
   });
 
   it('a split arrived at the extreme step is an oversplit', () => {
@@ -215,7 +215,7 @@ describe('the poses the markers are read from', () => {
     const state = new FeatState();
     state.step(doll, world.engine.maxy, STEP);
     expect(state.shown).toBe(FEATS.oversplit);
-    expect(state.said?.label).toBe('Сделал перешпагат');
+    expect(state.said?.label).toBe('сделал перешпагат');
   });
 
   it('hands and feet below the body, arched to the extreme step, is a bridge', () => {
@@ -226,7 +226,7 @@ describe('the poses the markers are read from', () => {
     const state = new FeatState();
     state.step(doll, world.engine.maxy, STEP);
     expect(state.shown).toBe(FEATS.bridge);
-    expect(state.said?.label).toBe('Сделал мостик');
+    expect(state.said?.label).toBe('сделал мостик');
   });
 
   it('one leg below the body and the other above the head, in a split, is a затяжка', () => {
@@ -242,7 +242,7 @@ describe('the poses the markers are read from', () => {
     const state = new FeatState();
     state.step(doll, world.engine.maxy, STEP);
     expect(state.shown).toBe(FEATS.suspension);
-    expect(state.said?.label).toBe('Сделал затяжку');
+    expect(state.said?.label).toBe('сделал затяжку');
   });
 
   it('knees and feet flat on the floor of the world, arched, is a triplefold', () => {
@@ -254,7 +254,7 @@ describe('the poses the markers are read from', () => {
     const state = new FeatState();
     state.step(doll, world.engine.maxy, STEP);
     expect(state.shown).toBe(FEATS.triplefold);
-    expect(state.said?.label).toBe('Сделал трипплфолд');
+    expect(state.said?.label).toBe('сделал трипплфолд');
   });
 
   it('the seventh portrait is the enlightenment, whatever the pose underneath it', () => {
@@ -265,7 +265,7 @@ describe('the poses the markers are read from', () => {
     const state = new FeatState();
     state.step(doll, world.engine.maxy, STEP);
     expect(state.shown).toBe(FEATS.superflex);
-    expect(state.said?.label).toBe('Достиг супергибкости');
+    expect(state.said?.label).toBe('достиг супергибкости');
   });
 
   it('a doll that is not there is a pose that is nothing', () => {
@@ -417,11 +417,11 @@ describe('the game saying what the machine says', () => {
     note(game);
     note(game);
     note(game);
-    expect(heard).toEqual(['Сделал шпагат']);
+    expect(heard).toEqual(['сделал шпагат']);
     standUp(doll);
     legsSwung(doll, 90, -90);
     note(game);
-    expect(heard).toEqual(['Сделал шпагат', 'Сделал перешпагат']);
+    expect(heard).toEqual(['сделал шпагат', 'сделал перешпагат']);
     // A lighter word after a heavier one changes nothing.
     standUp(doll);
     legsSwung(doll, 35, -125);
@@ -438,7 +438,7 @@ describe('the game saying what the machine says', () => {
     standUp(doll);
     legsSwung(doll, 90, -90);
     note(game);
-    expect(heard).toEqual(['Сделал перешпагат']);
+    expect(heard).toEqual(['сделал перешпагат']);
     game.stopRecording();
     game.record();
     // The same weight as the word the run before it had said — a word only a reset line can say.
@@ -446,7 +446,7 @@ describe('the game saying what the machine says', () => {
     archBack(doll, 75);
     armsUp(doll);
     note(game);
-    expect(heard).toEqual(['Сделал перешпагат', 'Сделал бэкбенд']);
+    expect(heard).toEqual(['сделал перешпагат', 'сделал бэкбенд']);
   });
 
   it('says the enlightenment, and nothing after it — heavier than it there is nothing', () => {
@@ -458,7 +458,7 @@ describe('the game saying what the machine says', () => {
     standUp(doll);
     doll.pain.step(sourcesAt({ neck: BEYOND, split: BEYOND }), STEP);
     note(game);
-    expect(heard).toEqual(['Достиг супергибкости']);
+    expect(heard).toEqual(['достиг супергибкости']);
     // The portrait gone and a triplefold underneath: the state moves, the line does not.
     doll.pain.step(sourcesAt(), STEP);
     standUp(doll);

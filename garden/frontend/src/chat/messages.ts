@@ -110,26 +110,30 @@ export const WINDOW_LINES = 50;
 /**
  * What a run's own line in the chat starts by saying: written the moment the run begins, and replaced
  * by the run's own word for itself as the play goes on (`Game.onFeat`).
+ *
+ * The technical words all begin with a small letter — they are the game's own reporting rather than a
+ * sentence anybody spoke, and a capital is a voice the game does not have.
  */
-export const RUN_STARTED = 'Начал игру';
+export const RUN_STARTED = 'начал гнуть';
 
 /**
  * What the link of a run's line wears when the run's row has not arrived (or is not there to arrive):
  * the word the first label made the link of, so a line that says nothing yet still reads as the thing
  * it is.
  */
-export const RUN_WORD = 'игру';
+export const RUN_WORD = 'гнуть';
 
 /**
  * What a run's line wears beside its words while the run is still being played: the row says `live`,
  * and the line says so — the reader knows to come back, because the end of the run is not in it yet.
  */
-export const RUN_LIVE = '(Идёт стрим)';
+export const RUN_LIVE = '(идёт стрим)';
 
 /**
- * A run's label as it is drawn: the words, and which of them is the link — the last one, so «Начал
- * игру» links its **игру** and «Сделал перешпагат» its **перешпагат**, the noun rather than the verb
- * that merely reports it. A label of one word is a link the whole of itself.
+ * A run's label as it is drawn: the words, and which of them is the link — the last one, so «начал
+ * гнуть» links its **гнуть** and «сделал перешпагат» its **перешпагат**: the word the deed itself is
+ * said with, rather than the reporting verb in front of it. A label of one word is a link the whole
+ * of itself.
  */
 export function labelWords(label: string): { said: string; word: string } {
   const trimmed = label.trim();

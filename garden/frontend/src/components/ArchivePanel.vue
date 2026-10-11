@@ -5,14 +5,16 @@ import { RUN_LIVE, RUN_STARTED } from '../chat/messages';
 
 /**
  * The archive's own screen — the fourth of the garden's locations, arrived over the chat's scenery
- * from the left («Все записи» in the chat's own heading): every run the server holds as one list,
+ * from the left («Гиблиотека» in the chat's own heading): every run the server holds as one list,
  * newest first, its words in the chat's own colour the way the conversation's are (`App.vue`).
  *
  * A line is three things said in one breath — when the run was kept, who played it (with the face
  * the site keeps for them, the way a line of the chat is signed), and the run's own word for
- * itself, the technical word of the recording («Начал игру», «Сделал шпагат») — and a line is
- * pressed rather than read: following it is the same thing following a link in the chat is
- * (`useRuns` through `App.vue`), a playback on at once and the way back here when it is put away.
+ * itself, the technical word of the recording («начал гнуть», «сделал шпагат») — and then, when the
+ * run has been watched at all, how many times: «(смотрели 3)» at the end of the line, the count the
+ * server keeps of every entering of its playback. A line is pressed rather than read: following it
+ * is the same thing following a link in the chat is (`useRuns` through `App.vue`), a playback on at
+ * once and the way back here when it is put away.
  *
  * The list fills from the top: the rows that have arrived stand in the screen's one scroll, and
  * the end of them is watched for (`more` is the archive's own asking, a window of the list at a
@@ -63,9 +65,9 @@ onBeforeUnmount(() => watcher?.disconnect());
 <template>
   <!-- The screen itself: the chat's own full-screen frame (`chat-card--full` — the transparent one
        over the scenery, its words in the chat's own colour), with the list where the conversation
-       would be. The way back at the left of its heading is where the chat's own is, and leads to
-       the chat: the archive is a room off it rather than a place of its own. -->
-  <section class="chat-card chat-card--full archive" aria-label="Все записи">
+       would be. The way back at the left of its heading is where the chat's own is, and leads to the
+       chat: the archive is a room off it rather than a place of its own. -->
+  <section class="chat-card chat-card--full archive" aria-label="Гиблиотека">
     <header class="chat-card__head">
       <button type="button" class="chat-card__back" aria-label="Назад к чату" @click="emit('close')">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -73,7 +75,7 @@ onBeforeUnmount(() => watcher?.disconnect());
         </svg>
         Назад
       </button>
-      <h2 class="chat-card__title">Все записи</h2>
+      <h2 class="chat-card__title">Гиблиотека</h2>
     </header>
     <!-- The one scroll of the screen, carrying the whole list: the rows arrive a window at a time
          and the scroll carries them all, so that going back up is reading what was already read
@@ -84,8 +86,9 @@ onBeforeUnmount(() => watcher?.disconnect());
            no columns and no headings over them, because a line says everything it is: the moment
            it was kept, the player who kept it with the face the site keeps for them, and the run's
            own word for itself — the same word a link in the chat wears, said the same way, with
-           the same fallback for a run that has not said anything yet and the same «(Идёт стрим)»
-           beside the words of one that is still going. The line is a control as well as a line:
+           the same fallback for a run that has not said anything yet and the same «(идёт стрим)»
+           beside the words of one that is still going — and, when it has been watched at all, how
+           many times, said at the end of the line. The line is a control as well as a line:
            pressing it is following the run. -->
       <div class="archive__list">
         <div
@@ -100,9 +103,13 @@ onBeforeUnmount(() => watcher?.disconnect());
         >
           <span class="archive__when">{{ whenWritten(row.whenMs) }}</span>
           <img class="archive__badge" :src="row.face" alt="" width="16" height="16" />
-          <b class="archive__nick">{{ row.author }}</b
-          ><span class="archive__colon">:</span>
-          <span class="archive__what">{{ row.label || RUN_STARTED }}{{ row.live ? ` ${RUN_LIVE}` : '' }}</span>
+          <!-- The byline and the word are one breath of inline text, joined by a literal space on
+               their one line: a whitespace node with a newline in it is dropped by the template
+               compiler, and the line would lose its one space between who and what. -->
+          <span class="archive__say"><b class="archive__nick">{{ row.author }}</b> <span class="archive__what">{{
+            `${row.label || RUN_STARTED}${row.live ? ` ${RUN_LIVE}` : ''}` +
+            (row.views > 0 ? ` (смотрели ${row.views})` : '')
+          }}</span></span>
         </div>
         <!-- The last line of the list: the whole of it said as one word, worn as one more line —
              same height, same place — so that the end reads as read rather than announced. -->

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Refused, type ChatWire } from '../src/chat/api';
+import type { Entry } from '../src/chat/archive';
 import type { Run } from '../src/chat/runs';
 import { useRuns } from '../src/composables/useRuns';
 import {
@@ -40,11 +41,12 @@ afterEach(() => {
 /** What each door of the fake wire answers with; a door with no rule answers with nothing at all. */
 interface Rule {
   tape?: (id: string) => string | Promise<string>;
+  view?: (id: string) => Entry | Promise<Entry>;
 }
 
 /** A wire that answers by rule, and keeps every question it was asked. */
 function fakeWire(rule: Rule = {}) {
-  const asked = { tape: [] as string[] };
+  const asked = { tape: [] as string[], view: [] as string[] };
   const wire: ChatWire = {
     // The page's own handshake and the chat's own doors, which the following of a run never opens:
     // they are here because they are part of what a wire is, and a follower that asked about them
@@ -66,6 +68,13 @@ function fakeWire(rule: Rule = {}) {
     },
     async archive() {
       throw new Refused(0, 'the following does not read the archive');
+    },
+    async view(id) {
+      asked.view.push(id);
+      const row = await rule.view?.(id);
+      // A test that wants a count to land says what the row is; one that wants it to fail throws instead.
+      if (!row) throw new Refused(0, 'the fake wire was not told what a viewed run answers with');
+      return row;
     },
     async tape(id) {
       asked.tape.push(id);
@@ -208,22 +217,26 @@ async function settled(): Promise<void> {
  * a parameter because one test's own failure is the whole point of it (a tape that came down and that the
  * game could not read); every other test's is the `played` this returns. The run's own tape, as the engine
  * has it, is what `grew` holds — one entry per answer the stream door gave, whether or not the tape grew
- * by it, because a run that has stopped being played is something the engine is told, too.
+ * by it, because a run that has stopped being played is something the engine is told, too. The rows the
+ * view door answered with — the bylines of the runs entered — are what `bylines` holds, and only when the
+ * caller asked for them at all.
  */
 async function following(rule: Rule = {}, setup: { live?: StreamRule; liveEvery?: number; play?: (id: string, tape: string) => void } = {}) {
   const { wire, asked } = fakeWire(rule);
   const { wire: streaming, asked: watched } = fakeStream(setup.live);
   const played: { id: string; tape: string }[] = [];
   const grew: { run: Run; tape: Tape }[] = [];
+  const bylines: Entry[] = [];
   const list = useRuns({
     wire,
     stream: streaming,
     liveEvery: setup.liveEvery ?? 0,
     play: setup.play ?? ((id, tape) => played.push({ id, tape })),
     grow: (one, tape) => grew.push({ run: one, tape }),
+    watched: (row) => bylines.push(row),
   });
   await settled();
-  return { list, asked, watched, played, grew };
+  return { list, asked, watched, played, grew, bylines };
 }
 
 /**
@@ -297,6 +310,72 @@ describe('a link followed', () => {
     await list.open('run-1');
     expect(played).toEqual([]);
     expect(list.error.value).toBe('Запись скачалась, но игра не смогла её прочитать.');
+  });
+});
+
+describe('the counting of a run being entered to watch', () => {
+  /** The file a run of these tests answers with: not a tape this game would play, but a tape, as text. */
+  const FILE = '{"format":"garden-tape/2","step":20,"steps":250,"seed":1,"stage":{"engine":{"speed":1,"gravity":0.0011,"fric":0.9993,"clamp":true},"dolls":[],"ropes":[]},"frames":[250],"edits":[]}';
+
+  /** The row the view door answers with: the run's own byline, count one more than it was. */
+  const ROW: Entry = {
+    id: 'run-1',
+    author: 'Марго',
+    face: '/i/margo.gif',
+    whenMs: 1760000000000,
+    label: 'начал гнуть',
+    live: false,
+    views: 1,
+  };
+
+  it('counts one watching the moment the run is entered, and hands its row on', async () => {
+    const { list, asked, bylines } = await following(
+      { tape: () => FILE, view: () => ROW },
+      { live: overWith('run-1') },
+    );
+    await list.open('run-1');
+    await settled();
+    expect(asked.view).toEqual(['run-1']);
+    expect(bylines).toEqual([ROW]);
+  });
+
+  it('counts a run that is still being played the same as one that is over', async () => {
+    vi.useFakeTimers();
+    try {
+      const live = watchedRun();
+      live.second();
+      const { list, asked, bylines } = await following(
+        { view: () => ROW },
+        { live: live.answer, liveEvery: 1000 },
+      );
+      await list.open('run-1');
+      await settled();
+      // Once for the entering of it, and never again on any of the asking that follows: the asking is
+      // the following, and a following is one watching.
+      expect(asked.view).toEqual(['run-1']);
+      expect(bylines).toEqual([ROW]);
+      await vi.advanceTimersByTimeAsync(3000);
+      expect(asked.view).toEqual(['run-1']);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('counts nothing for a run that never came down', async () => {
+    const { list, asked } = await following({}, { live: overWith('run-1') });
+    await list.open('run-1');
+    await settled();
+    expect(asked.view).toEqual([]);
+  });
+
+  it('says nothing when the count itself does not land: the run is already walking', async () => {
+    // The view door has no rule, so it throws — and the following neither fails nor waits: a count
+    // that did not arrive is a number one lower rather than a playback gone wrong.
+    const { list, played } = await following({ tape: () => FILE }, { live: overWith('run-1') });
+    await list.open('run-1');
+    await settled();
+    expect(played).toHaveLength(1);
+    expect(list.error.value).toBeNull();
   });
 });
 

@@ -351,9 +351,9 @@ describe('a door that did not open', () => {
 
 describe("the rows of the runs the chat's lines link", () => {
   it('is asked for by their own ids, in one ask, and read as the list is', async () => {
-    const server = fakeServer({ body: { recordings: [{ ...WIRE_RUN, label: 'Сделал перешпагат' }] } });
+    const server = fakeServer({ body: { recordings: [{ ...WIRE_RUN, label: 'сделал перешпагат' }] } });
     expect(await chatApi('/api', server.take).runsByIds(['run-2', 'run-3'])).toEqual([
-      { id: 'run-2', name: 'второй прогон', author: 'Марго', steps: 250, stepMs: 20, live: false, label: 'Сделал перешпагат' },
+      { id: 'run-2', name: 'второй прогон', author: 'Марго', steps: 250, stepMs: 20, live: false, label: 'сделал перешпагат' },
     ]);
     expect(server.asked[0].url).toBe('/api/recordings?ids=run-2,run-3');
   });
@@ -389,9 +389,9 @@ describe("a window of the whole list, as the archive's table asks for it", () =>
   });
 
   it('reads the byline with its face, the moment and the word — the row the table draws', async () => {
-    const server = fakeServer({ body: { recordings: [{ ...WIRE_RUN, icon: '9', live: true }] } });
+    const server = fakeServer({ body: { recordings: [{ ...WIRE_RUN, icon: '9', live: true, views: 2 }] } });
     expect(await chatApi('/api', server.take).archive(0, 100)).toEqual([
-      { id: 'run-2', author: 'Марго', face: '/i/9.gif', whenMs: 1750000001000, label: '', live: true },
+      { id: 'run-2', author: 'Марго', face: '/i/9.gif', whenMs: 1750000001000, label: '', live: true, views: 2 },
     ]);
   });
 
@@ -403,5 +403,38 @@ describe("a window of the whole list, as the archive's table asks for it", () =>
   it('refuses a window the server would not hand over', async () => {
     const server = fakeServer({ status: 500, statusText: 'Internal Server Error' });
     await expect(chatApi('/api', server.take).archive(0, 100)).rejects.toThrow(Refused);
+  });
+});
+
+describe('the counting of a run being entered to watch', () => {
+  it('is a posting to the run\'s own view door, and the row comes back as the table reads one', async () => {
+    const server = fakeServer({ body: { recording: { ...WIRE_RUN, icon: '9', views: 1 } } });
+    expect(await chatApi('/api', server.take).view('run-2')).toEqual({
+      id: 'run-2',
+      author: 'Марго',
+      face: '/i/9.gif',
+      whenMs: 1750000001000,
+      label: '',
+      live: false,
+      views: 1,
+    });
+    expect(server.asked[0].url).toBe('/api/recordings/run-2/view');
+    expect(server.asked[0].init?.method).toBe('POST');
+  });
+
+  it('is a refusal carrying the server\'s own sentence when the run is not there', async () => {
+    const server = fakeServer({ status: 404, statusText: 'Not Found', body: { error: 'no recording run-2' } });
+    const refused = (await chatApi('/api', server.take).view('run-2').catch((err: unknown) => err)) as Refused;
+    expect(refused).toBeInstanceOf(Refused);
+    expect(refused.status).toBe(404);
+    expect(refused.sentence).toBe('no recording run-2');
+  });
+
+  it('is a refusal when the server counted a view without naming the run', async () => {
+    // A door that answered with nothing shaped like a row is a door that did not open, whoever was
+    // doing the counting — and the caller treats the two alike, which is what makes the count a
+    // courtesy the playback does not wait for.
+    const server = fakeServer({ body: {} });
+    await expect(chatApi('/api', server.take).view('run-2')).rejects.toThrow(Refused);
   });
 });

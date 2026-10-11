@@ -99,7 +99,7 @@ const chatLog = [
 ];
 
 /** What the doors have been asked: the run's own record of it, read again by the report at the foot. */
-const chatAsked = { sent: [], tapes: [], archives: [] };
+const chatAsked = { sent: [], tapes: [], archives: [], views: [] };
 
 /**
  * The runs that arrived as they were *played*: the head each one was opened with, and the slices that followed
@@ -152,7 +152,7 @@ const chatOld = Array.from({ length: 120 }, (_, at) => ({
     steps: 150,
     step_ms: 20,
     live: false,
-    label: 'Сделал шпагат',
+    label: 'сделал шпагат',
   },
 }));
 
@@ -280,6 +280,23 @@ async function chatDoor(req, res) {
       return answer(200, { recordings: all.slice(offset, offset + limit) });
     }
     return answer(200, { recordings: chatRuns });
+  }
+
+  // One watching of a run: the count the archive's rows read, one more than it was, and the row back —
+  // which is the byline of the screen the playback is watched on (the way the real door does it,
+  // `Server.view` over `store.Viewed`). It counts askings rather than watchers — the same player
+  // coming back is two watchings — and it is asked the moment a run is entered, never after.
+  const viewed = pathname.match(/^\/api\/recordings\/([^/]+)\/view$/);
+  if (viewed && method === 'POST') {
+    const id = decodeURIComponent(viewed[1]);
+    const entry =
+      chatArchive.find((one) => one.row.id === id) ??
+      chatOld.find((one) => one.row.id === id) ??
+      (foreignRun && foreignRun.id === id ? { at: Date.now(), icon: player.icon, row: foreignRun.row } : null);
+    if (!entry) return answer(404, { error: `no recording ${id}` });
+    entry.row.views = (entry.row.views ?? 0) + 1;
+    chatAsked.views.push(id);
+    return answer(200, { recording: { ...entry.row, icon: entry.icon, recorded_ms: entry.at, uploaded_ms: entry.at } });
   }
 
   // The run's own word in the chat: which line of the log is the run's, and what that line says. The page
@@ -1753,6 +1770,9 @@ summary.chat.before = await page.evaluate(() => {
     nowrap: getComputedStyle(lines[0]).whiteSpace,
     mask: style.maskImage,
     clicks: style.pointerEvents,
+    // The block is half-transparent: a plate of black at two fifths rather than a solid one, so the hall
+    // the messages stand over keeps showing through them (`.chat-strip` in `src/styles.css`).
+    plate: style.backgroundColor,
     badges: [...strip.querySelectorAll('.chat-line__badge')].map((img) => `${img.naturalWidth}x${img.naturalHeight}`),
     gifs: strip.querySelectorAll('.chat-line__gif').length,
   };
@@ -1835,7 +1855,7 @@ summary.chat.window = await page.evaluate(() => {
     caret: speaker.querySelector('.chat-card__caret path').getAttribute('d'),
     pressed: speaker.getAttribute('aria-pressed'),
     // The log and nothing beside it: the runs are links inside the conversation now, and the first run
-    // this page played has already said itself — its line is the page's own word «Начал игру», worn as
+    // this page played has already said itself — its line is the page's own word «начал гнуть», worn as
     // a link whose words come from the run's own row (`useRunStates`).
     chat: card.querySelector('.chat-card__log') !== null,
     runLine: (() => {
@@ -1992,6 +2012,11 @@ if (summary.chat.hover !== 'rgb(255, 255, 255)') {
 if (chatStrip.nowrap !== 'nowrap') problems.push(`a line on the chat's strip wraps (${chatStrip.nowrap})`);
 if (!chatStrip.mask.includes('16px')) problems.push(`the strip's own fade is ${chatStrip.mask}`);
 if (chatStrip.clicks !== 'auto') problems.push(`the strip takes no clicks (${chatStrip.clicks})`);
+// The strip's own plate is half-transparent — black at two fifths rather than solid, the hall showing
+// through the lines it holds — and the mask that fades the block's right edge fades the plate with it.
+if (chatStrip.plate !== 'rgba(0, 0, 0, 0.4)') {
+  problems.push(`the strip's plate is ${chatStrip.plate} rather than the half-transparent black of it`);
+}
 if (chatStrip.badges.some((size) => !size.startsWith('16x'))) {
   problems.push(`the strip's badges are ${chatStrip.badges.join(', ')}, not the site's own sixteen-wide gifs`);
 }
@@ -2038,13 +2063,13 @@ if (!chatWindow.chat) {
   problems.push('the chat window is not the conversation it is');
 }
 // The first run this page played has said itself: its line is in the log, wearing the page's own
-// name and the words the run's own line carries — «Начал игру» to begin with, and the heavier words
+// name and the words the run's own line carries — «начал гнуть» to begin with, and the heavier words
 // of a feat once the play has earned them (`Game.onFeat`), which is the same link wearing what the
 // run has done rather than a different line.
 if (
   !chatWindow.runLine ||
   !chatWindow.runLine.startsWith(`${player.nick}: `) ||
-  !/^(Начал игру|Сделал |Достиг )/.test(chatWindow.runLine.slice(player.nick.length + 2))
+  !/^(начал гнуть|сделал |достиг )/.test(chatWindow.runLine.slice(player.nick.length + 2))
 ) {
   problems.push(`a run the page began was said in the chat as ${JSON.stringify(chatWindow.runLine)}`);
 }
@@ -3734,7 +3759,13 @@ const recorded = await page.evaluate(() => {
     // `aria-valuetext`, since a slider that reads out a step count of 437 of 1150 says nothing about a run.
     clock: document.querySelector('.tape__clock') !== null,
     readout: slider?.getAttribute('aria-valuetext') ?? '',
-    close: timeline?.querySelector('.tape__close')?.textContent?.trim() ?? '',
+    // The way out of the tape is the head's worded button at the world's own top left corner, wearing the
+    // chat's own way back (`TapeHead.vue`) — nothing of it is left at the foot of the world.
+    close: document.querySelector('.tape-head .chat-card__back')?.textContent?.trim() ?? '',
+    head: (() => {
+      const head = document.querySelector('.tape-head');
+      return head ? { up: true, byline: head.querySelector('.tape-head__byline') !== null } : { up: false };
+    })(),
     // ...and while the bar is up the game's own row is not on the page at all: a run on the tape is a run being
     // *watched*, and the tools and the chat have given the foot of the world up to the bar (`App.vue`).
     tools: document.querySelector('.toolbar') !== null,
@@ -3798,13 +3829,18 @@ if (!recorded.timeline) {
     );
   }
 }
-// While the bar is up it is the whole of the interface's row: the tools and the chat are not on the page, and what
-// ends the mode is a word at the end of the bar rather than a cross in its corner.
+// While the bar is up it is the whole of the interface's own row: the tools and the chat are not on the page, and what
+// ends the mode is the head's worded «Назад» at the world's own top left corner rather than a cross anywhere.
 if (recorded.tools || recorded.chat) {
   problems.push('the bar of tools and the chat are still up while a run is on the tape');
 }
-if (recorded.close !== 'Закрыть') {
+if (recorded.close !== 'Назад') {
   problems.push(`the way out of the tape reads "${recorded.close}"`);
+}
+// The head is up while the recording itself is on the timeline too, but its byline is not: the player's
+// own run is nobody's playback, there is no view door to answer for it, and the head is the way out alone.
+if (!recorded.head?.up || recorded.head.byline) {
+  problems.push(`the head of the recording's own timeline is ${JSON.stringify(recorded.head)}`);
 }
 if (recorded.slider?.max !== recorded.report.steps || recorded.slider?.value !== recorded.report.steps) {
   problems.push(
@@ -3956,7 +3992,7 @@ const played = await page.evaluate(() => {
     slider: slider ? Number(slider.value) : null,
     // The bar is up for as long as a run is loaded on it, and so is the *mode*: the tools stay out of the way once
     // the playback has stopped, since what follows a run is dragging its playhead about rather than the game.
-    close: timeline?.querySelector('.tape__close')?.textContent?.trim() ?? '',
+    close: document.querySelector('.tape-head .chat-card__back')?.textContent?.trim() ?? '',
     tools: document.querySelector('.toolbar') !== null,
     readings: timeline?.querySelectorAll('.tape__reading').length ?? 0,
     saves: timeline?.querySelectorAll('[data-action="save"]').length ?? 0,
@@ -3975,9 +4011,9 @@ if (played.report.playing || played.report.step !== played.report.steps) {
   );
 }
 // The mode outlasts the playback: a run that has stopped walking is still a run to drag the playhead about, so the
-// bar stays up and the tools stay away — what brings them back is the word at the end of the bar.
+// bar stays up and the tools stay away — what brings them back is the head's own worded way out.
 if (played.tools) problems.push('the bar of tools came back the moment the playback stopped');
-if (played.close !== 'Закрыть') problems.push(`the way out of the tape reads "${played.close}"`);
+if (played.close !== 'Назад') problems.push(`the way out of the tape reads "${played.close}"`);
 // And the room: the one room there is, on the window that watched the playback as much as the one that
 // recorded the run — the resize under the run reached the picture and never the physics.
 if (Math.abs(played.walls - wallsWhileRecording.maxx) > 0.001) {
@@ -4080,7 +4116,7 @@ if (!reloaded.loaded || reloaded.steps !== played.report.steps || reloaded.bytes
 
 // And off the timeline again: the world is the player's own once more — the one room stands as it always
 // did — and the game's own row of tools and chat comes back with it.
-await page.click('.tape__close');
+await page.click('.tape-head .chat-card__back');
 await wait(400);
 const unloaded = await page.evaluate(() => ({
   report: window.__garden.tapeState,
@@ -4104,13 +4140,13 @@ if (Math.abs(unloaded.walls - wallsWhileRecording.maxx) > 0.001) {
 //
 // It comes at the foot of the tape's own section on purpose. The tape a link hands over is the file the
 // section above has just recorded: `tapeFile`, the game's own JSON of a run this page walked — handed out
-// as somebody else's, whose line in the log says «Начал игру» the way every run's own line does. Nothing is
+// as somebody else's, whose line in the log says «начал гнуть» the way every run's own line does. Nothing is
 // invented here, and nothing about the format is read twice: what is checked is that following a link plays
 // *that* run — its steps, its walls — rather than that a line looks like a link.
 //
 // The page's own runs have been saying themselves all along: every run this page began put a line up in the
 // chat and bound itself to it (`useLiveRun`), and the tally of those sayings is read here — the words the
-// door was asked to carry («Начал игру»), the line they were said against, and the run they were said for.
+// door was asked to carry («начал гнуть»), the line they were said against, and the run they were said for.
 const smokedRun = {
   id: 'smoke-run',
   name: 'прогон смоука',
@@ -4130,7 +4166,7 @@ const smokedRow = {
   steps: smokedRun.steps,
   step_ms: smokedRun.step_ms,
   live: false,
-  label: 'Начал игру',
+  label: 'начал гнуть',
 };
 chatRows.set(smokedRun.id, smokedRow);
 chatArchive.push({ at: Date.now() - 60_000, icon: '14', row: smokedRow });
@@ -4150,11 +4186,11 @@ chatLog.push({
 // that is in the log above, linking the run that was saying it.
 //
 // A run says itself more than once: the words change as the play goes on (`Game.onFeat`), and a word change
-// is a note with no message in it — the binding was done once, at «Начал игру», and is not redone. So the
+// is a note with no message in it — the binding was done once, at «начал гнуть», and is not redone. So the
 // tally is read per run: the first saying of each must be the bound one, and every saying after it is only
 // the run's own word for what the play has done.
 summary.runs = { said: chatSaid.map((one) => ({ ...one })) };
-if (!chatSaid.some((one) => one.label === 'Начал игру' && typeof one.message === 'number')) {
+if (!chatSaid.some((one) => one.label === 'начал гнуть' && typeof one.message === 'number')) {
   problems.push(
     `the page's own runs were said as ${JSON.stringify(chatSaid)} rather than bound to lines with their first words`,
   );
@@ -4191,7 +4227,7 @@ await page.screenshot({ path: join(outDir, '27-chat-runs.png') });
 if (runLink.said === null) {
   problems.push(`the log has no line linking ${smokedRun.id}`);
 } else {
-  if (!runLink.said.startsWith(`${smokedRun.author}: Начал `) || !runLink.said.endsWith('игру')) {
+  if (!runLink.said.startsWith(`${smokedRun.author}: начал `) || !runLink.said.endsWith('гнуть')) {
     problems.push(`the line of a run that has just begun reads "${runLink.said}"`);
   }
   if (!runLink.isAnchor) problems.push('a run\'s link in the window is not a link to follow');
@@ -4242,6 +4278,40 @@ if (!picked.report.loaded || picked.report.steps !== smokedRun.steps) {
     `the run off the link is ${JSON.stringify(picked.report)} rather than the link's own run of ${smokedRun.steps} steps`,
   );
 }
+
+// The head of the playback screen, arrived from the same door the count did: the way out at the world's own
+// top left corner — the chat's own worded button — and beside it the run's byline, the face the site keeps
+// for whoever played it, their name, and the moment the run was kept. The entering is also the counting: the
+// view door was asked for the run this link named, once, and by the byline's own having arrived the count is
+// what the door answered with (`useRuns` hands the row on when the view lands).
+const pickedHead = await page
+  .waitForSelector('.tape-head__byline', { timeout: 10000 })
+  .then(() =>
+    page.evaluate(() => ({
+      badge: document.querySelector('.tape-head__badge')?.getAttribute('src') ?? null,
+      nick: document.querySelector('.tape-head__nick')?.textContent.trim() ?? null,
+      when: document.querySelector('.tape-head__when')?.textContent.trim() ?? null,
+      back: document.querySelector('.tape-head .chat-card__back')?.textContent.trim() ?? null,
+    })),
+  )
+  .catch(() => null);
+summary.runs.picked.head = pickedHead;
+if (!pickedHead) {
+  problems.push('the playback screen grew no byline of the run it was watching');
+} else {
+  if (pickedHead.nick !== smokedRun.author) {
+    problems.push(`the playback's byline is signed "${pickedHead.nick}" rather than ${smokedRun.author}`);
+  }
+  if (pickedHead.badge !== '/i/14.gif') problems.push(`the playback's byline wears the badge ${pickedHead.badge}`);
+  // The same moment the archive's table reads, comma and all the rest of it included (`whenWritten`).
+  if (!/^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/.test(pickedHead.when ?? '')) {
+    problems.push(`the playback's byline says the run was kept at "${pickedHead.when}"`);
+  }
+  if (pickedHead.back !== 'Назад') problems.push(`the playback's way back reads "${pickedHead.back}"`);
+}
+if (chatAsked.views.filter((id) => id === smokedRun.id).length !== 1) {
+  problems.push(`entering the run off a link counted it as watched ${JSON.stringify(chatAsked.views)}`);
+}
 // Half a second in, the run above is walking and its playhead is well inside it. What is *not* read here is
 // the room it walks in: a run carries the window it was made in and puts it back as it goes (the `v` events
 // of the file), so at its own beginning it walks in the room of the recording's beginning — which is this
@@ -4287,7 +4357,7 @@ if (Math.abs(pickedRoom.walls - wallsWhileRecording.maxx) > 0.001) {
 // bar gone, the bar of tools and the strip back in their corner, the room this window's own, and the
 // address back to what it was — a page no longer watching a run is a page whose address should not say it
 // is.
-if (picked.timeline) await page.click('.tape__close');
+if (picked.timeline) await page.click('.tape-head .chat-card__back');
 await wait(400);
 const pickedAway = await page.evaluate(() => ({
   report: window.__garden.tapeState,
@@ -4315,7 +4385,7 @@ if (pickedAway.addressRun !== null) {
 //
 // This is the other half of the live run above: that section checked what this page *sends* as it plays, and
 // this one checks what a page *reads* while somebody else is still playing — the line in the chat that says
-// «(Идёт стрим)» beside its link, the following of the link, and the tape that goes on arriving afterwards
+// «(идёт стрим)» beside its link, the following of the link, and the tape that goes on arriving afterwards
 // (`useRuns`, and the walk that carries on into it, `Game.growTape`).
 //
 // What the server outside serves is the run this page has just recorded, handed out as somebody else's: its
@@ -4352,7 +4422,7 @@ function sliced(tape, every) {
 foreignRun = {
   id: 'smoke-live',
   row: { id: 'smoke-live', name: 'чужой прогон', author: 'Костя', step_ms: recordedTape.step, live: true },
-  label: 'Начал игру',
+  label: 'начал гнуть',
   head: { format: recordedTape.format, step: recordedTape.step, seed: recordedTape.seed, stage: recordedTape.stage },
   slices: sliced(recordedTape, 50).map((slice, seq) => ({ ...slice, seq })),
   asked: [],
@@ -4368,9 +4438,9 @@ foreignRun = {
   },
 };
 // Its own line in the log, as the player still playing it would have written: a link, with the row saying
-// the words — and while the run is still going, the line wears «(Идёт стрим)» beside them. The archive
+// the words — and while the run is still going, the line wears «(идёт стрим)» beside them. The archive
 // hears of it here as well — a run being played is a run the whole list holds, and the table shows it
-// with its words and its «(Идёт стрим)» the way the conversation does.
+// with its words and its «(идёт стрим)» the way the conversation does.
 chatArchive.push({
   at: Date.now() - 30_000,
   icon: '14',
@@ -4425,10 +4495,10 @@ summary.watching = { row: liveRow, asked: foreignRun.asked };
 if (!liveRow.at) {
   problems.push(`the log has no line linking the run that is still being played (${JSON.stringify(liveRow)})`);
 } else {
-  // A link to a run that is still going says so beside its words — «(Идёт стрим)» — which is the one thing
+  // A link to a run that is still going says so beside its words — «(идёт стрим)» — which is the one thing
   // on a line that is not a number worked out of anything: the reader is being told to come back, because
   // the end of the run is not in the link yet.
-  if (!liveRow.said.includes('(Идёт стрим)')) {
+  if (!liveRow.said.includes('(идёт стрим)')) {
     problems.push(`the line of a run that is still being played reads "${liveRow.said}"`);
   }
   if (!liveRow.isAnchor) problems.push('the line of a live run is not a link to follow');
@@ -4546,7 +4616,7 @@ if (!liveRow.at) {
   // And off the timeline again, which is where the watching stops: a run that is not on the timeline any more is
   // a run nobody is watching, so the asking is over with it (`useRuns.stop`, reached through the tape's own
   // report in `App.vue`).
-  await page.click('.tape__close');
+  await page.click('.tape-head .chat-card__back');
   await wait(400);
   const watchedOff = await onTimeline();
   const askedAtClose = foreignRun.asked.length;
@@ -4702,7 +4772,7 @@ if (!ownHandle) {
   }));
   if (!underWatch.loaded) problems.push('the own-game section put no tape on the timeline to watch');
   if (!underWatch.recording) problems.push('a watch ended the run being written under it');
-  await page.click('.tape__close');
+  await page.click('.tape-head .chat-card__back');
   await wait(400);
   // The scene the watch put aside comes back exactly as it was put aside — and settles on from there, which
   // is the run's own doing again, so the reading below waits for its pause like the one above did: both
@@ -4782,7 +4852,7 @@ if (!ownHandle) {
   await page.screenshot({ path: join(outDir, '31-own-run-resumed.png') });
 }
 
-// The archive — «Все записи» — the garden's fourth screen: every run this server holds as one table,
+// The archive — «Гиблиотека» — the garden's fourth screen: every run this server holds as one table,
 // over the same scenery the chat stands over, arrived at by a button at the right of the chat's own
 // heading and arrived over like every screen is — the whole picture travelling left one more window,
 // its table waiting the pan out before it is drawn (`archiveShown` in `App.vue`).
@@ -4811,7 +4881,7 @@ summary.archive = { door: archiveDoor };
 if (!archiveDoor) {
   problems.push('the chat\'s heading has no way to the archive in it');
 } else {
-  if (archiveDoor.said !== 'Все записи') problems.push(`the way to the archive says "${archiveDoor.said}"`);
+  if (archiveDoor.said !== 'Гиблиотека') problems.push(`the way to the archive says "${archiveDoor.said}"`);
   // The right of the heading, at the top of the screen — across it from the way back, which is where
   // the archive's door was put rather than anywhere in the conversation.
   if (archiveDoor.fromRight > 40 || archiveDoor.fromTop > 60) {
@@ -4847,11 +4917,21 @@ if (!archiveDoor) {
       first: {
         run: first.getAttribute('data-run'),
         said: first.textContent.trim(),
+        read: first.querySelector('.archive__say')?.innerText.trim() ?? null,
         when: first.querySelector('.archive__when')?.textContent.trim() ?? null,
+        whenColor: getComputedStyle(first.querySelector('.archive__when')).color,
+        colon: first.querySelector('.archive__colon') !== null,
         nick: first.querySelector('.archive__nick')?.textContent.trim() ?? null,
         badge: first.querySelector('.archive__badge')?.getAttribute('src') ?? null,
         what: first.querySelector('.archive__what')?.textContent.trim() ?? null,
       },
+      // The run this section presses below, read where it stands: watched twice by the time the table
+      // is drawn — once off its link in the chat, once over the player's own unfinished run — so its
+      // line is the one that says so.
+      watched: (() => {
+        const one = card.querySelector('.archive__row[data-run="smoke-run"]');
+        return one ? one.querySelector('.archive__what')?.textContent.trim() ?? null : null;
+      })(),
       scenery: {
         archive: getComputedStyle(document.querySelector('.location--archive')).backgroundImage,
         chat: getComputedStyle(document.querySelector('.location--chat')).backgroundImage,
@@ -4861,7 +4941,7 @@ if (!archiveDoor) {
   const newest = chatLive.opened.at(-1)?.id ?? null;
   summary.archive.table = table;
   summary.archive.windows = chatAsked.archives;
-  if (table.title !== 'Все записи') problems.push(`the archive's screen is titled "${table.title}"`);
+  if (table.title !== 'Гиблиотека') problems.push(`the archive's screen is titled "${table.title}"`);
   if (table.back !== 'Назад') problems.push(`the archive's way back says "${table.back}"`);
   if (table.headings !== 0) problems.push('the list has column headings or a rule over it');
   // The list stands in the middle of the screen, a page of it 600 px across — and the whole of it
@@ -4885,15 +4965,33 @@ if (!archiveDoor) {
     problems.push(`the top of the table is the run ${table.first.run}, not this page's own ${newest}`);
   }
   // One line, in one breath: the moment first, then the byline with its face, then the run's own
-  // word — in that order, so the list reads like a log and not like a form to fill in.
-  if (!/^\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}$/.test(table.first.when ?? '')) {
+  // word — in that order, so the list reads like a log and not like a form to fill in. The moment
+  // is said in the scenery's own grey and with no comma after the year, and the byline is joined to
+  // the word by the one space a sentence takes — no colon, no gap of the table's own.
+  if (!/^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/.test(table.first.when ?? '')) {
     problems.push(`the top line's moment reads "${table.first.when}"`);
+  }
+  if (table.first.whenColor !== 'rgb(86, 86, 86)') {
+    problems.push(`the top line's moment is written in ${table.first.whenColor} rather than the scenery's own #565656`);
   }
   if (!table.first.said.startsWith(table.first.when)) problems.push(`the top line does not begin with its moment: "${table.first.said}"`);
   if (table.first.nick !== player.nick) problems.push(`the top row is signed "${table.first.nick}"`);
-  if (!table.first.said.includes(`${player.nick}:`)) problems.push(`the top line does not sign itself "${player.nick}:"`);
+  if (table.first.colon) problems.push('the byline still wears a colon after it');
+  if (table.first.read !== `${table.first.nick} ${table.first.what}`) {
+    problems.push(`the top line reads "${table.first.read}" rather than "${table.first.nick} ${table.first.what}"`);
+  }
   if (!table.first.what) problems.push('the top row says nothing about its run');
+  // A run nobody has entered — this page's own still-live one — says nothing about watchings: a count
+  // is only interesting once there is one.
+  if ((table.first.what ?? '').includes('(смотрели')) {
+    problems.push(`a run nobody has entered says it was watched: "${table.first.what}"`);
+  }
   if (table.first.badge !== `/i/${player.icon}.gif`) problems.push(`the top row wears the badge ${table.first.badge}`);
+  // The watched run's own line: twice entered, twice counted — said at the end of the line, after the
+  // run's own word for itself, in the row's own breath.
+  if (!(table.watched ?? '').endsWith('(смотрели 2)')) {
+    problems.push(`the watched run's line reads "${table.watched}" rather than ending in "(смотрели 2)"`);
+  }
   await page.screenshot({ path: join(outDir, '32-archive-table.png') });
 
   // A window too narrow for the slack: the list takes the whole of it rather than four fifths of a
@@ -4968,10 +5066,26 @@ if (!archiveDoor) {
     summary.archive.pressed = onAtOnce;
     if (!onAtOnce.loaded) problems.push('pressing a row of the table put no tape on the timeline');
     if (!onAtOnce.tableGone) problems.push('the table stayed on the screen over the playback');
+    // The pressing is an entering like any other: the run is counted a third time, and its byline is up
+    // in the head of the screen it is watched on — the same three things its row says, signed the same way.
+    const pressedHead = await page
+      .waitForSelector('.tape-head__byline', { timeout: 10000 })
+      .then(() =>
+        page.evaluate(() => ({
+          nick: document.querySelector('.tape-head__nick')?.textContent.trim() ?? null,
+          badge: document.querySelector('.tape-head__badge')?.getAttribute('src') ?? null,
+          when: document.querySelector('.tape-head__when')?.textContent.trim() ?? null,
+        })),
+      )
+      .catch(() => null);
+    summary.archive.pressedHead = pressedHead;
+    if (!pressedHead || pressedHead.nick !== smokedRun.author || pressedHead.badge !== '/i/14.gif') {
+      problems.push(`the pressed run's byline in the head came up as ${JSON.stringify(pressedHead)}`);
+    }
 
     // And the way back: putting the run away returns to the table it was pressed in — the row is
     // where the player left it, and the conversation is not where they land.
-    await page.click('.tape__close');
+    await page.click('.tape-head .chat-card__back');
     await page.waitForSelector('.archive', { visible: true, timeout: 20000 });
     // Counted by their runs rather than by their class: the end of the list is a line of it too
     // («Всё»), and what the way back has to find is the entries, not the word after them.
@@ -4984,6 +5098,13 @@ if (!archiveDoor) {
     if (backToTable.rows !== held) problems.push(`the way back found ${backToTable.rows} rows, not the ${held} the table held`);
     if (backToTable.tape) problems.push('the timeline stayed up over the archive');
     if (!backToTable.chat) problems.push('the way back from a pressed row landed in the chat rather than the table');
+    // The tally of the whole run: a link in the chat, a watch over the player's own unfinished run,
+    // and a row of the table — three enterings, three countings, and nothing else the door was asked for.
+    const smokedViews = chatAsked.views.filter((id) => id === smokedRun.id).length;
+    if (smokedViews !== 3) {
+      problems.push(`the run was counted as watched ${smokedViews} times rather than the three enterings of it`);
+    }
+    summary.archive.views = { asked: [...chatAsked.views], smokedViews };
   }
 
   // The way out is where the ways back always are: a worded button at the left of the heading, and
@@ -5271,6 +5392,12 @@ console.log(
   `${summary.tape?.wallsWhileRecording?.maxx ?? 0})`,
   '| put away:',
   `${!(summary.runs?.pickedAway?.report?.loaded ?? true)}`,
+  '| the byline up in the head:',
+  `${summary.runs?.picked?.head?.nick ?? '—'}`,
+  'wearing',
+  `${summary.runs?.picked?.head?.badge ?? '—'}`,
+  'kept at',
+  `"${summary.runs?.picked?.head?.when ?? '—'}"`,
 );
 console.log(
   'watching: a run that is still being played read',
@@ -5297,6 +5424,11 @@ console.log(
         ` and grew to ${summary.ownRun.continued.slices} slices (${summary.ownRun.continued.numbered})` +
         ` under ${summary.ownRun.continued.id}${summary.ownRun.continued.ended ? ', ended' : ''}`
     : '—',
+);
+console.log(
+  'views: the door was asked for',
+  `[${(summary.archive?.views?.asked ?? []).join(', ')}]`,
+  `— the pressed run counted ${summary.archive?.views?.smokedViews ?? 0} watchings, its row reading "${summary.archive?.table?.watched ?? '—'}"`,
 );
 writeFileSync(join(outDir, 'summary.json'), JSON.stringify(summary, null, 2));
 

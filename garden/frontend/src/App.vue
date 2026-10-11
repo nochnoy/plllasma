@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import ArchivePanel from './components/ArchivePanel.vue';
 import ChatPanel from './components/ChatPanel.vue';
 import ChatTicker from './components/ChatTicker.vue';
+import TapeHead from './components/TapeHead.vue';
 import TapeTimeline from './components/TapeTimeline.vue';
 import { useArchive } from './composables/useArchive';
 import { useChat } from './composables/useChat';
@@ -12,6 +13,7 @@ import { useRunStates } from './composables/useRunStates';
 import { useRuns } from './composables/useRuns';
 import { useTape } from './composables/useTape';
 import type { User } from './auth';
+import type { Entry } from './chat/archive';
 import type { Speaker } from './chat/messages';
 import { linkedRuns, userpic } from './chat/messages';
 import type { Run } from './chat/runs';
@@ -50,9 +52,9 @@ const player: Speaker = { id: props.user.id, nick: props.user.nick, face: userpi
  * one sentence about the place, and the «Сцена» button that is the way in. The second is the stage
  * itself, which is all the game there is: the hall (`assets/bg-2.png`, the world the renderer
  * draws), the doll, the bar of tools and the chat's strip. The third is the chat's own screen over
- * `assets/bg-3.png` — everything the window it used to be was, said over its own scenery in the
+ * `assets/bg-3.png` — everything the window it used to be was, said over its own scenery in
  * chat's own colour rather than on paper — and the way into it is the bar's chat button and the
- * strip alike. The fourth is the archive — «Все записи» — over the same scenery as the chat's, one
+ * strip alike. The fourth is the archive — «Гиблиотека» — over the same scenery as the chat's, one
  * window further along: every run the server holds as one table, and the way into it is the button
  * at the right of the chat's own heading.
  *
@@ -309,7 +311,7 @@ watch(settled, (still) => {
 });
 
 /**
- * The archive — «Все записи», the fourth location: every run the server holds as one table over the
+ * The archive — «Гиблиотека», the fourth location: every run the server holds as one table over the
  * chat's own scenery, read a window at a time as it is scrolled (`useArchive`). It is the chat's
  * other half: the conversation is the runs being played and said about now, and this is all of them,
  * whoever played them and however long ago — newest first, each row signed by its player's own face
@@ -356,9 +358,21 @@ const { rows: runRows } = useRunStates(() => linkedRuns(messages.value));
  * goes on arriving after that, and what stops it is the tape's own report rather than the screen
  * (`stopWatching`, below).
  */
+/**
+ * The run being watched, as the view door answered with it (`useRuns.watched`): the byline of the
+ * playback screen — who played it, with the face the site keeps for them, and when it was kept —
+ * arrived a moment after the run itself has started walking and cleared with it. Null while no run
+ * is on the tape, and briefly null at the start of one: the head of the playback screen is the way
+ * out alone until the row lands.
+ */
+const watched = ref<Entry | null>(null);
+
 const { open: openRun, stop: stopWatching } = useRuns({
   play: playRun,
   grow: growRun,
+  watched: (row) => {
+    watched.value = row;
+  },
 });
 
 /**
@@ -424,8 +438,9 @@ function growRun(run: Run, tape: Tape): void {
 }
 
 // A run that is not on the timeline any more is a run nobody is watching: the tape's own report says so
-// (`useTape`), and what takes a tape off is its own bar's «Закрыть» — which is also the door the player
-// comes back through, to their own scene and their own interrupted run (`Game.unload`). The address is
+// (`useTape`), and what takes a tape off is the head of the playback screen — the worded «Назад» at the
+// world's own top left corner, which is also the door the player comes back through, to their own scene
+// and their own interrupted run (`Game.unload`). The address is
 // told too: a page no longer watching a run is a page whose address should not say it is. And a run that
 // was followed out of a screen is put away *back into* that screen, as a cut: the conversation stands
 // where the player left it, one line down — the run's own line — and the table stands where its row was
@@ -434,6 +449,7 @@ watch(
   () => tape.value.loaded,
   (loaded) => {
     if (!loaded) {
+      watched.value = null;
       stopWatching();
       setRunInUrl(null);
       if (cameFrom.value !== null) {
@@ -451,7 +467,7 @@ watch(
  * written is nobody's playback, and the bar of tools has no button for it any more.
  *
  * What *is* on screen is its saying: the moment the run opens, a line goes up in the chat linking it —
- * «Начал игру» — and the run is bound to that line, so that what it goes on to do can be said in the
+ * «начал гнуть» — and the run is bound to that line, so that what it goes on to do can be said in the
  * same place (`announce` is how the saying reaches the log, and the engine's own word for a feat is
  * wired to it from inside the composable).
  *
@@ -650,12 +666,20 @@ watch(game, (engine) => {
           <ChatTicker :messages="ticker" :runs="runRows" @open="location = 3" />
           </div>
 
+      <!-- The head of the playback, at the world's own top left corner while a run is on the tape:
+           the way out — the chat's own worded button, leading back to wherever the run was followed
+           from — and the run's own byline beside it, the face and the name of whoever played it and
+           the moment it was kept, arrived from the view door a moment after the run itself. The row
+           the tools usually hang from is not here at all then (`.hud__row` above and `.tape` in
+           `src/styles.css`). -->
+      <TapeHead v-if="tape.loaded" :run="watched" @close="unload" />
+
       <!-- The tape's own bar, along the foot of the world and centred on it: it is up while a run is loaded
            on the tape, which is the length of a playback and of the dragging about that follows one, and
            while it is up it is the *whole* of the interface's own row — the bar of tools is not on the
            screen at all then (`:.hud__row` above and `.tape` in `src/styles.css`).
-           What it holds is the run's own play button, the way along it, and the way out. -->
-      <TapeTimeline v-if="tape.loaded" :tape="tape" @play="togglePlay" @seek="seek" @close="unload" />
+           What it holds is the run's own play button and the way along it; the way out is the head's. -->
+      <TapeTimeline v-if="tape.loaded" :tape="tape" @play="togglePlay" @seek="seek" />
     </div>
     </section>
 
@@ -691,7 +715,7 @@ watch(game, (engine) => {
       />
     </section>
 
-    <!-- The fourth: the archive — «Все записи» — one window further along than the chat, over the
+    <!-- The fourth: the archive — «Гиблиотека» — one window further along than the chat, over the
          same scenery it stands over (`bg-3.png` again): a room off the conversation rather than a
          place of the garden's own, arrived at by the chat's own heading and left by the same way
          back. What it holds is every run the server keeps, as one table newest first — a byline with
@@ -703,7 +727,7 @@ watch(game, (engine) => {
     <section
       class="location location--archive"
       :style="[placeOf(4), { backgroundImage: `url(${base}assets/bg-3.png)` }]"
-      aria-label="Все записи"
+      aria-label="Гиблиотека"
     >
       <ArchivePanel
         v-show="archiveShown"

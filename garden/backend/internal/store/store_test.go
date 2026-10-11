@@ -130,6 +130,41 @@ func TestStoreSaysWhatIsNotThere(t *testing.T) {
 	if _, err := st.Steps("nothing"); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("steps of nothing: %v, want ErrNotFound", err)
 	}
+	if _, err := st.Viewed("nothing", now); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("a watching of nothing: %v, want ErrNotFound", err)
+	}
+}
+
+// TestEachWatchingIsCounted is the counting itself: one more for every entering
+// of a run's playback, on the row the list reads, and a row that starts at zero
+// because nobody has entered a run this store has only just written down.
+func TestEachWatchingIsCounted(t *testing.T) {
+	st := open(t)
+	saved := recording(t, st, "run-1", 150)
+	if saved.Views != 0 {
+		t.Fatalf("a run just written down has been watched %d times", saved.Views)
+	}
+	once, err := st.Viewed("run-1", now)
+	if err != nil {
+		t.Fatalf("the first watching: %v", err)
+	}
+	if once.Views != 1 || once.ID != "run-1" || once.Author != "Марго" {
+		t.Fatalf("the first watching came back as %+v", once)
+	}
+	twice, err := st.Viewed("run-1", now)
+	if err != nil {
+		t.Fatalf("the second watching: %v", err)
+	}
+	if twice.Views != 2 {
+		t.Fatalf("the second watching counted %d, want 2", twice.Views)
+	}
+	list, err := st.Recordings(now)
+	if err != nil {
+		t.Fatalf("recordings: %v", err)
+	}
+	if len(list) != 1 || list[0].Views != 2 {
+		t.Fatalf("the list holds %+v", list)
+	}
 }
 
 func TestRecordingsAreNewestFirst(t *testing.T) {

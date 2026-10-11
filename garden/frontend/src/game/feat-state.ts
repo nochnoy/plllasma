@@ -4,23 +4,24 @@ import type { Doll } from './doll';
 
 /**
  * The run's own word for what the play is doing, as a machine over the pose rather than a one-off
- * threshold: seven poses worth a line, each with its own word and its own weight, and the line in
- * the chat is what the machine has said so far rather than whatever the pose reads as this instant.
+ * threshold: seven poses worth a line, each with its own word and its own weight, and the line in the
+ * chat is what the machine has said so far rather than whatever the pose reads as this instant.
  *
- * The markers, by weight:
+ * The markers, by weight — every word of them beginning with a small letter, like every technical
+ * word the game says (`RUN_STARTED` in `chat/messages.ts`):
  *
- * - «Сделал шпагат» (1) — her thighs opened past {@link OVERSPLIT_DEGREES}: the bar the line has
+ * - «сделал шпагат» (1) — her thighs opened past {@link OVERSPLIT_DEGREES}: the bar the line has
  *   carried since before it was a machine, kept where it was when the machine took the line over.
- * - «Сделал бэкбенд» (1) — the arch of her spine arrived at *extreme*, the step of the waist's own
+ * - «сделал бэкбенд» (1) — the arch of her spine arrived at *extreme*, the step of the waist's own
  *   ladder the face machine shows `4.png` for on arrival.
- * - «Сделал перешпагат» (2) — the split itself arrived at *extreme*: the same step, on the split's
+ * - «сделал перешпагат» (2) — the split itself arrived at *extreme*: the same step, on the split's
  *   ladder (`pain.ts` reads the two apart, because a split extends one hip and folds the other).
- * - «Сделал мостик» (2) — hands and feet below the body with the body arched at *extreme*: a bridge.
- * - «Сделал затяжку» (3) — one leg below the body and the other above the head, the legs in a
+ * - «сделал мостик» (2) — hands and feet below the body with the body arched at *extreme*: a bridge.
+ * - «сделал затяжку» (3) — one leg below the body and the other above the head, the legs in a
  *   split, the body arched at *extreme*: the vertical oversplit a rope hauls her into.
- * - «Сделал трипплфолд» (4) — both knees and both feet within {@link FLOOR_TOLERANCE_PX} of the
+ * - «сделал трипплфолд» (4) — both knees and both feet within {@link FLOOR_TOLERANCE_PX} of the
  *   floor of the physical world, the body arched at *extreme*: the fold that has nowhere lower to go.
- * - «Достиг супергибкости» (5) — the enlightenment: the face machine wearing `7.png`, its own word
+ * - «достиг супергибкости» (5) — the enlightenment: the face machine wearing `7.png`, its own word
  *   for two or more sources past their limits at once. Not measured here at all — the seventh
  *   portrait is the face machine's verdict, and this machine only repeats it.
  *
@@ -57,13 +58,13 @@ export type FeatId =
 
 /** The seven markers themselves, by the ids they are read as. */
 export const FEATS = {
-  split: { id: 'split', label: 'Сделал шпагат', weight: 1 },
-  backbend: { id: 'backbend', label: 'Сделал бэкбенд', weight: 1 },
-  oversplit: { id: 'oversplit', label: 'Сделал перешпагат', weight: 2 },
-  bridge: { id: 'bridge', label: 'Сделал мостик', weight: 2 },
-  suspension: { id: 'suspension', label: 'Сделал затяжку', weight: 3 },
-  triplefold: { id: 'triplefold', label: 'Сделал трипплфолд', weight: 4 },
-  superflex: { id: 'superflex', label: 'Достиг супергибкости', weight: 5 },
+  split: { id: 'split', label: 'сделал шпагат', weight: 1 },
+  backbend: { id: 'backbend', label: 'сделал бэкбенд', weight: 1 },
+  oversplit: { id: 'oversplit', label: 'сделал перешпагат', weight: 2 },
+  bridge: { id: 'bridge', label: 'сделал мостик', weight: 2 },
+  suspension: { id: 'suspension', label: 'сделал затяжку', weight: 3 },
+  triplefold: { id: 'triplefold', label: 'сделал трипплфолд', weight: 4 },
+  superflex: { id: 'superflex', label: 'достиг супергибкости', weight: 5 },
 } as const satisfies Record<FeatId, Feat>;
 
 /**

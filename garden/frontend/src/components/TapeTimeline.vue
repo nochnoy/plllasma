@@ -4,19 +4,18 @@ import type { TapeReport } from '../game/game';
 import { TAPE_STEP_MS } from '../game/tape';
 
 /**
- * The tape's own bar, along the foot of the world: the way along a run, and the two things a player does with
- * one — set it walking, and put it away.
+ * The tape's own bar, along the foot of the world: the way along a run, and the walking of it.
  *
  * It is drawn by the page rather than by the renderer, like the bar of tools, and it hangs inside the world's
  * own box for the same reason: the interface is part of the picture, and a control drawn at the window's own
  * size would sit out on the black beside a world scaled to fit. What the *slider* is, though, is a run's own
  * steps — a step of the tape, which is 20 ms of the world — so a drag is a seek rather than a scroll.
  *
- * Nothing here moves the world: the playhead arrives from the engine (`Game.onTapeChange`), and the button and
- * the slider ask the engine for what they say. What the component does own is how a run is *addressed* rather
- * than how it is measured: there is no clock on the bar, and what the clock said is still read out where it is
- * needed rather than shown (`length`, below) — a player does not read a run in seconds, they put the playhead
- * back where the interesting thing was and watch it again, which is what the way along it is for.
+ * Nothing here moves the world: the playhead arrives from the engine (`Game.onTapeChange`), and the button
+ * asks the engine for what it says. The way *out* of a run is not here any more: it is the head of the
+ * playback screen (`TapeHead.vue`), at the world's own top left corner where the bar of tools hangs from —
+ * a run is left the way the chat and its archive are, by a worded button at the left of the head, not by a
+ * cross at the end of a bar.
  *
  * The readings a run can be *measured* by — how faithfully a playback follows its recording, how big the file
  * is, how long it is — are not here and never were the player's: they are the debug panel's, which only exists
@@ -27,7 +26,7 @@ import { TAPE_STEP_MS } from '../game/tape';
  * `.tape` in `src/styles.css` for how it is measured against the world.
  */
 const props = defineProps<{ tape: TapeReport }>();
-const emit = defineEmits<{ play: []; seek: [step: number]; close: [] }>();
+const emit = defineEmits<{ play: []; seek: [step: number] }>();
 
 /**
  * A count of steps as a clock, to a tenth of a second: `0:04.0`, `1:02.4`.
@@ -53,11 +52,11 @@ const length = computed(() => `${clock(props.tape.step)} / ${clock(props.tape.st
 
 <template>
   <!--
-    The bar: the run's own play button, the way along it, and the way out.
+    The bar: the run's own play button and the way along it, nothing else.
 
-    Its three pieces stand at the foot of the world, in the order a player reads them — the run first, then the
-    run itself, then the way back to the game — and its bottom edge is the world's own foot, which the bar of
-    tools' own buttons stand on too.
+    Its two pieces stand at the foot of the world, in the order a player reads them — the run first,
+    then the run itself — and its bottom edge is the world's own foot, which the bar of tools' own
+    buttons stand on too. The way out is the head's (`TapeHead.vue`), at the other end of the world.
   -->
   <div class="tape" :class="{ 'is-seeking': tape.seeking }" role="group" aria-label="Запись на таймлайне">
     <button
@@ -90,7 +89,5 @@ const length = computed(() => `${clock(props.tape.step)} / ${clock(props.tape.st
         @input="emit('seek', Number(($event.target as HTMLInputElement).value))"
       />
     </div>
-
-    <button type="button" class="tape__close" @click="emit('close')">Закрыть</button>
   </div>
 </template>

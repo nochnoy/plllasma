@@ -1,11 +1,11 @@
 /**
- * The chat's own wire: the six calls the chat and its archive make about the log and the runs, over
- * six of the eleven doors the server opens (`backend/internal/api/server.go`) — the log of a place, the
+ * The chat's own wire: the seven calls the chat and its archive make about the log and the runs, over
+ * seven of the twelve doors the server opens (`backend/internal/api/server.go`) — the log of a place, the
  * line written into it, the list of runs the window draws beside that log, the rows of exactly those
- * runs, a window of the whole list for the archive's table, and one run's own tape, which is what
- * picking a row off any of them asks for.
+ * runs, a window of the whole list for the archive's table, one run's own tape (which is what picking
+ * a row off any of them asks for), and the counting of a run being entered to watch.
  *
- * The seventh door the page uses is deliberately not here: a run that is still being played is watched
+ * The eighth door the page uses is deliberately not here: a run that is still being played is watched
  * through the recording side's own wire (`frontend/src/live/api.ts`, `LiveWire.stream`), which is about a run
  * rather than about talking.
  *
@@ -69,7 +69,7 @@ export interface Draft {
 }
 
 /**
- * The whole of what the chat asks the server for, in six calls — which is the point of it: what the
+ * The whole of what the chat asks the server for, in seven calls — which is the point of it: what the
  * window and the strip see is one interface, so a test can be a fake wire rather than a fake server.
  */
 export interface ChatWire {
@@ -97,6 +97,13 @@ export interface ChatWire {
    * asks for more of the runs than the player has read.
    */
   archive(offset: number, limit: number): Promise<Entry[]>;
+  /**
+   * One entering of a run's playback: the server counts it (`views` on the row), and answers with the
+   * run's own row — the byline, the face and the moment, which is what the playback's own head is
+   * drawn from. Asked on the way in rather than awaited: a playback starts whether the count landed
+   * or not, and the head arrives when it does.
+   */
+  view(id: string): Promise<Entry>;
   /**
    * One run's own tape, as the file the game decodes (`decodeTape`).
    *
@@ -200,6 +207,16 @@ export function chatApi(base: string = apiBase(), take: typeof fetch = fetch, to
         recordings?: WireEntry[] | null;
       } | null;
       return (answer?.recordings ?? []).map(asEntry);
+    },
+
+    async view(id) {
+      // One run's playback being entered, told to the server rather than worked out by it: the door
+      // counts the asking and answers with the row as it now stands, views included.
+      const answer = (await ask(`/recordings/${encodeURIComponent(id)}/view`, { method: 'POST' })) as {
+        recording?: WireEntry;
+      } | null;
+      if (!answer?.recording) throw new Refused(0, 'the server counted a view without naming the run');
+      return asEntry(answer.recording);
     },
 
     async tape(id) {

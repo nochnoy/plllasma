@@ -14,7 +14,7 @@ import { Refused, type ChatWire } from '../src/chat/api';
 
 /** One row as the table holds it, made short: only the fields the composable itself touches. */
 function row(id: string): Entry {
-  return { id, author: `игрок ${id}`, face: '/i/-.gif', whenMs: 1, label: 'Начал игру', live: false };
+  return { id, author: `игрок ${id}`, face: '/i/-.gif', whenMs: 1, label: 'начал гнуть', live: false, views: 0 };
 }
 
 /**
@@ -43,6 +43,9 @@ function wireOf(all: Entry[], refuse = false) {
       asked.push({ offset, limit });
       if (refuse) throw new Refused(500, 'the window would not be read');
       return all.slice(offset, offset + limit);
+    },
+    async view() {
+      throw new Refused(0, 'the archive does not count a viewing');
     },
     async tape() {
       throw new Refused(0, 'the archive does not fetch a tape');

@@ -88,6 +88,9 @@ function fakeWire(rule: Rule = {}) {
     async archive() {
       throw new Refused(0, 'the chat does not read the archive');
     },
+    async view() {
+      throw new Refused(0, 'the chat does not count a viewing');
+    },
     async tape() {
       throw new Refused(0, 'the chat does not fetch a run\'s tape');
     },

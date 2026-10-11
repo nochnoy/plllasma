@@ -129,6 +129,13 @@ type Recording struct {
 	// than about the run: to say where the words are said, or to find the one
 	// message that is a run's own. Zero until the line is written.
 	MessageID int64 `json:"message_id"`
+	// Views is how many times the run has been watched: every entering of its
+	// playback is one, counted the moment the playback is asked for
+	// (`Viewed`). It is a count of askings rather than a census of watchers —
+	// the same player coming back is two watchings, which is what a list of
+	// recordings wants to know: not who has seen a run, but whether it is one
+	// anybody comes back to.
+	Views int `json:"views"`
 }
 
 // Seconds is how long the run lasts, which is what a list of recordings shows
@@ -225,7 +232,8 @@ CREATE TABLE IF NOT EXISTS recordings (
   live        INTEGER NOT NULL DEFAULT 0,
   ended_ms    INTEGER NOT NULL DEFAULT 0,
   label       TEXT NOT NULL DEFAULT '',
-  message_id  INTEGER NOT NULL DEFAULT 0
+  message_id  INTEGER NOT NULL DEFAULT 0,
+  views       INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -319,6 +327,7 @@ func Open(path string) (*Store, error) {
 	for _, added := range [][2]string{
 		{"label", "TEXT NOT NULL DEFAULT ''"},
 		{"message_id", "INTEGER NOT NULL DEFAULT 0"},
+		{"views", "INTEGER NOT NULL DEFAULT 0"},
 	} {
 		if _, err := db.Exec(fmt.Sprintf("ALTER TABLE recordings ADD COLUMN %s %s", added[0], added[1])); err != nil {
 			if !strings.Contains(err.Error(), "duplicate column name") {
@@ -505,6 +514,27 @@ func (s *Store) SetChat(id string, author int64, message *int64, label *string, 
 	return readRecording(s.db, id, now)
 }
 
+// Viewed is one watching of a run: the count the list keeps of how many times
+// a playback of it has been entered, one more than it was. It is a count of
+// askings rather than a census of watchers — the same player coming back is
+// two watchings — which is what a list of recordings wants to know: not who
+// has seen a run, but whether it is one anybody comes back to.
+//
+// The answer is the run's own row as it now stands, view count included: the
+// one asking of this door is also the one moment the run's byline — its
+// author, that author's badge, the moment it was kept — is wanted by whoever
+// is entering the playback.
+func (s *Store) Viewed(id string, now int64) (Recording, error) {
+	result, err := s.db.Exec(`UPDATE recordings SET views = views + 1 WHERE id = ?`, id)
+	if err != nil {
+		return Recording{}, fmt.Errorf("recording %s: %w", id, err)
+	}
+	if changed, err := result.RowsAffected(); err == nil && changed == 0 {
+		return Recording{}, fmt.Errorf("recording %s: %w", id, ErrNotFound)
+	}
+	return readRecording(s.db, id, now)
+}
+
 // Chunk is one slice of a live run: the steps it covers, and what was written
 // inside them — the frames, one record a step or a stillness, and the edits,
 // each carrying the step it belongs to.
@@ -561,7 +591,7 @@ const liveGraceMs = 2 * 60 * 1000
 // row joined in (`users`), which is what keeps a run's byline as current as the
 // site's own word for its player.
 const recordingColumns = `r.id, r.name, COALESCE(u.nick, ''), COALESCE(u.icon, '-'), r.steps, r.step_ms, r.seed, r.bytes,
-	r.recorded_ms, r.uploaded_ms, r.live, r.ended_ms, r.label, r.message_id`
+	r.recorded_ms, r.uploaded_ms, r.live, r.ended_ms, r.label, r.message_id, r.views`
 
 // rower is what reading one row needs of a database, or of a transaction inside
 // one: both answer `QueryRow`, so `readRecording` serves either.
@@ -585,7 +615,7 @@ func scanRecording(scan func(...any) error, now int64) (Recording, error) {
 		live bool
 	)
 	if err := scan(&r.ID, &r.Name, &r.Author, &r.Icon, &r.Steps, &r.StepMs, &r.Seed, &r.Bytes,
-		&r.RecordedMs, &r.UploadedMs, &live, &r.EndedMs, &r.Label, &r.MessageID); err != nil {
+		&r.RecordedMs, &r.UploadedMs, &live, &r.EndedMs, &r.Label, &r.MessageID, &r.Views); err != nil {
 		return Recording{}, err
 	}
 	r.Live = playing(live, r.EndedMs, now)

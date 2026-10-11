@@ -1,5 +1,5 @@
 /**
- * The archive — «Все записи» — and what one row of its table is: the whole of every run the server
+ * The archive — «Гиблиотека» — and what one row of its table is: the whole of every run the server
  * holds, newest first, read a window at a time as the table is scrolled (`useArchive`).
  *
  * Nothing here talks to anybody — the wire is `chat/api.ts` — and nothing here decides anything. The
@@ -31,13 +31,19 @@ export interface Entry {
    */
   whenMs: number;
   /**
-   * What the run's own line in the chat is saying — «Начал игру», «Сделал шпагат» — as of the moment
+   * What the run's own line in the chat is saying — «начал гнуть», «сделал шпагат» — as of the moment
    * this window of the list was read. Empty when nobody has said anything yet, which the row draws
    * its own word for (the table falls back to `RUN_STARTED`, the word every run starts by saying).
    */
   label: string;
   /** Whether the run was still being played when this window was read. */
   live: boolean;
+  /**
+   * How many times the run has been watched: each entering of its playback is a view, counted by the
+   * server the moment the playback is asked for (`view` in `chat/api.ts`). Zero for a run nobody has
+   * opened, which the row says nothing about — a count is only interesting once there is one.
+   */
+  views: number;
 }
 
 /**
@@ -54,6 +60,7 @@ export interface WireEntry {
   uploaded_ms?: number;
   live?: boolean;
   label?: string;
+  views?: number;
 }
 
 /** A run as the archive's table reads it: the server's names turned into this module's own. */
@@ -65,24 +72,30 @@ export function asEntry(wire: WireEntry): Entry {
     whenMs: wire.uploaded_ms ?? 0,
     live: wire.live ?? false,
     label: wire.label ?? '',
+    views: wire.views ?? 0,
   };
 }
 
 /**
  * The clock every run of the archive is read by, in the player's own language and their own
- * timezone: «10.10.2026, 14:30». One formatter for the whole table rather than one a row, because
- * a formatter is a thing the browser builds and a table is not the place to build a thousand of
- * them — and the shape it writes is a promise the tests hold onto.
+ * timezone: «10.10.2026 14:30» — the date and the time each said by their own formatter and joined
+ * with a space, because the one formatter for both is what writes the comma after the year. One pair
+ * for the whole table rather than one a row, because a formatter is a thing the browser builds and a
+ * table is not the place to build a thousand of them — and the shape they write is a promise the
+ * tests hold onto.
  */
-const clock = new Intl.DateTimeFormat('ru-RU', {
+const day = new Intl.DateTimeFormat('ru-RU', {
   day: '2-digit',
   month: '2-digit',
   year: 'numeric',
+});
+const time = new Intl.DateTimeFormat('ru-RU', {
   hour: '2-digit',
   minute: '2-digit',
 });
 
 /** When a run was kept, as the table's second column says it. */
 export function whenWritten(ms: number): string {
-  return clock.format(new Date(ms));
+  const when = new Date(ms);
+  return `${day.format(when)} ${time.format(when)}`;
 }
