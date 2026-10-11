@@ -1,17 +1,17 @@
 :root {
   --ink: #1d3346;
   /*
-   * The garden's own interface colour — the one the site paints its sidebars with
-   * (`--color-page-bg-shade` in the site's own `styles.scss`) — and every button of the garden wears
-   * it three ways: its edge, the light it answers a hover with, and the drawing inside it. The names
-   * of the places wear it too (`.chat-card__title`), and the sentence of the threshold
-   * (`.intro__said`). It began as the colour of the hall's own timber — the squares of the bar's
-   * tools and of the tape's own bar — and the name is what it was called then; the colour is the
-   * UI's now, one number for the whole of it. Nothing of a button itself changes under the pointer
-   * beyond that colour: a press is the whole of its answer, and the one thing a hover adds is the
-   * word that stands beside it (`.hint`), which is not the button.
+   * The garden's own interface colour — the gold the scrollbars wear (#ECBD67, the strip that is
+   * dragged) — and every button of the garden wears it three ways: its edge, the light it answers a
+   * hover with, and the drawing inside it. The names of the places wear it too (`.chat-card__title`),
+   * and the sentence of the threshold (`.intro__said`). It began as the colour of the hall's own
+   * timber — the squares of the bar's tools and of the tape's own bar — and the name is what it was
+   * called then; the colour is the UI's now, one number for the whole of it, scrollbars included.
+   * Nothing of a button itself changes under the pointer beyond that colour: a press is the whole of
+   * its answer, and the one thing a hover adds is the word that stands beside it (`.hint`), which is
+   * not the button.
    */
-  --wood: #d2c5b6;
+  --wood: #ecbd67;
   /*
    * The chat's own colour: the paper its screen is made of, and — turned around, on the black of the
    * page — the colour its words stand in wherever they are read out of the paper (the strip beside the
@@ -756,11 +756,12 @@ body {
 /*
  * The scrollbars of the garden — the conversation's own scroll above and the archive's list below —
  * wear nothing but the strip that is dragged: no track of their own (whatever is scrolled shows
- * through), no buttons at their ends, and the strip itself in the chat's own gold. The strip stands
- * a rem in from the screen's own edge, and the margin between it and the edge is scrollbar still:
- * the scrollbar is wide enough to hold the margin and the strip is drawn at its inner end (a rem of
- * transparent border on the thumb, clipped out of the colour), so a mouse that lands in the margin
- * drags the strip rather than poking at the page.
+ * through), no buttons at their ends, and the strip itself in the garden's own colour — the gold
+ * every button wears (`--wood`), which began as the scrollbars' own. The strip stands a rem in from
+ * the screen's own edge, and the margin between it and the edge is scrollbar still: the scrollbar is
+ * wide enough to hold the margin and the strip is drawn at its inner end (a rem of transparent
+ * border on the thumb, clipped out of the colour), so a mouse that lands in the margin drags the
+ * strip rather than poking at the page.
  *
  * The offset can only be said where scrollbars can be drawn about at all — the ::-webkit
  * pseudo-elements — so it is said there, and engines without them keep the strip the standard way:
@@ -781,7 +782,7 @@ body {
 
   .chat-card__body::-webkit-scrollbar-thumb,
   .archive__body::-webkit-scrollbar-thumb {
-    background: #ecbd67;
+    background: var(--wood);
     /* The visible strip is the thumb's padding box: a rem of transparent border pushes it off the
        screen's edge, and the thumb keeps the whole width for the hand. */
     border-right: 1rem solid transparent;
@@ -793,7 +794,7 @@ body {
   .chat-card__body,
   .archive__body {
     scrollbar-width: thin;
-    scrollbar-color: #ecbd67 transparent;
+    scrollbar-color: var(--wood) transparent;
   }
 }
 
