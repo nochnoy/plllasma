@@ -14,8 +14,10 @@
 // — or the rope's 5% stretch budget, the opening's own claims (she is lying on the floor from the first
 // frame, at rest, with her shadow at full strength and a calm card), the rule that a rope fixed on the
 // stage hands the arrow back, the interface having to sit *inside* the world (the bar
-// at the world's left edge — its three buttons hanging from the world's own top, the chat's own button the
-// last of them — the chat's strip under that stack against the same left edge and the strip of portraits in the bottom right corner of it, or
+// at the world's left edge — its four buttons hanging from the world's own top, the sounds' own mute
+// among them between the rope and the chat, and the chat's own button the last of them; the mute keeps
+// its square as any resting button's and says its state in the icon alone, and is remembered in localStorage — the
+// chat's strip under that stack against the same left edge and the strip of portraits in the bottom right corner of it, or
 // in its top right one when the window is taller than it is wide, at
 // whatever size the window makes the world), the page being black around it, the icon the page hands the
 // browser for its own tab, the chat's own four lines and
@@ -1587,9 +1589,9 @@ await page.waitForFunction(
   { timeout: 8000 },
   palette.wood,
 );
-// The bar itself: three buttons hanging from the top of the world's own left edge — the arrow, then the
-// rope, then the chat's at the very foot of the stack, that one being the only button of the three that
-// picks no tool. Each is a black square with a drawing the colour of the hall's own wood in it, since the
+// The bar itself: four buttons hanging from the top of the world's own left edge — the arrow, then the
+// rope, then the sounds' own mute, then the chat's at the very foot of the stack, the last two being the
+// buttons of the four that pick no tool. Each is a black square with a drawing the colour of the hall's own wood in it, since the
 // bar lies over the hall, and the one in the player's hand is the same square the other way round. Where
 // the bar *is* — against the world's own left edge, hanging from the world's top — is read with the rest
 // of the layout, and what each button wears for the pointer on it is read straight after.
@@ -1716,12 +1718,51 @@ summary.toolbar.hints = {
   rest: await hintsAt(null),
   drag: await hintsAt('drag'),
   rope: await hintsAt('rope'),
+  sound: await hintsAt('sound'),
   chat: await hintsAt('chat'),
 };
 // A picture of it while one is up: the rope's word, standing over the hall. The pointer is put on that
 // button again for it, since a word is worth a screenshot the way any other part of the page is.
 await pointPointer('rope');
 await page.screenshot({ path: join(outDir, '12-bar-words.png') });
+
+// The sounds' own mute: a button in the bar like the others, between the rope and the chat, that picks
+// no tool and says one word about the garden's music — off. It never wears the square the other way
+// round: muted or not, the button is a black square with the wood in it, and the *icon* is what says
+// the state — waves while the garden sounds, a cross once it is muted — told to the reader as well
+// (`aria-pressed`) and remembered in `localStorage`, so that a garden muted today is a garden muted
+// tomorrow; pressed again, all of it comes back. The music itself is the page's own business
+// (`useMusic`); what is checked here is the button and its remembering.
+await page.click('.toolbar [data-tool="sound"]');
+await page.waitForFunction(
+  (wood) => {
+    const sound = document.querySelector('.toolbar [data-tool="sound"]');
+    return (
+      !sound.classList.contains('is-active') &&
+      sound.getAttribute('aria-pressed') === 'true' &&
+      getComputedStyle(sound).backgroundColor === 'rgb(0, 0, 0)' &&
+      getComputedStyle(sound).color === wood &&
+      localStorage.getItem('garden-muted') === 'on'
+    );
+  },
+  { timeout: 8000 },
+  palette.wood,
+);
+await page.click('.toolbar [data-tool="sound"]');
+await page.waitForFunction(
+  (wood) => {
+    const sound = document.querySelector('.toolbar [data-tool="sound"]');
+    return (
+      !sound.classList.contains('is-active') &&
+      sound.getAttribute('aria-pressed') === 'false' &&
+      getComputedStyle(sound).backgroundColor === 'rgb(0, 0, 0)' &&
+      getComputedStyle(sound).color === wood &&
+      localStorage.getItem('garden-muted') === 'off'
+    );
+  },
+  { timeout: 8000 },
+  palette.wood,
+);
 
 // The chat, which is part of the interface rather than of the hall: the last four messages in a strip
 // standing in the world's own bottom left corner — across the foot of the picture from the bar that
@@ -2117,10 +2158,10 @@ if (
   );
 }
 // The bar is a pile of buttons hanging from the world's own top rather than a column floating down its
-// left edge: its own box is nothing but the three of them, and its head — the arrow, the first of the
-// three — is the world's own top, one inset in. The numbers in between are the interface's own (three
+// left edge: its own box is nothing but the four of them, and its head — the arrow, the first of the
+// four — is the world's own top, one inset in. The numbers in between are the interface's own (four
 // 44 px buttons 8 px apart), and the browser's box has to land on them.
-const barStack = 3 * 44 + 2 * 8;
+const barStack = 4 * 44 + 3 * 8;
 if (Math.abs(chatStrip.bar.top - (chatStrip.world.y + chatStrip.hud.scale * 12)) > 1) {
   problems.push(
     `the bar starts at y = ${chatStrip.bar.top}, not hanging from the world's top ` +
@@ -2130,7 +2171,7 @@ if (Math.abs(chatStrip.bar.top - (chatStrip.world.y + chatStrip.hud.scale * 12))
 if (Math.abs(chatStrip.bar.height - chatStrip.hud.scale * barStack) > 1) {
   problems.push(
     `the bar is ${chatStrip.bar.height.toFixed(1)} px tall, not the ` +
-      `${(chatStrip.hud.scale * barStack).toFixed(1)} of its three buttons`,
+      `${(chatStrip.hud.scale * barStack).toFixed(1)} of its four buttons`,
   );
 }
 if (chatStrip.button.bottom !== chatStrip.bar.bottom) {
@@ -2904,12 +2945,12 @@ if (!hauled || Math.hypot(hauled.x, hauled.y) < 40) {
 }
 
 // The bar is a pile of buttons at the world's own left edge, standing on the foot of it: the arrow first,
-// which is the tool that used to be the whole of the game, the rope under it, and the chat last — the one
-// button of the three that picks no tool, and the one at the very foot of the picture, so the way into the
-// chat is in the bottom left corner of the world. Where the bar *is* is a claim about the world as well as
-// the page, and it is checked with the layout.
+// which is the tool that used to be the whole of the game, the rope under it, the sounds' mute under
+// that, and the chat last — the mute and the chat being the two that pick no tool, and the chat the one
+// at the very foot of the picture, so the way into the chat is in the bottom left corner of the world.
+// Where the bar *is* is a claim about the world as well as the page, and it is checked with the layout.
 const bar = summary.toolbar.layout;
-if (JSON.stringify(bar.map((button) => button.tool)) !== JSON.stringify(['drag', 'rope', 'chat'])) {
+if (JSON.stringify(bar.map((button) => button.tool)) !== JSON.stringify(['drag', 'rope', 'sound', 'chat'])) {
   problems.push(`the bar holds ${JSON.stringify(bar.map((button) => button.tool))}`);
 }
 if (bar.some((button, i) => i > 0 && (button.top <= bar[i - 1].top || button.left !== bar[i - 1].left))) {
@@ -2917,9 +2958,9 @@ if (bar.some((button, i) => i > 0 && (button.top <= bar[i - 1].top || button.lef
     `the buttons do not run down the corner: ${bar.map((button) => `${button.left},${button.top}`).join(' ')}`,
   );
 }
-// ...and they are a pile rather than three buttons strung down the world: each stands the same distance
+// ...and they are a pile rather than a string of buttons strung down the world: each stands the same distance
 // under the one above it (a button is 44 px and the gap is 8), the chat's included — it used to be pushed
-// down the whole height of the world away from the other two, and it is the next one under the rope now.
+// down the whole height of the world away from the other two, and it is the next one under the mute now.
 const pitch = bar.length > 1 ? bar[1].top - bar[0].top : 0;
 if (bar.some((button, i) => i > 0 && Math.abs(button.top - bar[i - 1].top - pitch) > 1)) {
   problems.push(
@@ -2975,13 +3016,13 @@ for (const card of summary.portraits.first.cards) {
     );
   }
 }
-// Each of those squares wears its own word, and the words are the bar's three — the arrow's, the rope's and
-// the chat's — said beside the square and only while the pointer is on it. The word is the button's own name
-// in the markup as well, which is what a screen reader reads out, and it does not cover the button: it
-// stands off the right edge of the square, level with the middle of it, inside the world. It is not a
-// control either — no pointer of its own — so whatever stands under it (the hall, or the chat's own four
-// lines for the two lower buttons) is what a press there lands on.
-const barWords = ['Таскать', 'Связывать', 'Чат'];
+// Each of those squares wears its own word, and the words are the bar's four — the arrow's, the rope's,
+// the mute's and the chat's — said beside the square and only while the pointer is on it. The word is
+// the button's own name in the markup as well, which is what a screen reader reads out, and it does not
+// cover the button: it stands off the right edge of the square, level with the middle of it, inside the
+// world. It is not a control either — no pointer of its own — so whatever stands under it (the hall, or
+// the chat's own four lines for the lower buttons) is what a press there lands on.
+const barWords = ['Таскать', 'Связывать', 'Звук', 'Чат'];
 const hints = summary.toolbar.hints ?? {};
 const restWords = (hints.rest ?? []).map((hint) => hint.word);
 if (JSON.stringify(restWords) !== JSON.stringify(barWords)) {
@@ -2990,7 +3031,7 @@ if (JSON.stringify(restWords) !== JSON.stringify(barWords)) {
 if ((hints.rest ?? []).some((hint) => hint.shown)) {
   problems.push('a word of the bar is up with the pointer nowhere on the bar');
 }
-for (const tool of ['drag', 'rope', 'chat']) {
+for (const tool of ['drag', 'rope', 'sound', 'chat']) {
   const read = hints[tool] ?? [];
   const shown = read.filter((hint) => hint.shown).map((hint) => hint.tool);
   if (shown.length !== 1 || shown[0] !== tool) {
@@ -5730,7 +5771,7 @@ console.log(
   'bar words:',
   (summary.toolbar.hints?.rest ?? []).map((hint) => hint.word).join(' / '),
   '| worn for the pointer on',
-  ['drag', 'rope', 'chat']
+  ['drag', 'rope', 'sound', 'chat']
     .map((tool) => {
       const hint = (summary.toolbar.hints?.[tool] ?? []).find((entry) => entry.shown);
       return hint ? `${tool}: ${hint.word} over ${hint.landed}` : `${tool}: nothing`;
@@ -5747,7 +5788,7 @@ console.log(
   `${(started.bar?.x ?? -1).toFixed(0)}, ${(started.bar?.y ?? -1).toFixed(0)}`,
   'down to',
   `${((started.bar?.y ?? 0) + (started.bar?.height ?? 0)).toFixed(0)}`,
-  '(three buttons',
+  '(four buttons',
   `${(started.bar?.height ?? 0).toFixed(0)} tall)`,
   '| world at',
   `${started.world.x.toFixed(0)}, ${started.world.y.toFixed(0)} ${started.world.width.toFixed(0)}x${started.world.height.toFixed(0)}`,

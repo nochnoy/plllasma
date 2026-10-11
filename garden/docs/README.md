@@ -51,9 +51,9 @@ Vue 3 + PixiJS. Оригинал — фильм на ActionScript про тря�
 
 ```
 frontend/src/
-  App.vue                 интерфейс в кадре мира: три кнопки игры на стопе зала и полоса чата, а пока лента на таймлайне — полоска ленты у стопы зала (Vue)
+  App.vue                 интерфейс в кадре мира: четыре кнопки игры на стопе зала (включая «Звук» — мьют) и полоса чата, а пока лента на таймлайне — полоска ленты у стопы зала (Vue)
   components/             части интерфейса: ChatTicker.vue, ChatPanel.vue, ChatLine.vue, NickDialog.vue, TapeTimeline.vue, TapeHead.vue, ArchivePanel.vue
-  composables/            мосты «Vue -> Game»: useGame.ts, useChat.ts, useRuns.ts, useRunStates.ts, useArchive.ts, useLiveRun.ts, useTape.ts
+  composables/            мосты «Vue -> Game»: useGame.ts, useChat.ts, useRuns.ts, useRunStates.ts, useArchive.ts, useLiveRun.ts, useTape.ts, useMusic.ts (музыка сцены и её мьют, памятный в localStorage)
   chat/messages.ts        чат без сервера: формы строки и места и чистые правила над ними
   chat/runs.ts            прогон, как его читает строка окна, две подписи строки (длина и «Live») и перевод серверных имён прогона в свои (`asRun`)
   chat/archive.ts         архив без сервера: форма строки списка (`Entry`, `asEntry`) и момент прогона в человеческом виде (`whenWritten`)

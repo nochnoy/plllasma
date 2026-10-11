@@ -263,8 +263,8 @@ body {
   touch-action: manipulation;
   display: flex;
   /*
-   * The three buttons one under the other, hanging from the world's top left corner — the last of them
-   * the chat's, so the way into the chat is the lowest of the three. Being narrow and along the edge,
+   * The four buttons one under the other, hanging from the world's top left corner — the last of them
+   * the chat's, so the way into the chat is the lowest of the four. Being narrow and along the edge,
    * the stack stays out of the way of whatever falls past it.
    */
   flex-direction: column;
@@ -276,8 +276,8 @@ body {
 
 /*
  * The word beside a button, while the pointer is on it: what the player calls the thing in the button —
- * «Таскать», «Связывать», «Чат» — said beside the square, where a bar lying over the hall can afford to
- * say it at all.
+ * «Таскать», «Связывать», «Звук», «Чат» — said beside the square, where a bar lying over the hall can
+ * afford to say it at all.
  *
  * It stands *beside* the button rather than over it. A caption laid over a button covers the very thing the
  * button presses on, which is the one place a word may not go; out here it lies over the hall instead, or —

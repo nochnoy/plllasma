@@ -256,9 +256,10 @@ watch(location, (at, was) => {
  * once a session and never again; the threshold before it is silent, for a page nobody has touched
  * is a page no browser will sound. What ends the music is a move between the garden's screens: two
  * seconds of falling silent, and quiet — which is what a playback or a stream being watched arrives
- * to as well.
+ * to as well. The mute is the player's own word over all of it — the «Звук» button in the stage's
+ * bar below — and the browser is asked to remember the word between visits.
  */
-useMusic(location, tape);
+const { muted } = useMusic(location, tape);
 
 /**
  * The chat: the four lines under the bar, the screen the bar's chat button and those lines are both the
@@ -594,12 +595,12 @@ watch(game, (engine) => {
         }"
       >
         <div v-if="!tape.loaded" class="hud__row">
-              <!-- The bar of tools, hanging from the top of the world's own left edge: three buttons one
+              <!-- The bar of tools, hanging from the top of the world's own left edge: four buttons one
                    under the other, each a black square with a drawing of the hall's own wood in it.
-                   Each also wears the word the player calls it — «Таскать», «Связывать», «Чат» — for the
-                   pointer on it, which is the button's own name in the markup as much as it is what is drawn;
-                   the word stands *beside* the square rather than over it, since a caption laid over a button
-                   covers the very thing that button presses on (`.hint` in `src/styles.css`).
+                   Each also wears the word the player calls it — «Таскать», «Связывать», «Звук», «Чат» —
+                   for the pointer on it, which is the button's own name in the markup as much as it is what
+                   is drawn; the word stands *beside* the square rather than over it, since a caption laid
+                   over a button covers the very thing that button presses on (`.hint` in `src/styles.css`).
                    Which tool is in hand reads without any word at all: that button is the same square the
                    other way round, wood with a dark drawing and a dark edge. -->
               <div class="toolbar" role="toolbar" aria-label="Инструменты">
@@ -645,9 +646,39 @@ watch(game, (engine) => {
               </svg>
             </button>
 
-            <!-- The chat: the lowest button of the bar, and the only one that picks no tool — it is the
-                 way to the chat's own screen, the third of the garden's three, and it reads as pressed
-                 while the player is there. -->
+            <!-- The sounds: the player's own word over the garden's music, standing in the bar
+                 between the rope and the chat because the bar is where the stage's own controls
+                 live. It picks no tool — it mutes what the stage sounds, at once and whole — and it
+                 never wears the square the other way round: the button looks as any resting
+                 button's, and the state is the icon's to say — waves while the garden sounds, a
+                 cross once it is muted (`aria-pressed` says the same to a reader). The word is the
+                 browser's to remember (`useMusic`), so a garden muted today is a garden muted
+                 tomorrow. -->
+            <button
+              type="button"
+              class="tool"
+              data-tool="sound"
+              :aria-pressed="muted"
+              aria-label="Звук"
+              @click="muted = !muted"
+            >
+              <span class="hint">Звук</span>
+              <!-- A speaker, drawn rather than filled like the chat's own bubble: a horn with a wave
+                   off its mouth — the wave is the sound, and muted it is a cross instead, which is
+                   what the button has to say without any word beside it. -->
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 9.6v4.8h3.4l5.2 4V5.6l-5.2 4z" />
+                <g v-if="!muted">
+                  <path d="M15.9 9.6a3.6 3.6 0 0 1 0 4.8" />
+                  <path d="M18.4 7.1a7.1 7.1 0 0 1 0 9.8" />
+                </g>
+                <path v-else d="M16.1 9.9l4.5 4.2M20.6 9.9l-4.5 4.2" />
+              </svg>
+            </button>
+
+            <!-- The chat: the lowest button of the bar, and one of the two that pick no tool (the
+                 sounds' mute is the other) — it is the way to the chat's own screen, the third of
+                 the garden's three, and it reads as pressed while the player is there. -->
             <button
               type="button"
               class="tool"
