@@ -61,12 +61,12 @@ body {
  * Carrying each screen by itself rather than as a slice of one triple-wide strip is what keeps the
  * motion out of the main thread's reach: each screen is its own layer, one window big, and the
  * browser's compositor does the moving. What the compositor cannot carry is the arrival of the
- * heaviest screen — the chat's, with its list being read and its field taking focus — so that work
- * is kept out of the motion altogether: the pan slides the chat's scenery in bare, and the
+ * heaviest screen — the chat's, with its list being read and its field taking focus — so that work is
+ * kept out of the motion altogether: the pan slides the chat's scenery in bare, and the
  * conversation is standing there when it stops (`App.vue`, `settled`/`chatShown`). Each of the four
- * also has a picture of its own (`bg-1`/`bg-2`/`bg-3.png`, laid in by `App.vue` — the archive shares
- * the chat's) — the garden is the same place all the way along, and the pictures are what each end
- * of it looks like.
+ * also has a picture of its own (`bg-1`/`bg-2`/`bg-3.png`, laid in by `App.vue`; the fourth is black
+ * with two pictures standing in it — `.location--archive` below) — the garden is the same place all
+ * the way along, and the pictures are what each end of it looks like.
  */
 .location {
   position: absolute;
@@ -724,6 +724,20 @@ body {
   scrollbar-gutter: stable;
 }
 
+/*
+ * The scrollbars of the garden — the conversation's own scroll above and the archive's list below —
+ * wear nothing but the strip that is dragged: no track of their own (whatever is scrolled shows
+ * through), no buttons at their ends, and the strip itself in the wood's own gold. Said with the
+ * standard properties rather than ::-webkit pseudo-elements, so that one rule is the same in every
+ * engine and what the page computes is what a check reads back — a scrollbar with a colour of its
+ * own is a scrollbar the engine draws its plain way, without a staircase of buttons on it.
+ */
+.chat-card__body,
+.archive__body {
+  scrollbar-width: thin;
+  scrollbar-color: #ecbd67 transparent;
+}
+
 /* The log: the conversation itself, one block after another with the newest at the bottom. */
 .chat-card__log {
   padding: 4px 20px 16px;
@@ -965,6 +979,53 @@ a.chat-line__run:focus-visible {
  */
 .archive {
   font-size: 14px;
+}
+
+/*
+ * The fourth location itself: no scenery picture laid edge to edge — the screen is its own black,
+ * and what stands in the black is the two halves of a scene (`bg-4-l`/`bg-4-r`, laid in by
+ * `App.vue` as `.location__wing` below), the way the garden's other ends each stand in a picture.
+ * The black is said here rather than left to the page behind, because a screen of the garden owns
+ * its own edges: what the archive is, it is all the way out to them.
+ */
+.location--archive {
+  background: #000;
+}
+
+/*
+ * The two halves of the archive's scene, one against each side of the screen and standing on its
+ * foot — above the black, under everything else (the panel is lifted over them by
+ * `.location--archive > .chat-card` below, and the wings themselves take no pointer).
+ *
+ * A wing keeps its own size whatever the window does (`width: 500px` — the halves' own width, the
+ * two files being 500×740 — and `height: auto` for the shape): a window narrower than the two of
+ * them does not squeeze the pair together smaller. Instead each wing stands its inner edge at the
+ * middle of the screen — the line they touch on is the centre line itself, always — and lets its
+ * outer edge go past the screen's side, cropped by it (`overflow: hidden` on `.location`): the
+ * `min` is the whole of the choosing, the wing's own edge (0) when the window has room for both
+ * halves, and the distance from the middle to the wing's far side (negative) when it has not. A
+ * window too short for a wing's own height crops it at the top the same way.
+ */
+.location__wing {
+  position: absolute;
+  bottom: 0;
+  width: 500px;
+  height: auto;
+  pointer-events: none;
+}
+
+.location__wing--left {
+  left: min(0px, calc(50% - 500px));
+}
+
+.location__wing--right {
+  right: min(0px, calc(50% - 500px));
+}
+
+/* The archive's own panel stands over the wings: it is the screen's content, and the wings are its
+   scenery — the one is read, the other is looked at. */
+.location--archive > .chat-card {
+  position: relative;
 }
 
 /* The one scroll of the screen, carrying the whole list: the rows arrive a window at a time and

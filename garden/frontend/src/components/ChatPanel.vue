@@ -113,14 +113,13 @@ async function submit(): Promise<void> {
            scenery — the one thing the conversation itself does not reach, because the lines it is
            showing are the last fifty and the runs are all of them. It stands at the right of the
            heading, across the screen from the way back, and is the door the archive is entered by
-           (`App.vue`, the fourth location). -->
+           (`App.vue`, the fourth location). Its drawing is the way it goes — further along the
+           garden, to the right, the same arrow the threshold's own «Сцена» says its way with. -->
       <button type="button" class="chat-card__archive" aria-label="Гиблиотека" @click="emit('openArchive')">
-        <!-- A table of rows: three lines of three lengths, the way a list of recordings reads from
-             afar — the picture of what the door opens onto rather than a word about it. -->
-        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4.4 6.4h15.2M4.4 12h15.2M4.4 17.6h9" />
-        </svg>
         Гиблиотека
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12.8 5.2 19.6 12l-6.8 6.8M19.1 12H4.5" />
+        </svg>
       </button>
     </header>
       <!-- The one scroll of the window, carrying the conversation: the runs are links in it rather

@@ -4863,15 +4863,17 @@ if (!ownHandle) {
 }
 
 // The archive — «Гиблиотека» — the garden's fourth screen: every run this server holds as one table,
-// over the same scenery the chat stands over, arrived at by a button at the right of the chat's own
-// heading and arrived over like every screen is — the whole picture travelling left one more window,
+// over a screen of its own — the garden's only one that is plain black, with the two halves of a
+// scene standing in the black at the sides — arrived at by a button at the right of the chat's own
+// heading and arrived over like every screen is: the whole picture travelling left one more window,
 // its table waiting the pan out before it is drawn (`archiveShown` in `App.vue`).
 //
 // What this section checks is the whole of that: the way in and where it stands, the pan and the
 // content after it, the columns of a row (a byline with its face, a human-readable moment, and the
 // run's own word for itself), the order (newest first — this page's own still-live run at the top),
-// and the filling: a hundred rows in the first window and the rest only as the scroll reaches for
-// them, a window at a time until the server's list is over. And the pressing of a row, which is the
+// the filling (a hundred rows in the first window and the rest only as the scroll reaches for
+// them, a window at a time until the server's list is over), the scenery and the scrollbar the
+// list is scrolled by. And the pressing of a row, which is the
 // same following a link in the chat is — a playback on at once, and the way back the table it was
 // pressed in.
 await page.click('.chat-strip');
@@ -4882,6 +4884,9 @@ const archiveDoor = await page.evaluate(() => {
   const rect = button.getBoundingClientRect();
   return {
     said: button.textContent.trim(),
+    // The drawing is the way the door goes — further along the garden, rightwards: the same arrow
+    // the threshold's own «Сцена» says its way with, read as the first number of its path.
+    arrow: button.querySelector('.icon path')?.getAttribute('d')?.startsWith('M12.8 5.2') ?? false,
     fromRight: Math.round(innerWidth - rect.right),
     fromTop: Math.round(rect.top),
     at: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
@@ -4892,6 +4897,7 @@ if (!archiveDoor) {
   problems.push('the chat\'s heading has no way to the archive in it');
 } else {
   if (archiveDoor.said !== 'Гиблиотека') problems.push(`the way to the archive says "${archiveDoor.said}"`);
+  if (!archiveDoor.arrow) problems.push('the way to the archive does not point right');
   // The right of the heading, at the top of the screen — across it from the way back, which is where
   // the archive's door was put rather than anywhere in the conversation.
   if (archiveDoor.fromRight > 40 || archiveDoor.fromTop > 60) {
@@ -4942,10 +4948,44 @@ if (!archiveDoor) {
         const one = card.querySelector('.archive__row[data-run="smoke-run"]');
         return one ? one.querySelector('.archive__what')?.textContent.trim() ?? null : null;
       })(),
-      scenery: {
-        archive: getComputedStyle(document.querySelector('.location--archive')).backgroundImage,
-        chat: getComputedStyle(document.querySelector('.location--chat')).backgroundImage,
-      },
+      // The screen's own scenery: no picture laid edge to edge — plain black, with the two halves of
+      // a scene standing in it at the sides (read as `wings` below, and here in the colours the
+      // screen itself is painted with).
+      scenery: (() => {
+        const style = getComputedStyle(document.querySelector('.location--archive'));
+        return {
+          picture: style.backgroundImage,
+          colour: style.backgroundColor,
+          chat: getComputedStyle(document.querySelector('.location--chat')).backgroundImage,
+        };
+      })(),
+      // The two halves, measured against the screen they stand in: pinned to their own side and the
+      // foot of it, never wider than half of it, and keeping their own shape.
+      wings: (() => {
+        const screen = document.querySelector('.location--archive').getBoundingClientRect();
+        const read = (which) => {
+          const one = document.querySelector(`.location__wing--${which}`);
+          if (!one) return null;
+          const rect = one.getBoundingClientRect();
+          return {
+            left: rect.left - screen.left,
+            right: rect.right - screen.left,
+            top: rect.top - screen.top,
+            bottom: rect.bottom - screen.top,
+            width: rect.width,
+            height: rect.height,
+            natural: [one.naturalWidth, one.naturalHeight],
+          };
+        };
+        return { screen: { width: screen.width, height: screen.height }, left: read('left'), right: read('right') };
+      })(),
+      // The strip that is dragged: the garden's scrollbars wear nothing but it, in the wood's own
+      // gold, with no track under and no buttons at the ends (`scrollbar-width: thin` is what takes
+      // the buttons off — the engine's own plain scrollbar has none).
+      scrolled: (() => {
+        const style = getComputedStyle(document.querySelector('.archive__body'));
+        return { width: style.scrollbarWidth, colour: style.scrollbarColor };
+      })(),
     };
   });
   const newest = chatLive.opened.at(-1)?.id ?? null;
@@ -4962,8 +5002,71 @@ if (!archiveDoor) {
   if (Math.abs(table.list.left - (table.list.of - table.list.width) / 2) > 2) {
     problems.push(`the list stands at ${table.list.left} of ${table.list.of}, not in the middle`);
   }
-  if (table.scenery.archive !== table.scenery.chat) {
-    problems.push('the archive stands over scenery of its own rather than the chat\'s');
+  if (table.scenery.picture !== 'none' || table.scenery.colour !== 'rgb(0, 0, 0)') {
+    problems.push(
+      `the archive's screen is a picture of its own (${table.scenery.picture} on ${table.scenery.colour}) rather than plain black`,
+    );
+  }
+  if (table.scenery.chat === 'none') {
+    problems.push('the chat\'s own scenery went missing with the archive\'s');
+  }
+  // The two halves of the scene: each keeps its own size whatever the window does — nothing is
+  // squeezed, at any width — and where it stands depends only on whether the window has room for
+  // the pair. With room (this read happens on a 1100 px window) each is against its own side and
+  // the black shows between them; without it the inner edges meet at the middle of the screen
+  // exactly and it is the outer edges that give way, going past the screen's sides and cropped by
+  // them (the narrow read below catches that same meeting further in).
+  if (!table.wings.left || !table.wings.right) {
+    problems.push('the archive\'s screen is missing one of its two wings');
+  } else {
+    const screen = table.wings.screen;
+    const half = screen.width / 2;
+    const room = table.wings.left.natural[0] * 2 <= screen.width;
+    const innerEdgeOf = (which, wing) => (which === 'left' ? wing.right : wing.left);
+    const outerEdgeOf = (which, wing) => (which === 'left' ? wing.left : wing.right);
+    for (const [which, wing, ownEdge] of [
+      ['left', table.wings.left, 0],
+      ['right', table.wings.right, screen.width],
+    ]) {
+      if (Math.abs(wing.bottom - screen.height) > 0.5) {
+        problems.push(`the ${which} wing stands ${wing.bottom.toFixed(1)} px up from the screen's foot`);
+      }
+      // Its own size, not the window's: the picture is never resized to fit anything.
+      if (wing.width !== wing.natural[0] || wing.height !== wing.natural[1]) {
+        problems.push(
+          `the ${which} wing is drawn ${wing.width.toFixed(0)}x${wing.height.toFixed(0)} rather than its own ` +
+            `${wing.natural[0]}x${wing.natural[1]}`,
+        );
+      }
+      if (room) {
+        // Room for both: each against its own side of the screen.
+        if (Math.abs(outerEdgeOf(which, wing) - ownEdge) > 0.5) {
+          problems.push(`the ${which} wing is not against the screen's ${which} edge on a window with room for both`);
+        }
+      } else {
+        // No room: the inner edge at the middle of the screen, exactly — the line the two touch on —
+        // and the outer edge past the screen's side: cropped, not scaled.
+        if (Math.abs(innerEdgeOf(which, wing) - half) > 0.5) {
+          problems.push(
+            `the ${which} wing's inner edge is at ${innerEdgeOf(which, wing).toFixed(1)} of ${screen.width.toFixed(0)}, not the middle`,
+          );
+        }
+        if ((which === 'left' ? wing.left : wing.right) > 0.5) {
+          problems.push(`the ${which} wing shrank inside the screen rather than going past its edge`);
+        }
+      }
+    }
+    // However much room there is, the two never overlap: the black between them, or the line.
+    if (table.wings.left.right > table.wings.right.left + 0.5) {
+      problems.push(`the wings overlap by ${(table.wings.left.right - table.wings.right.left).toFixed(1)} px`);
+    }
+  }
+  // The scrollbar: a thin one, gold where it is anything at all, and nothing under it.
+  if (table.scrolled.width !== 'thin') {
+    problems.push(`the archive's scrollbar is a ${table.scrolled.width} one rather than the thin strip`);
+  }
+  if (!String(table.scrolled.colour).startsWith('rgb(236, 189, 103)')) {
+    problems.push(`the archive's scrollbar is coloured ${table.scrolled.colour} rather than #ECBD67`);
   }
   // The first window is a hundred rows, and only a hundred: the filling is what the scroll asks for,
   // and a table that arrived complete would be a page that asked for the whole of the list at once.
@@ -5007,17 +5110,39 @@ if (!archiveDoor) {
   // A window too narrow for the slack: the list takes the whole of it rather than four fifths of a
   // nothing much — read at 450 px, where the whole is the only width left. The measure is the
   // scroll's own client box for the same reason as above: the gutter keeps its 15 px whatever the
-  // window is.
+  // window is. And the two halves of the scene, at a window this narrow, are still their own size
+  // and still only touching — outer edges past the screen's sides, inner edges at the middle.
   await page.setViewport({ width: 450, height: 700, deviceScaleFactor: 1 });
   const narrowList = await page.evaluate(() => {
     const list = document.querySelector('.archive__list').getBoundingClientRect();
     const of = document.querySelector('.archive__body').clientWidth;
-    return { width: Math.round(list.width), of, window: innerWidth };
+    const screen = document.querySelector('.location--archive').getBoundingClientRect();
+    const left = document.querySelector('.location__wing--left').getBoundingClientRect();
+    const right = document.querySelector('.location__wing--right').getBoundingClientRect();
+    return {
+      width: Math.round(list.width),
+      of,
+      window: innerWidth,
+      wings: { screen: screen.width, left: left.right - screen.left, right: right.left - screen.left },
+    };
   });
   await page.setViewport({ width: 900, height: 700, deviceScaleFactor: 1 });
   summary.archive.narrow = narrowList;
   if (narrowList.window < 500 && narrowList.width !== narrowList.of) {
     problems.push(`on a ${narrowList.window} px window the list is ${narrowList.width} of ${narrowList.of} wide, not the whole of it`);
+  }
+  {
+    const half = narrowList.wings.screen / 2;
+    if (
+      Math.abs(narrowList.wings.left - half) > 0.5 ||
+      Math.abs(narrowList.wings.right - half) > 0.5 ||
+      narrowList.wings.left > narrowList.wings.right + 0.5
+    ) {
+      problems.push(
+        `on a ${narrowList.window} px window the wings are at ${narrowList.wings.left.toFixed(1)} and ` +
+          `${narrowList.wings.right.toFixed(1)} of ${narrowList.wings.screen.toFixed(0)}, not touching at the middle`,
+      );
+    }
   }
 
   // The rest of the list follows the scroll: the end of the drawn rows is watched for

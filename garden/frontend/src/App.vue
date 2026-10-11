@@ -54,9 +54,9 @@ const player: Speaker = { id: props.user.id, nick: props.user.nick, face: userpi
  * draws), the doll, the bar of tools and the chat's strip. The third is the chat's own screen over
  * `assets/bg-3.png` — everything the window it used to be was, said over its own scenery in
  * chat's own colour rather than on paper — and the way into it is the bar's chat button and the
- * strip alike. The fourth is the archive — «Гиблиотека» — over the same scenery as the chat's, one
- * window further along: every run the server holds as one table, and the way into it is the button
- * at the right of the chat's own heading.
+ * strip alike. The fourth is the archive — «Гиблиотека» — one window further along: its own black
+ * with the two halves of a scene standing in it at the sides (`bg-4-l`/`bg-4-r`), and the way into
+ * it is the button at the right of the chat's own heading.
  *
  * On the first, the third and the fourth there is nothing of the game at all — no doll, no bar, no
  * physics to watch — just the screen each of them is. The stage's own clock stands still for as long
@@ -715,20 +715,35 @@ watch(game, (engine) => {
       />
     </section>
 
-    <!-- The fourth: the archive — «Гиблиотека» — one window further along than the chat, over the
-         same scenery it stands over (`bg-3.png` again): a room off the conversation rather than a
-         place of the garden's own, arrived at by the chat's own heading and left by the same way
-         back. What it holds is every run the server keeps, as one table newest first — a byline with
-         its face, the moment it was kept, the run's own word for itself — filling a window at a time
-         as the table is scrolled, and each row pressed to be watched.
+    <!-- The fourth: the archive — «Гиблиотека» — one window further along than the chat: a room off
+         the conversation rather than a place of the garden's own, arrived at by the chat's own
+         heading and left by the same way back. Its screen is its own black, and what stands in the
+         black is the two halves of a scene — `bg-4-l`/`bg-4-r`, against the screen's two sides and
+         standing on its foot, giving way to each other until they meet at the centre on a window
+         narrow enough (`location__wing` in `src/styles.css`). What it holds is every run the server
+         keeps, as one table newest first — a byline with its face, the moment it was kept, the run's
+         own word for itself — filling a window at a time as the table is scrolled, and each row
+         pressed to be watched.
          The table itself waits the pan out like the conversation does (`archiveShown`): the pan
-         slides in the scenery alone, and the rows are asked for and drawn to a screen that has
-         already arrived. -->
+         slides the black and its wings in alone, and the rows are asked for and drawn to a screen
+         that has already arrived. -->
     <section
       class="location location--archive"
-      :style="[placeOf(4), { backgroundImage: `url(${base}assets/bg-3.png)` }]"
+      :style="placeOf(4)"
       aria-label="Гиблиотека"
     >
+      <img
+        class="location__wing location__wing--left"
+        :src="`${base}assets/bg-4-l.png`"
+        alt=""
+        aria-hidden="true"
+      />
+      <img
+        class="location__wing location__wing--right"
+        :src="`${base}assets/bg-4-r.png`"
+        alt=""
+        aria-hidden="true"
+      />
       <ArchivePanel
         v-show="archiveShown"
         :rows="archiveRows"
