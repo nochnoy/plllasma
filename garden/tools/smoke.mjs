@@ -1770,9 +1770,11 @@ summary.chat.before = await page.evaluate(() => {
     nowrap: getComputedStyle(lines[0]).whiteSpace,
     mask: style.maskImage,
     clicks: style.pointerEvents,
-    // The block is half-transparent: a plate of black at two fifths rather than a solid one, so the hall
-    // the messages stand over keeps showing through them (`.chat-strip` in `src/styles.css`).
+    // Nothing under the lines: the strip's own transparency is in its text (`colour` above) and in its
+    // pictures (`faded` below), not in a plate behind them — the hall shows through the letters and
+    // the faces alike (`.chat-strip` in `src/styles.css`).
     plate: style.backgroundColor,
+    faded: getComputedStyle(strip.querySelector('.chat-line__badge')).opacity,
     badges: [...strip.querySelectorAll('.chat-line__badge')].map((img) => `${img.naturalWidth}x${img.naturalHeight}`),
     gifs: strip.querySelectorAll('.chat-line__gif').length,
   };
@@ -2004,18 +2006,26 @@ if (chatStrip.button.bottom !== chatStrip.bar.bottom) {
     `the chat's button ends at ${chatStrip.button.bottom} px with the bar ending at ${chatStrip.bar.bottom}`,
   );
 }
-if (chatStrip.colour !== palette.paper) problems.push(`the chat's text is ${chatStrip.colour}`);
-// ...and under the pointer it is the bar's own white, the way a button of the bar answers a hover.
+// The strip's own self is half-transparent — the chat's own colour at half of itself, and its
+// pictures at half of themselves, nothing under either — so the hall shows through the letters and
+// the faces alike; under the pointer the whole strip comes back, words to the bar's own white the way
+// a button of the bar answers a hover.
+if (chatStrip.colour !== 'rgba(192, 192, 192, 0.5)') {
+  problems.push(`the chat's text is ${chatStrip.colour}, not the half of its own colour`);
+}
+if (chatStrip.faded !== '0.5') {
+  problems.push(`the strip's badges are drawn at opacity ${chatStrip.faded} rather than half of themselves`);
+}
 if (summary.chat.hover !== 'rgb(255, 255, 255)') {
   problems.push(`the chat's strip answers a hover with ${summary.chat.hover}`);
 }
 if (chatStrip.nowrap !== 'nowrap') problems.push(`a line on the chat's strip wraps (${chatStrip.nowrap})`);
 if (!chatStrip.mask.includes('16px')) problems.push(`the strip's own fade is ${chatStrip.mask}`);
 if (chatStrip.clicks !== 'auto') problems.push(`the strip takes no clicks (${chatStrip.clicks})`);
-// The strip's own plate is half-transparent — black at two fifths rather than solid, the hall showing
-// through the lines it holds — and the mask that fades the block's right edge fades the plate with it.
-if (chatStrip.plate !== 'rgba(0, 0, 0, 0.4)') {
-  problems.push(`the strip's plate is ${chatStrip.plate} rather than the half-transparent black of it`);
+// And there is no plate under it: the lines stand over the hall as they are, half of the picture
+// showing through the letters, rather than on anything laid between the two.
+if (chatStrip.plate !== 'rgba(0, 0, 0, 0)') {
+  problems.push(`the strip has a background of its own (${chatStrip.plate})`);
 }
 if (chatStrip.badges.some((size) => !size.startsWith('16x'))) {
   problems.push(`the strip's badges are ${chatStrip.badges.join(', ')}, not the site's own sixteen-wide gifs`);
