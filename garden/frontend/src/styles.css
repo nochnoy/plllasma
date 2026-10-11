@@ -111,7 +111,7 @@ body {
  *
  * The screen is split into halves across, with 20 px of the screen's own black standing between
  * them, and the sentence's own container is pressed to the right edge of the left one — a shade
- * left of the middle of the screen — where it has its own 200 px, with the sentence centred inside
+ * left of the middle of the screen — where it has its own 300 px, with the sentence centred inside
  * that and its breaks of line its own (`<br>` in `App.vue`) rather than the container's.
  */
 .location--intro {
@@ -125,7 +125,7 @@ body {
 .intro__said {
   grid-column: 1;
   justify-self: end;
-  width: 200px;
+  width: 300px;
   margin: 0;
   color: var(--paper);
   font-size: 18px;
