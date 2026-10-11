@@ -1,13 +1,17 @@
 :root {
   --ink: #1d3346;
   /*
-   * The wood the interface over the hall is drawn in — the squares of the bar's tools and of the
-   * tape's own bar, their drawings and their edges — the colour of the hall's own timber rather
-   * than a grey that belongs to no part of the room. Nothing of a button itself changes under the
-   * pointer: a press is the whole of its answer, and the one thing a hover adds is the word that
-   * stands beside it (`.hint`), which is not the button.
+   * The garden's own interface colour — the one the site paints its sidebars with
+   * (`--color-page-bg-shade` in the site's own `styles.scss`) — and every button of the garden wears
+   * it three ways: its edge, the light it answers a hover with, and the drawing inside it. The names
+   * of the places wear it too (`.chat-card__title`), and the sentence of the threshold
+   * (`.intro__said`). It began as the colour of the hall's own timber — the squares of the bar's
+   * tools and of the tape's own bar — and the name is what it was called then; the colour is the
+   * UI's now, one number for the whole of it. Nothing of a button itself changes under the pointer
+   * beyond that colour: a press is the whole of its answer, and the one thing a hover adds is the
+   * word that stands beside it (`.hint`), which is not the button.
    */
-  --wood: #C0C0C0;
+  --wood: #d2c5b6;
   /*
    * The chat's own colour: the paper its screen is made of, and — turned around, on the black of the
    * page — the colour its words stand in wherever they are read out of the paper (the strip beside the
@@ -127,7 +131,9 @@ body {
   justify-self: end;
   width: 300px;
   margin: 0;
-  color: var(--paper);
+  /* The garden's own colour, as its buttons and the names of its places wear it: the sentence is
+     the place speaking, and the place speaks in the one colour the garden's UI is drawn in. */
+  color: var(--wood);
   font-size: 18px;
   line-height: 1.55;
   text-align: center;
@@ -595,10 +601,21 @@ body {
  * way back rather than a part of the title. The name is lifted out of the flow for the sake of that
  * centring, so the button keeps the left end and the name keeps the middle whatever either of them
  * is wide.
+ *
+ * On the screens the garden is made of (the chat and the archive, both `--full`) the heading is the
+ * topbar: one row, the same on both screens, whose standing room is the buttons' own 32 px plus the
+ * inset the screen's own top edge keeps of itself — the bar hugs nothing, the buttons standing 8 px
+ * in from the top and from either side, as much room under them as the next thing (the list, a rem
+ * below) is read at a distance by. The name is said in the garden's own colour (`--wood`), the way
+ * its buttons are, while the rest of what the screens say stays the chat's own.
  */
 .chat-card--full .chat-card__head {
   position: relative;
   justify-content: flex-start;
+  /* The buttons' own height plus the top inset: the same 40 px on both screens, nowhere taller. */
+  flex: none;
+  height: 40px;
+  padding: 8px 8px 0;
 }
 
 .chat-card--full .chat-card__title {
@@ -611,6 +628,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--wood);
 }
 
 /*
@@ -725,17 +743,58 @@ body {
 }
 
 /*
+ * The reading stands a rem under the topbar, on both screens the garden has one for: the bar holds
+ * the ways and the name of the place, and the conversation and the list alike begin below it, at
+ * their own distance — the bar is a strip of buttons, and what it carries is not what it is read
+ * against.
+ */
+.chat-card--full .chat-card__body,
+.archive__body {
+  margin-top: 1rem;
+}
+
+/*
  * The scrollbars of the garden — the conversation's own scroll above and the archive's list below —
  * wear nothing but the strip that is dragged: no track of their own (whatever is scrolled shows
- * through), no buttons at their ends, and the strip itself in the wood's own gold. Said with the
- * standard properties rather than ::-webkit pseudo-elements, so that one rule is the same in every
- * engine and what the page computes is what a check reads back — a scrollbar with a colour of its
- * own is a scrollbar the engine draws its plain way, without a staircase of buttons on it.
+ * through), no buttons at their ends, and the strip itself in the chat's own gold. The strip stands
+ * a rem in from the screen's own edge, and the margin between it and the edge is scrollbar still:
+ * the scrollbar is wide enough to hold the margin and the strip is drawn at its inner end (a rem of
+ * transparent border on the thumb, clipped out of the colour), so a mouse that lands in the margin
+ * drags the strip rather than poking at the page.
+ *
+ * The offset can only be said where scrollbars can be drawn about at all — the ::-webkit
+ * pseudo-elements — so it is said there, and engines without them keep the strip the standard way:
+ * a thin gold one at the edge itself, the way it stood before the margin was.
  */
-.chat-card__body,
-.archive__body {
-  scrollbar-width: thin;
-  scrollbar-color: #ecbd67 transparent;
+@supports selector(::-webkit-scrollbar) {
+  .chat-card__body::-webkit-scrollbar,
+  .archive__body::-webkit-scrollbar {
+    /* The margin plus the strip: the whole of the width takes the hand. */
+    width: calc(1rem + 8px);
+    background: transparent;
+  }
+
+  .chat-card__body::-webkit-scrollbar-track,
+  .archive__body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .chat-card__body::-webkit-scrollbar-thumb,
+  .archive__body::-webkit-scrollbar-thumb {
+    background: #ecbd67;
+    /* The visible strip is the thumb's padding box: a rem of transparent border pushes it off the
+       screen's edge, and the thumb keeps the whole width for the hand. */
+    border-right: 1rem solid transparent;
+    background-clip: padding-box;
+  }
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .chat-card__body,
+  .archive__body {
+    scrollbar-width: thin;
+    scrollbar-color: #ecbd67 transparent;
+  }
 }
 
 /* The log: the conversation itself, one block after another with the newest at the bottom. */
@@ -1152,13 +1211,13 @@ a.chat-line__run:focus-visible {
 }
 
 /*
- * The list itself: a page of it, 600 px across, stood in the middle of the screen — the scenery
+ * The list itself: a page of it, 500 px across, stood in the middle of the screen — the scenery
  * showing at either side of it the way it shows above and below. A window narrower than the page
  * has no room for that: the list takes the whole of what there is (`min` below), which is the whole
- * of the scroll's own box on anything under 600 px wide.
+ * of the scroll's own box on anything under 500 px wide.
  */
 .archive__list {
-  width: min(600px, 100%);
+  width: min(500px, 100%);
   margin: 0 auto;
 }
 

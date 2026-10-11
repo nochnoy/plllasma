@@ -81,8 +81,8 @@ onBeforeUnmount(() => watcher?.disconnect());
          and the scroll carries them all, so that going back up is reading what was already read
          rather than asking for it again. -->
     <div ref="scroll" class="archive__body">
-      <!-- The list itself: four fifths of the screen across and stood in the middle of it (the
-           whole of it on a window too narrow for the slack to be worth having), one line per run —
+      <!-- The list itself: a page of it, 500 px across, stood in the middle of the screen (the
+           whole of it on a window too narrow for the page to be worth having), one line per run —
            no columns and no headings over them, because a line says everything it is: the moment
            it was kept, the player who kept it with the face the site keeps for them, and the run's
            own word for itself — the same word a link in the chat wears, said the same way, with

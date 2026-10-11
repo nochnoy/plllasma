@@ -875,6 +875,9 @@ summary.handshake.after = {
       // flattens them back to one line, since the words are what is being checked against.
       said: said?.textContent?.replace(/\s+/g, ' ').trim() ?? null,
       saidAt: box(said),
+      // The sentence is the place speaking, and the place speaks in the garden's own colour — the
+      // one its buttons and the names of its places wear (`--wood`).
+      saidColour: said ? getComputedStyle(said).color : null,
       go: go?.textContent?.trim() ?? null,
       goAt: box(go),
     };
@@ -933,6 +936,13 @@ if (Math.abs(saidAt.height - 5 * 1.55 * 18) > 2) {
   problems.push(
     `the sentence is ${saidAt.height.toFixed(0)} px tall, not the five lines it says ` +
       `(${(5 * 1.55 * 18).toFixed(0)}): a line of it was wrapped`,
+  );
+}
+// The sentence stands in the garden's own colour, as its buttons do — the place speaking in the
+// colour the place's UI is drawn in (`--wood`).
+if (summary.handshake.after.threshold.saidColour !== palette.wood) {
+  problems.push(
+    `the sentence is written in ${summary.handshake.after.threshold.saidColour}, not the garden's own colour`,
   );
 }
 if (goAt.left < 450 || Math.abs(goAt.top + goAt.height / 2 - 350) > 4) {
@@ -1564,17 +1574,18 @@ if (summary.toolbar.knotInRopeHand.ropes !== 1) {
 await page.click('[data-tool="drag"]');
 await page.mouse.move(stageHigh.x, stageHigh.y);
 await page.waitForFunction(
-  () => {
+  (wood) => {
     const drag = document.querySelector('.toolbar [data-tool="drag"]');
     const rope = document.querySelector('.toolbar [data-tool="rope"]');
     return (
-      getComputedStyle(drag).backgroundColor === 'rgb(192, 192, 192)' &&
+      getComputedStyle(drag).backgroundColor === wood &&
       getComputedStyle(drag).color === 'rgb(0, 0, 0)' &&
       getComputedStyle(rope).backgroundColor === 'rgb(0, 0, 0)' &&
-      getComputedStyle(rope).color === 'rgb(192, 192, 192)'
+      getComputedStyle(rope).color === wood
     );
   },
   { timeout: 8000 },
+  palette.wood,
 );
 // The bar itself: three buttons hanging from the top of the world's own left edge — the arrow, then the
 // rope, then the chat's at the very foot of the stack, that one being the only button of the three that
@@ -1843,8 +1854,9 @@ summary.chat.window = await page.evaluate(() => {
     parts: [...card.children].map((child) => child.className),
     // The log and the field beneath it: the conversation stands on the page it always has — 600 px
     // across and stood in the middle of the screen (measured against the scroll's own client box:
-    // a stable scrollbar gutter keeps ~15 px of the window for itself) — while the field is the
-    // painted one here, a picture 785 px wide on the same page's place.
+    // the scrollbar's own width — the rem of margin and the strip — keeps ~24 px of the window for
+    // itself) — while the field is the painted one here, a picture 785 px wide on the same page's
+    // place.
     page: (() => {
       const log = card.querySelector('.chat-card__log').getBoundingClientRect();
       const form = card.querySelector('.chat-card__form').getBoundingClientRect();
@@ -1857,6 +1869,21 @@ summary.chat.window = await page.evaluate(() => {
     titleAt: (() => {
       const rect = card.querySelector('.chat-card__title')?.getBoundingClientRect();
       return rect ? { left: rect.left, width: rect.width } : null;
+    })(),
+    // The topbar: one row, the same on both screens — the buttons' own height plus the inset the
+    // screen's top edge keeps (8 px, the sides' own), the conversation a rem under it, and the name
+    // in the garden's own colour (`--wood`).
+    topbar: (() => {
+      const head = card.querySelector('.chat-card__head').getBoundingClientRect();
+      const backBox = back.getBoundingClientRect();
+      const body = card.querySelector('.chat-card__body').getBoundingClientRect();
+      return {
+        height: Math.round(head.height),
+        buttons: Math.round(backBox.height),
+        inset: Math.round(backBox.top - head.top),
+        gap: Math.round(body.top - head.bottom),
+        titleColour: getComputedStyle(card.querySelector('.chat-card__title')).color,
+      };
     })(),
     back: back?.textContent.trim() ?? null,
     lines: card.querySelectorAll('.chat-line').length,
@@ -2210,6 +2237,26 @@ if (chatWindow.titleAt && Math.abs(chatWindow.titleAt.left + chatWindow.titleAt.
   );
 }
 if (chatWindow.back !== 'Назад') problems.push(`the way back says "${chatWindow.back}", not «Назад»`);
+// The topbar: the buttons' own height plus the top edge's own inset — the same 40 px the archive's
+// own bar reads below — the conversation a rem under it, and the name of the place said in the
+// garden's own colour, as its buttons are.
+if (chatWindow.topbar.height !== chatWindow.topbar.buttons + chatWindow.topbar.inset) {
+  problems.push(
+    `the chat's topbar is ${chatWindow.topbar.height} px tall over ${chatWindow.topbar.buttons} px buttons ` +
+      `standing ${chatWindow.topbar.inset} px in`,
+  );
+}
+if (chatWindow.topbar.inset !== 8) {
+  problems.push(
+    `the chat's buttons stand ${chatWindow.topbar.inset} px from the top edge, not the 8 px the sides keep`,
+  );
+}
+if (chatWindow.topbar.gap !== 16) {
+  problems.push(`the chat's log stands ${chatWindow.topbar.gap} px under the topbar, not the rem of it`);
+}
+if (chatWindow.topbar.titleColour !== palette.wood) {
+  problems.push(`the chat's heading is written in ${chatWindow.topbar.titleColour}, not the garden's own colour`);
+}
 // The conversation and the field stand on the same page: the conversation 600 px across (the whole
 // of the scroll on a window that narrow), both of them, in the middle of it — while the field, on a
 // window wide enough for the picture, is the painted one, its own 785 px of picture.
@@ -2284,8 +2331,8 @@ if (narrowField.fieldBorder !== 2 || narrowField.inputBorder !== 0 || narrowFiel
       `${narrowField.inputBorder}px around the text inside, its button edged ${narrowField.sendBorder}px`,
   );
 }
-if (narrowField.sendEdge !== 'rgb(192, 192, 192)') {
-  problems.push(`the framed field's button is edged in ${narrowField.sendEdge}, not the wood's own silver`);
+if (narrowField.sendEdge !== palette.wood) {
+  problems.push(`the framed field's button is edged in ${narrowField.sendEdge}, not the garden's own colour`);
 }
 if (narrowField.fieldHeight !== narrowField.sendHeight) {
   problems.push(
@@ -4483,6 +4530,9 @@ const pickedHead = await page
         when: document.querySelector('.tape-head__when')?.textContent.trim() ?? null,
         live: document.querySelector('.tape-head__live')?.textContent.trim() ?? null,
         back: document.querySelector('.tape-head .chat-card__back')?.textContent.trim() ?? null,
+        // The byline is the one name the garden's own colour does not reach: the playback's header
+        // stays in the chat's own colour, on the hall the run is watched in.
+        colour: getComputedStyle(document.querySelector('.tape-head__byline')).color,
         // The byline's place as distances rather than looks: how far its middle stands from the head's
         // own middle, and how much room is left between the way out and the byline's first letter.
         offMiddle: head && byline ? Math.abs((byline.left + byline.right) / 2 - (head.left + head.right) / 2) : null,
@@ -4507,6 +4557,11 @@ if (!pickedHead) {
   // A run that is over wears no «(идёт стрим)»: the word belongs to a run still being played, and the
   // row this head was drawn from (`live` off the view door's own answer) says this one is not.
   if (pickedHead.live !== null) problems.push(`the playback of a run that is over wears "${pickedHead.live}"`);
+  // ...and it wears the chat's own colour still: the playback's header is the one place the garden's
+  // own colour does not reach.
+  if (pickedHead.colour !== palette.paper) {
+    problems.push(`the playback's byline is written in ${pickedHead.colour}, not the chat's own colour`);
+  }
   // In the middle of the head, with a pixel of grace around the middle — and never under the way out:
   // a byline that reached the button would be the centring buying its place with the corner's own.
   if (pickedHead.offMiddle === null || pickedHead.offMiddle > 1) {
@@ -5160,13 +5215,28 @@ if (!archiveDoor) {
       back: card.querySelector('.chat-card__back')?.textContent.trim() ?? null,
       // One line per run and nothing over them: no columns, no heading row, no rule under one.
       headings: card.querySelectorAll('th, .archive__head').length,
+      // The topbar: one row, the same on both screens — the buttons' own height plus the inset the
+      // screen's top edge keeps, the list a rem under it, the name in the garden's own colour over
+      // it (`--wood`).
+      topbar: (() => {
+        const head = card.querySelector('.chat-card__head').getBoundingClientRect();
+        const backBox = card.querySelector('.chat-card__back').getBoundingClientRect();
+        const body = card.querySelector('.archive__body').getBoundingClientRect();
+        return {
+          height: Math.round(head.height),
+          buttons: Math.round(backBox.height),
+          inset: Math.round(backBox.top - head.top),
+          gap: Math.round(body.top - head.bottom),
+          titleColour: getComputedStyle(card.querySelector('.chat-card__title')).color,
+        };
+      })(),
       list: (() => {
         const box = card.querySelector('.archive__list');
         const body = card.querySelector('.archive__body');
         const rect = box?.getBoundingClientRect();
-        // Measured against the scroll's own client box rather than the window: a stable scrollbar
-        // gutter (`scrollbar-gutter: stable`) keeps ~15 px of the window for itself, and four fifths
-        // of what the list may have is four fifths of that, not of the window.
+        // Measured against the scroll's own client box rather than the window: the scrollbar's own
+        // width — the rem of margin and the strip (`scrollbar-gutter: stable`) — keeps ~24 px of the
+        // window for itself, and the page the list stands on is a page of that, not of the window.
         return rect && body ? { width: Math.round(rect.width), left: Math.round(rect.left), of: body.clientWidth } : null;
       })(),
       standing: rows.length,
@@ -5219,12 +5289,23 @@ if (!archiveDoor) {
         };
         return { screen: { width: screen.width, height: screen.height }, left: read('left'), right: read('right') };
       })(),
-      // The strip that is dragged: the garden's scrollbars wear nothing but it, in the wood's own
-      // gold, with no track under and no buttons at the ends (`scrollbar-width: thin` is what takes
-      // the buttons off — the engine's own plain scrollbar has none).
+      // The scrollbar: the strip that is dragged, in the chat's own gold, a rem in from the screen's
+      // own edge — and the margin between it and the edge is the scrollbar still, the bar being wide
+      // enough to hold both and the strip drawn at its inner end (a rem of transparent border on
+      // the thumb), with no track under and no buttons at the ends.
       scrolled: (() => {
-        const style = getComputedStyle(document.querySelector('.archive__body'));
-        return { width: style.scrollbarWidth, colour: style.scrollbarColor };
+        const body = document.querySelector('.archive__body');
+        const bar = getComputedStyle(body, '::-webkit-scrollbar');
+        const thumb = getComputedStyle(body, '::-webkit-scrollbar-thumb');
+        const track = getComputedStyle(body, '::-webkit-scrollbar-track');
+        return {
+          width: bar.width,
+          background: bar.backgroundColor,
+          strip: thumb.backgroundColor,
+          inset: thumb.borderRightWidth,
+          clip: thumb.backgroundClip,
+          track: track.backgroundColor,
+        };
       })(),
     };
   });
@@ -5233,11 +5314,31 @@ if (!archiveDoor) {
   summary.archive.windows = chatAsked.archives;
   if (table.title !== 'Гиблиотека') problems.push(`the archive's screen is titled "${table.title}"`);
   if (table.back !== 'Назад') problems.push(`the archive's way back says "${table.back}"`);
+  // The topbar: the buttons' own height plus the top edge's own inset — the same 40 px the chat's
+  // own bar reads — the list a rem under it, and the name in the garden's own colour. The archive
+  // is the chat's other half, and the bar the two screens share is drawn the same way on both.
+  if (table.topbar.height !== table.topbar.buttons + table.topbar.inset) {
+    problems.push(
+      `the archive's topbar is ${table.topbar.height} px tall over ${table.topbar.buttons} px buttons ` +
+        `standing ${table.topbar.inset} px in`,
+    );
+  }
+  if (table.topbar.inset !== 8) {
+    problems.push(
+      `the archive's buttons stand ${table.topbar.inset} px from the top edge, not the 8 px the sides keep`,
+    );
+  }
+  if (table.topbar.gap !== 16) {
+    problems.push(`the archive's list stands ${table.topbar.gap} px under the topbar, not the rem of it`);
+  }
+  if (table.topbar.titleColour !== palette.wood) {
+    problems.push(`the archive's heading is written in ${table.topbar.titleColour}, not the garden's own colour`);
+  }
   if (table.headings !== 0) problems.push('the list has column headings or a rule over it');
-  // The list stands in the middle of the screen, a page of it 600 px across — and the whole of it
+  // The list stands in the middle of the screen, a page of it 500 px across — and the whole of it
   // on a window with no room for the page (checked below, where the window is made that narrow).
-  if (table.list.of >= 600 && table.list.width !== 600) {
-    problems.push(`the list is ${table.list.width} of ${table.list.of} wide, not the 600 px of a page centred`);
+  if (table.list.of >= 500 && table.list.width !== 500) {
+    problems.push(`the list is ${table.list.width} of ${table.list.of} wide, not the 500 px of a page centred`);
   }
   if (Math.abs(table.list.left - (table.list.of - table.list.width) / 2) > 2) {
     problems.push(`the list stands at ${table.list.left} of ${table.list.of}, not in the middle`);
@@ -5301,12 +5402,40 @@ if (!archiveDoor) {
       problems.push(`the wings overlap by ${(table.wings.left.right - table.wings.right.left).toFixed(1)} px`);
     }
   }
-  // The scrollbar: a thin one, gold where it is anything at all, and nothing under it.
-  if (table.scrolled.width !== 'thin') {
-    problems.push(`the archive's scrollbar is a ${table.scrolled.width} one rather than the thin strip`);
+  // The scrollbar: a gold strip a rem in from the screen's own edge, and the margin between it and
+  // the edge is the scrollbar still — the bar is wide enough to hold both, and the strip is drawn
+  // at its inner end, so a mouse in the margin takes the strip rather than poking at the page.
+  // Nothing under it: no track, no buttons.
+  if (table.scrolled.width !== '24px') {
+    problems.push(
+      `the archive's scrollbar is ${table.scrolled.width} wide, not the rem of margin and the 8 px strip`,
+    );
   }
-  if (!String(table.scrolled.colour).startsWith('rgb(236, 189, 103)')) {
-    problems.push(`the archive's scrollbar is coloured ${table.scrolled.colour} rather than #ECBD67`);
+  if (table.scrolled.strip !== 'rgb(236, 189, 103)') {
+    problems.push(`the archive's scrollbar strip is ${table.scrolled.strip} rather than #ECBD67`);
+  }
+  if (table.scrolled.inset !== '16px' || table.scrolled.clip !== 'padding-box') {
+    problems.push(
+      `the archive's strip stands ${table.scrolled.inset} from the edge, clipped as ${table.scrolled.clip} — not a rem in from it`,
+    );
+  }
+  if (table.scrolled.track !== 'rgba(0, 0, 0, 0)' || table.scrolled.background !== 'rgba(0, 0, 0, 0)') {
+    problems.push(`the archive's scrollbar wears a track (${table.scrolled.track} on ${table.scrolled.background})`);
+  }
+  // ...and the margin is the scrollbar's own, to the pixel: the scroll's own client box is the
+  // window less the whole 24 px of it — the rem of margin and the strip — which is what puts a hand
+  // in the margin on the scrollbar rather than on the page. (Whether a *press* there drags is not
+  // something this harness can ask: headless Chromium does not deliver its synthetic mouse events
+  // to scrollbars at all, its own included — the width is the promise and the proof there is.)
+  const marginOf = await page.evaluate(() => ({
+    client: document.querySelector('.archive__body').clientWidth,
+    window: innerWidth,
+  }));
+  summary.archive.margin = marginOf;
+  if (marginOf.window - marginOf.client !== 24) {
+    problems.push(
+      `the scrollbar keeps ${marginOf.window - marginOf.client} px of the window, not the rem of margin and the 8 px strip`,
+    );
   }
   // The first window is a hundred rows, and only a hundred: the filling is what the scroll asks for,
   // and a table that arrived complete would be a page that asked for the whole of the list at once.
@@ -5347,11 +5476,11 @@ if (!archiveDoor) {
   }
   await page.screenshot({ path: join(outDir, '32-archive-table.png') });
 
-  // A window too narrow for the slack: the list takes the whole of it rather than four fifths of a
+  // A window too narrow for the page: the list takes the whole of it rather than a page of a
   // nothing much — read at 450 px, where the whole is the only width left. The measure is the
-  // scroll's own client box for the same reason as above: the gutter keeps its 15 px whatever the
-  // window is. And the two halves of the scene, at a window this narrow, are still their own size
-  // and still only touching — outer edges past the screen's sides, inner edges at the middle.
+  // scroll's own client box for the same reason as above: the scrollbar keeps its ~24 px whatever
+  // the window is. And the two halves of the scene, at a window this narrow, are still their own
+  // size and still only touching — outer edges past the screen's sides, inner edges at the middle.
   await page.setViewport({ width: 450, height: 700, deviceScaleFactor: 1 });
   const narrowList = await page.evaluate(() => {
     const list = document.querySelector('.archive__list').getBoundingClientRect();
