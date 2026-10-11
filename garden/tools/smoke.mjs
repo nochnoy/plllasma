@@ -5411,8 +5411,8 @@ if (!archiveDoor) {
       `the archive's scrollbar is ${table.scrolled.width} wide, not the rem of margin and the 8 px strip`,
     );
   }
-  if (table.scrolled.strip !== 'rgb(236, 189, 103)') {
-    problems.push(`the archive's scrollbar strip is ${table.scrolled.strip} rather than #ECBD67`);
+  if (table.scrolled.strip !== 'rgb(163, 129, 71)') {
+    problems.push(`the archive's scrollbar strip is ${table.scrolled.strip} rather than #A38147`);
   }
   if (table.scrolled.inset !== '16px' || table.scrolled.clip !== 'padding-box') {
     problems.push(

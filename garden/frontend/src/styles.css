@@ -1,17 +1,18 @@
 :root {
   --ink: #1d3346;
   /*
-   * The garden's own interface colour — the gold the scrollbars wear (#ECBD67, the strip that is
-   * dragged) — and every button of the garden wears it three ways: its edge, the light it answers a
-   * hover with, and the drawing inside it. The names of the places wear it too (`.chat-card__title`),
-   * and the sentence of the threshold (`.intro__said`). It began as the colour of the hall's own
-   * timber — the squares of the bar's tools and of the tape's own bar — and the name is what it was
-   * called then; the colour is the UI's now, one number for the whole of it, scrollbars included.
-   * Nothing of a button itself changes under the pointer beyond that colour: a press is the whole of
-   * its answer, and the one thing a hover adds is the word that stands beside it (`.hint`), which is
-   * not the button.
+   * The garden's own interface colour — the scrollbars' colour (#A38147, the strip that is dragged;
+   * it began as their gold #ECBD67, and the darkened tone is worn by the scrollbars together with
+   * everything else) — and every button of the garden wears it three ways: its edge, the light it
+   * answers a hover with, and the drawing inside it. The names of the places wear it too
+   * (`.chat-card__title`), and the sentence of the threshold (`.intro__said`). It began as the colour
+   * of the hall's own timber — the squares of the bar's tools and of the tape's own bar — and the
+   * name is what it was called then; the colour is the UI's now, one number for the whole of it,
+   * scrollbars included. Nothing of a button itself changes under the pointer beyond that colour: a
+   * press is the whole of its answer, and the one thing a hover adds is the word that stands beside
+   * it (`.hint`), which is not the button.
    */
-  --wood: #ecbd67;
+  --wood: #a38147;
   /*
    * The chat's own colour: the paper its screen is made of, and — turned around, on the black of the
    * page — the colour its words stand in wherever they are read out of the paper (the strip beside the
