@@ -854,7 +854,7 @@ await page.evaluate(() => new Promise((resolve) => {
 }));
 await wait(60);
 const theSentence =
-  'Говорят, если ночью прийти в сад, найти там старую сцену и захотеть стать гибкой, то твоё желание исполнится.';
+  'Приди в проклятый сад, найди там старую сцену ложись на неё, и духи подарят тебе гибкость';
 summary.handshake.after = {
   gone: await page.evaluate(() => document.querySelector('.loading') === null),
   middle: await middleOfPage(),
@@ -925,17 +925,17 @@ if (summary.handshake.after.threshold.go !== 'Сцена') {
 // are laid out in — pressed to the right edge of that half by its own 300 px container (wide enough
 // for the longest of its lines, so the breaks the player reads are the ones it says itself and not
 // the container's), centred inside it both ways: a 900-wide window split in two with 20 px between
-// the halves puts the left half's right edge at 440. And it is five lines tall — one per `<br>` it
+// the halves puts the left half's right edge at 440. And it is four lines tall — one per `<br>` it
 // says — which is what says no line of it was wrapped by the container.
 if (Math.abs(saidAt.left + saidAt.width - 440) > 6 || Math.abs(saidAt.top + saidAt.height / 2 - 350) > 4) {
   problems.push(
     `the sentence stands at ${saidAt.left + saidAt.width},${saidAt.top + saidAt.height / 2}, not pressed to the left half's right edge`,
   );
 }
-if (Math.abs(saidAt.height - 5 * 1.55 * 18) > 2) {
+if (Math.abs(saidAt.height - 4 * 1.55 * 18) > 2) {
   problems.push(
-    `the sentence is ${saidAt.height.toFixed(0)} px tall, not the five lines it says ` +
-      `(${(5 * 1.55 * 18).toFixed(0)}): a line of it was wrapped`,
+    `the sentence is ${saidAt.height.toFixed(0)} px tall, not the four lines it says ` +
+      `(${(4 * 1.55 * 18).toFixed(0)}): a line of it was wrapped`,
   );
 }
 // The sentence stands in the garden's own colour, as its buttons do — the place speaking in the
