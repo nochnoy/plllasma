@@ -9,6 +9,7 @@ import { useArchive } from './composables/useArchive';
 import { useChat } from './composables/useChat';
 import { useGame } from './composables/useGame';
 import { useLiveRun } from './composables/useLiveRun';
+import { useMusic } from './composables/useMusic';
 import { useRunStates } from './composables/useRunStates';
 import { useRuns } from './composables/useRuns';
 import { useTape } from './composables/useTape';
@@ -248,6 +249,16 @@ watch(location, (at, was) => {
   if (at === 2) game.value?.resume();
   else game.value?.suspend();
 });
+
+/**
+ * The garden's music, one track and one moment (`useMusic`): the stage's own music begins with the
+ * run — the first touch of a doll, the same edge that opens the run on the server (`useLiveRun`) —
+ * once a session and never again; the threshold before it is silent, for a page nobody has touched
+ * is a page no browser will sound. What ends the music is a move between the garden's screens: two
+ * seconds of falling silent, and quiet — which is what a playback or a stream being watched arrives
+ * to as well.
+ */
+useMusic(location, tape);
 
 /**
  * The chat: the four lines under the bar, the screen the bar's chat button and those lines are both the
