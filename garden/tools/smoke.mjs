@@ -4473,12 +4473,22 @@ if (!picked.report.loaded || picked.report.steps !== smokedRun.steps) {
 const pickedHead = await page
   .waitForSelector('.tape-head__byline', { timeout: 10000 })
   .then(() =>
-    page.evaluate(() => ({
-      badge: document.querySelector('.tape-head__badge')?.getAttribute('src') ?? null,
-      nick: document.querySelector('.tape-head__nick')?.textContent.trim() ?? null,
-      when: document.querySelector('.tape-head__when')?.textContent.trim() ?? null,
-      back: document.querySelector('.tape-head .chat-card__back')?.textContent.trim() ?? null,
-    })),
+    page.evaluate(() => {
+      const head = document.querySelector('.tape-head')?.getBoundingClientRect() ?? null;
+      const byline = document.querySelector('.tape-head__byline')?.getBoundingClientRect() ?? null;
+      const back = document.querySelector('.tape-head .chat-card__back')?.getBoundingClientRect() ?? null;
+      return {
+        badge: document.querySelector('.tape-head__badge')?.getAttribute('src') ?? null,
+        nick: document.querySelector('.tape-head__nick')?.textContent.trim() ?? null,
+        when: document.querySelector('.tape-head__when')?.textContent.trim() ?? null,
+        live: document.querySelector('.tape-head__live')?.textContent.trim() ?? null,
+        back: document.querySelector('.tape-head .chat-card__back')?.textContent.trim() ?? null,
+        // The byline's place as distances rather than looks: how far its middle stands from the head's
+        // own middle, and how much room is left between the way out and the byline's first letter.
+        offMiddle: head && byline ? Math.abs((byline.left + byline.right) / 2 - (head.left + head.right) / 2) : null,
+        overButton: back && byline ? byline.left - back.right : null,
+      };
+    }),
   )
   .catch(() => null);
 summary.runs.picked.head = pickedHead;
@@ -4494,6 +4504,21 @@ if (!pickedHead) {
     problems.push(`the playback's byline says the run was kept at "${pickedHead.when}"`);
   }
   if (pickedHead.back !== 'Назад') problems.push(`the playback's way back reads "${pickedHead.back}"`);
+  // A run that is over wears no «(идёт стрим)»: the word belongs to a run still being played, and the
+  // row this head was drawn from (`live` off the view door's own answer) says this one is not.
+  if (pickedHead.live !== null) problems.push(`the playback of a run that is over wears "${pickedHead.live}"`);
+  // In the middle of the head, with a pixel of grace around the middle — and never under the way out:
+  // a byline that reached the button would be the centring buying its place with the corner's own.
+  if (pickedHead.offMiddle === null || pickedHead.offMiddle > 1) {
+    problems.push(
+      `the playback's byline stands ${pickedHead.offMiddle?.toFixed(1) ?? '??'} px off the middle of the head`,
+    );
+  }
+  if (pickedHead.overButton === null || pickedHead.overButton < 0) {
+    problems.push(
+      `the playback's byline reaches under the way out (${pickedHead.overButton?.toFixed(1) ?? '??'} px past it)`,
+    );
+  }
 }
 if (chatAsked.views.filter((id) => id === smokedRun.id).length !== 1) {
   problems.push(`entering the run off a link counted it as watched ${JSON.stringify(chatAsked.views)}`);
@@ -4756,6 +4781,30 @@ if (!liveRow.at) {
     problems.push('a run that is still being played did not reach the timeline');
   }
   if (!(first.steps > 0)) problems.push('a run that is still being played arrived with no steps in it');
+  // The head signs the playback the way it signs any — who, with what face, when — and says the one
+  // thing more: that the run is still going. The word is the chat's own «(идёт стрим)» (`RUN_LIVE`),
+  // read off the live flag the view door's own row came with — the same word the link this playback
+  // was followed out of wears beside its words, read the same way off the same row.
+  const liveHead = await page
+    .waitForSelector('.tape-head__byline', { timeout: 10000 })
+    .then(() =>
+      page.evaluate(() => ({
+        nick: document.querySelector('.tape-head__nick')?.textContent.trim() ?? null,
+        live: document.querySelector('.tape-head__live')?.textContent.trim() ?? null,
+      })),
+    )
+    .catch(() => null);
+  summary.watching.head = liveHead;
+  if (!liveHead) {
+    problems.push('the playback of a run still being played grew no byline');
+  } else {
+    if (liveHead.nick !== foreignRun.row.author) {
+      problems.push(`the live run's byline is signed "${liveHead.nick}" rather than ${foreignRun.row.author}`);
+    }
+    if (liveHead.live !== '(идёт стрим)') {
+      problems.push(`the live run's byline says "${liveHead.live}" rather than (идёт стрим)`);
+    }
+  }
   // And it *grows*: the tape under the walk is the run as it stands, so its length is read again a second later
   // and again — which is the whole of what watching a run somebody else is playing is.
   if (!(second.steps > first.steps)) {

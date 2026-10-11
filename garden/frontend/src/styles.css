@@ -1388,10 +1388,10 @@ a.chat-line__run:focus-visible {
  * the player's — a run being watched is still the game's own picture, not a page to be pressed on.
  */
 .tape-head {
+  position: relative;
   flex: none;
   display: flex;
   align-items: center;
-  gap: 12px;
   pointer-events: none;
 }
 
@@ -1400,16 +1400,23 @@ a.chat-line__run:focus-visible {
 }
 
 /*
- * The byline: badge, bold nickname, and the moment — one line, said after the button the way a
- * recording's label follows the way out of it. Nothing of it is a control, so none of it takes a
- * pointer; a byline longer than the room it has is cut short at the end, the way the archive's rows
- * are, rather than pushing the head about.
+ * The byline: badge, bold nickname, the moment, and — while the run is still being played — its
+ * «(идёт стрим)», the chat's own word for it. One line, stood in the middle of the head the way the
+ * chat window's own heading stands in the middle of its strip (`chat-card--full .chat-card__title`):
+ * a playback is *of* somebody, and whose it is reads before where the way out of it is. Nothing of it
+ * is a control, so none of it takes a pointer; a byline longer than the room it has is cut short at
+ * the end, and the room is measured past the way out — the «Назад» pill and a breath either side of
+ * it — so the cut never reaches under the button.
  */
 .tape-head__byline {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  max-width: calc(100% - 14rem);
   display: flex;
   align-items: center;
   gap: 6px;
-  min-width: 0;
   margin: 0;
   color: var(--paper);
   font-size: 14px;

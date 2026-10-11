@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { RUN_LIVE } from '../chat/messages';
 import { whenWritten, type Entry } from '../chat/archive';
 
 /**
  * The head of the playback screen, along the top of the world while a run is on the tape
- * (`App.vue`): the way out at the world's own top left corner, and beside it the run's own byline —
- * who played it, with the face the site keeps for them, and when it was kept.
+ * (`App.vue`): the way out at the world's own top left corner, and the run's own byline in the
+ * middle of the strip — who played it, with the face the site keeps for them, and when it was kept,
+ * and — while the run is still being played — the word for that, the same «(идёт стрим)» the link
+ * in the chat wears (`RUN_LIVE`).
  *
  * The way out is the chat's own worded button rather than the tape bar's old «Закрыть» at its other
  * end: what the button ends is not a box but a *place* — the mode a timeline up puts the stage in —
@@ -14,7 +17,9 @@ import { whenWritten, type Entry } from '../chat/archive';
  *
  * The byline arrives when the view door answers (`useRuns.watched`), a moment after the run itself
  * has started walking: a playback does not wait to be signed, and a head with nothing in it yet is
- * only the button, in its place, already.
+ * only the button, in its place, already. It is a snapshot rather than a live reading — the word
+ * says whether the run was still going when the view door was asked, the way a row of the archive
+ * says it as of the moment its window was read.
  */
 defineProps<{
   /** The run being watched, as the view door answered with it — or null while it has not answered. */
@@ -24,8 +29,8 @@ const emit = defineEmits<{ close: [] }>();
 </script>
 
 <template>
-  <!-- The head itself: the button at the world's own corner, the byline beside it — both in the
-       interface's own place, at the top of the frame the bar of tools usually hangs from. It takes
+  <!-- The head itself: the button at the world's own corner, the byline in the middle of the strip —
+       both in the interface's own place, at the top of the frame the bar of tools usually hangs from. It takes
        no clicks of its own beyond the button: the stage under it stays the player's. -->
   <header class="tape-head">
     <button type="button" class="chat-card__back" aria-label="Назад" @click="emit('close')">
@@ -38,6 +43,7 @@ const emit = defineEmits<{ close: [] }>();
       <img class="tape-head__badge" :src="run.face" alt="" width="16" height="16" />
       <b class="tape-head__nick">{{ run.author }}</b>
       <span class="tape-head__when">{{ whenWritten(run.whenMs) }}</span>
+      <span v-if="run.live" class="tape-head__live">{{ RUN_LIVE }}</span>
     </p>
   </header>
 </template>
