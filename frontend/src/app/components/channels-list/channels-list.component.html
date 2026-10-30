@@ -1,0 +1,32 @@
+<div class="district" *ngFor="let district of districts">
+  <label *ngIf="district.label">{{district.label}}</label>
+  <div class="channels">
+    <ng-container *ngFor="let channel of district.channels">
+
+      <a *ngIf="navigateOnClick"
+         class="channel"
+         [class.channel-new]="channel.id_place > 47"
+         [class.channel-closed]="!channel.role || channel.role === RoleEnum.nobody"
+         [class.channel-subscribed]="channel.at_menu === 't'"
+         [class.channel-ignored]="channel.ignoring === 1"
+         [class.star]="!(!channel.role || channel.role === RoleEnum.nobody) && channel.ignoring !== 1 && channel.at_menu !== 't' && channel.star"
+         [routerLink]="'/channel/' + channel.id_place">
+        {{channel.shortName}}
+      </a>
+
+      <span *ngIf="!navigateOnClick"
+            class="channel"
+            [class.channel-new]="channel.id_place > 47"
+            [class.channel-closed]="!channel.role || channel.role === RoleEnum.nobody"
+            [class.channel-subscribed]="channel.at_menu === 't'"
+            [class.channel-ignored]="channel.ignoring === 1"
+            [class.star]="!(!channel.role || channel.role === RoleEnum.nobody) && channel.ignoring !== 1 && channel.at_menu !== 't' && channel.star"
+            (click)="onChannelClick($event, channel)">
+        {{channel.shortName}}
+      </span>
+
+    </ng-container>
+  </div>
+</div>
+
+<div *ngIf="isNothingFound">Не найдено</div>

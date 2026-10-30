@@ -135,11 +135,12 @@ export class HttpService {
     );
   }
 
-  kitchenMessage(messageId: number): Observable<any> {
+  moveMessage(messageId: number, placeId: number): Observable<any> {
     return this.httpClient.post(
-      `${HttpService.apiPath}/message-kitchen.php`,
+      `${HttpService.apiPath}/message-move.php`,
       {
-        messageId
+        messageId,
+        placeId
       },
       {observe: 'body', withCredentials: true}
     );

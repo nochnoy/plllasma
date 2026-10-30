@@ -6,6 +6,16 @@ import {ChannelService} from "../../services/channel.service";
 import {HttpService} from "../../services/http.service";
 import {delay, tap} from "rxjs/operators";
 import {UserService} from "../../services/user.service";
+import {MatDialog} from "@angular/material/dialog";
+import {
+  MoveMessageDialogComponent,
+  MoveMessageDialogData,
+  MoveMessageDialogResult
+} from "../move-message-dialog/move-message-dialog.component";
+import {
+  MoveMessageConfirmDialogComponent,
+  MoveMessageConfirmDialogData
+} from "../move-message-confirm-dialog/move-message-confirm-dialog.component";
 import {INewAttachment} from "../../model/app-model";
 
 @Component({
@@ -19,7 +29,8 @@ export class MessagesComponent {
     public appService: AppService,
     public httpService: HttpService,
     public channelService: ChannelService,
-    public userService: UserService
+    public userService: UserService,
+    private dialog: MatDialog,
   ) {}
 
   ShlopMessageRef = ShlopMessage;
@@ -96,15 +107,62 @@ export class MessagesComponent {
     }
   }
 
-  onKitchenClick(event: any, message: Message): void {
+  onMoveClick(event: any, message: Message): void {
     event.preventDefault();
-    if (window.confirm('Переместить сообщение и подсообщения в Кухню?')) {
-      this.httpService.kitchenMessage(message.id).pipe(
-        tap(() => {
-          this.channelService.invalidateChannel(this.placeId);
-        })
-      ).subscribe();
-    }
+    const selectDialogRef = this.dialog.open<MoveMessageDialogComponent, MoveMessageDialogData, MoveMessageDialogResult>(
+      MoveMessageDialogComponent,
+      {
+        width: '95vw',
+        maxWidth: '95vw',
+        height: '95vh',
+        maxHeight: '95vh',
+        panelClass: 'plasma-dialog-panel',
+        data: {
+          messageId: message.id,
+          currentPlaceId: this.placeId
+        }
+      }
+    );
+    selectDialogRef.afterClosed().subscribe((result) => {
+      if (!result?.placeId) {
+        return; // Диалог закрыт без выбора канала
+      }
+
+      // Нет прав писать в выбранный канал - сообщаем и не переносим
+      if (!this.userService.canWrite(result.placeId)) {
+        alert(`Вы не можете писать в канал «${result.channelName}» - перенос отменён.`);
+        return;
+      }
+
+      const confirmDialogRef = this.dialog.open<MoveMessageConfirmDialogComponent, MoveMessageConfirmDialogData, boolean>(
+        MoveMessageConfirmDialogComponent,
+        {
+          panelClass: 'plasma-dialog-panel',
+          data: {
+            channelName: result.channelName
+          }
+        }
+      );
+      confirmDialogRef.afterClosed().subscribe((confirmed) => {
+        if (!confirmed) {
+          return;
+        }
+        this.httpService.moveMessage(message.id, result.placeId).pipe(
+          tap((moveResult: any) => {
+            if (moveResult.error) {
+              alert(`Перенос не удался: ${moveResult.error}`);
+            } else {
+              this.channelService.invalidateChannel(this.placeId);
+            }
+          })
+        ).subscribe({
+          error: (err) => {
+            console.error('Не удалось перенести сообщение:', err);
+            alert('Перенос не удался - сервер вернул ошибку.');
+          }
+        });
+      });
+    });
   }
 
   onYoutubizeClick(event: any, message: Message): void {

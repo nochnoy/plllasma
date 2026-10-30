@@ -17,94 +17,7 @@
       </header>
 
       <ng-container *ngIf="!isLoading">
-
-        <ng-container *ngIf="!searchPhrase">
-
-          <div class="district" *ngIf="updatedChannels.length">
-            <label>Обновились</label>
-            <div class="channels">
-              <ng-container *ngFor="let channel of updatedChannels">
-                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-              </ng-container>
-            </div>
-          </div>
-
-          <div class="district">
-            <label>Основные</label>
-            <div class="channels">
-              <ng-container *ngFor="let channel of channelsFlex">
-                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-              </ng-container>
-            </div>
-          </div>
-
-          <div class="district">
-            <label>Имена</label>
-            <div class="channels">
-              <ng-container *ngFor="let channel of channelsFlexPerformers">
-                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-              </ng-container>
-            </div>
-          </div>
-
-          <div class="district">
-            <label>18+</label>
-            <div class="channels">
-              <ng-container *ngFor="let channel of channelsFlexDark">
-                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-              </ng-container>
-            </div>
-          </div>
-
-          <div class="district">
-            <label>Всякое</label>
-            <div class="channels">
-              <ng-container *ngFor="let channel of channelsOther">
-                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-              </ng-container>
-            </div>
-          </div>
-
-          <div class="district">
-            <label>МК</label>
-            <div class="channels">
-              <ng-container *ngFor="let channel of channelsMen">
-                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-              </ng-container>
-            </div>
-          </div>
-
-          <div class="district">
-            <label>Амазония</label>
-            <div class="channels">
-              <ng-container *ngFor="let channel of channelsAmazonia">
-                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-              </ng-container>
-            </div>
-          </div>
-
-          <div class="district">
-            <label>Техническое</label>
-            <div class="channels">
-              <ng-container *ngFor="let channel of channelsAdmin">
-                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-              </ng-container>
-            </div>
-          </div>
-
-        </ng-container>
-
-        <ng-container *ngIf="searchPhrase">
-          <div class="district">
-            <div class="channels" *ngIf="channelsSearching.length">
-              <ng-container *ngFor="let channel of channelsSearching">
-                <ng-container [ngTemplateOutlet]="memberTemplate" [ngTemplateOutletContext]="{channel: channel}"></ng-container>
-              </ng-container>
-            </div>
-          </div>
-          <div *ngIf="!channelsSearching.length">Не найдено</div>
-        </ng-container>
-
+        <app-channels-list [channels]="channelsAll" [searchPhrase]="searchPhrase"></app-channels-list>
       </ng-container>
 
     </section>
@@ -129,15 +42,3 @@
     <app-holiday></app-holiday>
   </div>
 </div>
-
-<ng-template #memberTemplate let-channel='channel'>
-  <a class="channel"
-     [class.channel-new]="channel.id_place > 47"
-     [class.channel-closed]="!channel.role || channel.role === 9"
-     [class.channel-subscribed]="channel.at_menu === 't'"
-     [class.channel-ignored]="channel.ignoring === 1"
-     [class.star]="!(!channel.role || channel.role === 9) && channel.ignoring !== 1 && channel.at_menu !== 't' && channel.star"
-     [routerLink]="'/channel/' + channel.id_place">
-       {{channel.shortName}}
-  </a>
-</ng-template>

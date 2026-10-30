@@ -699,3 +699,39 @@ textarea {
   position: relative;
   top: 0.1rem;
 }
+
+/* Диалоги в цвете страниц (панель MatDialog по умолчанию белая).
+   Класс вешается через panelClass при открытии диалога.
+   Отступы: заголовок и содержимое - 1rem со всех сторон.
+   Родные отступы Material (в т.ч. отрицательный маргин слева у заголовка) сброшены,
+   свои отступы диалоги задают на внутренних элементах. */
+.plasma-dialog-panel {
+  .mat-mdc-dialog-container .mdc-dialog__surface {
+    background-color: var(--color-page-bg);
+  }
+
+  .mat-mdc-dialog-container .mdc-dialog__title {
+    margin: 0;
+    padding: 0;
+
+    // Псевдоэлемент-распорка Material (inline-block высотой 40px) -
+    // именно он создавал огромный отступ сверху
+    &::before {
+      height: 0;
+    }
+  }
+
+  .mat-mdc-dialog-container .mat-mdc-dialog-content {
+    max-height: none;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 0 1rem 1rem;
+  }
+
+  .mat-mdc-dialog-container .mat-mdc-dialog-actions {
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 1rem;
+  }
+}
+

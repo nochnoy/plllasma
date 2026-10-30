@@ -1,4 +1,7 @@
 import { NgModule } from '@angular/core';
+import {CommonModule} from "@angular/common";
+import {RouterModule} from "@angular/router";
+import {FormsModule} from "@angular/forms";
 import {PlasmaDatePipe} from "./pipes/plasmadate.pipe";
 import {AsPipe} from "./pipes/as.pipe";
 import {LinkyPipe} from "./pipes/linky.pipe";
@@ -7,8 +10,14 @@ import {ShortenPipe} from "./pipes/shorten.pipe";
 import {NewlinePipe} from "./pipes/newline.pipe";
 import {SafePipe} from "./pipes/safe.pipe";
 import {ContenteditableValueAccessor} from "./directives/contenteditable-value-accessor";
+import {ChannelsListComponent} from "../../components/channels-list/channels-list.component";
 
 @NgModule({
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+  ],
   declarations: [
     PlasmaDatePipe,
     AsPipe,
@@ -18,6 +27,7 @@ import {ContenteditableValueAccessor} from "./directives/contenteditable-value-a
     NewlinePipe,
     SafePipe,
     ContenteditableValueAccessor,
+    ChannelsListComponent,
   ],
   exports: [
     PlasmaDatePipe,
@@ -27,7 +37,8 @@ import {ContenteditableValueAccessor} from "./directives/contenteditable-value-a
     ShortenPipe,
     NewlinePipe,
     SafePipe,
-    ContenteditableValueAccessor
+    ContenteditableValueAccessor,
+    ChannelsListComponent,
   ],
 })
 export class SharedModule { }

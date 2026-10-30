@@ -1,12 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from 'src/app/services/user.service';
 import {HttpService} from "../../../../services/http.service";
-import {IChannelLink, RoleEnum} from "../../../../model/app-model";
+import {IChannelLink} from "../../../../model/app-model";
 import {UntilDestroy, untilDestroyed} from "@ngneat/until-destroy";
-import {switchMap, tap} from "rxjs/operators";
-import { Const } from 'src/app/model/const';
+import {tap} from "rxjs/operators";
 import {Router} from "@angular/router";
-import {of} from "rxjs";
 import {ChannelService} from "../../../../services/channel.service";
 import {HolidayService} from "../../../../services/holiday.service";
 
@@ -31,16 +29,6 @@ export class ChannelsPageComponent implements OnInit {
   hereAndNowUsers: string[] = [];
 
   channelsAll: IChannelLink[] = [];
-  channelsActivity: IChannelLink[] = [];
-  channelsSearching: IChannelLink[] = [];
-  channelsFlex: IChannelLink[] = [];
-  channelsFlexDark: IChannelLink[] = [];
-  channelsFlexPerformers: IChannelLink[] = [];
-  channelsOther: IChannelLink[] = [];
-  channelsMen: IChannelLink[] = [];
-  channelsAmazonia: IChannelLink[] = [];
-  channelsAdmin: IChannelLink[] = [];
-  updatedChannels: IChannelLink[] = []; // Категория "Обновившиеся" перед "Основные"
 
   ngOnInit(): void {
     this.clearSuperstar();
@@ -54,69 +42,15 @@ export class ChannelsPageComponent implements OnInit {
       tap((result) => {
         this.isLoading = false;
 
-        // Сократим
-        (result || []).forEach((channel: any) => channel.shortName = channel.name.substr(0, Const.channelShornNameLength));
-
-        // Вообще все
+        // Вообще все. Сортировку, сокращение имён и разбивку по разделам делает channels-list
         this.channelsAll = result || [];
-        this.channelsAll = this.channelsAll.sort((a, b) => {
-          if (a.name > b.name) {
-            return 1;
-          } else if (a.name < b.name) {
-            return -1;
-          } else {
-            return 0;
-          }
-        });
-
-        // Активность
-        this.channelsActivity = [...this.channelsAll].sort((a, b) => {
-          if (a.time_changed < b.time_changed) {
-            return 1;
-          } else if (a.time_changed > b.time_changed) {
-            return -1;
-          } else {
-            return 0;
-          }
-        }).slice(0, 5);
-
-        // Остальные
-        this.channelsOther = this.channelsAll.filter((c) => c.id_section === Const.channelSectionOther);
-        this.channelsFlex = this.channelsAll.filter((c) => c.id_section === Const.channelSectionFlex);
-        this.channelsFlexDark = this.channelsAll.filter((c) => c.id_section === Const.channelSectionFlexDark);
-        this.channelsFlexPerformers = this.channelsAll.filter((c) => c.id_section === Const.channelSectionPerformers);
-        this.channelsMen = this.channelsAll.filter((c) => c.id_section === Const.channelSectionMen);
-        this.channelsAmazonia = this.channelsAll.filter((c) => c.id_section === Const.channelSectionAmazonia);
-        this.channelsAdmin = this.channelsAll.filter((c) => c.id_section === Const.channelSectionAdmin);
-
-        this.updateChannelsToShow();
-
-        // Категория "Обновившиеся": звезданутые неподписанные каналы, по свежести.
-        // Каналы при этом остаются и в своих категориях ниже - списки независимы.
-        this.updatedChannels = this.channelsAll
-          .filter((channel) => this.isChannelUpdated(channel))
-          .sort((a, b) => a.time_changed < b.time_changed ? 1 : (a.time_changed > b.time_changed ? -1 : 0));
       }),
       untilDestroyed(this)
     ).subscribe();
   }
 
-  updateChannelsToShow(): void {
-    if (this.searchPhrase) {
-      this.channelsSearching = this.channelsAll.filter((channel) => (channel.name ?? '').toUpperCase().indexOf(this.searchPhrase.toUpperCase()) > -1);
-    } else {
-      this.channelsSearching = [];
-    }
-  }
-
-  // Канал попадает в раздел "Обновились": есть серверная звёздочка (_STAR_,
-  // уже посчитана с учётом игнорируемых и исчезнувших юзеров), канал неподписан,
-  // не игнорируется и читаем
-  isChannelUpdated(channel: IChannelLink): boolean {
-    return !!channel.star
-      && channel.ignoring !== 1
-      && channel.at_menu !== 't'
-      && (!!channel.role && channel.role !== RoleEnum.nobody);
+  onFilter(): void {
+    this.searchPhrase = this.searchPhrase.trim();
   }
 
   // Суперзвезда гаснет при заходе на страницу каталога:
@@ -128,10 +62,6 @@ export class ChannelsPageComponent implements OnInit {
         untilDestroyed(this)
       ).subscribe();
     }
-  }
-
-  onFilter(): void {
-    this.updateChannelsToShow();
   }
 
   getHereAndNow(): void {

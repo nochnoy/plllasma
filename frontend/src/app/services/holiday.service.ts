@@ -12,7 +12,7 @@ import {Injectable} from '@angular/core';
 })
 export class HolidayService {
 
-  /** Хэллоуин: с 11 октября по 6 ноября включительно. */
+  /** Хэллоуин: с 13 октября по 6 ноября включительно. */
   isHalloween = false;
 
   /** Новый год: с 15 декабря по 10 января включительно (захватывает и январские каникулы). */
@@ -24,7 +24,7 @@ export class HolidayService {
     const month = now.getMonth() + 1;
     const date = now.getDate();
 
-    const from = new Date(year, 10 - 1, 11);
+    const from = new Date(year, 10 - 1, 13);
     const to = new Date(year, 11 - 1, 6);
     this.isHalloween = now.getTime() >= from.getTime() && now.getTime() <= to.getTime();
 

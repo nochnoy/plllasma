@@ -1,0 +1,30 @@
+// Отступы контента задаёт глобальный .plasma-dialog-panel (styles.scss),
+// здесь - только внутренние элементы заголовка
+.title-row {
+  position: relative;
+  display: block;
+}
+
+// Шрифт как в заголовках канала (.channel-title на странице канала)
+.dialog-title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--color-black);
+  margin: 0;
+  padding: 1rem 4rem 1rem 1rem; // справа резерв под крестик
+}
+
+.close {
+  position: absolute;
+  right: 0.5rem;
+  top: 0.8rem;
+  text-decoration: none;
+  color: var(--color-black);
+  font-size: 1.8rem;
+  line-height: 1.2;
+  padding: 0.2rem 0.5rem;
+
+  &:hover {
+    color: var(--color-logo-red);
+  }
+}

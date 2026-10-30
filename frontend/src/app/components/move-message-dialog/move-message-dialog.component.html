@@ -1,0 +1,12 @@
+<div mat-dialog-title class="title-row">
+  <h1 class="dialog-title">Выберите канал</h1>
+  <a href class="close" (click)="onCancel()">&times;</a>
+</div>
+<div mat-dialog-content class="content">
+  <div class="spinner" *ngIf="isLoading">Загрузка</div>
+  <app-channels-list *ngIf="!isLoading"
+                     [channels]="channels"
+                     [navigateOnClick]="false"
+                     (channelSelect)="onChannelSelect($event)">
+  </app-channels-list>
+</div>

@@ -29,6 +29,8 @@ import { AttachmentPageComponent } from './pages/attachment-page/attachment-page
 import { AttachmentItemComponent } from './components/attachment-item/attachment-item.component';
 import { AttachmentListComponent } from './components/attachment-list/attachment-list.component';
 import { MatrixLinkDialogComponent } from './components/matrix-link-dialog/matrix-link-dialog.component';
+import { MoveMessageDialogComponent } from './components/move-message-dialog/move-message-dialog.component';
+import { MoveMessageConfirmDialogComponent } from './components/move-message-confirm-dialog/move-message-confirm-dialog.component';
 
 @NgModule({
   imports: [
@@ -62,6 +64,8 @@ import { MatrixLinkDialogComponent } from './components/matrix-link-dialog/matri
       SelectionComponent,
       DialogDataExampleDialog,
       MatrixLinkDialogComponent,
+      MoveMessageDialogComponent,
+      MoveMessageConfirmDialogComponent,
     AttachmentPageComponent,
     AttachmentItemComponent,
     AttachmentListComponent

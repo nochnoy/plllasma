@@ -45,6 +45,11 @@ export class UserService {
     return this.user.access.some((a) => a.id_place === channelId && a.role !== RoleEnum.nobody);
   }
 
+  // Может ли юзер писать в канал (та же логика, что canWrite на бэкенде)
+  canWrite(channelId: number): boolean {
+    return this.canAccess(channelId);
+  }
+
   canModerate(channelId: number): boolean {
     const roles = [
       RoleEnum.moderator,
